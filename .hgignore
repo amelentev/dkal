@@ -1,0 +1,3 @@
+^DkalEngine/(bin|obj)/.*$
+^DkalEngine/DkalController/(bin|obj)/.*$
+.suo$
