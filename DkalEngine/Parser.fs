@@ -4,7 +4,10 @@ open System
 open System.IO
 open System.Text
 open Microsoft.FSharp.Text
+
+open Microsoft.Research.DkalEngine.Util
 open Microsoft.Research.DkalEngine.Ast
+open Microsoft.Research.DkalEngine.PreAst
 
 module Parser =
   

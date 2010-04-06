@@ -4,8 +4,10 @@ open System
 open System.IO
 open System.Text
 open Microsoft.FSharp.Text
-open Microsoft.Research.DkalEngine.Ast
 open Microsoft.FSharp.Collections
+
+open Microsoft.Research.DkalEngine.Util
+open Microsoft.Research.DkalEngine.Ast
 
 type GQueue<'a> = Collections.Generic.Queue<'a>
 
@@ -42,10 +44,9 @@ type Engine =
     mutable sql : option<SqlConnector>
     mutable comm : option<SqlCommunicator>
     mutable me : option<Principal>
-    ctx : Context
+    ctx : PreAst.Context
     sentItems : Dict<Message, bool>
     hooks : IViewHooks
-    eval : Evaluator
     pending : GQueue<Action>
     mutable trace : int
     mutable infonstrate : list<Knows>
@@ -56,11 +57,10 @@ type Engine =
   }
   
   static member Make (trace, hooks) =
-    let ctx = Context.Make()
+    let ctx = PreAst.Context.Make()
     ctx.trace <- trace
     { me = None; ctx = ctx; hooks = hooks;
       infonstrate = []; filters = []; communications = []; nextId = 0;
-      eval = new Evaluator()
       sentItems = dict()
       trace = trace
       sql = None
@@ -97,21 +97,12 @@ type Engine =
   member this.SetTrace v =
     this.ctx.trace <- v
     this.trace <- v
-    this.eval.SetTrace (v > 1)
 
   member this.Populate assertions =
     let myId = this.me.Value.internal_id
     let addAssertion = function
       | Knows k when k.ai.principal.internal_id = myId ->
         this.infonstrate <- k :: this.infonstrate
-        
-        match k.infon with
-          | AsInfon (_, Term.App (_, { name = "==" }, [a; b])) ->
-            this.eval.AddRewrite a b
-          | AsInfon (_, t) ->
-            this.eval.AddRewrite t Term.True
-          | _ ->
-            ()
       | SendTo c when c.ai.principal.internal_id = myId ->
         this.communications <- c :: this.communications
       | ReceiveFrom f when f.ai.principal.internal_id = myId ->
@@ -161,7 +152,7 @@ type Engine =
   member private this.InfonsWithPrefix subst pref template =
     let res = ref []
     let rec stripPrefix subst prefixUnif preconds suff = 
-      let simpl s (t:Term) = this.eval.Eval (t.Apply s)
+      let simpl s (t:Term) = t.Apply s
       
       let immediate = function
         | ([], i) ->
@@ -320,8 +311,8 @@ type Engine =
       let toks = Parser.applyRules this.ctx toks
       match toks with
         | [t]
-        | [t; Tok.NewLine _] -> Some (Resolver.resolveInfon this.ctx t)
-        | [Tok.NewLine _]
+        | [t; PreAst.Tok.NewLine _] -> Some (Resolver.resolveInfon this.ctx t)
+        | [PreAst.Tok.NewLine _]
         | [] -> raise (SyntaxError (fakePos, "infon expected"))
         | _ -> raise (SyntaxError (fakePos, "only one infon expected"))
     with 

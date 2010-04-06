@@ -55,7 +55,7 @@ namespace Microsoft.Research.DkalController
       }
     }
     
-    public void SyntaxError(E.Ast.Pos pos, string msg)
+    public void SyntaxError(E.Util.Pos pos, string msg)
     {
       Say("<b>ERROR</b> <blue>{0}</blue>: {1}\n", pos, msg);
     }

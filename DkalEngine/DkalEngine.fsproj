@@ -53,11 +53,12 @@
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
     <Compile Include="Lexer.fs" />
+    <Compile Include="Utils.fs" />
     <Compile Include="Ast.fs" />
+    <Compile Include="PreAst.fs" />
     <Compile Include="Tokenizer.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Resolver.fs" />
-    <Compile Include="Evaluator.fs" />
     <Compile Include="SqlConnector.fs" />
     <Compile Include="SqlCommunicator.fs" />
     <Compile Include="SqlCompiler.fs" />

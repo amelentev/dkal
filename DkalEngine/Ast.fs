@@ -5,126 +5,9 @@ open System.IO
 open System.Text
 open Microsoft.FSharp.Collections
 open Microsoft.FSharp.Text
-open Microsoft.Research.DkalEngine.PreToken
+open Microsoft.Research.DkalEngine.Util
 
 module Ast =
-  type Pos = 
-    { 
-      line : int; 
-      column : int 
-    }
-    
-    override this.ToString() =
-      (this.line+1).ToString() + ":" + (this.column+1).ToString()
-  
-  let fakePos = { line = 0; column = 0 }
-  
-  exception SyntaxError of Pos * string
-  
-  let opening = function
-    | ')' -> '('
-    | ']' -> '['
-    | '}' -> '{'
-    | c -> c
-  
-  let log (msg:string) = System.Console.WriteLine msg
-  
-  type Pat =
-    | Id of string
-    | Group of char
-    | Block
-    | App of string
-    | NewLine
-    | Any
-    
-    override this.ToString() =
-      match this with
-        | Id s -> "'" + s + "'"
-        | Group c -> "Group" + c.ToString()
-        | Block -> "Block"
-        | NewLine -> "NL"
-        | App s -> s + "(...)"
-        | Any -> "*"
-  
-  type Tok =
-    | Group of Pos * char * list<Tok>
-    | Block of Pos * list<Tok>
-    | NewLine of Pos
-    | Int of Pos * int
-    | Id of Pos * string  // non-capitalized
-    | Var of Pos * string // capitalized
-    | StringLiteral of Pos * string
-    
-    | App of Pos * string * list<Tok>
-    
-    member this.Pos =
-      match this with
-        | Group (p, _, _)
-        | Block (p, _)
-        | NewLine p
-        | Int (p, _)
-        | Id (p, _)
-        | StringLiteral (p, _)
-        | Var (p, _)
-        | App (p, _, _) -> p
-        
-    
-    override this.ToString() =
-      let sb = new StringBuilder()
-      let wr (s:obj) = sb.Append s |> ignore
-      let rec pr l = function
-        | Group (_, c, toks) ->
-          wr (opening c)
-          wr " "
-          for t in toks do
-            pr l t
-          wr c
-          wr " "
-        | Block (_, toks) ->
-          wr "{ "
-          for t in toks do
-            pr (l+2) t
-          sb.Length <- sb.Length - 2
-        | NewLine _ ->
-          wr " NL\n"
-          wr (new String (' ', l))
-        | Int (_, i) -> wr i; wr " "
-        | Var (_, s) -> wr "$"; wr s; wr " "
-        | Id (_, s) -> wr s; wr " "
-        | StringLiteral (_, s) -> wr "\""; wr s; wr "\""
-        | App (_, p, args) ->
-          wr p
-          wr "("
-          for t in args do
-            pr l t
-            wr ", "
-          sb.Length <- sb.Length - 2
-          wr ") "
-          
-      pr 0 this
-      sb.ToString()
-
-  //
-  // Misc utils
-  //
-  
-  type Dict<'A,'B> = System.Collections.Generic.Dictionary<'A,'B>
-  type Vec<'A> = System.Collections.Generic.List<'A>
-  
-  let dict() = new Dict<_,_>()
-  let vec() = new Vec<_>()
-
-  let getDefl (dict:Dict<_,_>) k d =
-    match dict.TryGetValue k with
-      | true, r -> r
-      | _ -> d
-      
-  let rec rev_append a b =
-    match a with
-      | x :: xs -> rev_append xs (x :: b)
-      | [] -> b
-  
-  
   //
   // The real final AST
   //
@@ -203,7 +86,7 @@ module Ast =
     static member Int = intType
     static member Bool = boolType
   
-  let private globalFunctions = dict()
+  let globalFunctions = dict() // accessed from ParsingCtx
   let private mkVar tp =
     let id = nextId()
     ({ id = id; name = "global#" + id.ToString(); typ = tp} : Var)
@@ -446,65 +329,7 @@ module Ast =
         | ReceiveFrom f ->
           f.ai.principal.ToString() + " from " + f.source.ToString() + " : [" + f.message.ToString() + " <-- " + f.proviso.ToString() + "] <== " + f.trigger.ToString()
             
-    
-  // All assertions are principal-specific, and thus:
-  //type Policy = list<Principal * list<Assertion>>
-
-    
-  type Rule =
-    {
-      name : string;
-      pats : list<Pat>;
-      body : list<Tok> -> list<Tok>;
-      priority : int;
-    }
-  
-  type Context =
-    {
-      options : Dict<string, string>;
-      types : Dict<string, Type>;
-      functions : Dict<string, Function>;
-      rules : Dict<int, list<Rule>>;
-      principals : Dict<string, Principal>;
-      vars : Dict<string, Var>;
-      mutable pendingFunctions : list<Function>;
-      mutable id : int;
-      mutable trace : int;
-    }    
-    
-    member this.AddRule r =
-      this.rules.[r.priority] <- r :: getDefl this.rules r.priority []
-    
-    member this.NextId () =
-      this.id <- this.id + 1
-      this.id
-      
-    member this.AddType name =
-      this.types.Add (name, { id = this.NextId(); name = name })
-    
-    member this.AddPrincipal name =
-      this.principals.Add (name, { name = name; internal_id = this.NextId(); typ = Type.Principal })
-    
-    member this.MkVar name tp =
-      let id = this.NextId()
-      let name =
-        if name = "" then
-          "anon#" + id.ToString()
-        else name
-      ({ name = name; id = id; typ = tp } : Var)
-      
-    member this.AddVar name =
-      this.vars.Add (name, { name = name; id = this.NextId(); typ = Type.Unbound })
         
-    static member Make() =
-      let ctx = { options = dict(); types = dict(); functions = dict(); rules = dict(); principals = dict(); vars = dict(); id = 100; pendingFunctions = []; trace = 0 }
-      ctx.types.Add ("principal", Type.Principal)
-      ctx.types.Add ("int", Type.Int)
-      ctx.types.Add ("bool", Type.Bool)
-      for k in globalFunctions.Keys do
-        ctx.functions.Add (k, globalFunctions.[k])
-      ctx
-    
   //
   // Unification and substitutions
   //

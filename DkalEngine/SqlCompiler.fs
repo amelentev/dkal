@@ -4,6 +4,8 @@ open System
 open System.IO
 open System.Text
 open Microsoft.FSharp.Text
+
+open Microsoft.Research.DkalEngine.Util
 open Microsoft.Research.DkalEngine.Ast
 
 module SqlCompiler =
@@ -169,7 +171,7 @@ module SqlCompiler =
         
     loop !eqs
   
-  let compile (ctx:Context) nextId theTerms =
+  let compile (ctx:PreAst.Context) nextId theTerms =
     let nextScope = ref 1
     let fresh (v:Var) =      
       let id = nextId()

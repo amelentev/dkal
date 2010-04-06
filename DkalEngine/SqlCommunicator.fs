@@ -4,10 +4,11 @@ open System
 open System.IO
 open System.Text
 open Microsoft.FSharp.Text
-open Microsoft.Research.DkalEngine.PreToken
-open Microsoft.Research.DkalEngine.Ast
 
-type SqlCommunicator(ctx:Context, me:Principal) =
+open Microsoft.Research.DkalEngine.Ast
+open Microsoft.Research.DkalEngine.Util
+
+type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
   let sql = SqlConnector(ctx.options.["common_sql"])
   
   let principalName = dict()
