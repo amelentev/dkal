@@ -1,3 +1,4 @@
 ^DkalEngine/(bin|obj)/.*$
 ^DkalEngine/DkalController/(bin|obj)/.*$
+^DkalEngine/Lexer.fs$
 .suo$
