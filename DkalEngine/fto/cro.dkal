@@ -1,0 +1,28 @@
+#include "common.dkal"
+#set private_sql "Server=tcp:wmmk2vmk5y.database.windows.net;Database=ftoCro;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
+#set me "_cro"
+
+// From _cro to _site:
+if _cro knows 
+  SITE participates in T
+  SITE is assigned id numbers from N_0 to N_1 in T
+then they send
+  to SITE with certificate
+    if
+      asInfon(N_0 <= patientID(R) && patientID(R) <= N_1) 
+    then
+      _cro implied P can read R in records of trial T under the authority of SITE
+//  to SITE
+//    SITE participates in T
+//    SITE is assigned id numbers from N_0 to N_1 in T
+
+// Get it spinning
+
+_cro knows 
+  if
+    start
+  then
+    _site participates in trial0
+    _site is assigned id numbers from 0 to 42 in trial0
+
+#set initial_input "start"

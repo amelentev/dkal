@@ -1,0 +1,112 @@
+# include "ftoTypes.dkal"
+
+// From _cro to _site:
+if _cro knows 
+  SITE participates in T
+  SITE is assigned id numbers from N_0 to N_1 in T
+then they send
+  to SITE
+    SITE is assigned id numbers from N_0 to N_1 in T
+    if you know 
+        asInfon(N_0 <= patientID(Verb_V) && patientID(Verb_V) <= N_1) 
+        Verb_X can read Verb_V in records of trial T
+    then
+        Verb_X can read Verb_V in records of trial T under the authority of SITE
+
+// _sites knowledge, and communication from _site to _physician:
+_site knows
+  if
+    _site participates in T 
+    asInfon( C == croOf(T) )
+  then 
+    C tdonS _site is assigned id numbers from N_0 to N_1 in T
+
+_site knows
+  if
+    PHYSICIAN is a physician assigned to T at _site
+    patient N is assigned to PHYSICIAN in T
+    asInfon(V is a data clarification request in T)
+    asInfon(patientID(V) == N) 
+  then
+    PHYSICIAN can read V in records of trial T
+
+if _site knows
+  _site is assigned id numbers from N_0 to N_1 in T
+  PHYSICIAN is a physician assigned to T at _site
+  patient N is assigned to PHYSICIAN in T
+  asInfon(N_0 <= N && N <= N_1)
+then they send
+  to PHYSICIAN
+    PHYSICIAN is assigned to trial T at _site
+    patient N is assigned to PHYSICIAN in T
+  to PHYSICIAN with certificate
+    if you know 
+      asInfon(Verb_V is a data clarification request in T)
+      asInfon(patientID(Verb_V)  == N) 
+      asInfon(croOf(T) == C)
+    then
+      C implied PHYSICIAN can read Verb_V in records of trial T under the authority of _site
+
+// _physicians knowledge, and communication from physician to _cgc:
+_physician knows
+  _site tdonS PHYSICIAN is assigned to trial T at _site
+  _site tdonS patient N is assigned to PHYSICIAN in T
+
+// _cgcs knowledge:
+_cgc knows 
+  if
+    asInfon( C == croOf(T) )
+  then
+    C tdonI X can read V in records of trial T under the authority of P
+
+if _physician knows
+  _physician is assigned to trial T at _site
+  patient N is assigned to _physician in T
+then they send
+  to _cgc with certificate
+    if you know
+      asInfon(Verb_V is a data clarification request in T)
+      asInfon(patientID(Verb_V) == N) 
+      asInfon(C == croOf(T))
+    then
+      C implied _physician can read Verb_V in records of trial T under the authority of _site
+
+// Get it spinning
+
+function [2] trial0 returns {T:trial}
+  is T == trials.id && trials.id == 1
+
+_cro knows 
+  _site participates in trial0
+  _site is assigned id numbers from 0 to 42 in trial0
+
+_site knows
+  _site participates in trial0
+  _physician is a physician assigned to trial0 at _site
+  patient 10 is assigned to _physician in trial0
+
+can _cgc infer
+  X can read R in records of trial T under the authority of P
+
+/*
+can _site infer
+  P can read record0 in records of trial T
+
+can _site infer
+  _site is assigned id numbers from X to Y in T
+
+// debugging
+attribute [0] goal0
+
+_site knows
+  if
+    _site is assigned id numbers from N_0 to N_1 in T
+    PHYSICIAN is a physician assigned to T at _site
+    patient N is assigned to PHYSICIAN in T
+    asInfon(N_0 <= N && N <= N_1)
+  then
+   goal0
+
+can _site infer
+  goal0
+*/

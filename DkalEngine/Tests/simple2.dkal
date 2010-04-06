@@ -1,0 +1,49 @@
+// 
+// Testing
+//
+
+type t
+attribute [16] {t} likes {t}
+attribute [16] {t} loves {t}
+attribute [14] both {t} and {t} like {t}
+
+function [2] t0 returns {t}
+function [2] t1 returns {t}
+function [2] t2 returns {t}
+
+_a knows 
+  _b implied t0 loves t2
+  _b said t1 likes t2
+  _b tdonI X likes Y
+  _b tdonI X loves Y
+  if
+    X loves Y
+  then
+    X likes Y
+  _b said ((X loves Y) --> (X likes Y))
+  
+can _a infer
+  _b said t2 likes t0
+
+can _a infer
+  _b said t1 likes t2
+
+can _a infer
+  _b implied t1 likes t2
+
+can _a infer
+  t1 likes t2
+
+can _a infer
+  X likes Y
+
+can _a infer
+  _b said X likes Y
+
+/*
+can _a infer
+  _b implied A likes B
+
+can _a infer
+  _b said A likes B
+*/

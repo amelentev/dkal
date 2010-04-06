@@ -1,0 +1,57 @@
+{
+module Microsoft.Research.DkalEngine.Lexer
+
+open Microsoft.Research.DkalEngine.PreToken
+open Microsoft.FSharp.Text.Lexing
+
+let lexeme  (lexbuf : LexBuffer<char>) = new System.String(lexbuf.Lexeme)
+let newline (lexbuf:LexBuffer<char>) = lexbuf.EndPos <- lexbuf.EndPos.NextLine
+let stringBuf = new System.Text.StringBuilder()
+let add (ch:char) = stringBuf.Append ch |> ignore
+}
+
+
+// Base regular expressions
+let digit = ['0'-'9']
+let lowercase = (['a'-'z'] | '_')
+let uppercase = ['A'-'Z']
+let alnum = (digit | lowercase | uppercase)
+let whitespace = [' ']
+let newline = ('\n' | '\r' '\n')
+let opstart = ['!' '%' '^' '&' '*' '/' '<' '>' '=' '?' '|' '+' '-' '.' ':' '#' ]
+let opchar = opstart
+
+rule token = parse
+| [' ']+             { Spaces (lexeme lexbuf).Length }
+| newline            { newline lexbuf; NewLine }
+| ['-']?digit+       { Int (System.Int32.Parse(lexeme lexbuf)) }
+| "("                { LParen ')' }
+| ")"                { RParen ')' }
+| "["                { LParen ']' }
+| "]"                { RParen ']' }
+| '{'                { LParen '\x7D' }
+| '}'                { RParen '\x7D' }
+| '/' '*'            { comment lexbuf }
+| '/' '/' [^ '\n']*  { token lexbuf }
+| '"'                { stringBuf.Length <- 0;
+                       string lexbuf;
+                       StringLiteral (stringBuf.ToString()) }
+| lowercase alnum*   { Id (lexeme lexbuf) }
+| opstart opchar*    { Id (lexeme lexbuf) }
+| uppercase alnum*   { Var (lexeme lexbuf) }
+| eof                { Eof }
+| _                  { Invalid (lexeme lexbuf) }
+and comment = parse 
+| "*/"               { token lexbuf }
+| newline            { newline lexbuf; comment lexbuf }
+| eof                { Eof }
+| _                  { comment lexbuf }
+and string = parse
+  '"' { () }
+| '\\' 'n' { add '\n'; string lexbuf }
+| '\\' 'r' { add '\r'; string lexbuf }
+| '\\' 't' { add '\t'; string lexbuf }
+| '\\' _ { add (lexbuf.Lexeme.[1]); string lexbuf }
+| [^ '\\' '"']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
+| _ { add (lexbuf.Lexeme.[0]); string lexbuf }
+| eof { () }

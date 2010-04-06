@@ -1,0 +1,9 @@
+if _foo knows
+  X is mother of Y
+  Y is mother of Z
+// a comment  
+then they send
+  to _bar
+  X is grandmother of (mother of [parent of Z])
+  foo /* multi-line comment
+  joining lines */ bar
