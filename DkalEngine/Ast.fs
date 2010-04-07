@@ -73,7 +73,8 @@ module Ast =
   
   let private infon : Type = { id = nextId(); name = "*infon*" }
   let private assertion : Type = { id = nextId(); name = "*assertion*" }
-  let private unbound : Type = { id = nextId(); name = "*assertion*" }
+  let private unbound : Type = { id = nextId(); name = "*unbound*" }
+  let private evidence : Type = { id = nextId(); name = "*evidence*" }
   let private principal : Type = { id = nextId(); name = "principal" }
   let private intType : Type = { id = nextId(); name = "int" }
   let private boolType : Type = { id = nextId(); name = "bool" }
@@ -85,6 +86,7 @@ module Ast =
     static member Principal = principal
     static member Int = intType
     static member Bool = boolType
+    static member Evidence = evidence
   
   let globalFunctions = dict() // accessed from ParsingCtx
   let private mkVar tp =
@@ -100,7 +102,12 @@ module Ast =
   let private infonSaid = addGlobalFunction Type.Infon "Infon.said" [Type.Principal; Type.Infon]
   let private infonImplied = addGlobalFunction Type.Infon "Infon.implied" [Type.Principal; Type.Infon]
   let private infonEmpty = addGlobalFunction Type.Infon "Infon.empty" []
-  let private infonAsInfon = addGlobalFunction Type.Infon "asInfon" [Type.Bool]
+  let private infonAsInfon = addGlobalFunction Type.Infon "asInfon" [Type.Bool]  
+  let private infonCertified = addGlobalFunction Type.Infon "Infon.cert" [Type.Infon; Type.Evidence]
+  
+  // the int parameter is a placeholder for the actual cryptographic signature
+  let private evSignature = addGlobalFunction Type.Evidence "Ev.sign" [Type.Principal; Type.Infon; Type.Int]
+  let private evMp = addGlobalFunction Type.Evidence "Ev.mp" [Type.Evidence; Type.Evidence]
   
   type Function with
     static member And = infonAnd
@@ -109,6 +116,9 @@ module Ast =
     static member Implied = infonImplied
     static member Empty = infonEmpty
     static member AsInfon = infonAsInfon
+    static member Cert = infonCertified
+    static member EvSignature = evSignature
+    static member EvMp = evMp
   
   [<StructuralEquality; NoComparison>]
   type Principal =
@@ -215,12 +225,17 @@ module Ast =
     | App (p, fn, [a]) when fn === Function.AsInfon -> Some (AsInfon (p, a))
     | _ -> None
   
+  let (|InfonCert|_|) = function
+    | App (p, fn, [a; b]) when fn === Function.Cert -> Some (InfonCert (p, a, b))
+    | _ -> None
+  
   type Term with
     static member And (p, a, b) = App (p, Function.And, [a; b])
     static member Follows (p, a, b) = App (p, Function.Follows, [a; b])
     static member Said (p, a, b) = App (p, Function.Said, [a; b])
     static member Implied (p, a, b) = App (p, Function.Implied, [a; b])
     static member Empty (p) = App (p, Function.Empty, [])
+    static member Cert (p, i, e) = App (p, Function.Cert, [i; e])
     
     member this.IsEmpty =
       match this with
@@ -309,8 +324,12 @@ module Ast =
       target : Principal
       message : Infon
       proviso : Infon
-      certified : bool
     }
+    
+    member this.IsCertified =
+      match this.message with
+        | InfonCert _ -> true
+        | _ -> false
     
   type Assertion =
     | Knows of Knows

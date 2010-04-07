@@ -118,6 +118,7 @@ module Resolver =
                                    proviso = proviso
                                    trigger = precond
                                    certified = name.Contains "cert" })
+                                   
             splitList singleComm what
           | t ->
             err t "expecting 'to' after 'then they send'"

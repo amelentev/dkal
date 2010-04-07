@@ -36,6 +36,7 @@ type IViewHooks =
   abstract QueryResults : Infon * seq<seq<Binding>> -> unit
   abstract SyntaxError : Pos * string -> unit
   abstract Loaded : string -> unit
+  abstract Warning : string -> unit
   
 type Action = delegate of unit -> unit
   
@@ -79,7 +80,7 @@ type Engine =
       let toks = Parser.applyRules ctx toks
       //System.Console.WriteLine (Tok.Block (fakePos, toks))
       Resolver.resolveFunctions ctx
-      let assertions = List.map (Resolver.resolve ctx) toks |> List.concat
+      let assertions = List.collect (Resolver.resolve ctx) toks |> List.map this.HandleCertifications
       let me = ctx.principals.[ctx.options.["me"]]
       
       this.me <- Some me
@@ -245,9 +246,53 @@ type Engine =
       let apply (t:Term) = t.Apply augS.subst
       let sqlExpr = SqlCompiler.compile this.ctx this.NextId (augS.assumptions |> List.map apply)
       SqlCompiler.execQuery (this.sql.Value, this.comm.Value, sqlExpr, augS.subst, vars) |> Seq.toList      
-    { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.map checkAssumptions |> List.concat }
+    { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.collect checkAssumptions }
+  
+  //
+  // Evidential
+  // 
+  
+  // return true iff signature is the signature of principal under infon
+  member private this.SignatureCheck principal infon signature =
+    // TODO
+    true
     
-  member this.Listen (msg:Message) =    
+  member private this.FinalOutcome = function
+    | InfonFollows (_, _, i) -> this.FinalOutcome i
+    | i -> i
+  
+  member private this.CanSign principal infon =
+    match this.FinalOutcome infon with
+      | InfonSaid (_, p, _)
+      | InfonImplied (_, p, _) -> principal = p
+      | _ -> false
+  
+  member private this.EvidenceCheck (acc:Vec<_>) (ev:Term) =
+    let ret inf =
+      acc.Add inf
+      acc.Add (Infon.Cert (ev.Pos, inf, ev))
+      Some inf
+      
+    match ev with
+      | App (_, f, [p; inf; sign]) when f === Function.EvSignature ->
+        if this.SignatureCheck p inf sign && this.CanSign p inf then
+          ret inf
+        else
+          this.hooks.Warning ("spoofed signature")
+          None
+      | App (_, f, [a; b]) when f === Function.EvMp ->
+        match this.EvidenceCheck acc a, this.EvidenceCheck acc b with
+          | Some i1, Some (InfonFollows (_, i1', i2)) when i1 = i1' ->
+            ret i2
+          | _ ->
+            this.hooks.Warning ("malformed mp")
+            None
+      | _ ->
+        this.hooks.Warning ("unhandled evidence constructor")
+        None                
+        
+  
+  member this.Listen (msg:Message) =  
     this.hooks.Recieved msg
     let src = Term.Const (fakePos, Const.Principal msg.source)
     let msg =
@@ -261,24 +306,34 @@ type Engine =
                                                (msg.proviso, filter.proviso)]
       let apply s =
         let t = msg.message.Apply s
-        let infon =
-          match msg.proviso.Apply s with
-            | InfonEmpty ->
-              if msg.certified then t
-              else Infon.Said (fakePos, src, t)
-            | proviso ->
-              // certified implication, not clear if it should be here, but the example requires it
-              if msg.certified then 
-                Infon.Follows (fakePos, proviso, t)
-              else
-                Infon.Follows (fakePos, proviso, Infon.Implied (fakePos, src, t))
-        { ai = this.FakeAI(); infon = infon }
+        let infons =
+          match t with
+            | InfonCert (p, _, e) ->
+              match msg.proviso.Apply s with
+                | InfonEmpty ->
+                  let acc = vec()
+                  match this.EvidenceCheck acc e with
+                    | Some _ ->
+                      Seq.toList acc
+                    | _ ->
+                      this.hooks.Warning ("fake certified infon")
+                      []
+                | _ ->
+                  this.hooks.Warning ("certified infon with proviso")
+                  []
+            | _ ->
+              match msg.proviso.Apply s with
+                | InfonEmpty ->
+                  [Infon.Said (fakePos, src, t)]
+                | proviso ->
+                  [Infon.Follows (fakePos, proviso, Infon.Implied (fakePos, src, t))]
+        List.map (fun infon -> { ai = this.FakeAI(); infon = infon }) infons
           
       match subst with
         | Some s ->
-          (this.Derive s filter.trigger).All |> List.map apply
+          (this.Derive s filter.trigger).All |> List.collect apply
         | None -> []
-    let newInfons = this.filters |> List.map matches |> List.concat
+    let newInfons = this.filters |> List.collect matches
     List.iter this.hooks.Knows newInfons
     this.infonstrate <- newInfons @ this.infonstrate
     
@@ -297,7 +352,6 @@ type Engine =
                        target = p
                        message = comm.message.Apply subst
                        proviso = comm.proviso.Apply subst
-                       certified = comm.certified
                      } : Message).Canonical()
           this.Send msg
         | t ->

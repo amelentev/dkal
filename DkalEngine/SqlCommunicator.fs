@@ -148,7 +148,7 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
     let add (n, v) = cmd.Parameters.AddWithValue (n, v) |> ignore
     add ("s", this.PrincipalId msg.source)
     add ("r", this.PrincipalId msg.target)
-    add ("m", serializeTerms [msg.message; msg.proviso; Term.Const (fakePos, Const.Bool msg.certified)])
+    add ("m", serializeTerms [msg.message; msg.proviso])
     cmd.ExecuteNonQuery() |> ignore
   
   member this.CheckForMessage () =
@@ -163,13 +163,12 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
       System.Console.WriteLine("{0}", rd.GetInt32 1)
       let src = principalById (rd.GetInt32 1)
       match deserializeTerms (rd.GetString 2) with
-        | [msg; prov; Term.Const (_, Const.Bool cert)] ->
+        | [msg; prov] ->
           let msg =
             { source = src
               target = me
               message = msg
-              proviso = prov
-              certified = cert } 
+              proviso = prov }
           rd.GetValue 0, msg
         | _ -> failwith "invalid message"
           
