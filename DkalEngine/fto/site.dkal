@@ -23,22 +23,25 @@ if _site knows
   asInfon(croOf(T) == C)
   if
     Prov
+    _site implied PHYSICIAN can read R in records of trial T under the authority of _site
   then
     C implied PHYSICIAN can read R in records of trial T under the authority of _site
   PHYSICIAN is a physician assigned to T at _site
   patient N is assigned to PHYSICIAN in T
 then they send
-//  to PHYSICIAN
-//    PHYSICIAN is assigned to trial T at _site
-//    patient N is assigned to PHYSICIAN in T
+  to PHYSICIAN with certificate
+    if
+      Prov
+      _site implied PHYSICIAN can read R in records of trial T under the authority of _site
+    then
+      C implied PHYSICIAN can read R in records of trial T under the authority of _site
 
   to PHYSICIAN with certificate
     if
       asInfon(R is a data clarification request in T)
       asInfon(patientID(R) == N)
-      Prov
     then
-      C implied PHYSICIAN can read R in records of trial T under the authority of _site
+      _site implied PHYSICIAN can read R in records of trial T under the authority of _site
 
 _site knows
   _physician is a physician assigned to trial0 at _site

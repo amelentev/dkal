@@ -22,7 +22,6 @@
 
 // forward our template authorization to CGC
 if _physician knows
-  asInfon(croOf(T) == C)
   if
     Prov
   then

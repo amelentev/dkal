@@ -10,6 +10,7 @@ then they send
   to SITE with certificate
     if
       asInfon(N_0 <= patientID(R) && patientID(R) <= N_1) 
+      SITE implied P can read R in records of trial T under the authority of SITE
     then
       _cro implied P can read R in records of trial T under the authority of SITE
 //  to SITE
