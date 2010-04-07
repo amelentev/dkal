@@ -80,15 +80,15 @@ type Engine =
       let toks = Parser.applyRules ctx toks
       //System.Console.WriteLine (Tok.Block (fakePos, toks))
       Resolver.resolveFunctions ctx
-      let assertions = List.collect (Resolver.resolve ctx) toks |> List.map this.HandleCertifications
+      let assertions = List.collect (Resolver.resolve ctx) toks
       let me = ctx.principals.[ctx.options.["me"]]
       
       this.me <- Some me
       this.sql <- Some (SqlConnector(ctx.options.["private_sql"]))
       this.comm <- Some (SqlCommunicator(ctx, me))
             
-      this.AddDefaultFilter()
-      this.Populate assertions
+      this.AddDefaultFilter()       
+      this.Populate assertions 
       
       this.hooks.Loaded filename
             
@@ -109,7 +109,7 @@ type Engine =
       | ReceiveFrom f when f.ai.principal.internal_id = myId ->
         this.filters <- f :: this.filters
       | _ -> ()
-    List.iter addAssertion assertions
+    List.iter addAssertion (List.map this.HandleCertifications assertions)
     
   member private this.NextId () =
     this.nextId <- this.nextId - 1
@@ -248,50 +248,6 @@ type Engine =
       SqlCompiler.execQuery (this.sql.Value, this.comm.Value, sqlExpr, augS.subst, vars) |> Seq.toList      
     { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.collect checkAssumptions }
   
-  //
-  // Evidential
-  // 
-  
-  // return true iff signature is the signature of principal under infon
-  member private this.SignatureCheck principal infon signature =
-    // TODO
-    true
-    
-  member private this.FinalOutcome = function
-    | InfonFollows (_, _, i) -> this.FinalOutcome i
-    | i -> i
-  
-  member private this.CanSign principal infon =
-    match this.FinalOutcome infon with
-      | InfonSaid (_, p, _)
-      | InfonImplied (_, p, _) -> principal = p
-      | _ -> false
-  
-  member private this.EvidenceCheck (acc:Vec<_>) (ev:Term) =
-    let ret inf =
-      acc.Add inf
-      acc.Add (Infon.Cert (ev.Pos, inf, ev))
-      Some inf
-      
-    match ev with
-      | App (_, f, [p; inf; sign]) when f === Function.EvSignature ->
-        if this.SignatureCheck p inf sign && this.CanSign p inf then
-          ret inf
-        else
-          this.hooks.Warning ("spoofed signature")
-          None
-      | App (_, f, [a; b]) when f === Function.EvMp ->
-        match this.EvidenceCheck acc a, this.EvidenceCheck acc b with
-          | Some i1, Some (InfonFollows (_, i1', i2)) when i1 = i1' ->
-            ret i2
-          | _ ->
-            this.hooks.Warning ("malformed mp")
-            None
-      | _ ->
-        this.hooks.Warning ("unhandled evidence constructor")
-        None                
-        
-  
   member this.Listen (msg:Message) =  
     this.hooks.Recieved msg
     let src = Term.Const (fakePos, Const.Principal msg.source)
@@ -417,4 +373,82 @@ type Engine =
                 doYield()
       if not this.die then loop ()
     loop ()
+
+
+
+
+
+  //
+  // Evidential things
+  // 
+  
+  // return true iff signature is the signature of principal under infon
+  member private this.SignatureCheck principal infon signature =
+    // TODO
+    true
+  
+  member private this.MakeSignature (infon:Infon) =
+    // TODO
+    Term.Const (infon.Pos, Const.Int 42)
     
+  member private this.FinalOutcome = function
+    | InfonFollows (_, _, i) -> this.FinalOutcome i
+    | i -> i
+  
+  member private this.IsMe = function
+    | Term.Const (_, Const.Principal p) -> p = this.me.Value
+    | _ -> false
+  
+  member private this.CanSign principal infon =
+    match this.FinalOutcome infon with
+      | InfonSaid (_, p, _)
+      | InfonImplied (_, p, _) -> principal = p
+      | _ -> false
+  
+  member private this.EvidenceCheck (acc:Vec<_>) (ev:Term) =
+    let ret inf =
+      acc.Add inf
+      acc.Add (Infon.Cert (ev.Pos, inf, ev))
+      Some inf
+      
+    match ev with
+      | App (_, f, [p; inf; sign]) when f === Function.EvSignature ->
+        if this.SignatureCheck p inf sign && this.CanSign p inf then
+          ret inf
+        else
+          this.hooks.Warning ("spoofed signature")
+          None
+      | App (_, f, [a; b]) when f === Function.EvMp ->
+        match this.EvidenceCheck acc a, this.EvidenceCheck acc b with
+          | Some i1, Some (InfonFollows (_, i1', i2)) when i1 = i1' ->
+            ret i2
+          | _ ->
+            this.hooks.Warning ("malformed mp")
+            None
+      | _ ->
+        this.hooks.Warning ("unhandled evidence constructor")
+        None                        
+
+  member private this.HandleCertifications = function
+    | Assertion.SendTo ({ certified = true } as comm) ->
+      let comm =
+        match comm.proviso with
+          | InfonEmpty ->
+            let msg = comm.message
+            let pos = msg.Pos
+            match this.FinalOutcome comm.message with
+               | InfonSaid (_, p, _)
+               | InfonImplied (_, p, _) when this.IsMe p ->
+                 { comm with message = Infon.Cert (pos, msg, App (pos, Function.EvSignature, [p; msg; this.MakeSignature msg])) }
+               | _ ->
+                 let v = this.FreshVar Type.Evidence
+                 let msg = Infon.Cert (pos, msg, Term.Var (pos, v))
+                 { comm 
+                   with message = msg
+                        trigger = Infon.And (pos, msg, comm.trigger) }
+          | _ ->
+            this.hooks.Warning ("certified provisional communication not supported at this time")
+            comm
+      Assertion.SendTo { comm with certified = false }
+    | t -> t
+        

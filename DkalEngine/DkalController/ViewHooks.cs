@@ -9,6 +9,7 @@ namespace Microsoft.Research.DkalController
   {
     CommunicationWindow comm;
     internal E.Engine eng;
+    bool lastMsgCertified = false;
 
     private void Say(string msg, params object[] args)
     {
@@ -25,7 +26,8 @@ namespace Microsoft.Research.DkalController
 
     public void Knows(E.Ast.Knows k)
     {
-      //Say(string.Format("<b>KNOWS</b> {0}\n", k.infon));
+      if (lastMsgCertified)
+        Say(string.Format("<b>KNOWS</b> {0}\n", k.infon));
     }
 
     public void Recieved(E.Ast.Message msg)
@@ -33,6 +35,7 @@ namespace Microsoft.Research.DkalController
       Say("<b>FROM</b> {0} <b>GOT</b> {1}\n", msg.source, msg.message);
       if (!msg.proviso.IsEmpty)
         Say("    <blue>PROVIDED</blue> {0}\n", msg.proviso);
+      lastMsgCertified = msg.IsCertified;
     }
 
     public void Send(E.Ast.Message msg)
@@ -70,6 +73,12 @@ namespace Microsoft.Research.DkalController
         inp = "";
       comm.BeginInvoke((E.Action)(() => { comm.Loaded(me, inp);   } ));
     }
+
+    public void Warning(string s)
+    {
+      Say("<b>WARNING/b> <blue>{0}</blue>\n", s);
+    }
+      
 
     #endregion
   }
