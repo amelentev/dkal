@@ -64,6 +64,14 @@ namespace Microsoft.Research.DkalController
     }
 
 
+    int GetInt(string name)
+    {
+      string s;
+      int i;
+      if (eng.ctx.options.TryGetValue(name, out s) && int.TryParse(s, out i)) return i;
+      return -1;
+    }
+
     public void Loaded(string f)
     {
       Say("<b>LOADED DKAL FILE</b> <blue>{0}</blue> ({1} infons, {2} comm.rules, {3} filters)\n", f, eng.infonstrate.Length, eng.communications.Length, eng.filters.Length);
@@ -71,6 +79,7 @@ namespace Microsoft.Research.DkalController
       string inp = null;
       if (!eng.ctx.options.TryGetValue("initial_input", out inp))
         inp = "";
+      comm.BeginInvoke((E.Action)(() => { comm.SetPosition(GetInt("x"), GetInt("y"), GetInt("w"), GetInt("h")); }));
       comm.BeginInvoke((E.Action)(() => { comm.Loaded(me, inp);   } ));
     }
 

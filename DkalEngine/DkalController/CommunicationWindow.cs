@@ -34,6 +34,18 @@ namespace Microsoft.Research.DkalController
       Console.WriteLine("Hello.");
     }
 
+    public void SetPosition(int x, int y, int w, int h)
+    {
+      if (w > 50)
+        this.Width = w;
+      if (h > 50)
+        this.Height = h;
+      if (x >= 0)
+        this.Left = x;
+      if (y >= 0)
+        this.Top = y;
+    }
+
     public void Say(string msg)
     {
       int i = 0;
@@ -142,6 +154,11 @@ namespace Microsoft.Research.DkalController
       eng.AsyncAdd(textBox1.Text);
       textBox1.SelectAll();
       textBox1.Focus();
+    }
+
+    private void button3_Click_2(object sender, EventArgs e)
+    {
+      eng.AsyncStep();
     }
   }
 

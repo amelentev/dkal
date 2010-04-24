@@ -1,6 +1,8 @@
 #include "common.dkal"
 #set private_sql "Server=tcp:wmmk2vmk5y.database.windows.net;Database=ftoSite;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
 #set me "_site"
+#set x "0"
+#set y "472"
 
 // _sites knowledge, and communication from _site to _physician:
 //_site knows

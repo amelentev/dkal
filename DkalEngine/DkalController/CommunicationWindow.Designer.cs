@@ -43,6 +43,7 @@
       this.tabPage1 = new System.Windows.Forms.TabPage();
       this.tabPage2 = new System.Windows.Forms.TabPage();
       this.richTextBox2 = new System.Windows.Forms.RichTextBox();
+      this.button3 = new System.Windows.Forms.Button();
       this.menuStrip1.SuspendLayout();
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
@@ -122,6 +123,7 @@
       // 
       // splitContainer1.Panel2
       // 
+      this.splitContainer1.Panel2.Controls.Add(this.button3);
       this.splitContainer1.Panel2.Controls.Add(this.button2);
       this.splitContainer1.Panel2.Controls.Add(this.button1);
       this.splitContainer1.Panel2.Controls.Add(this.textBox1);
@@ -145,7 +147,7 @@
       // button2
       // 
       this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-      this.button2.Location = new System.Drawing.Point(598, 40);
+      this.button2.Location = new System.Drawing.Point(537, 40);
       this.button2.Name = "button2";
       this.button2.Size = new System.Drawing.Size(59, 35);
       this.button2.TabIndex = 9;
@@ -156,7 +158,7 @@
       // button1
       // 
       this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-      this.button1.Location = new System.Drawing.Point(598, 3);
+      this.button1.Location = new System.Drawing.Point(537, 3);
       this.button1.Name = "button1";
       this.button1.Size = new System.Drawing.Size(59, 35);
       this.button1.TabIndex = 8;
@@ -173,7 +175,7 @@
       this.textBox1.Location = new System.Drawing.Point(3, 3);
       this.textBox1.Multiline = true;
       this.textBox1.Name = "textBox1";
-      this.textBox1.Size = new System.Drawing.Size(589, 72);
+      this.textBox1.Size = new System.Drawing.Size(528, 72);
       this.textBox1.TabIndex = 3;
       // 
       // tabControl1
@@ -224,6 +226,17 @@
       this.richTextBox2.TabIndex = 2;
       this.richTextBox2.Text = "";
       // 
+      // button3
+      // 
+      this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+      this.button3.Location = new System.Drawing.Point(597, 3);
+      this.button3.Name = "button3";
+      this.button3.Size = new System.Drawing.Size(59, 72);
+      this.button3.TabIndex = 10;
+      this.button3.Text = "Go!";
+      this.button3.UseVisualStyleBackColor = true;
+      this.button3.Click += new System.EventHandler(this.button3_Click_2);
+      // 
       // CommunicationWindow
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -268,6 +281,7 @@
     private System.Windows.Forms.TabPage tabPage1;
     private System.Windows.Forms.TabPage tabPage2;
     private System.Windows.Forms.RichTextBox richTextBox2;
+    private System.Windows.Forms.Button button3;
   }
 }
 

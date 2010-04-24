@@ -1,6 +1,8 @@
 #include "common.dkal"
 #set private_sql "Server=tcp:wmmk2vmk5y.database.windows.net;Database=ftoCgc;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
 #set me "_cgc"
+#set x "0"
+#set y "0"
 
 // _cgc's knowledge:
 _cgc knows 

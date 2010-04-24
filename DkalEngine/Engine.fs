@@ -55,6 +55,7 @@ type Engine =
     mutable communications : list<Communication>
     mutable nextId : int   
     mutable die : bool
+    mutable stepwise : bool
   }
   
   static member Make (trace, hooks) =
@@ -68,6 +69,7 @@ type Engine =
       comm = None
       pending = new GQueue<_>()
       die = false
+      stepwise = true
       }
 
   member this.Load filename =
@@ -90,6 +92,10 @@ type Engine =
       this.AddDefaultFilter()       
       this.Populate assertions 
       
+      match ctx.options.TryGetValue "stepwise" with
+        | true, "0" -> this.stepwise <- false
+        | _ -> ()
+
       this.hooks.Loaded filename
             
     with SyntaxError (pos, s) ->
@@ -350,10 +356,22 @@ type Engine =
         this.hooks.SyntaxError (fakePos, "exception: " + e.Message)
     lock this.pending (fun () -> this.pending.Enqueue (fun () -> wrapped ()))
   
+  member this.Step () =
+    if this.sql.IsSome then
+      let cnt = this.sentItems.Count
+      this.Talk()
+      if cnt = this.sentItems.Count then
+        match this.comm.Value.CheckForMessage() with
+          | Some msg -> this.Listen msg; true
+          | None -> false
+      else false
+    else false
+  
   member this.AsyncDie () = this.Invoke (fun () -> this.die <- true)
   member this.AsyncAsk i = this.Invoke (fun () -> this.Ask i)
   member this.AsyncAdd i = this.Invoke (fun () -> this.Add i)
   member this.AsyncLoad n = this.Invoke (fun () -> this.Load n)
+  member this.AsyncStep () = this.Invoke (fun () -> this.Step () |> ignore)
   
   member this.EventLoop () =
     let doYield () = System.Threading.Thread.Sleep 1000
@@ -362,15 +380,9 @@ type Engine =
         lock this.pending (fun () -> if this.pending.Count > 0 then Some (this.pending.Dequeue()) else None)
       match act with
         | Some a -> a.Invoke()
-        | None when this.sql.IsNone -> doYield()
         | None ->
-          let cnt = this.sentItems.Count
-          this.Talk()
-          if cnt = this.sentItems.Count then
-            match this.comm.Value.CheckForMessage() with
-              | Some msg -> this.Listen msg
-              | None ->
-                doYield()
+          if not this.stepwise && this.Step () then ()
+          else doYield()
       if not this.die then loop ()
     loop ()
 

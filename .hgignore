@@ -2,3 +2,4 @@
 ^DkalEngine/DkalController/(bin|obj)/.*$
 ^DkalEngine/Lexer.fs$
 .suo$
+.user$

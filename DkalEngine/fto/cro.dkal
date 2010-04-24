@@ -1,6 +1,8 @@
 #include "common.dkal"
 #set private_sql "Server=tcp:wmmk2vmk5y.database.windows.net;Database=ftoCro;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
 #set me "_cro"
+#set x "680"
+#set y "0"
 
 // From _cro to _site:
 if _cro knows 
