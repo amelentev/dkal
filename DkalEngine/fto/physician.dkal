@@ -1,28 +1,10 @@
 #include "common.dkal"
 #set private_sql "Server=tcp:wmmk2vmk5y.database.windows.net;Database=ftoSite;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
 #set me "_physician"
-#set x "680"
-#set y "472"
+#set x "50"
+#set y "50"
 
-
-// _physician's knowledge, and communication from physician to _kgc:
-//_physician knows
-//  _site tdonS PHYSICIAN is assigned to trial T at _site
-//  _site tdonS patient N is assigned to PHYSICIAN in T
-//
-//if _physician knows
-//  _physician is assigned to trial T at _site
-//  patient N is assigned to _physician in T
-//then they send
-//  to _kgc with certificate
-//    if you know
-//      asInfon(Verb_V is a data clarification request in T)
-//      asInfon(patientID(Verb_V) == N) 
-//      asInfon(C == croOf(T))
-//    then
-//      C implied _physician can read Verb_V in records of trial T under the authority of _site
-
-// forward our template authorization to CGC
+// forward our template authorization to KGC
 if _physician knows
   if
     Prov

@@ -1,25 +1,8 @@
 #include "common.dkal"
 #set private_sql "Server=tcp:wmmk2vmk5y.database.windows.net;Database=ftoSite;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
 #set me "_site"
-#set x "0"
-#set y "472"
-
-// _sites knowledge, and communication from _site to _physician:
-//_site knows
-//  if
-//    asInfon( C == croOf(T) )
-//  then 
-//    C tdonS _site participates in T 
-//    C tdonS _site is assigned id numbers from N_0 to N_1 in T
-
-//_site knows
-//  if
-//    PHYSICIAN is a physician assigned to T at _site
-//    patient N is assigned to PHYSICIAN in T
-//    asInfon(V is a data clarification request in T)
-//    asInfon(patientID(V) == N) 
-//  then
-//    PHYSICIAN can read V in records of trial T
+#set x "30"
+#set y "30"
 
 if _site knows
   asInfon(croOf(T) == C)
