@@ -39,7 +39,7 @@ module Ast =
               PBlock (n + str.Length, List.rev (x.Append str :: xs))
             | [] -> PString str          
 
-    member this.Prepend str =
+    member this.Prepend (str:string) =
       match this with
         | PString s -> PString (str + s)
         | PBlock (n, x :: xs) ->
@@ -51,6 +51,34 @@ module Ast =
         | PString s -> s.Length
         | PBlock (n, _) -> n
 
+    member this.Print (sb:System.Text.StringBuilder) margin =
+      let wr (s:string) = sb.Append s |> ignore
+      let rec wrpp = function
+        | PP.PString s -> wr s
+        | PP.PBlock (_, l) ->
+          match List.rev l with
+            | x :: xs ->
+              for x in List.rev xs do
+                wrpp x
+                wr " "
+              wrpp x
+            | [] -> () 
+      let rec line ind = function
+        | PP.PString s ->
+          wr (String(' ', ind))
+          wr s
+          wr "\n"
+        | PP.PBlock (len, x :: xs) as pp ->
+          if len + ind > margin then
+            line ind x
+            List.iter (line (ind + 2)) xs
+          else
+            wr (String(' ', ind))
+            wrpp pp
+            wr "\n"
+        | PP.PBlock (_, []) -> ()
+      line 0 this
+    
     static member Block lst =
       PBlock (List.map (fun (s:PP) -> s.Length) lst |> List.sum, lst)
 
@@ -73,7 +101,7 @@ module Ast =
           | _ ->
             match List.rev lst with
               | x :: xs ->
-                let args = List.rev (x.Append ")" :: xs |> List.map (fun x -> x.Append ","))                
+                let args = List.rev (x.Append ")" :: (xs |> List.map (fun x -> x.Append ",")))                
                 PP.Block (PP.PString (this.name + "(") :: args)
               | [] -> failwith ""
       else
@@ -260,47 +288,28 @@ module Ast =
         | InfonEmpty -> true
         | _ -> false
 
-  let private infonToString (sb:StringBuilder, t_:obj) =
-    let wr (s:obj) = sb.Append s |> ignore
+  let private infonToString (sb, (t_:obj)) =
+    let par pp = ((PP.Block pp).Append ")").Prepend "("
+    let s s = PString s
     let rec pr = function
       | InfonFollows (_, InfonSaid (_, p, a), a') when a = a' ->
-        wr "("
-        wr (p.ToString())
-        wr " tdonS "
-        pr a
-        wr ")"
+        par [s (p.ToString()); s "tdonS"; pr a]
       | InfonFollows (_, InfonImplied (_, p, a), a') when a = a' ->
-        wr "("
-        wr (p.ToString())
-        wr " tdonI "
-        pr a
-        wr ")"
+        par [s (p.ToString()); s "tdonI"; pr a]
       | InfonFollows (_, a, b) ->
-        wr "("
-        pr a
-        wr " ==> "
-        pr b
-        wr ")"
+        par [pr a; s "==>"; pr a]
       | InfonAnd (_, a, b) ->
-        wr "("
-        pr a
-        wr " && "
-        pr b
-        wr ")"
+        par [pr a; s "&&"; pr a]
       | InfonSaid (_, p, i) ->
-        wr (p.ToString())
-        wr " said "
-        pr i          
+        PP.Block [s (p.ToString()); s "said"; pr i]
       | InfonImplied (_, p, i) ->
-        wr (p.ToString())
-        wr " implied "
-        pr i
-      | InfonEmpty -> wr "empty"
+        PP.Block [s (p.ToString()); s "implied"; pr i]
+      | InfonEmpty -> s "empty"
       | App (_, f, args) ->
-        f.WriteAsInfix sb pr args
-      | Var (_, v) -> wr (v.name)
-      | Const (_, p) -> wr p
-    pr (t_ :?> Term)
+        f.WriteAsInfix (List.map pr args)
+      | Var (_, v) -> s (v.name)
+      | Const (_, p) -> s (p.ToString())
+    (pr (t_ :?> Term)).Print sb 50
 
   do termToStringCallback := infonToString
 
