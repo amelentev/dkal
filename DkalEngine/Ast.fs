@@ -80,6 +80,7 @@ module Ast =
       line 0 this
     
     static member Block lst =
+      let lst = lst |> List.filter (function PString "" -> false | _ -> true)
       PBlock (List.map (fun (s:PP) -> s.Length) lst |> List.sum, lst)
 
   [<ReferenceEquality; NoComparison>]
@@ -101,8 +102,9 @@ module Ast =
           | _ ->
             match List.rev lst with
               | x :: xs ->
-                let args = List.rev (x.Append ")" :: (xs |> List.map (fun x -> x.Append ",")))                
-                PP.Block (PP.PString (this.name + "(") :: args)
+                match List.rev (x.Append ")" :: (xs |> List.map (fun x -> x.Append ","))) with
+                  | x :: xs -> PP.Block (PP.PString this.name :: x.Prepend "(" :: xs)
+                  | [] -> failwith ""
               | [] -> failwith ""
       else
         let words = ("-" + this.name + "-").Split '*' |> Seq.toList
@@ -111,7 +113,8 @@ module Ast =
         else
           let toPP (s:string) = PP.PString (s.Trim '-')
           let par (p:PP) = (p.Prepend "(").Append ")"
-          PP.Block (List.fold2 (fun acc a b -> par a :: toPP b :: acc) [toPP (List.head words)] lst (List.tail words))
+          let args = List.fold2 (fun acc a b -> par a :: toPP b :: acc) [toPP (List.head words)] lst (List.tail words) 
+          PP.Block (List.rev args)
                   
   let private nextId =
     let curr = ref 0
@@ -297,9 +300,9 @@ module Ast =
       | InfonFollows (_, InfonImplied (_, p, a), a') when a = a' ->
         par [s (p.ToString()); s "tdonI"; pr a]
       | InfonFollows (_, a, b) ->
-        par [pr a; s "==>"; pr a]
+        par [pr a; s "==>"; pr b]
       | InfonAnd (_, a, b) ->
-        par [pr a; s "&&"; pr a]
+        par [pr a; s "&&"; pr b]
       | InfonSaid (_, p, i) ->
         PP.Block [s (p.ToString()); s "said"; pr i]
       | InfonImplied (_, p, i) ->
