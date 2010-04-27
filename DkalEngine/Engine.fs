@@ -378,12 +378,12 @@ type Engine =
     let doYield () = System.Threading.Thread.Sleep 1000
     let rec loop () =
       let act =
-        lock this.pending (fun () -> if this.pending.Count > 0 then Some (this.pending.Dequeue()) else None)
+          lock this.pending (fun () -> if this.pending.Count > 0 then Some (this.pending.Dequeue()) else None)
       match act with
-        | Some a -> a.Invoke()
-        | None ->
-          if this.Step () then ()
-          else doYield()
+          | Some a -> a.Invoke()
+          | None ->
+            if this.Step () then ()
+            else doYield()
       if not this.die then loop ()
     loop ()
 

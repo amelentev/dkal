@@ -162,7 +162,8 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
       // deserialize
       System.Console.WriteLine("{0}", rd.GetInt32 1)
       let src = principalById (rd.GetInt32 1)
-      match deserializeTerms (rd.GetString 2) with
+      let raw = rd.GetString 2
+      match deserializeTerms raw with
         | [msg; prov] ->
           let msg =
             { source = src
@@ -170,7 +171,8 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
               message = msg
               proviso = prov }
           rd.GetValue 0, msg
-        | _ -> failwith "invalid message"
+        | msg -> 
+          failwith ("invalid message " + msg.Length.ToString() + " elts: " + raw)
           
     fillPrincipals()
     let res = 
