@@ -26,6 +26,34 @@ module Ast =
     
     override this.ToString() = this.name
 
+  type PP =
+    | PString of string
+    | PBlock of int * list<PP>
+
+    member this.Append str =
+      match this with
+        | PString s -> PString (s + str)
+        | PBlock (n, lst) ->
+          match List.rev lst with
+            | x :: xs ->
+              PBlock (n + str.Length, List.rev (x.Append str :: xs))
+            | [] -> PString str          
+
+    member this.Prepend str =
+      match this with
+        | PString s -> PString (str + s)
+        | PBlock (n, x :: xs) ->
+          PBlock (n + str.Length, x.Prepend str :: xs)
+        | PBlock (_, []) -> PString str
+
+    member this.Length =
+      match this with
+        | PString s -> s.Length
+        | PBlock (n, _) -> n
+
+    static member Block lst =
+      PBlock (List.map (fun (s:PP) -> s.Length) lst |> List.sum, lst)
+
   [<ReferenceEquality; NoComparison>]
   type Function =
     {
@@ -36,36 +64,26 @@ module Ast =
       mutable body : obj
     }
     
-    member this.WriteAsInfix (sb:StringBuilder) pr lst =
-      let wr (s:obj) = sb.Append s |> ignore
-      let rec aux pos lst =
-        if pos >= this.name.Length then
-          if lst = [] then ()
-          else failwith "more arguments than stars"
-        else
-          match this.name.[pos] with
-            | '-' -> 
-              wr ' '; aux (pos + 1) lst
-            | '*' ->
-              match lst with
-                | x :: xs ->                
-                  wr "("; pr x; wr ")"
-                  aux (pos + 1) xs
-                | [] -> failwith "more stars than arguments"
-            | ch ->
-              wr ch; aux (pos + 1) lst
-
+    member this.WriteAsInfix (lst:list<PP>) =
       if this.name.IndexOf '*' < 0 then
-        wr this.name
-        if lst <> [] then
-          wr "("
-          for t in lst do
-            pr t
-            wr ", "
-          sb.Length <- sb.Length - 2
-          wr ")"
+        match lst with
+          | [a; b] when not (this.name |> Seq.exists Char.IsLetterOrDigit) ->
+            PP.Block [a.Prepend "("; PP.PString this.name; b.Append ")"]
+          | [] -> PP.PString this.name
+          | _ ->
+            match List.rev lst with
+              | x :: xs ->
+                let args = List.rev (x.Append ")" :: xs |> List.map (fun x -> x.Append ","))                
+                PP.Block (PP.PString (this.name + "(") :: args)
+              | [] -> failwith ""
       else
-        aux 0 lst
+        let words = ("-" + this.name + "-").Split '*' |> Seq.toList
+        if words.Length - 1 <> lst.Length then
+          failwith ("wrong args " + this.name)
+        else
+          let toPP (s:string) = PP.PString (s.Trim '-')
+          let par (p:PP) = (p.Prepend "(").Append ")"
+          PP.Block (List.fold2 (fun acc a b -> par a :: toPP b :: acc) [toPP (List.head words)] lst (List.tail words))
                   
   let private nextId =
     let curr = ref 0

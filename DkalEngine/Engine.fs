@@ -359,7 +359,8 @@ type Engine =
   member this.Step () =
     if this.sql.IsSome then
       let cnt = this.sentItems.Count
-      this.Talk()
+      if not this.stepwise then
+        this.Talk()
       if cnt = this.sentItems.Count then
         match this.comm.Value.CheckForMessage() with
           | Some msg -> this.Listen msg; true
@@ -371,7 +372,7 @@ type Engine =
   member this.AsyncAsk i = this.Invoke (fun () -> this.Ask i)
   member this.AsyncAdd i = this.Invoke (fun () -> this.Add i)
   member this.AsyncLoad n = this.Invoke (fun () -> this.Load n)
-  member this.AsyncStep () = this.Invoke (fun () -> this.Step () |> ignore)
+  member this.AsyncStep () = this.Invoke (fun () -> this.Talk ())
   
   member this.EventLoop () =
     let doYield () = System.Threading.Thread.Sleep 1000
@@ -381,7 +382,7 @@ type Engine =
       match act with
         | Some a -> a.Invoke()
         | None ->
-          if not this.stepwise && this.Step () then ()
+          if this.Step () then ()
           else doYield()
       if not this.die then loop ()
     loop ()

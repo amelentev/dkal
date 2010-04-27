@@ -22,10 +22,10 @@ then they send
 // Get it spinning
 
 _cro knows 
-  if
-    start
-  then
+//  if
+//    start
+//  then
     _site participates in trial0
     _site is assigned id numbers from 0 to 42 in trial0
 
-#set initial_input "start"
+//#set initial_input "start"
