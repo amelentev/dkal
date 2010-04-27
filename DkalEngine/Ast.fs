@@ -113,7 +113,7 @@ module Ast =
         else
           let toPP (s:string) = PP.PString (s.Trim '-')
           let par (p:PP) = (p.Prepend "(").Append ")"
-          let args = List.fold2 (fun acc a b -> par a :: toPP b :: acc) [toPP (List.head words)] lst (List.tail words) 
+          let args = List.fold2 (fun acc a b -> toPP b :: par a :: acc) [toPP (List.head words)] lst (List.tail words) 
           PP.Block (List.rev args)
                   
   let private nextId =
@@ -312,9 +312,24 @@ module Ast =
         f.WriteAsInfix (List.map pr args)
       | Var (_, v) -> s (v.name)
       | Const (_, p) -> s (p.ToString())
-    (pr (t_ :?> Term)).Print sb 50
+    (pr (t_ :?> Term)).Print sb 90
+    if sb.Chars (sb.Length - 1) = '\n' then
+      sb.Length <- sb.Length - 1
 
   do termToStringCallback := infonToString
+
+  type Term with
+    member this.Sanitize () =
+      let vars = dict()
+      let aux = function
+        | Term.App (x, f, [p; _; _]) when f === Function.EvSignature ->
+          Some (Term.App (x, f, [p]))
+        | Term.Var (p, v) ->
+          if not (vars.ContainsKey v.id) then
+            vars.[v.id] <- Term.Var (p, { v with name = String((char)((int)'A' + vars.Count), 1) })
+          Some (vars.[v.id])
+        | _ -> None
+      this.Map aux
 
   
   [<StructuralEquality; NoComparison>]

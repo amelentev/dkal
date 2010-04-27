@@ -26,28 +26,28 @@ namespace Microsoft.Research.DkalController
 
     public void Knows(E.Ast.Knows k)
     {
-      if (lastMsgCertified)
-        Say(string.Format("<b>KNOWS</b> {0}\n", k.infon));
+      //if (lastMsgCertified)
+      //  Say(string.Format("<b>KNOWS</b>\n{0}\n", k.infon.Sanitize()));
     }
 
     public void Recieved(E.Ast.Message msg)
     {
-      Say("<b>FROM</b> {0} <b>GOT</b> {1}\n", msg.source, msg.message);
+      Say("<b>FROM</b> {0} <b>GOT</b>\n{1}\n", msg.source, msg.message.Sanitize());
       if (!msg.proviso.IsEmpty)
-        Say("    <blue>PROVIDED</blue> {0}\n", msg.proviso);
+        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
       lastMsgCertified = msg.IsCertified;
     }
 
     public void Send(E.Ast.Message msg)
     {
-      Say("<b>TO</b> {0} <b>SEND</b> {1}\n", msg.target, msg.message);
+      Say("<b>TO</b> {0} <b>SEND</b>\n{1}\n", msg.target, msg.message.Sanitize());
       if (!msg.proviso.IsEmpty)
-        Say("    <blue>PROVIDED</blue> {0}\n", msg.proviso);
+        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
     }
 
     public void QueryResults(E.Ast.Term inf, IEnumerable<IEnumerable<E.Binding>> results)
     {
-      Say("<b>QUERY</b> {0}\n", inf);
+      Say("<b>QUERY</b>\n{0}\n", inf);
       foreach (var result in results) {
         var sb = new StringBuilder();
         sb.AppendFormat("  <blue>RESULT:</blue>\n");

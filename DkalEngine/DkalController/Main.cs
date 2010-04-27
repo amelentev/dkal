@@ -27,7 +27,7 @@ namespace Microsoft.Research.DkalController
         filename = args[argp++];
       }
 
-      var comm = new CommunicationWindow();
+      var comm = new CommunicationWindow(filename);
       var hooks = new ViewHooks(comm);
       E.Engine e = E.Engine.Make(trace, hooks);
       hooks.eng = e;

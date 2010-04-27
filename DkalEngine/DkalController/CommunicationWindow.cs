@@ -24,7 +24,7 @@ namespace Microsoft.Research.DkalController
       styles["blue"] = () => { richTextBox1.SelectionColor = Color.Blue; };
     }
 
-    public CommunicationWindow()
+    public CommunicationWindow(string fileName)
     {
       InitializeComponent();
       AddStyles();
@@ -32,6 +32,7 @@ namespace Microsoft.Research.DkalController
       Console.SetOut(sink);
       Console.SetError(sink);
       Console.WriteLine("Hello.");
+      richTextBox3.Text = System.IO.File.ReadAllText(fileName);
     }
 
     public void SetPosition(int x, int y, int w, int h)

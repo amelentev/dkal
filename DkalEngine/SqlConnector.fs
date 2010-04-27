@@ -11,14 +11,23 @@ open System.Data.SqlClient
 
 type SqlConnector(connStr) =
   let conn = new SqlConnection(connStr)
+  let check() =
+    try
+      use comm = new SqlCommand("SELECT 1", conn)
+      comm.ExecuteScalar() |> ignore
+    with e ->
+      System.Console.WriteLine ("reopening database: " + e.Message)
+      conn.Open()
   do
     conn.Open()
       
   member this.ExecNonQuery s =
+    check()
     let comm = new SqlCommand(s, conn)
     comm.ExecuteNonQuery()
   
   member this.ExecReader s =
+    check()
     let comm = new SqlCommand(s, conn)
     comm.ExecuteReader()
   
@@ -26,6 +35,7 @@ type SqlConnector(connStr) =
     new SqlCommand(s, conn)
   
   member this.ExecQuery (s:string, parms:seq<obj>, log) =
+    check()
     if log then
       System.Console.WriteLine ("execQ: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
     let addParm (comm:SqlCommand) (idx:int) o =
