@@ -5,7 +5,7 @@
 #set y "472"
 
 
-// _physician's knowledge, and communication from physician to _cgc:
+// _physician's knowledge, and communication from physician to _kgc:
 //_physician knows
 //  _site tdonS PHYSICIAN is assigned to trial T at _site
 //  _site tdonS patient N is assigned to PHYSICIAN in T
@@ -14,7 +14,7 @@
 //  _physician is assigned to trial T at _site
 //  patient N is assigned to _physician in T
 //then they send
-//  to _cgc with certificate
+//  to _kgc with certificate
 //    if you know
 //      asInfon(Verb_V is a data clarification request in T)
 //      asInfon(patientID(Verb_V) == N) 
@@ -29,7 +29,7 @@ if _physician knows
   then
     C implied _physician can read R in records of trial T under the authority of SITE
 then they send
-  to _cgc with certificate
+  to _kgc with certificate
     if
       Prov
     then
