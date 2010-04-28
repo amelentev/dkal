@@ -155,7 +155,7 @@ module Ast =
   let private infonCertified = addGlobalFunction Type.Infon "Infon.cert" [Type.Infon; Type.Evidence]
   
   // the int parameter is a placeholder for the actual cryptographic signature
-  let private evSignature = addGlobalFunction Type.Evidence "Ev.sign" [Type.Principal; Type.Infon; Type.Int]
+  let private evSignature = addGlobalFunction Type.Evidence "Ev.signedBy" [Type.Principal; Type.Infon; Type.Int]
   let private evMp = addGlobalFunction Type.Evidence "Ev.mp" [Type.Evidence; Type.Evidence]
   
   type Function with

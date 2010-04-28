@@ -40,7 +40,7 @@ namespace Microsoft.Research.DkalController
 
     public void Send(E.Ast.Message msg)
     {
-      Say("<b>TO</b> {0} <b>SEND</b>\n{1}\n", msg.target, msg.message.Sanitize());
+      Say("<b>SENT TO</b> {0}\n{1}\n", msg.target, msg.message.Sanitize());
       if (!msg.proviso.IsEmpty)
         Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
     }
