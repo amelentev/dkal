@@ -34,7 +34,7 @@ namespace Microsoft.Research.DkalController
       comm.eng = e;
 
       if (filename != null)
-        e.AsyncLoadStream(System.IO.File.OpenText(filename));
+        e.AsyncLoad(filename);
 
       var t = new Thread(() => { Thread.Sleep(100); e.EventLoop(); });
       t.Start();
