@@ -72,11 +72,11 @@ type Engine =
       stepwise = true
       }
 
-  member this.Load filename =
+  member this.Load filename stream =
     try
       let ctx = this.ctx
       let prelude = Tokenizer.fromString Prelude.text
-      let toks = prelude @ Tokenizer.fromFile filename
+      let toks = prelude @ Tokenizer.fromFile filename stream
       Parser.addStandardRules ctx
       let toks = Parser.addRules ctx toks
       let toks = Parser.applyRules ctx toks
@@ -371,7 +371,8 @@ type Engine =
   member this.AsyncDie () = this.Invoke (fun () -> this.die <- true)
   member this.AsyncAsk i = this.Invoke (fun () -> this.Ask i)
   member this.AsyncAdd i = this.Invoke (fun () -> this.Add i)
-  member this.AsyncLoad n = this.Invoke (fun () -> this.Load n)
+  member this.AsyncLoad n = this.Invoke (fun () -> this.Load n (File.OpenText n))
+  member this.AsyncLoadStream n = this.Invoke (fun () -> this.Load "stdin.dkal" n)
   member this.AsyncStep () = this.Invoke (fun () -> this.Talk ())
   
   member this.EventLoop () =

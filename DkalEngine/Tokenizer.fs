@@ -112,9 +112,9 @@ module Tokenizer =
       | [] -> []
       | (k, l) :: _ -> err (fst l.Head) "first line of input should have no indentation"
    
-  let fromFile filename = 
+  let fromFile filename stream = 
     let path = System.IO.Path.GetDirectoryName filename
-    tokenize 0 path (Lexing.LexBuffer<char>.FromTextReader (File.OpenText filename))
+    tokenize 0 path (Lexing.LexBuffer<char>.FromTextReader stream)
     
   let fromString (text:string) =
     let chars = Array.create text.Length ' '
