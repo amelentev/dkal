@@ -10,7 +10,7 @@ open Microsoft.Research.DkalEngine.Util
 
 type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
   let sql = SqlConnector(ctx.options.["common_sql"])
-  
+  let tableName = "dkal_messages_demo"
   let principalName = dict()
   let principalId = dict()
   let fillPrincipals() = 
@@ -144,7 +144,7 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
   member this.PrincipalId (p:Principal) = principalId p
   
   member this.SendMessage (msg:Message) =
-    let cmd = sql.GetCommand "INSERT INTO dkal_messages (sender, reciver, msg) VALUES (@s, @r, @m)"
+    let cmd = sql.GetCommand ("INSERT INTO " + tableName + " (sender, reciver, msg) VALUES (@s, @r, @m)")
     let add (n, v) = cmd.Parameters.AddWithValue (n, v) |> ignore
     add ("s", this.PrincipalId msg.source)
     add ("r", this.PrincipalId msg.target)
@@ -153,7 +153,7 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
   
   member this.CheckForMessage () =
     let markRead o =
-      let cmd = sql.GetCommand "UPDATE dkal_messages SET readAt = CURRENT_TIMESTAMP WHERE sentAt = @s"
+      let cmd = sql.GetCommand ("UPDATE " + tableName + " SET readAt = CURRENT_TIMESTAMP WHERE sentAt = @s")
       let add (n, v) = cmd.Parameters.AddWithValue (n, v) |> ignore
       add ("s", o)
       cmd.ExecuteNonQuery() |> ignore
@@ -176,7 +176,7 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
           
     fillPrincipals()
     let res = 
-      sql.ExecQuery ("SELECT TOP 1 sentAt, sender, msg FROM dkal_messages WHERE reciver = @p__0 AND readAt IS NULL ORDER BY sentAt", 
+      sql.ExecQuery ("SELECT TOP 1 sentAt, sender, msg FROM " + tableName + " WHERE reciver = @p__0 AND readAt IS NULL ORDER BY sentAt", 
                      [this.PrincipalId me :> obj], false) |> Seq.map getMsg |> Seq.toList
     match res with
       | [] -> None
