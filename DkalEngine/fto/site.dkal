@@ -1,5 +1,4 @@
 #include "common.dkal"
-#set private_sql "Server=tcp:wmmk2vmk5y.database.windows.net;Database=ftoSite;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
 #set me "_site"
 #set x "30"
 #set y "30"

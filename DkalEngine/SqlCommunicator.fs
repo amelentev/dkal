@@ -142,6 +142,9 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
   
   member this.PrincipalById id = principalById id  
   member this.PrincipalId (p:Principal) = principalId p
+
+  member this.Close () = 
+    sql.Close()
   
   member this.SendMessage (msg:Message) =
     let cmd = sql.GetCommand ("INSERT INTO " + tableName + " (sender, reciver, msg) VALUES (@s, @r, @m)")

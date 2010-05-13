@@ -86,7 +86,15 @@ type Engine =
       let me = ctx.principals.[ctx.options.["me"]]
       
       this.me <- Some me
-      this.sql <- Some (SqlConnector(ctx.options.["private_sql"]))
+
+      let priv_sql_name = "private_sql" + ctx.options.["me"]
+      let priv_sql =
+        if ctx.options.ContainsKey priv_sql_name then
+          ctx.options.[priv_sql_name]
+        else
+          ctx.options.["private_sql"]          
+      this.sql <- Some (SqlConnector priv_sql)
+
       this.comm <- Some (SqlCommunicator(ctx, me))
             
       this.AddDefaultFilter()       
@@ -375,6 +383,10 @@ type Engine =
   member this.AsyncLoadStream n = this.Invoke (fun () -> this.Load "stdin.dkal" n)
   member this.AsyncStep () = this.Invoke (fun () -> this.Talk ())
   
+  member this.Close () =
+    this.sql |> Option.iter (fun s -> s.Close())
+    this.comm |> Option.iter (fun s -> s.Close())
+      
   member this.EventLoop () =
     let doYield () = System.Threading.Thread.Sleep 1000
     let rec loop () =
@@ -387,9 +399,7 @@ type Engine =
             else doYield()
       if not this.die then loop ()
     loop ()
-
-
-
+    this.Close()
 
 
   //

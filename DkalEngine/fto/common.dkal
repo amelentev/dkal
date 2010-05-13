@@ -25,4 +25,4 @@ function [2] trial0 returns {T:trial}
 
 attribute [2] start
 
-#set common_sql  "Server=tcp:wmmk2vmk5y.database.windows.net;Database=fto;User ID=fto;Password=yaeche9H;Trusted_Connection=False;Encrypt=True;"
+#include "passwords.sql"

@@ -21,6 +21,9 @@ type SqlConnector(connStr) =
   do
     conn.Open()
       
+  member this.Close () =
+    conn.Close()
+
   member this.ExecNonQuery s =
     check()
     let comm = new SqlCommand(s, conn)
