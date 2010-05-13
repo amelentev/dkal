@@ -25,4 +25,4 @@ function [2] trial0 returns {T:trial}
 
 attribute [2] start
 
-#include "passwords.sql"
+#include "passwords.dkal"
