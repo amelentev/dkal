@@ -140,11 +140,11 @@ type Engine =
         let id = this.NextId()
         subst := (!subst).Add (v.id, { v with id = id; name = v.name + "#" + id.ToString() })      
       (!subst).[v.id]
-    infon.Map (function Term.Var (p, v) -> Some (Term.Var (p, repl v)) | _ -> None)
+    infon.Map (function Term.Var v -> Some (Term.Var (repl v)) | _ -> None)
     
   member private this.FreshenList infons =
-    match this.Freshen (Term.App (fakePos, Function.Empty, infons)) with
-      | Term.App (_, _, l) -> l
+    match this.Freshen (Term.App (Function.Empty, infons)) with
+      | Term.App (_, l) -> l
       | _ -> failwith "cannot happen"
       
   member private this.FakeAI () =
@@ -157,10 +157,10 @@ type Engine =
     let filter =
       {
         ai = this.FakeAI()
-        source = Term.Var (fakePos, src)
-        message = Infon.Var (fakePos, msg)
-        proviso = Infon.Var (fakePos, proviso)
-        trigger = Infon.Empty fakePos
+        source = Term.Var src
+        message = Infon.Var msg
+        proviso = Infon.Var proviso
+        trigger = Infon.Empty
       }
     this.filters <- filter :: this.filters
   
@@ -191,26 +191,26 @@ type Engine =
         | _ -> ()
              
       function
-      | (Pref.Implied t1 :: pref, InfonSaid (p, t2, i))
-      | (Pref.Implied t1 :: pref, InfonImplied (p, t2, i)) ->
+      | (Pref.Implied t1 :: pref, InfonSaid (t2, i))
+      | (Pref.Implied t1 :: pref, InfonImplied (t2, i)) ->
         match unifyTerms subst (simpl subst t1, simpl subst t2) with
           | Some subst ->
-            stripPrefix subst prefixUnif preconds (fun i -> suff (Infon.Implied (p, t2, i))) (pref, i)
+            stripPrefix subst prefixUnif preconds (fun i -> suff (Infon.Implied (t2, i))) (pref, i)
           | None -> 
-            stripPrefix subst ((t1, t2) :: prefixUnif) preconds (fun i -> suff (Infon.Implied (p, t2, i))) (pref, i)
-      | (Pref.Said t1 :: pref, InfonSaid (p, t2, i)) ->
+            stripPrefix subst ((t1, t2) :: prefixUnif) preconds (fun i -> suff (Infon.Implied (t2, i))) (pref, i)
+      | (Pref.Said t1 :: pref, InfonSaid (t2, i)) ->
         match unifyTerms subst (simpl subst t1, simpl subst t2) with
           | Some subst -> 
-            stripPrefix subst prefixUnif preconds (fun i -> suff (Infon.Said (p, t2, i))) (pref, i)
+            stripPrefix subst prefixUnif preconds (fun i -> suff (Infon.Said (t2, i))) (pref, i)
           | None ->
-            stripPrefix subst ((t1, t2) :: prefixUnif) preconds (fun i -> suff (Infon.Said (p, t2, i))) (pref, i)
-      | (pref, InfonAnd (_, a, b)) ->
+            stripPrefix subst ((t1, t2) :: prefixUnif) preconds (fun i -> suff (Infon.Said (t2, i))) (pref, i)
+      | (pref, InfonAnd (a, b)) ->
         stripPrefix subst prefixUnif preconds suff (pref, a)
         stripPrefix subst prefixUnif preconds suff (pref, b)
-      | (pref, InfonFollows (_, a, b)) as t ->
+      | (pref, InfonFollows (a, b)) as t ->
         immediate t
         stripPrefix subst prefixUnif (suff a :: preconds) suff (pref, b)
-      | (pref, Infon.Var (_, v)) when subst.ContainsKey v.id ->
+      | (pref, Infon.Var v) when subst.ContainsKey v.id ->
         stripPrefix subst prefixUnif preconds suff (pref, subst.[v.id])
       | t -> immediate t
     
@@ -226,16 +226,16 @@ type Engine =
       List.fold (fun acc e -> f e @ acc) [] lst
       
     match infon with
-      | InfonAnd (_, i1, i2) ->
+      | InfonAnd (i1, i2) ->
         (this.DoDerive pref subst i1) |> sum (fun s1 -> this.DoDerive pref s1 i2)
       | InfonEmpty _ -> [subst]
-      | InfonSaid (_, p, i) ->
+      | InfonSaid (p, i) ->
         this.DoDerive (Pref.Said p :: pref) subst i
-      | InfonImplied (_, p, i) ->
+      | InfonImplied (p, i) ->
         this.DoDerive (Pref.Implied p :: pref) subst i
-      | Infon.Var (_, v) when subst.subst.ContainsKey v.id ->
+      | Infon.Var v when subst.subst.ContainsKey v.id ->
         this.DoDerive pref subst subst.subst.[v.id]
-      | AsInfon (_, e) ->
+      | AsInfon e ->
         if pref <> [] then
           failwith "asInfon(...) under said/implied prefix"
         [{ subst with assumptions = e :: subst.assumptions }]
@@ -264,7 +264,7 @@ type Engine =
   
   member this.Listen (msg:Message) =  
     this.hooks.Recieved msg
-    let src = Term.Const (fakePos, Const.Principal msg.source)
+    let src = Term.Const (Const.Principal msg.source)
     let msg =
       match this.FreshenList [msg.message; msg.proviso] with
         | [m;p] -> { msg with message = m ; proviso = p }
@@ -278,7 +278,7 @@ type Engine =
         let t = msg.message.Apply s
         let infons =
           match t with
-            | InfonCert (p, _, e) ->
+            | InfonCert (_, e) ->
               match msg.proviso.Apply s with
                 | InfonEmpty ->
                   let acc = vec()
@@ -294,9 +294,9 @@ type Engine =
             | _ ->
               match msg.proviso.Apply s with
                 | InfonEmpty ->
-                  [Infon.Said (fakePos, src, t)]
+                  [Infon.Said (src, t)]
                 | proviso ->
-                  [Infon.Follows (fakePos, proviso, Infon.Implied (fakePos, src, t))]
+                  [Infon.Follows (proviso, Infon.Implied (src, t))]
         List.map (fun infon -> { ai = this.FakeAI(); infon = infon }) infons
           
       match subst with
@@ -317,7 +317,7 @@ type Engine =
   member this.Talk () =
     let runCommFor (comm:Communication) (subst:Subst) =
       match comm.target.Apply subst with
-        | Term.Const (_, Const.Principal p) ->
+        | Term.Const (Const.Principal p) ->
           let msg = ({ source = this.me.Value
                        target = p
                        message = comm.message.Apply subst
@@ -413,38 +413,38 @@ type Engine =
   
   member private this.MakeSignature (infon:Infon) =
     // TODO
-    Term.Const (infon.Pos, Const.Int 42)
+    Term.Const (Const.Int 42)
     
   member private this.FinalOutcome = function
-    | InfonFollows (_, _, i) -> this.FinalOutcome i
+    | InfonFollows (_, i) -> this.FinalOutcome i
     | i -> i
   
   member private this.IsMe = function
-    | Term.Const (_, Const.Principal p) -> p = this.me.Value
+    | Term.Const (Const.Principal p) -> p = this.me.Value
     | _ -> false
   
   member private this.CanSign principal infon =
     match this.FinalOutcome infon with
-      | InfonSaid (_, p, _)
-      | InfonImplied (_, p, _) -> principal = p
+      | InfonSaid (p, _)
+      | InfonImplied (p, _) -> principal = p
       | _ -> false
   
   member private this.EvidenceCheck (acc:Vec<_>) (ev:Term) =
     let ret inf =
       acc.Add inf
-      acc.Add (Infon.Cert (ev.Pos, inf, ev))
+      acc.Add (Infon.Cert (inf, ev))
       Some inf
       
     match ev with
-      | App (_, f, [p; inf; sign]) when f === Function.EvSignature ->
+      | App (f, [p; inf; sign]) when f === Function.EvSignature ->
         if this.SignatureCheck p inf sign && this.CanSign p inf then
           ret inf
         else
           this.hooks.Warning ("spoofed signature")
           None
-      | App (_, f, [a; b]) when f === Function.EvMp ->
+      | App (f, [a; b]) when f === Function.EvMp ->
         match this.EvidenceCheck acc a, this.EvidenceCheck acc b with
-          | Some i1, Some (InfonFollows (_, i1', i2)) when i1 = i1' ->
+          | Some i1, Some (InfonFollows (i1', i2)) when i1 = i1' ->
             ret i2
           | _ ->
             this.hooks.Warning ("malformed mp")
@@ -459,17 +459,16 @@ type Engine =
         match comm.proviso with
           | InfonEmpty ->
             let msg = comm.message
-            let pos = msg.Pos
             match this.FinalOutcome comm.message with
-               | InfonSaid (_, p, _)
-               | InfonImplied (_, p, _) when this.IsMe p ->
-                 { comm with message = Infon.Cert (pos, msg, App (pos, Function.EvSignature, [p; msg; this.MakeSignature msg])) }
+               | InfonSaid (p, _)
+               | InfonImplied (p, _) when this.IsMe p ->
+                 { comm with message = Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg])) }
                | _ ->
                  let v = this.FreshVar Type.Evidence
-                 let msg = Infon.Cert (pos, msg, Term.Var (pos, v))
+                 let msg = Infon.Cert (msg, Term.Var v)
                  { comm 
                    with message = msg
-                        trigger = Infon.And (pos, msg, comm.trigger) }
+                        trigger = Infon.And (msg, comm.trigger) }
           | _ ->
             this.hooks.Warning ("certified provisional communication not supported at this time")
             comm

@@ -131,7 +131,7 @@ module SqlCompiler =
     }
     
   let err (t:Term) msg =
-    raise (SyntaxError (t.Pos, "SQL compilation error: " + msg + " at '" + t.ToString() + "'"))
+    raise (SyntaxError (fakePos, "SQL compilation error: " + msg + " at '" + t.ToString() + "'"))
     
   let simplify expr =
   
@@ -179,10 +179,10 @@ module SqlCompiler =
     let rec comp top (localCtx:LocalCtx) term = 
       let res =
         match term with
-          | Term.Const (_, Const.Column (t, c)) ->
+          | Term.Const (Const.Column (t, c)) ->
             Expr.Column ({ scope = localCtx.currentScope; name = t }, c)
-          | Term.Const (_, c) -> Expr.Const c
-          | Term.Var (_, v) ->
+          | Term.Const c -> Expr.Const c
+          | Term.Var v ->
             match localCtx.bindings.TryFind v.id with
               | Some r -> r
               | None when localCtx.currentScope <> 0 ->
@@ -190,7 +190,7 @@ module SqlCompiler =
                 localCtx.bindings <- localCtx.bindings.Add (v.id, expr)
                 expr
               | None -> Expr.Var v
-          | Term.App (pos, fn, args) as t ->
+          | Term.App (fn, args) as t ->
             let args = List.map (comp false localCtx) args
             match fn.body with
               | :? Term as body ->
@@ -266,7 +266,7 @@ module SqlCompiler =
         | Expr.Const (Const.Column _) -> failwith "impossible"
         | Expr.Var v ->
           match subst.TryFind v.id with
-            | Some (Term.Const (_, c)) ->
+            | Some (Term.Const c) ->
               print (Expr.Const c)
             | Some t ->
               failwith ("substitution maps " + v.name + " to term " + t.ToString() + " not constant")
@@ -308,7 +308,7 @@ module SqlCompiler =
               pr ", "
               resSubst.Add v
             | _ ->
-              let expr = (Term.Var (fakePos,v)).Apply subst
+              let expr = (Term.Var v).Apply subst
               //log ("expand " + v.ToString() + " into " + expr.ToString())
               expr.Vars() |> List.iter need
       List.iter need vars
@@ -322,7 +322,7 @@ module SqlCompiler =
       
       let addToSubst rd (idx, subst:Subst) var =
         let constVal = sql.ReadVar (comm.PrincipalById, rd, var, idx)
-        (idx + 1, subst.Add (var.id, Term.Const (fakePos, constVal)))
+        (idx + 1, subst.Add (var.id, Term.Const constVal))
       
       sql.ExecQuery (sb.ToString(), parms, true) |>
         Seq.map (fun rd -> Seq.fold (addToSubst rd) (0, subst) resSubst |> snd)

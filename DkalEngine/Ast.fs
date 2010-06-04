@@ -175,9 +175,6 @@ module Ast =
     
     override this.ToString() = this.name
   
-  type TermDesc =
-    { pos : Pos; typ : Type }
-  
   type Const =
     | Principal of Principal
     | Int of int
@@ -197,9 +194,9 @@ module Ast =
   
   [<StructuralEquality; NoComparison>]
   type Term =
-    | App of Pos * Function * list<Term>
-    | Const of Pos * Const
-    | Var of Pos * Var
+    | App of Function * list<Term>
+    | Const of Const
+    | Var of Var
     
     member this.Map f =
       let rec aux t = 
@@ -207,25 +204,19 @@ module Ast =
           | Some r -> r
           | None ->
             match t with
-              | Term.App (pos, fn, args) -> Term.App (pos, fn, List.map aux args)
+              | Term.App (fn, args) -> Term.App (fn, List.map aux args)
               | Const _
               | Var _ -> t
       aux this
-      
-    member this.Pos =
-      match this with
-        | App (p, _, _) -> p
-        | Var (p, _) -> p
-        | Const (p, _) -> p
         
     member this.Type =
       match this with
-        | App (_, f, _) -> f.retType.typ
-        | Var (_, v) -> v.typ
-        | Const (_, Const.Int _) -> Type.Int
-        | Const (_, Const.Principal _) -> Type.Principal
-        | Const (_, Const.Bool _) -> Type.Bool
-        | Const (_, Const.Column _) -> Type.Unbound
+        | App (f, _) -> f.retType.typ
+        | Var (v) -> v.typ
+        | Const (Const.Int _) -> Type.Int
+        | Const (Const.Principal _) -> Type.Principal
+        | Const (Const.Bool _) -> Type.Bool
+        | Const (Const.Column _) -> Type.Unbound
         
     member this.Vars() =
       let vars = dict()
@@ -235,7 +226,7 @@ module Ast =
         else
           varList := v :: !varList
           vars.Add (v.id, true)
-      this.Map (function Term.Var (_, v) -> add v; None | _ -> None) |> ignore
+      this.Map (function Term.Var v -> add v; None | _ -> None) |> ignore
       !varList |> List.rev
         
     override this.ToString() =
@@ -243,7 +234,7 @@ module Ast =
       !termToStringCallback (sb, (this :> obj))
       sb.ToString()
     
-    static member True = Const (fakePos, Const.Bool true)
+    static member True = Const (Const.Bool true)
       
   type PrincipalTerm = Term  
   type Infon = Term
@@ -251,40 +242,40 @@ module Ast =
   let (===) = LanguagePrimitives.PhysicalEquality
   
   let (|InfonAnd|_|) = function
-    | App (p, fn, [a; b]) when fn === Function.And -> Some (InfonAnd (p, a, b))
+    | App (fn, [a; b]) when fn === Function.And -> Some (InfonAnd (a, b))
     | _ -> None
   
   let (|InfonFollows|_|) = function
-    | App (p, fn, [a; b]) when fn === Function.Follows -> Some (InfonFollows (p, a, b))
+    | App (fn, [a; b]) when fn === Function.Follows -> Some (InfonFollows (a, b))
     | _ -> None
   
   let (|InfonSaid|_|) = function
-    | App (p, fn, [a; b]) when fn === Function.Said -> Some (InfonSaid (p, a, b))
+    | App (fn, [a; b]) when fn === Function.Said -> Some (InfonSaid (a, b))
     | _ -> None
   
   let (|InfonImplied|_|) = function
-    | App (p, fn, [a; b]) when fn === Function.Implied -> Some (InfonImplied (p, a, b))
+    | App (fn, [a; b]) when fn === Function.Implied -> Some (InfonImplied (a, b))
     | _ -> None
   
   let (|InfonEmpty|_|) = function
-    | App (p, fn, []) when fn === Function.Empty -> Some (InfonEmpty)
+    | App (fn, []) when fn === Function.Empty -> Some (InfonEmpty)
     | _ -> None
   
   let (|AsInfon|_|) = function
-    | App (p, fn, [a]) when fn === Function.AsInfon -> Some (AsInfon (p, a))
+    | App (fn, [a]) when fn === Function.AsInfon -> Some (AsInfon a)
     | _ -> None
   
   let (|InfonCert|_|) = function
-    | App (p, fn, [a; b]) when fn === Function.Cert -> Some (InfonCert (p, a, b))
+    | App (fn, [a; b]) when fn === Function.Cert -> Some (InfonCert (a, b))
     | _ -> None
   
   type Term with
-    static member And (p, a, b) = App (p, Function.And, [a; b])
-    static member Follows (p, a, b) = App (p, Function.Follows, [a; b])
-    static member Said (p, a, b) = App (p, Function.Said, [a; b])
-    static member Implied (p, a, b) = App (p, Function.Implied, [a; b])
-    static member Empty (p) = App (p, Function.Empty, [])
-    static member Cert (p, i, e) = App (p, Function.Cert, [i; e])
+    static member And (a, b) = App (Function.And, [a; b])
+    static member Follows (a, b) = App (Function.Follows, [a; b])
+    static member Said (a, b) = App (Function.Said, [a; b])
+    static member Implied (a, b) = App (Function.Implied, [a; b])
+    static member Empty = App (Function.Empty, [])
+    static member Cert (i, e) = App (Function.Cert, [i; e])
     
     member this.IsEmpty =
       match this with
@@ -295,23 +286,23 @@ module Ast =
     let par pp = ((PP.Block pp).Append ")").Prepend "("
     let s s = PString s
     let rec pr = function
-      | InfonFollows (_, InfonSaid (_, p, a), a') when a = a' ->
+      | InfonFollows (InfonSaid (p, a), a') when a = a' ->
         par [s (p.ToString()); s "tdonS"; pr a]
-      | InfonFollows (_, InfonImplied (_, p, a), a') when a = a' ->
+      | InfonFollows (InfonImplied (p, a), a') when a = a' ->
         par [s (p.ToString()); s "tdonI"; pr a]
-      | InfonFollows (_, a, b) ->
+      | InfonFollows (a, b) ->
         par [pr a; s "==>"; pr b]
-      | InfonAnd (_, a, b) ->
+      | InfonAnd (a, b) ->
         par [pr a; s "&&"; pr b]
-      | InfonSaid (_, p, i) ->
+      | InfonSaid (p, i) ->
         PP.Block [s (p.ToString()); s "said"; pr i]
-      | InfonImplied (_, p, i) ->
+      | InfonImplied (p, i) ->
         PP.Block [s (p.ToString()); s "implied"; pr i]
       | InfonEmpty -> s "empty"
-      | App (_, f, args) ->
+      | App (f, args) ->
         f.WriteAsInfix (List.map pr args)
-      | Var (_, v) -> s (v.name)
-      | Const (_, p) -> s (p.ToString())
+      | Var v -> s (v.name)
+      | Const p -> s (p.ToString())
     (pr (t_ :?> Term)).Print sb 90
     if sb.Chars (sb.Length - 1) = '\n' then
       sb.Length <- sb.Length - 1
@@ -322,11 +313,11 @@ module Ast =
     member this.Sanitize () =
       let vars = dict()
       let aux = function
-        | Term.App (x, f, [p; _; _]) when f === Function.EvSignature ->
-          Some (Term.App (x, f, [p]))
-        | Term.Var (p, v) ->
+        | Term.App (f, [p; _; _]) when f === Function.EvSignature ->
+          Some (Term.App (f, [p]))
+        | Term.Var v ->
           if not (vars.ContainsKey v.id) then
-            vars.[v.id] <- Term.Var (p, { v with name = String((char)((int)'A' + vars.Count), 1) })
+            vars.[v.id] <- Term.Var { v with name = String((char)((int)'A' + vars.Count), 1) }
           Some (vars.[v.id])
         | _ -> None
       this.Map aux
@@ -404,7 +395,7 @@ module Ast =
     member this.Apply (s:Subst) =
       this.Map
         (function 
-                | Term.Var (_, v) when s.ContainsKey v.id -> 
+                | Term.Var v when s.ContainsKey v.id -> 
                   Some (s.[v.id].Apply s) 
                 | _ -> None)
       
@@ -428,14 +419,14 @@ module Ast =
         | Some s -> unifyList unify (unify s x) xs
 
   let rec occursTerm (v:Var) = function
-    | Term.App (_, _, args) ->
+    | Term.App (_, args) ->
       List.exists (occursTerm v) args
     | Term.Const _ -> false
-    | Term.Var (_, v') -> v.id = v'.id
+    | Term.Var v' -> v.id = v'.id
     
   let rec unifyTerms (subst:Subst) = function
-    | (Term.Var (_, v1), Term.Var (_, v2)) when v1.id = v2.id -> Some subst
-    | (Term.Var (_, v), t) ->
+    | (Term.Var v1, Term.Var v2) when v1.id = v2.id -> Some subst
+    | (Term.Var v, t) ->
       if subst.ContainsKey v.id then
         unifyTerms subst (subst.[v.id], t)
       else
@@ -443,9 +434,9 @@ module Ast =
         else Some (subst.Add (v.id, t))
     | (t, (Term.Var _ as t')) ->
       unifyTerms subst (t', t)
-    | (Term.App (_, f, args), Term.App (_, f', args')) when f.id = f'.id ->
+    | (Term.App (f, args), Term.App (f', args')) when f.id = f'.id ->
       unifyList unifyTerms (Some subst) (List.zip args args')
-    | (Term.Const (_, p1), Term.Const (_, p2)) when p1 = p2 -> Some subst
+    | (Term.Const p1, Term.Const p2) when p1 = p2 -> Some subst
     | _ -> None
     
     
@@ -459,23 +450,23 @@ module Ast =
     member this.Canonical() =
       let currentSubst = dict()
       let rec aux = function
-        | Term.App (_, f, args) ->
-          Term.App (fakePos, f, List.map aux args)
-        | Term.Const (_, c) -> Term.Const (fakePos, c)
-        | Term.Var (_, v) ->
+        | Term.App (f, args) ->
+          Term.App (f, List.map aux args)
+        | Term.Const c -> Term.Const c
+        | Term.Var v ->
           if not (currentSubst.ContainsKey v.id) then
             let id = currentSubst.Count + 100
             let key = (v.typ, id)
             if not (canonicalVariables.ContainsKey key) then
               canonicalVariables.Add (key, ({ id = id; typ = v.typ; name = "V#" + id.ToString() } : Var))
             let repl = canonicalVariables.[key]
-            currentSubst.[v.id] <- Term.Var (fakePos, repl)
+            currentSubst.[v.id] <- Term.Var repl
           currentSubst.[v.id]
       aux this
   
     static member Canonicalize lst =
-      match (Term.App (fakePos, Function.Empty, lst)).Canonical() with
-        | Term.App (_, _, lst) -> lst
+      match (Term.App (Function.Empty, lst)).Canonical() with
+        | Term.App (_, lst) -> lst
         | _ -> failwith "impossible"
 
   type Message with

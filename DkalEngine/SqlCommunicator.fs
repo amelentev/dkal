@@ -48,18 +48,18 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
         else wr '\\'; wr c       
     let visitedVars = dict()
     let rec aux = function
-      | Term.Const (_, Int i) -> wr "#"; wr i
-      | Term.Const (_, Bool b) -> wr "@"; wr (if b then "T" else "F")
-      | Term.Const (_, Principal p) -> wr "%"; wr (principalId p)
-      | Term.Const (_, Column _) -> failwith "cannot serilize column"
-      | Term.Var (_, v) -> 
+      | Term.Const (Int i) -> wr "#"; wr i
+      | Term.Const (Bool b) -> wr "@"; wr (if b then "T" else "F")
+      | Term.Const (Principal p) -> wr "%"; wr (principalId p)
+      | Term.Const (Column _) -> failwith "cannot serilize column"
+      | Term.Var v -> 
         wr "$"; quote v.name
         if not (visitedVars.ContainsKey v.id) then
           wr ":"; quote v.typ.name
           visitedVars.Add (v.id, true)
-      | Term.App (_, f, []) ->
+      | Term.App (f, []) ->
         quote f.name; wr "()"
-      | Term.App (_, f, args) ->
+      | Term.App (f, args) ->
         quote f.name
         wr "("
         for t in args do
@@ -88,18 +88,17 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
         else cur
       let theEnd = findEnd i
       (theEnd, System.Int32.Parse (s.Substring (i, theEnd - i)))
-    let p = fakePos
     let vars = dict()
     let rec parseTerm i =
       match s.[i] with
         | '#' ->
           let (i, v) = parseInt (i + 1)
-          (i, Term.Const (p, Const.Int v))
+          (i, Term.Const (Const.Int v))
         | '@' ->
-          (i + 2, Term.Const (p, Const.Bool (s.[i+1] = 'T')))
+          (i + 2, Term.Const (Const.Bool (s.[i+1] = 'T')))
         | '%' ->
           let (i, v) = parseInt (i + 1)
-          (i, Term.Const (p, Const.Principal (principalById v)))
+          (i, Term.Const (Const.Principal (principalById v)))
         | '$' ->
           let (i, name) = parseName (i + 1)
           let (i, tp) =
@@ -114,7 +113,7 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
                 let v = ctx.MkVar name tp.Value
                 vars.Add (name, v)
                 v
-          (i, Term.Var (p, v))          
+          (i, Term.Var (v))          
         | c when c = '\\' || idChar c ->
           let (i, name) = parseName i
           let fn = ctx.functions.[name]
@@ -127,17 +126,17 @@ type SqlCommunicator(ctx:PreAst.Context, me:Principal) =
                 parseList (t :: acc) i
           if s.[i] <> '(' then failwith "expecting ( in term app"
           let (i, args) = parseList [] (i + 1)
-          (i, Term.App (p, fn, args))          
+          (i, Term.App (fn, args))          
         | _ -> failwith "invalid character"  
     parseTerm 0
           
 
   let serializeTerms ts =
-    serializeTerm (Term.App (fakePos, ctx.functions.["__tuple"], ts))
+    serializeTerm (Term.App (ctx.functions.["__tuple"], ts))
   
   let deserializeTerms s =
     match deserializeTerm s with
-      | _, Term.App (_, { name = "__tuple" }, ts) -> ts
+      | _, Term.App ({ name = "__tuple" }, ts) -> ts
       | _ -> failwith "expecting __tuple(...)"
   
   member this.PrincipalById id = principalById id  

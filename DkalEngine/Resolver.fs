@@ -30,33 +30,33 @@ module Resolver =
   let rec resolveTerm (ctx:Context) (expectedType:Type) tok =
     let res =
       match tok with
-        | Tok.App (pos, ".", [Tok.Id (_, table); Tok.Id (_, column)]) ->
-          Term.Const (pos, Const.Column (table, column))
+        | Tok.App (_, ".", [Tok.Id (_, table); Tok.Id (_, column)]) ->
+          Term.Const (Const.Column (table, column))
         | Tok.App (pos, name, [Tok.Group (_, ')', args)]) ->
           resolveTerm ctx expectedType (Tok.App (pos, name, args))
-        | Tok.App (pos, name, args) ->
+        | Tok.App (_, name, args) ->
           match ctx.functions.TryGetValue name with
             | true, fn ->
               if fn.argTypes.Length <> args.Length then
                 err tok "wrong number of arguments"
               else
                 let args = List.map2 (fun (v:Var) arg -> resolveTerm ctx v.typ arg) fn.argTypes args
-                Term.App (pos, fn, args)
+                Term.App (fn, args)
             | _ -> err tok "undefined function"
-        | Tok.Id (pos, name) when ctx.principals.ContainsKey name ->
-          Term.Const (pos, Const.Principal ctx.principals.[name])
-        | Tok.Id (pos, name) when expectedType = Type.Principal ->
+        | Tok.Id (_, name) when ctx.principals.ContainsKey name ->
+          Term.Const (Const.Principal ctx.principals.[name])
+        | Tok.Id (_, name) when expectedType = Type.Principal ->
           ctx.AddPrincipal name
-          Term.Const (pos, Const.Principal ctx.principals.[name])
+          Term.Const (Const.Principal ctx.principals.[name])
         | Tok.Var (pos, name) ->
           if not (ctx.vars.ContainsKey name) then
             ctx.AddVar name
           let v = ctx.vars.[name]  
           if v.typ = Type.Unbound then
             v.typ <- expectedType
-          Term.Var (pos, v)
-        | Tok.Int (p, i) ->
-          Term.Const (p, Const.Int i)
+          Term.Var v
+        | Tok.Int (_, i) ->
+          Term.Const (Const.Int i)
         | _ -> err tok "expecting a term"
     //System.Console.WriteLine ("resolved: " + tok.ToString() + " -> " + res.ToString() + ":" + res.Type.ToString() + " (expecting " + expectedType.ToString() + ")")
     if expectedType <> Type.Unbound && expectedType <> res.Type then
@@ -64,23 +64,23 @@ module Resolver =
     res
              
   let rec multiAnd = function
-    | [] -> Infon.Empty fakePos
+    | [] -> Infon.Empty 
     | [x] -> x
-    | (x:Term) :: xs -> Infon.And (x.Pos, x, multiAnd xs)
+    | (x:Term) :: xs -> Infon.And (x, multiAnd xs)
               
   let rec resolveInfon (ctx:Context) = function
     | Tok.Group (_, ')', [e]) -> resolveInfon ctx e
     | Tok.App (_, ("==>"|"-->"), [premise; consequence]) ->
       let premise = resolveProviso ctx premise
-      multiAnd (splitList (fun t -> [Infon.Follows (t.Pos, premise, resolveInfon ctx t)]) consequence)
+      multiAnd (splitList (fun t -> [Infon.Follows (premise, resolveInfon ctx t)]) consequence)
     | Tok.App (pos, ("tdonS"|"tdonI"|"said"|"implied" as name), [p; i]) ->
       let p = resolveTerm ctx Type.Principal p
       let i = resolveInfon ctx i
       match name with
-        | "said" -> Infon.Said (pos, p, i)
-        | "implied" -> Infon.Implied (pos, p, i)
-        | "tdonS" -> Infon.Follows (pos, Infon.Said (pos, p, i), i)
-        | "tdonI" -> Infon.Follows (pos, Infon.Implied (pos, p, i), i)
+        | "said" -> Infon.Said (p, i)
+        | "implied" -> Infon.Implied (p, i)
+        | "tdonS" -> Infon.Follows (Infon.Said (p, i), i)
+        | "tdonI" -> Infon.Follows (Infon.Implied (p, i), i)
         | _ -> failwith "cannot happen"
     | tok ->
       resolveTerm ctx Type.Infon tok
@@ -92,7 +92,7 @@ module Resolver =
       let proviso = resolveProviso ctx t1
       splitList (fun t -> [resolveInfon ctx t, proviso]) t2
     | t ->
-      splitList (fun t -> [resolveInfon ctx t, Infon.Empty t.Pos]) t
+      splitList (fun t -> [resolveInfon ctx t, Infon.Empty]) t
   
   let resolve (ctx:Context) t = 
     ctx.vars.Clear()
