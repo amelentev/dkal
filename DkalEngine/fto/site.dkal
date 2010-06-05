@@ -30,3 +30,12 @@ _site knows
   _physician is a physician assigned to trial0 at _site
   patient 10 is assigned to _physician in trial0
 
+_site knows
+  if
+    if
+      Prov
+      _site implied PHYSICIAN can read R in records of trial T under the authority of _site
+    then
+      C implied PHYSICIAN can read R in records of trial T under the authority of _site
+  then
+    start

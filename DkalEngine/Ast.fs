@@ -173,7 +173,7 @@ module Ast =
   type Principal =
     { internal_id : int; name : string; typ : Type } 
     
-    override this.ToString() = this.name
+    override this.ToString() = this.name + ":" + this.internal_id.ToString()
   
   type Const =
     | Principal of Principal

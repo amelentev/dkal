@@ -82,8 +82,7 @@ namespace Microsoft.Research.DkalController
 
     public void Knows(E.Ast.Knows k)
     {
-      //if (lastMsgCertified)
-      //  Say(string.Format("<b>KNOWS</b>\n{0}\n", k.infon.Sanitize()));
+        Say(string.Format("<b>KNOWS</b>\n{0}\n", k.infon.Sanitize()));
     }
 
     public void QueryResults(E.Ast.Term inf, IEnumerable<IEnumerable<E.Binding>> results)
@@ -101,7 +100,7 @@ namespace Microsoft.Research.DkalController
 
     public void Warning(string s)
     {
-      Say("<b>WARNING/b> <blue>{0}</blue>\n", s);
+      Say("<b>WARNING</b> <blue>{0}</blue>\n", s);
     }
 
     #endregion

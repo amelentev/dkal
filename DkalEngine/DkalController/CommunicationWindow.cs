@@ -167,6 +167,12 @@ namespace Microsoft.Research.DkalController
 
     private void button1_Click_1(object sender, EventArgs e)
     {
+      if (textBox1.Text == "ALL") {
+        foreach (var i in eng.infonstrate)
+          this.Say(string.Format("<b>INFON:</b>\n{0}\n", i.infon));
+        return;
+      }
+
       try {
         eng.Ask(hooks, pctx.ParseInfon(textBox1.Text));
       } catch (Exception ex) { hooks.ExceptionHandler(ex); }

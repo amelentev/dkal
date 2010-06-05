@@ -62,6 +62,7 @@ namespace Microsoft.Research.DkalController
       e.Reset();
       foreach (var a in decls)
         e.AddAssertion(a);
+      e.AddDefaultFilter();
       System.Threading.Thread.Sleep(500);
 
       var hooks = new ViewHooks(pctx, e);
