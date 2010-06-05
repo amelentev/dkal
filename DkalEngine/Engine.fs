@@ -251,16 +251,17 @@ type Engine =
     this.Invoke (fun () ->
        this.infonstrate <- { ai = this.FakeAI(); infon = i } :: this.infonstrate)
   
-  member this.AddAssertion a = 
+  member this.AddAssertion (a:Assertion) = 
     this.Invoke (fun () ->
-      match a with
+      this.me <- Some a.AssertionInfo.principal
+      match this.HandleCertifications a with
         | Knows k ->
           this.infonstrate <- k :: this.infonstrate
         | SendTo c ->
           this.communications <- c :: this.communications
         | ReceiveFrom f ->
-          this.filters <- f :: this.filters
-      this.me <- Some a.AssertionInfo.principal)
+          this.filters <- f :: this.filters      
+      )
     
   member this.AddDefaultFilter () =
     this.Invoke (fun () ->
