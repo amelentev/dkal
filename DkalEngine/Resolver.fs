@@ -101,9 +101,6 @@ module Resolver =
       | Tok.App (_, "knows", [who; what]) ->
         let who = getPrincipal ctx who
         splitList (fun t -> [Assertion.Knows { ai = { origin = t.Pos; principal = who }; infon = resolveInfon ctx t }]) what
-      | Tok.App (_, "query", [who; what]) ->
-        let who = getPrincipal ctx who
-        splitList (fun t -> [Assertion.Query { ai = { origin = t.Pos; principal = who }; infon = resolveInfon ctx t }]) what
       | Tok.App (_, "send", [who; precond; targets]) ->
         let who = getPrincipal ctx who          
         let precond = resolveProviso ctx precond

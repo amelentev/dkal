@@ -14,14 +14,15 @@ open Microsoft.Research.DkalEngine.PreToken
 module Util =
   type Pos = 
     { 
+      filename : string;
       line : int; 
       column : int 
     }
     
     override this.ToString() =
-      (this.line+1).ToString() + ":" + (this.column+1).ToString()
+      this.filename + ":" + (this.line+1).ToString() + ":" + (this.column+1).ToString()
   
-  let fakePos = { line = 0; column = 0 }
+  let fakePos = { filename = ""; line = 0; column = 0 }
   
   exception SyntaxError of Pos * string
   

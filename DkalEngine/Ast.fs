@@ -371,14 +371,17 @@ module Ast =
     | Knows of Knows
     | SendTo of Communication
     | ReceiveFrom of Filter
-    | Query of Knows
     
+    member this.AssertionInfo =
+      match this with
+        | Knows k -> k.ai
+        | SendTo c -> c.ai
+        | ReceiveFrom f -> f.ai
+
     override this.ToString() =
       match this with
         | Knows k ->
           k.ai.principal.ToString() + " : " + k.infon.ToString()
-        | Query k ->
-          k.ai.principal.ToString() + " ? " + k.infon.ToString()
         | SendTo c ->
           c.ai.principal.ToString() + " to " + c.target.ToString() + " : [" + c.message.ToString() + " <-- " + c.proviso.ToString() + "] <== " + c.trigger.ToString()
         | ReceiveFrom f ->

@@ -1,5 +1,4 @@
 #include "common.dkal"
-#set me "_kgc"
 #set x "70"
 #set y "70"
 

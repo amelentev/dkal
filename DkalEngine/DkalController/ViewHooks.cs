@@ -5,11 +5,12 @@ using E = Microsoft.Research.DkalEngine;
 
 namespace Microsoft.Research.DkalController
 {
-  class ViewHooks : E.IViewHooks
+  public class ViewHooks : E.ICommunicator
   {
-    CommunicationWindow comm;
-    internal E.Engine eng;
-    bool lastMsgCertified = false;
+    internal CommunicationWindow comm;
+    E.ParsingCtx pctx;
+    E.Engine eng;
+    E.SqlCommunicator sqlcomm;
 
     private void Say(string msg, params object[] args)
     {
@@ -17,32 +18,72 @@ namespace Microsoft.Research.DkalController
       comm.BeginInvoke((DoAction)(() => comm.Say(s)));
     }
 
-    public ViewHooks(CommunicationWindow c)
+    public ViewHooks(E.ParsingCtx pctx, E.Engine eng)
     {
-      comm = c;
+      this.pctx = pctx;
+      this.eng = eng;
+      sqlcomm = new E.SqlCommunicator(pctx);
     }
 
-    #region IViewHooks Members
+
+    internal void Step()
+    {
+      FSharp.Core.FSharpOption<E.Ast.Message> msg = null;
+
+      lock (sqlcomm) {
+        msg = sqlcomm.CheckForMessage();
+      }
+
+      if (msg != null) {
+        eng.Listen(this, msg.Value);
+        Recieved(msg.Value);
+      } else
+        eng.Talk(this);
+    }
+
+    void Recieved(E.Ast.Message msg)
+    {
+      Say("<b>FROM</b> {0} <b>GOT</b>\n{1}\n", msg.source, msg.message.Sanitize());
+      if (!msg.proviso.IsEmpty)
+        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
+    }
+
+    #region ICommunicator Members
+    public void ExceptionHandler(Exception value)
+    {
+      E.Util.SyntaxError se = value as E.Util.SyntaxError;
+      if (se != null)
+        Say("<b>ERROR</b> <blue>{0}</blue>: {1}\n", se.Data0, se.Data1);
+      else
+        Say("<b>Excaption:</b>\n{0}\n", value);
+    }
+
+    public E.Ast.Principal PrincipalById(int value)
+    {
+      lock(sqlcomm)
+        return sqlcomm.PrincipalById(value);
+    }
+
+    public int PrincipalId(E.Ast.Principal value)
+    {
+      lock(sqlcomm)
+        return sqlcomm.PrincipalId(value);
+    }
+
+    public void SendMessage(E.Ast.Message msg)
+    {
+      lock(sqlcomm)
+        sqlcomm.SendMessage(msg);
+
+      Say("<b>SENT TO</b> {0}\n{1}\n", msg.target, msg.message.Sanitize());
+      if (!msg.proviso.IsEmpty)
+        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
+    }
 
     public void Knows(E.Ast.Knows k)
     {
       //if (lastMsgCertified)
       //  Say(string.Format("<b>KNOWS</b>\n{0}\n", k.infon.Sanitize()));
-    }
-
-    public void Recieved(E.Ast.Message msg)
-    {
-      Say("<b>FROM</b> {0} <b>GOT</b>\n{1}\n", msg.source, msg.message.Sanitize());
-      if (!msg.proviso.IsEmpty)
-        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
-      lastMsgCertified = msg.IsCertified;
-    }
-
-    public void Send(E.Ast.Message msg)
-    {
-      Say("<b>SENT TO</b> {0}\n{1}\n", msg.target, msg.message.Sanitize());
-      if (!msg.proviso.IsEmpty)
-        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
     }
 
     public void QueryResults(E.Ast.Term inf, IEnumerable<IEnumerable<E.Binding>> results)
@@ -56,38 +97,12 @@ namespace Microsoft.Research.DkalController
         }
         Say(sb.ToString());
       }
-    }
-    
-    public void SyntaxError(E.Util.Pos pos, string msg)
-    {
-      Say("<b>ERROR</b> <blue>{0}</blue>: {1}\n", pos, msg);
-    }
-
-
-    int GetInt(string name)
-    {
-      string s;
-      int i;
-      if (eng.ctx.options.TryGetValue(name, out s) && int.TryParse(s, out i)) return i;
-      return -1;
-    }
-
-    public void Loaded(string f)
-    {
-      Say("<b>LOADED DKAL FILE</b> <blue>{0}</blue> ({1} infons, {2} comm.rules, {3} filters)\n", f, eng.infonstrate.Length, eng.communications.Length, eng.filters.Length);
-      var me = eng.me.Value.name;
-      string inp = null;
-      if (!eng.ctx.options.TryGetValue("initial_input", out inp))
-        inp = "";
-      comm.BeginInvoke((E.Action)(() => { comm.SetPosition(GetInt("x"), GetInt("y"), GetInt("w"), GetInt("h")); }));
-      comm.BeginInvoke((E.Action)(() => { comm.Loaded(me, inp);   } ));
-    }
+    }    
 
     public void Warning(string s)
     {
       Say("<b>WARNING/b> <blue>{0}</blue>\n", s);
     }
-      
 
     #endregion
   }

@@ -60,7 +60,6 @@ function [send_target 30] to {principal} {block assertion} returns {assertion}
 function [send_target_cert 30] to {principal} with certificate {block assertion} returns {assertion}
 function [proviso 30] if you know {block assertion} then {block assertion} returns {assertion}
 function [==> 30] if {block assertion} then {block assertion} returns {assertion}
-function [query 30] can {principal} infer {block assertion} returns {assertion}
 
 attribute [10] {infon} --> {infon}
 

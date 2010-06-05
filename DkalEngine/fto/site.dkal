@@ -1,5 +1,4 @@
 #include "common.dkal"
-#set me "_site"
 #set x "30"
 #set y "30"
 

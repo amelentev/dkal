@@ -13,7 +13,9 @@ namespace Microsoft.Research.DkalController
 
   public partial class CommunicationWindow : Form
   {
-    internal E.Engine eng;
+    E.Engine eng;
+    E.ParsingCtx pctx;
+    ViewHooks hooks;
 
     Dictionary<string, SetStyle> styles = new Dictionary<string, SetStyle>();
 
@@ -24,15 +26,44 @@ namespace Microsoft.Research.DkalController
       styles["blue"] = () => { richTextBox1.SelectionColor = Color.Blue; };
     }
 
-    public CommunicationWindow(string fileName)
+    int GetInt(string name)
     {
+      string s;
+      int i;
+      if (pctx.Options.TryGetValue(name, out s) && int.TryParse(s, out i)) return i;
+      return -1;
+    }
+
+    void InitialMessage(string f)
+    {
+      Say(string.Format(
+        "<b>LOADED DKAL FILE</b> <blue>{0}</blue> ({1} infons, {2} comm.rules, {3} filters)\n", f, eng.infonstrate.Length, eng.communications.Length, eng.filters.Length));
+
+      string inp = null;
+      if (pctx.Options.TryGetValue("initial_input", out inp)) {
+        textBox1.Text = inp;
+        textBox1.SelectAll();
+      }
+
+      Text += ": " + pctx.Me.name;
+
+      SetPosition(GetInt("x"), GetInt("y"), GetInt("w"), GetInt("h"));
+    }
+
+    public CommunicationWindow(string fileName, ViewHooks h, E.Engine eng, E.ParsingCtx pctx)
+    {
+      h.comm = this;
       InitializeComponent();
       AddStyles();
+      this.pctx = pctx;
+      this.eng = eng;
+      this.hooks = h;
       var sink = new LogSink(richTextBox2);
       Console.SetOut(sink);
       Console.SetError(sink);
       Console.WriteLine("Hello.");
       richTextBox3.Text = System.IO.File.ReadAllText(fileName);
+      InitialMessage(fileName);
     }
 
     public void SetPosition(int x, int y, int w, int h)
@@ -98,15 +129,6 @@ namespace Microsoft.Research.DkalController
       richTextBox1.ScrollToCaret();
     }
 
-    internal void Loaded(string me, string initialInput)
-    {
-      if (textBox1.Text == "") {
-        textBox1.Text = initialInput;
-        textBox1.SelectAll();
-      }
-      Text += ": " + me;
-    }
-
     private void richTextBox1_TextChanged(object sender, EventArgs e)
     {
 
@@ -145,21 +167,25 @@ namespace Microsoft.Research.DkalController
 
     private void button1_Click_1(object sender, EventArgs e)
     {
-      eng.AsyncAsk(textBox1.Text);
+      try {
+        eng.Ask(hooks, pctx.ParseInfon(textBox1.Text));
+      } catch (Exception ex) { hooks.ExceptionHandler(ex); }
       textBox1.SelectAll();
       textBox1.Focus();
     }
 
     private void button2_Click(object sender, EventArgs e)
     {
-      eng.AsyncAdd(textBox1.Text);
+      try {
+        eng.AddInfon(pctx.ParseInfon(textBox1.Text));
+      } catch (Exception ex) { hooks.ExceptionHandler(ex); }
       textBox1.SelectAll();
       textBox1.Focus();
     }
 
     private void button3_Click_2(object sender, EventArgs e)
     {
-      eng.AsyncStep();
+      hooks.Step();
     }
   }
 

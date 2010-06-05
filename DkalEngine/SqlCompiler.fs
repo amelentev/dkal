@@ -171,7 +171,7 @@ module SqlCompiler =
         
     loop !eqs
   
-  let compile (ctx:PreAst.Context) nextId theTerms =
+  let compile (opts:Options) nextId theTerms =
     let nextScope = ref 1
     let fresh (v:Var) =      
       let id = nextId()
@@ -204,7 +204,7 @@ module SqlCompiler =
                                }
                 incr nextScope
                 let res = comp false newCtx body
-                if ctx.trace >= 2 then
+                if opts.Trace >= 2 then
                   log ("Body " + body.ToString() + " =====> " + res.ToString())
                 localCtx.pendingEqs <- res :: newCtx.pendingEqs @ localCtx.pendingEqs
                 Expr.Var resV
@@ -221,17 +221,18 @@ module SqlCompiler =
                     pendingEqs = []
                     bindings = Map.empty }
 
-    if ctx.trace >= 1 then
+    let trace = opts.Trace
+    if trace >= 1 then
       log ("Query " + String.concat ", " (theTerms |> List.map (fun s -> s.ToString())))
     let body = List.map (comp true initCtx) theTerms |> sqlMultiAnd
-    if ctx.trace >= 1 then
+    if trace >= 1 then
       log ("  Compiled " + body.ToString())
     let body, bindings = body |> simplify
-    if ctx.trace >= 1 then  
+    if trace >= 1 then  
       log ("  Simplified " + body.ToString() + " @ " + String.concat ", " (List.map (fun (v:Var,e:Expr) -> v.ToString() + " -> " + e.ToString()) bindings))
     body, bindings
     
-  let execQuery (sql:SqlConnector, comm:SqlCommunicator, cc:CompiledQuery, subst:Subst, vars:list<Var>) =
+  let execQuery (sql:SqlConnector, comm:ICommunicator, cc:CompiledQuery, subst:Subst, vars:list<Var>) =
     if cc = (sqlTrue, []) then
       seq [subst]
     else

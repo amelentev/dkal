@@ -27,21 +27,49 @@ namespace Microsoft.Research.DkalController
         filename = args[argp++];
       }
 
-      var comm = new CommunicationWindow(filename);
-      var hooks = new ViewHooks(comm);
-      E.Engine e = E.Engine.Make(trace, hooks);
-      hooks.eng = e;
-      comm.eng = e;
+      if (filename == null) {
+        MessageBox.Show("expecting filename on command line");
+        return;
+      }
 
-      if (filename != null)
-        e.AsyncLoad(filename);
+      var decls = new List<E.Ast.Assertion>();
+      var pctx = new E.ParsingCtx();
+      string me = null;
 
-      var t = new Thread(() => { Thread.Sleep(100); e.EventLoop(); });
-      t.Start();
+      try {
+        foreach (var a in pctx.ParsePrelude())
+          decls.Add(a);
+        foreach (var a in pctx.ParseFile(filename)) {
+          decls.Add(a);
+          me = a.AssertionInfo.principal.name;
+        }
+      } catch (E.Util.SyntaxError se) {
+        MessageBox.Show(se.Data0 + ": " + se.Data1, "Syntax Error");
+        return;
+      }
+
+      var key = "private_sql" + me;
+      if (me == null || !pctx.Options.ContainsKey(key))
+        key = "private_sql";
+
+      var opts = E.Options.Create();
+      opts.PrivateSql = pctx.Options[key];
+      opts.Trace = trace;
+
+
+      E.Engine e = E.Engine.Config(opts);
+
+      e.Reset();
+      foreach (var a in decls)
+        e.AddAssertion(a);
+      System.Threading.Thread.Sleep(500);
+
+      var hooks = new ViewHooks(pctx, e);
+      var comm = new CommunicationWindow(filename, hooks, e, pctx);
 
       Application.Run(comm);
 
-      t.Abort();
+      e.Close();
     }
   }
 }

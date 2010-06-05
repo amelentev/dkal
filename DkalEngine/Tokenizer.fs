@@ -11,12 +11,12 @@ open Microsoft.Research.DkalEngine.PreAst
 open Microsoft.Research.DkalEngine.Ast
 
 module Tokenizer =
-  let rec tokenize depth path lexbuf : list<Tok> =
+  let rec tokenize includeStack getStream lexbuf : list<Tok> =
     let err pos s = raise (SyntaxError (pos, s))
     
     let rec handleLine acc = 
       let tok0 = Lexer.token lexbuf
-      let pos = { line = lexbuf.StartPos.Line; column = lexbuf.StartPos.Column }
+      let pos = { filename = List.head includeStack; line = lexbuf.StartPos.Line; column = lexbuf.StartPos.Column }
       let newAcc = (pos, tok0) :: acc
       match tok0 with        
         | Tok0.Eof -> false, List.rev ((pos, Tok0.NewLine) :: acc), pos
@@ -44,12 +44,11 @@ module Tokenizer =
       let acc = 
         match line with
           | (pos, Tok0.Id "#") :: (_, Tok0.Id "include") :: (_, Tok0.StringLiteral filename) :: _ ->
-            if depth > 7 then
+            if includeStack.Length > 7 then
               err pos "maximal #include depth exceeded"
             else
-              let filename = System.IO.Path.Combine (path, filename)
               let fn () =
-                tokenize (depth + 1) path (Lexing.LexBuffer<char>.FromTextReader (File.OpenText filename)) :> obj
+                tokenize (filename :: includeStack) getStream (Lexing.LexBuffer<char>.FromTextReader (getStream (pos, filename))) :> obj
               (0, [(pos, Tok0.Late fn)]) :: acc
           | [(_, Tok0.NewLine)] -> acc
           | _ -> (indent, line) :: acc
@@ -112,11 +111,12 @@ module Tokenizer =
       | [] -> []
       | (k, l) :: _ -> err (fst l.Head) "first line of input should have no indentation"
    
-  let fromFile filename stream = 
-    let path = System.IO.Path.GetDirectoryName filename
-    tokenize 0 path (Lexing.LexBuffer<char>.FromTextReader stream)
+  let fromFile filename getStream stream =     
+    tokenize [filename] getStream (Lexing.LexBuffer<char>.FromTextReader stream)
     
   let fromString (text:string) =
+    let getStream (pos, _) =
+      raise (SyntaxError (pos, "#include not supported when parsing strings"))
     let chars = Array.create text.Length ' '
     text.CopyTo (0, chars, 0, chars.Length)
-    tokenize 0 "." (Lexing.LexBuffer<char>.FromChars chars)
+    tokenize ["-string-"] getStream (Lexing.LexBuffer<char>.FromChars chars)

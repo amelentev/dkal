@@ -1,5 +1,4 @@
 #include "common.dkal"
-#set me "_physician"
 #set x "50"
 #set y "50"
 

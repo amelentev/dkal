@@ -48,6 +48,7 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Options.fs" />
     <Compile Include="PreToken.fs" />
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
@@ -55,15 +56,18 @@
     <Compile Include="Lexer.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Ast.fs" />
+    <Compile Include="Callbacks.fs" />
     <Compile Include="PreAst.fs" />
     <Compile Include="Tokenizer.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Resolver.fs" />
     <Compile Include="SqlConnector.fs" />
-    <Compile Include="SqlCommunicator.fs" />
     <Compile Include="SqlCompiler.fs" />
-    <Compile Include="Prelude.fs" />
     <Compile Include="Engine.fs" />
+    <Compile Include="Prelude.fs" />
+    <Compile Include="ParsingCtx.fs" />
+    <Compile Include="Serializer.fs" />
+    <Compile Include="SqlCommunicator.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll')" />

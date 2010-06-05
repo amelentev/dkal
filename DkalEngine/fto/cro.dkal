@@ -1,5 +1,4 @@
 #include "common.dkal"
-#set me "_cro"
 #set x "10"
 #set y "10"
 

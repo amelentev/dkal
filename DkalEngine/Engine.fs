@@ -23,108 +23,38 @@ type SubstSet =
   member this.All = this.substs
   member this.Add (ss:SubstSet) = { substs = this.substs @ ss.substs }
 
-type Binding =
-  {
-    formal : Var
-    actual : Term
-  }
 
-type IViewHooks =
-  abstract Recieved : Message -> unit
-  abstract Send : Message -> unit
-  abstract Knows : Knows -> unit
-  abstract QueryResults : Infon * seq<seq<Binding>> -> unit
-  abstract SyntaxError : Pos * string -> unit
-  abstract Loaded : string -> unit
-  abstract Warning : string -> unit
-  
 type Action = delegate of unit -> unit
   
 type Engine =
   {
     mutable sql : option<SqlConnector>
-    mutable comm : option<SqlCommunicator>
     mutable me : option<Principal>
-    ctx : PreAst.Context
+    mutable worker : option<System.Threading.Thread>
+    mutable comm : option<ICommunicator>
     sentItems : Dict<Message, bool>
-    hooks : IViewHooks
-    pending : GQueue<Action>
-    mutable trace : int
+    pending : GQueue<unit -> unit>
+    options : Options
     mutable infonstrate : list<Knows>
     mutable filters : list<Filter>
     mutable communications : list<Communication>
     mutable nextId : int   
-    mutable die : bool
-    mutable stepwise : bool
   }
   
-  static member Make (trace, hooks) =
-    let ctx = PreAst.Context.Make()
-    ctx.trace <- trace
-    { me = None; ctx = ctx; hooks = hooks;
-      infonstrate = []; filters = []; communications = []; nextId = 0;
-      sentItems = dict()
-      trace = trace
-      sql = None
-      comm = None
-      pending = new GQueue<_>()
-      die = false
-      stepwise = true
-      }
+  static member Config (opts:Options) =
+    let this =
+      { me = None; worker = None;
+        infonstrate = []; filters = []; communications = []; nextId = 0;
+        comm = None;
+        sentItems = dict()
+        sql = None
+        pending = new GQueue<_>()
+        options = opts
+        }
+    this
 
-  member this.Load filename stream =
-    try
-      let ctx = this.ctx
-      let prelude = Tokenizer.fromString Prelude.text
-      let toks = prelude @ Tokenizer.fromFile filename stream
-      Parser.addStandardRules ctx
-      let toks = Parser.addRules ctx toks
-      let toks = Parser.applyRules ctx toks
-      //System.Console.WriteLine (Tok.Block (fakePos, toks))
-      Resolver.resolveFunctions ctx
-      let assertions = List.collect (Resolver.resolve ctx) toks
-      let me = ctx.principals.[ctx.options.["me"]]
-      
-      this.me <- Some me
+  member private this.Comm = this.comm.Value
 
-      let priv_sql_name = "private_sql" + ctx.options.["me"]
-      let priv_sql =
-        if ctx.options.ContainsKey priv_sql_name then
-          ctx.options.[priv_sql_name]
-        else
-          ctx.options.["private_sql"]          
-      this.sql <- Some (SqlConnector priv_sql)
-
-      this.comm <- Some (SqlCommunicator(ctx, me))
-            
-      this.AddDefaultFilter()       
-      this.Populate assertions 
-      
-      match ctx.options.TryGetValue "stepwise" with
-        | true, "0" -> this.stepwise <- false
-        | _ -> ()
-
-      this.hooks.Loaded filename
-            
-    with SyntaxError (pos, s) ->
-      this.hooks.SyntaxError (pos, s)
-  
-  member this.SetTrace v =
-    this.ctx.trace <- v
-    this.trace <- v
-
-  member this.Populate assertions =
-    let myId = this.me.Value.internal_id
-    let addAssertion = function
-      | Knows k when k.ai.principal.internal_id = myId ->
-        this.infonstrate <- k :: this.infonstrate
-      | SendTo c when c.ai.principal.internal_id = myId ->
-        this.communications <- c :: this.communications
-      | ReceiveFrom f when f.ai.principal.internal_id = myId ->
-        this.filters <- f :: this.filters
-      | _ -> ()
-    List.iter addAssertion (List.map this.HandleCertifications assertions)
-    
   member private this.NextId () =
     this.nextId <- this.nextId - 1
     this.nextId
@@ -150,20 +80,6 @@ type Engine =
   member private this.FakeAI () =
     { origin = fakePos; principal = this.me.Value }
     
-  member this.AddDefaultFilter () =
-    let src = this.FreshVar Type.Principal
-    let msg = this.FreshVar Type.Infon
-    let proviso = this.FreshVar Type.Infon
-    let filter =
-      {
-        ai = this.FakeAI()
-        source = Term.Var src
-        message = Infon.Var msg
-        proviso = Infon.Var proviso
-        trigger = Infon.Empty
-      }
-    this.filters <- filter :: this.filters
-  
   member private this.InfonsWithPrefix subst pref template =
     let res = ref []
     let rec stripPrefix subst prefixUnif preconds suff = 
@@ -177,16 +93,16 @@ type Engine =
               match s with
                 | None -> None
                 | Some s -> unifyAndSimpl (unifyTerms s (simpl s a, simpl s b)) xs
-        
-          if this.trace >= 2 then
+          let trace = this.options.Trace
+          if trace >= 2 then
             System.Console.Write ("immediate result " + String.concat ", " (prefixUnif |> List.map (fun (a, b) -> String.Format ("{0} =?= {1}", a, b)) ))
           match unifyAndSimpl (Some subst) ((template, i) :: prefixUnif) with
             | Some subst ->
-              if this.trace >= 2 then
+              if trace >= 2 then
                 System.Console.WriteLine (" YES")
               res := (subst, preconds) :: !res
             | None ->
-              if this.trace >= 2 then
+              if trace >= 2 then
                 System.Console.WriteLine (" NO")
         | _ -> ()
              
@@ -219,7 +135,7 @@ type Engine =
       
   
   member this.DoDerive pref (subst:AugmentedSubst) infon =
-    if this.trace > 0 then
+    if this.options.Trace > 0 then
       System.Console.WriteLine ("derive: {0} under {1}", infon, substToString subst.subst)
     
     let sum f lst =
@@ -251,19 +167,17 @@ type Engine =
       ()
     else
       this.sentItems.Add (msg, true)
-      this.hooks.Send msg
-      this.comm.Value.SendMessage msg
+      this.Comm.SendMessage msg
       
   member this.Derive s (infon:Term) =
     let vars = (infon.Apply s).Vars()
     let checkAssumptions (augS:AugmentedSubst) =
       let apply (t:Term) = t.Apply augS.subst
-      let sqlExpr = SqlCompiler.compile this.ctx this.NextId (augS.assumptions |> List.map apply)
-      SqlCompiler.execQuery (this.sql.Value, this.comm.Value, sqlExpr, augS.subst, vars) |> Seq.toList      
+      let sqlExpr = SqlCompiler.compile this.options this.NextId (augS.assumptions |> List.map apply)
+      SqlCompiler.execQuery (this.sql.Value, this.Comm, sqlExpr, augS.subst, vars) |> Seq.toList      
     { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.collect checkAssumptions }
   
-  member this.Listen (msg:Message) =  
-    this.hooks.Recieved msg
+  member private this.DoListen (msg:Message) =  
     let src = Term.Const (Const.Principal msg.source)
     let msg =
       match this.FreshenList [msg.message; msg.proviso] with
@@ -286,10 +200,10 @@ type Engine =
                     | Some _ ->
                       Seq.toList acc
                     | _ ->
-                      this.hooks.Warning ("fake certified infon")
+                      this.Comm.Warning ("fake certified infon")
                       []
                 | _ ->
-                  this.hooks.Warning ("certified infon with proviso")
+                  this.Comm.Warning ("certified infon with proviso")
                   []
             | _ ->
               match msg.proviso.Apply s with
@@ -304,17 +218,12 @@ type Engine =
           (this.Derive s filter.trigger).All |> List.collect apply
         | None -> []
     let newInfons = this.filters |> List.collect matches
-    List.iter this.hooks.Knows newInfons
+    List.iter this.Comm.Knows newInfons
     this.infonstrate <- newInfons @ this.infonstrate
-    
-  member this.Listen () =
-    match this.comm.Value.CheckForMessage() with
-      | Some m -> this.Listen m
-      | None -> ()
     
   member this.Me = this.me
   
-  member this.Talk () =
+  member private this.DoTalk () =
     let runCommFor (comm:Communication) (subst:Subst) =
       match comm.target.Apply subst with
         | Term.Const (Const.Principal p) ->
@@ -329,77 +238,97 @@ type Engine =
           
     this.communications |> List.iter (fun comm -> (this.Derive Map.empty comm.trigger).All |> List.iter (runCommFor comm))
   
-  member this.ParseInfon s = 
-    try
-      let toks = Tokenizer.fromString s
-      let toks = Parser.applyRules this.ctx toks
-      match toks with
-        | [t]
-        | [t; PreAst.Tok.NewLine _] -> Some (Resolver.resolveInfon this.ctx t)
-        | [PreAst.Tok.NewLine _]
-        | [] -> raise (SyntaxError (fakePos, "infon expected"))
-        | _ -> raise (SyntaxError (fakePos, "only one infon expected"))
-    with 
-      | SyntaxError (pos, s) ->
-        this.hooks.SyntaxError (pos, s)
-        None
-              
-  member this.Ask (i:string) =
-    match this.ParseInfon i with
-      | Some i -> 
-        let bind (s:Subst) =
-          i.Vars() |> Seq.map (fun v -> { formal = v; actual = s.[v.id].Apply s })
-        this.hooks.QueryResults (i, (this.Derive Map.empty i).All |> Seq.map bind)
-      | None -> ()
-    
-  member this.Add i =
-    match this.ParseInfon i with
-      | Some i -> this.infonstrate <- { ai = this.FakeAI(); infon = i } :: this.infonstrate
-      | None -> ()
+  member this.Reset () =
+    this.Close()
+    this.sql <- Some (SqlConnector this.options.PrivateSql)
+    let t = System.Threading.Thread this.Work
+    this.worker <- Some t
+    t.Start()
   
-  member this.Invoke a = 
+  member this.AddInfon i =
+    this.Invoke (fun () ->
+       this.infonstrate <- { ai = this.FakeAI(); infon = i } :: this.infonstrate)
+  
+  member this.AddAssertion a = 
+    this.Invoke (fun () ->
+      match a with
+        | Knows k ->
+          this.infonstrate <- k :: this.infonstrate
+        | SendTo c ->
+          this.communications <- c :: this.communications
+        | ReceiveFrom f ->
+          this.filters <- f :: this.filters
+      this.me <- Some a.AssertionInfo.principal)
+    
+  member this.AddDefaultFilter () =
+    this.Invoke (fun () ->
+      let src = this.FreshVar Type.Principal
+      let msg = this.FreshVar Type.Infon
+      let proviso = this.FreshVar Type.Infon
+      let filter =
+        {
+          ai = this.FakeAI()
+          source = Term.Var src
+          message = Infon.Var msg
+          proviso = Infon.Var proviso
+          trigger = Infon.Empty
+        }
+      this.filters <- filter :: this.filters)
+  
+  member this.Listen (comm, msg:Message) =
+    this.Invoke (fun () ->
+      this.comm <- Some comm
+      this.DoListen msg
+      this.DoTalk ())
+
+  member this.Talk (comm) =
+    this.Invoke (fun () ->
+      this.comm <- Some comm
+      this.DoTalk ())
+
+  member this.Ask (comm, i:Infon) =
+    this.Invoke (fun () ->
+      this.comm <- Some comm
+      let bind (s:Subst) =
+        i.Vars() |> Seq.map (fun v -> { formal = v; actual = s.[v.id].Apply s })
+      this.Comm.QueryResults (i, (this.Derive Map.empty i).All |> Seq.map bind))
+    
+  member private this.Invoke a = 
+    if this.worker.IsNone then failwith "not yet started"
     let wrapped () =
       try a()
       with e ->
-        this.hooks.SyntaxError (fakePos, "exception: " + e.Message)
-    lock this.pending (fun () -> this.pending.Enqueue (fun () -> wrapped ()))
+        this.Comm.ExceptionHandler e
+    lock this.pending (fun () ->
+      this.pending.Enqueue wrapped
+      System.Threading.Monitor.Pulse this.pending)
   
-  member this.Step () =
-    if this.sql.IsSome then
-      let cnt = this.sentItems.Count
-      if not this.stepwise then
-        this.Talk()
-      if cnt = this.sentItems.Count then
-        match this.comm.Value.CheckForMessage() with
-          | Some msg -> this.Listen msg; true
-          | None -> false
-      else false
-    else false
-  
-  member this.AsyncDie () = this.Invoke (fun () -> this.die <- true)
-  member this.AsyncAsk i = this.Invoke (fun () -> this.Ask i)
-  member this.AsyncAdd i = this.Invoke (fun () -> this.Add i)
-  member this.AsyncLoad n = this.Invoke (fun () -> this.Load n (File.OpenText n))
-  member this.AsyncLoadStream n = this.Invoke (fun () -> this.Load "stdin.dkal" n)
-  member this.AsyncStep () = this.Invoke (fun () -> this.Talk ())
-  
+  member private this.Work () =
+    while true do
+      let act = 
+        lock this.pending (fun () ->
+          while this.pending.Count = 0 do
+            System.Threading.Monitor.Wait this.pending |> ignore
+          this.pending.Dequeue())
+      act()
+
   member this.Close () =
+    match this.worker with
+      | Some w ->
+        w.Abort()
+        w.Join()
+        this.worker <- None
+      | None -> ()          
     this.sql |> Option.iter (fun s -> s.Close())
-    this.comm |> Option.iter (fun s -> s.Close())
-      
-  member this.EventLoop () =
-    let doYield () = System.Threading.Thread.Sleep 1000
-    let rec loop () =
-      let act =
-          lock this.pending (fun () -> if this.pending.Count > 0 then Some (this.pending.Dequeue()) else None)
-      match act with
-          | Some a -> a.Invoke()
-          | None ->
-            if this.Step () then ()
-            else doYield()
-      if not this.die then loop ()
-    loop ()
-    this.Close()
+    this.sql <- None
+    this.me <- None
+    this.pending.Clear()
+    this.sentItems.Clear()
+    this.comm <- None
+    this.infonstrate <- []
+    this.filters <- []
+    this.communications <- []
+    this.nextId <- 0
 
 
   //
@@ -440,17 +369,17 @@ type Engine =
         if this.SignatureCheck p inf sign && this.CanSign p inf then
           ret inf
         else
-          this.hooks.Warning ("spoofed signature")
+          this.Comm.Warning ("spoofed signature")
           None
       | App (f, [a; b]) when f === Function.EvMp ->
         match this.EvidenceCheck acc a, this.EvidenceCheck acc b with
           | Some i1, Some (InfonFollows (i1', i2)) when i1 = i1' ->
             ret i2
           | _ ->
-            this.hooks.Warning ("malformed mp")
+            this.Comm.Warning ("malformed mp")
             None
       | _ ->
-        this.hooks.Warning ("unhandled evidence constructor")
+        this.Comm.Warning ("unhandled evidence constructor")
         None                        
 
   member private this.HandleCertifications = function
@@ -470,7 +399,7 @@ type Engine =
                    with message = msg
                         trigger = Infon.And (msg, comm.trigger) }
           | _ ->
-            this.hooks.Warning ("certified provisional communication not supported at this time")
+            this.Comm.Warning ("certified provisional communication not supported at this time")
             comm
       Assertion.SendTo { comm with certified = false }
     | t -> t
