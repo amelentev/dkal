@@ -173,6 +173,7 @@ module Ast =
   type Principal =
     { internal_id : int; name : string; typ : Type } 
     
+    member this.Name = this.name
     override this.ToString() = this.name + ":" + this.internal_id.ToString()
   
   type Const =
@@ -192,6 +193,7 @@ module Ast =
   // YUCK!!!
   let private termToStringCallback = ref (fun (sb:StringBuilder, t:obj) -> failwith "should be assigned"; ())
   
+  /// Represent substrate terms as well as infons.
   [<StructuralEquality; NoComparison>]
   type Term =
     | App of Function * list<Term>
@@ -353,6 +355,9 @@ module Ast =
       trigger : Infon
     }
 
+  /// A message to be sent over wire, or recived over wire. It usually involves serialization
+  /// using Serializer class (for message and proviso), and using ICommunicator PrincipalId methods
+  /// (for source and target).
   [<StructuralEquality; NoComparison>]       
   type Message =
     {
@@ -366,7 +371,9 @@ module Ast =
       match this.message with
         | InfonCert _ -> true
         | _ -> false
-    
+
+  /// A communication assertion, usually corresponds to a single statement in
+  /// the policy file.
   type Assertion =
     | Knows of Knows
     | SendTo of Communication

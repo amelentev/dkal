@@ -8,6 +8,8 @@ open Microsoft.FSharp.Text
 open Microsoft.Research.DkalEngine.Ast
 open Microsoft.Research.DkalEngine.Util
 
+/// Term<->string serialization/deserialization. Requires a parsing context with
+/// function definitions.
 type Serializer(ctx:ParsingCtx) =
   let idChar c = Char.IsLetterOrDigit c || c = '_'
   
@@ -100,7 +102,7 @@ type Serializer(ctx:ParsingCtx) =
           let (i, args) = parseList [] (i + 1)
           (i, Term.App (fn, args))          
         | _ -> failwith "invalid character"  
-    parseTerm 0
+    snd (parseTerm 0)
           
 
   member this.SerializeTerms ts =
@@ -108,5 +110,5 @@ type Serializer(ctx:ParsingCtx) =
   
   member this.DeserializeTerms s =
     match this.DeserializeTerm s with
-      | _, Term.App ({ name = "__tuple" }, ts) -> ts
+      | Term.App ({ name = "__tuple" }, ts) -> ts
       | _ -> failwith "expecting __tuple(...)"

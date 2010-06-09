@@ -69,8 +69,10 @@ namespace Microsoft.Research.DkalController
       var comm = new CommunicationWindow(filename, hooks, e, pctx);
 
       Application.Run(comm);
+      E.Ast.Message s;
 
       e.Close();
     }
   }
 }
+

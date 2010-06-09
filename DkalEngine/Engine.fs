@@ -25,7 +25,8 @@ type SubstSet =
 
 
 type Action = delegate of unit -> unit
-  
+
+/// DKAL execution engine. Corresponds to a infostrate and substrate of a single principal.
 type Engine =
   {
     mutable sql : option<SqlConnector>
@@ -41,6 +42,7 @@ type Engine =
     mutable nextId : int   
   }
   
+  /// Create a new engine instance.
   static member Config (opts:Options) =
     let this =
       { me = None; worker = None;
@@ -240,6 +242,7 @@ type Engine =
           
     this.communications |> List.iter (fun comm -> (this.Derive Map.empty comm.trigger).All |> List.iter (runCommFor comm))
   
+  /// First close the Engine, and then start a new substrate connection and a worker thread(s).
   member this.Reset () =
     this.Close()
     this.sql <- Some (SqlConnector this.options.PrivateSql)
@@ -247,10 +250,12 @@ type Engine =
     this.worker <- Some t
     t.Start()
   
+  /// Add an infon to the infostrate.
   member this.AddInfon i =
     this.Invoke (fun () ->
        this.infonstrate <- { ai = this.FakeAI(); infon = i } :: this.infonstrate)
   
+  /// Add a policy assertion to the infonstrate.
   member this.AddAssertion (a:Assertion) = 
     this.Invoke (fun () ->
       this.me <- Some a.AssertionInfo.principal
@@ -262,7 +267,9 @@ type Engine =
         | ReceiveFrom f ->
           this.filters <- f :: this.filters      
       )
-    
+  
+
+  /// Add the default, permissive filter to the infonstrate.
   member this.AddDefaultFilter () =
     this.Invoke (fun () ->
       let src = this.FreshVar Type.Principal
@@ -278,17 +285,22 @@ type Engine =
         }
       this.filters <- filter :: this.filters)
   
+  /// Add incomming message to the infostrate. Will call comm.Knows() for each
+  /// new infons learned. Will call Talk() at the end.
   member this.Listen (comm, msg:Message) =
     this.Invoke (fun () ->
       this.comm <- Some comm
       this.DoListen msg
       this.DoTalk ())
 
+  /// See if some messages should be sent, and if so, sends them using comm.Send().
   member this.Talk (comm) =
     this.Invoke (fun () ->
       this.comm <- Some comm
       this.DoTalk ())
 
+  /// Given an infon, possibly with free variables, return all the possible values
+  /// for these variables using comm.QueryResults(i, results). 
   member this.Ask (comm, i:Infon) =
     this.Invoke (fun () ->
       this.comm <- Some comm
@@ -315,6 +327,7 @@ type Engine =
           this.pending.Dequeue())
       act()
 
+  /// Kill all the worker threads. Close the substrate SQL connection. Clear infostrate and the current policy.
   member this.Close () =
     match this.worker with
       | Some w ->

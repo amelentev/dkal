@@ -9,6 +9,9 @@ open Microsoft.FSharp.Collections
 open Microsoft.Research.DkalEngine.Util
 open Microsoft.Research.DkalEngine.Ast
 
+/// A context for parsing a single policy file. After parsing the policy
+/// with all function declarations, it can be used to parse a single infon.
+/// The deserialization also depends on the function definitions accumulated here.
 type ParsingCtx() =
   let ctx = PreAst.Context.Make()
   let mutable me = None
@@ -54,12 +57,20 @@ type ParsingCtx() =
   member this.MakeVar name tp =
     ctx.MkVar name tp
 
+  /// Parse the builtin prelude file. Should be called before calling any other methods.
   member this.ParsePrelude () =
     let prelude = Tokenizer.fromString Prelude.text
     Parser.addStandardRules ctx
     parseAssertions prelude
 
-  member this.ParseStream filename getStream stream =
+  member this.ParseStreamEx filename getStream stream =
+    let toks = Tokenizer.fromFile filename getStream stream
+    parseAssertions toks
+
+  /// Returns a list of Assertions from the specified stream. The filename is only used for error messages.
+  member this.ParseStream filename stream =
+    let getStream (pos, _) =
+      raise (SyntaxError (pos, "#include not supported when parsing streams"))
     let toks = Tokenizer.fromFile filename getStream stream
     parseAssertions toks
 
@@ -68,7 +79,7 @@ type ParsingCtx() =
       let path = System.IO.Path.GetDirectoryName filename
       let name = System.IO.Path.Combine (path, included)
       File.OpenText name
-    this.ParseStream filename getStream (File.OpenText filename)
+    this.ParseStreamEx filename getStream (File.OpenText filename)
 
   member this.ParseInfon s =
     let toks = Tokenizer.fromString s
