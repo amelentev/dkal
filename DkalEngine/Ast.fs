@@ -169,6 +169,8 @@ module Ast =
     static member EvSignature = evSignature
     static member EvMp = evMp
   
+  /// Principals are fully identified by name. New principals should be created only using
+  /// ParsingCtx.LookupOrAddPrincipal method.
   [<StructuralEquality; NoComparison>]
   type Principal =
     { internal_id : int; name : string; typ : Type } 

@@ -41,6 +41,7 @@ type ParsingCtx() =
       | Some v -> v
       | None -> raise (SyntaxError (fakePos, "principal identity not provided"))
 
+  /// Lookup or create a new named principal.
   member this.LookupOrAddPrincipal name =
     match ctx.principals.TryGetValue name with
       | true, p -> p
