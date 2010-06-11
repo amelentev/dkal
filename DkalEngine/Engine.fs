@@ -191,7 +191,6 @@ type Engine =
     { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.collect checkAssumptions }
   
   member private this.DoListen (msg:Message) =  
-    this.Comm.Warning "listen"
     let src = Term.Const (Const.Principal msg.source)
     let msg =
       match this.FreshenList [msg.message; msg.proviso] with
@@ -207,7 +206,6 @@ type Engine =
         let infons =
           match t with
             | InfonCert (_, e) ->
-              this.Comm.Warning ("got certified")      
               match msg.proviso.Apply s with
                 | InfonEmpty ->
                   let acc = vec()

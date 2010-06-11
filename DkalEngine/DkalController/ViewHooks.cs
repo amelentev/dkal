@@ -93,7 +93,7 @@ namespace Microsoft.Research.DkalController
 
     public void Knows(E.Ast.Knows k)
     {
-        Say(string.Format("<b>KNOWS</b>\n{0}\n", k.infon.Sanitize()));
+        //Say(string.Format("<b>KNOWS</b>\n{0}\n", k.infon.Sanitize()));
     }
 
     public void QueryResults(E.Ast.Term inf, IEnumerable<IEnumerable<E.Binding>> results)
