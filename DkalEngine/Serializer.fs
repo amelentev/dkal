@@ -123,3 +123,15 @@ type Serializer(ctx:ParsingCtx) =
     match this.DeserializeTerm s with
       | Term.App ({ name = "__tuple" }, ts) -> ts
       | _ -> failwith "expecting __tuple(...)"
+
+  member this.SerializeMessage (msg:Ast.Message) =
+    this.SerializeTerms [Term.Const (Const.Principal msg.source); Term.Const (Const.Principal msg.target); msg.message; msg.proviso]
+
+  member this.DeserializeMessage s =
+    match this.DeserializeTerms s with
+      | [Term.Const (Const.Principal src); Term.Const (Const.Principal trg); msg; prov] ->
+        { source = src
+          target = trg
+          message = msg
+          proviso = prov }
+      | _ -> failwith "wrong serialized message format"
