@@ -1,0 +1,39 @@
+// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+type trial   // trials.id
+type patient // patients.id
+type record  // records.id
+// principal type maps to string
+
+attribute [16] {principal} participates in {trial}
+attribute [16] {principal} is assigned id numbers from {int} to {int} in {trial}
+attribute [18] {principal} can read {record} in records of trial {trial}
+attribute [16] {principal} can read {record} in records of trial {trial} under the authority of {principal}
+attribute [16] {principal} is assigned to trial {trial} at {principal}
+attribute [16] patient {int} is assigned to {principal} in {trial}
+attribute [16] {principal} is a physician assigned to {trial} at {principal}
+
+function [16] {R:record} is a data clarification request in {T:trial} returns {Res:bool}
+  is records.id == R && records.trial == T && records.is_clarification == true && Res == true
+
+function [2] patientID ( {R:record} ) returns {P:int}
+  is records.id == R && records.patient == P
+
+function [2] croOf ( {T:trial} ) returns {P:principal}
+  is trials.id == T && trials.cro == P
+
+function [2] trial0 returns {T:trial}
+  is T == trials.id && trials.id == 1
+
+attribute [2] start
+
+#include "passwords.dkal"

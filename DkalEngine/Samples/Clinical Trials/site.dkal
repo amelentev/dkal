@@ -1,0 +1,52 @@
+// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+#include "common.dkal"
+#set x "30"
+#set y "30"
+
+if _site knows
+  asInfon(croOf(T) == C)
+  if
+    Prov
+    _site implied PHYSICIAN can read R in records of trial T under the authority of _site
+  then
+    C implied PHYSICIAN can read R in records of trial T under the authority of _site
+  PHYSICIAN is a physician assigned to T at _site
+  patient N is assigned to PHYSICIAN in T
+then they send
+  to PHYSICIAN with certificate
+    if
+      Prov
+      _site implied PHYSICIAN can read R in records of trial T under the authority of _site
+    then
+      C implied PHYSICIAN can read R in records of trial T under the authority of _site
+
+  to PHYSICIAN with certificate
+    if
+      asInfon(R is a data clarification request in T)
+      asInfon(patientID(R) == N)
+    then
+      _site implied PHYSICIAN can read R in records of trial T under the authority of _site
+
+_site knows
+  _physician is a physician assigned to trial0 at _site
+  patient 10 is assigned to _physician in trial0
+
+_site knows
+  if
+    if
+      Prov
+      _site implied PHYSICIAN can read R in records of trial T under the authority of _site
+    then
+      C implied PHYSICIAN can read R in records of trial T under the authority of _site
+  then
+    start

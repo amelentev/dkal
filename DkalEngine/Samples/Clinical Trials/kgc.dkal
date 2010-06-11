@@ -1,0 +1,24 @@
+// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+#include "common.dkal"
+#set x "70"
+#set y "70"
+
+// _kgc's knowledge:
+_kgc knows 
+  if
+    asInfon( C == croOf(T) )
+  then
+    C tdonI X can read V in records of trial T under the authority of P
+
+#set initial_input "X can read R in records of trial T under the authority of P"
+
