@@ -1,0 +1,10 @@
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalHostConsole.exe
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalHostConsole.pdb
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\obj\x86\Debug\ResolveAssemblyReference.cache
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\obj\x86\Debug\DkalHostConsole.exe
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\obj\x86\Debug\DkalHostConsole.pdb
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalHost.dll
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalEngine.dll
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalHost.pdb
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalEngine.pdb
+c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalEngine.xml
