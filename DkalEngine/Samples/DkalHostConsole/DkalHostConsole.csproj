@@ -57,9 +57,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="dkalfiles\crocom.dkal" />
-  </ItemGroup>
-  <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

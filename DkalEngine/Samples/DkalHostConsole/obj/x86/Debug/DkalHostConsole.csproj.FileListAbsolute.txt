@@ -8,3 +8,13 @@ c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\
 c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalHost.pdb
 c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalEngine.pdb
 c:\users\v-tumeh\documents\visual studio 2010\Projects\DkalHost\DkalHostConsole\bin\Debug\DkalEngine.xml
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHostConsole.exe
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHostConsole.pdb
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalEngine.dll
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHost.dll
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHost.pdb
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalEngine.pdb
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalEngine.xml
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\DkalHostConsole.exe
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\DkalHostConsole.pdb
