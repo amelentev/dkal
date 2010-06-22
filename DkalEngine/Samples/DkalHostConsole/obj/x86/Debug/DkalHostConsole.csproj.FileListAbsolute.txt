@@ -18,3 +18,4 @@ C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalEng
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\ResolveAssemblyReference.cache
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\DkalHostConsole.exe
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\DkalHostConsole.pdb
+C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHostConsole.exe.config

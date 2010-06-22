@@ -18,6 +18,7 @@ using System.Runtime.Remoting.Messaging;
 using E = Microsoft.Research.DkalEngine;
 using System.IO;
 using Microsoft.Research.DkalEngine;
+using System.Configuration;
 
 namespace DkalController
 {
@@ -65,19 +66,21 @@ namespace DkalController
                     // the “from-database.dkal” will be used in error messages
                     foreach (var a in pctx.ParseStream("from-database.dkal", readFile))
                         decls.Add(a);
-                }
-                catch (IOException ex)
-                {
-                    throw new Exception(ex.ToString());
-                }
-                finally
-                {
+
                     readFile.Close();
                     readFile = null;
                 }
+                catch (IOException ex)
+                {
+                    throw new Exception(ex.Message);
+                }
 
                 var opts = E.Options.Create();
-                opts.PrivateSql = @"Server=V-TUMEH1\R2SQLSERVER;Database=ftocro;User ID=sa;Password=tu5hAr%#;Trusted_Connection=False;Encrypt=True;";
+                string conString = ConfigurationManager.AppSettings["SubstrateConnectionString"];
+
+                if (string.IsNullOrEmpty(conString))
+                    throw new Exception("SubstrateConnectionString is null");
+                opts.PrivateSql = conString;
                 opts.Trace = 0;
 
                 eCro = E.Engine.Config(opts);
@@ -91,19 +94,17 @@ namespace DkalController
             }
             catch (E.Util.SyntaxError se)
             {
-                Console.WriteLine(se.Data0 + ": " + se.Data1, "Syntax Error");
-                return;
+                throw new Exception(se.Data0 + ": " + se.Data1+ " -Syntax Error");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                return;
+                throw new Exception(ex.Message);
             }
         }
 
         public void SendMessage(string msg, string principal)
         {
-            Ast.Principal principalObj = pctx.LookupOrAddPrincipal("_cro");
+            Ast.Principal principalObj = pctx.LookupOrAddPrincipal(principal);
             Ast.Term termObj = pctx.ParseInfon(msg);
             E.Engine e = GetEngine(principal);
             e.AddInfon(termObj);
