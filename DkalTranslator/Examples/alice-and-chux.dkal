@@ -1,0 +1,97 @@
+/* Alice and Chux example from DKAL2 paper
+*/
+
+/*
+Declarations 
+-------------
+- Should declare all principals and functions that are going to be used with the keywords "Principals" and "Functions"
+- Principals and function names should be in lowercase
+- Types in uppercase
+- Bool is translated to bool (in lowercase). The other types are translated directly.
+*/
+Principals alice, publishers, bureau, integral, chux;
+Functions isALicensedSeller: Principal -> Infon, accedesToPurchase: Principal -> U -> Infon, mayPlay: Principal -> U -> Infon, hasGoodStanding: Principal -> Infon,
+			isGovernedBy: U -> U -> Principal -> Infon, isLicensed: Principal -> Infon, licExp: Principal -> Int, song: U, policyA: U,
+			curTime: Principal -> Int;
+
+
+/* Fixed functions (optional keyword)
+Specify some fixed values for functions.
+*/			
+
+Fix licExp(chux) = 10;
+Fix curTime(alice) = 5;
+
+/*
+Assertions
+------------
+- Uppercase identifiers are variables, in other case they should be declared as principals or functions
+- less, greater (are translated to <, >), tdonS, tdonP and asInfon are built-in functions
+- true is mapped to trueInfon
+*/
+
+/*Alice has this knowledge*/
+alice knows isGovernedBy(S, Pol, Auth) -> tdonP(Auth, mayPlay(alice, S));
+alice knows isGovernedBy(song, policyA, publishers);
+
+/*So she knows this*/
+? alice knows tdonP(publishers, mayPlay(alice,song));
+
+/*Alice gets a communication from Publishers:*/
+publishers to alice:[mayPlay(alice, song)  <- isALicensedSeller(X) + X said mayPlay(alice, song)];
+
+/*and she lets go through any Publishers' communication*/
+alice from publishers: [X];
+
+/*so she learns*/
+? alice knows (isALicensedSeller(chux) + chux said mayPlay(alice,song)) -> publishers put mayPlay(alice, song);
+
+/*so she deduce also this
+(the following 2 formulas are provable in the full infon logic, but not in the primal)
+*/
+? alice knows (isALicensedSeller(chux) + chux said mayPlay(alice,song)) -> mayPlay(alice, song);
+
+/*and this (A3)*/
+? alice knows isALicensedSeller(chux) -> tdonS(chux, mayPlay(alice, song));
+
+/*Alice trusts on the Bureau*/
+alice knows tdonP(bureau, isALicensedSeller(X));
+
+/*The Bureau knows Chux is Licensed*/
+bureau knows isLicensed(chux);
+
+/*And they inform to Alice about all their licensed sellers. The expiration licence of x should be greater than alice current time.*/
+bureau to  alice: [isALicensedSeller(X) <- asInfon(less(curTime(alice), licExp(X)))]  <=  isLicensed(X);
+
+/*Alice does not filter Bureau communications*/
+alice from bureau: [X];
+
+/*so she learns*/
+? alice knows bureau put isALicensedSeller(chux);
+
+/*and taking into account that she trusts in the Bureau, she knows*/
+? alice knows isALicensedSeller(chux);
+
+/*Given A3 she also learns*/
+? alice knows tdonS(chux, mayPlay(alice, song));
+
+/*Chux uses a communication assertion*/
+chux to P: [mayPlay(P,S)] <= P said accedesToPurchase(P,S) + integral said hasGoodStanding(P);
+
+/*and he already knows that Integral sais Alice has good standing*/
+chux knows integral said hasGoodStanding(alice);
+
+/*Alice communicates*/
+alice to chux:[accedesToPurchase(alice,song)];
+
+/*This is filtered through*/
+chux from P:[accedesToPurchase(P,S)];
+
+/*and this gives rise to Chux knowledge*/
+chux knows alice said accedesToPurchase(alice, song);
+
+/*Alice accepts any communication from Chux */
+alice from chux: [X];
+
+/*so Alice learns*/
+? alice knows mayPlay(alice,song);
