@@ -428,4 +428,10 @@ type Engine =
             comm
       Assertion.SendTo { comm with certified = false }
     | t -> t
+
+  member this.Certify = function
+    | InfonSaid (p, _)
+    | InfonImplied (p, _) as msg ->
+      Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg]))
+    | _ -> failwith "invalid input"
         
