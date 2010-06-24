@@ -1,0 +1,1319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>DkalEngine</name></assembly>
+<members>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Binding">
+<summary>
+ Gives an actual value for a variable.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.Talk(Microsoft.Research.DkalEngine.ICommunicator)">
+<summary>
+ See if some messages should be sent, and if so, sends them using comm.Send().
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.Reset">
+<summary>
+ First close the Engine, and then start a new substrate connection and a worker thread(s).
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.Listen(Microsoft.Research.DkalEngine.ICommunicator,Microsoft.Research.DkalEngine.Ast.Message)">
+<summary>
+ Add incomming message to the infostrate. Will call comm.Knows() for each
+ new infons learned. Will call Talk() at the end.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.Config(Microsoft.Research.DkalEngine.Options)">
+<summary>
+ Create a new engine instance.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.Close">
+<summary>
+ Kill all the worker threads. Close the substrate SQL connection. Clear infostrate and the current policy.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.Ask(Microsoft.Research.DkalEngine.ICommunicator,Microsoft.Research.DkalEngine.Ast.Term)">
+<summary>
+ Given an infon, possibly with free variables, return all the possible values
+ for these variables using comm.QueryResults(i, results). 
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.AddInfon(Microsoft.Research.DkalEngine.Ast.Term)">
+<summary>
+ Add an infon to the infostrate.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.AddDefaultFilter">
+<summary>
+ Add the default, permissive filter to the infonstrate.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.AddAssertion(Microsoft.Research.DkalEngine.Ast.Assertion)">
+<summary>
+ Add a policy assertion to the infonstrate.
+</summary>
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Engine">
+<summary>
+ DKAL execution engine. Corresponds to a infostrate and substrate of a single principal.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.Warning(System.String)">
+<summary>
+ Called when some extraordinary condition arise (i.e., malformed communication arrives).
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.SendMessage(Microsoft.Research.DkalEngine.Ast.Message)">
+<summary>
+ Called when the engine needs to send a message. It should put the message the sending queue.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.QueryResults(Microsoft.Research.DkalEngine.Ast.Term,System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{Microsoft.Research.DkalEngine.Binding}})">
+<summary>
+ Called when results of an Ask query are available. It also provides the infon which was asked for.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.PrincipalId(Microsoft.Research.DkalEngine.Ast.Principal)">
+<summary>
+ Get a database id of named principal.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.PrincipalById(System.Int32)">
+<summary>
+ Get a principal corresponding to the id used in the database.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.Knows(Microsoft.Research.DkalEngine.Ast.Knows)">
+<summary>
+ Called when the engine learns a new fact from communication.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.ExceptionHandler(System.Exception)">
+<summary>
+ Called when there is an exception in execution of the current task.
+</summary>
+</member>
+<member name="T:Microsoft.Research.DkalEngine.ICommunicator">
+<summary>
+ Callbacks passed to every async method of Engine.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ParsingCtx.ParseStream(System.String,System.IO.TextReader)">
+<summary>
+ Returns a list of Assertions from the specified stream. The filename is only used for error messages.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ParsingCtx.ParsePrelude">
+<summary>
+ Parse the builtin prelude file. Should be called before calling any other methods.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.ParsingCtx.LookupOrAddPrincipal(System.String)">
+<summary>
+ Lookup or create a new named principal.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.ParsingCtx">
+<summary>
+ A context for parsing a single policy file. After parsing the policy
+ with all function declarations, it can be used to parse a single infon.
+ The deserialization also depends on the function definitions accumulated here.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Serializer">
+<summary>
+ Term&lt;-&gt;string serialization/deserialization. Requires a parsing context with
+ function definitions.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Ast.Assertion">
+<summary>
+ A communication assertion, usually corresponds to a single statement in
+ the policy file.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Ast.Message">
+<summary>
+ A message to be sent over wire, or recived over wire. It usually involves serialization
+ using Serializer class (for message and proviso), and using ICommunicator PrincipalId methods
+ (for source and target).
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Ast.Term">
+<summary>
+ Represent substrate terms as well as infons.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Ast.Principal">
+<summary>
+ Principals are fully identified by name. New principals should be created only using
+ ParsingCtx.LookupOrAddPrincipal method.
+</summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Ast">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Lexer">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Parser">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.PreAst">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.PreToken">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Prelude">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Resolver">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.SqlCompiler">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Tokenizer">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.Util">
+
+</member>
+</members>
+</doc>
