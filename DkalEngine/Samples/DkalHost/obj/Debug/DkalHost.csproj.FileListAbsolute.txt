@@ -14,3 +14,11 @@ C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHost\bin\Debug\DkalEngine.xml
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHost\obj\Debug\ResolveAssemblyReference.cache
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHost\obj\Debug\DkalHost.dll
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHost\obj\Debug\DkalHost.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\bin\Debug\DkalHost.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\bin\Debug\DkalHost.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\bin\Debug\DkalEngine.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\bin\Debug\DkalEngine.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\bin\Debug\DkalEngine.xml
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\obj\Debug\ResolveAssemblyReference.cache
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\obj\Debug\DkalHost.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHost\obj\Debug\DkalHost.pdb

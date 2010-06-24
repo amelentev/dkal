@@ -58,9 +58,11 @@
     <Compile Include="UnitTest1.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="dkalfiles\crocom.dkal" />
     <None Include="dkalfiles\physiciancom.dkal" />
     <None Include="dkalfiles\sitecom.dkal" />
+    <None Include="dkalfiles\test.dkal" />
     <None Include="DkalOrderedTest.orderedtest">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

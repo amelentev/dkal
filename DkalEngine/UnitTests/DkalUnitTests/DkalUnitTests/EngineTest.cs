@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Data.SqlClient;
+using DkalController;
+using Microsoft.Research.DkalEngine;
+using System.Threading;
 
 namespace DkalUnitTest
 {
@@ -13,6 +16,7 @@ namespace DkalUnitTest
     [TestClass]
     public class EngineTest
     {
+        Microsoft.Research.DkalEngine.Ast.Message msg;
         public EngineTest()
         {
             //
@@ -105,9 +109,27 @@ namespace DkalUnitTest
         [TestMethod]
         public void SendMessageTest()
         {
-            //
-            // TODO: Add test logic here
-            //
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            MessageController msgcntroller = new MessageController(dkalContext);
+            msgcntroller.OnInfonProcessed += new MessageController.MyEventHandler(msgcntroller_OnInfonProcessed);
+
+            ParsingCtx pctx = msgcntroller.ParsingContext;
+            string infon = "42 is a good number";
+            string expected = "i-like (42)";
+
+            msgcntroller.SendMessage(infon, null);
+            while(this.msg==null)
+                Thread.Sleep(1000);
+
+            Microsoft.Research.DkalEngine.Ast.Message message= this.msg;
+            Assert.AreEqual(expected, this.msg.message.ToString());
+        }
+
+        void msgcntroller_OnInfonProcessed(object sender, DkalInfoEventArgs e)
+        {
+            if (e.DkalMessage == null)
+                throw new ArgumentNullException("DkalMessage");
+            msg = e.DkalMessage;
         }
 
         /// <summary>
@@ -130,6 +152,12 @@ namespace DkalUnitTest
             //
             // TODO: Add test logic here
             //
+        }
+
+        [TestCleanup]
+        public void CleanUp()
+        {
+            this.msg = null;
         }
     }
 }

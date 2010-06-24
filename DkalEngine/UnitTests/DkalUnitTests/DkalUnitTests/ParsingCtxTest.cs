@@ -88,7 +88,8 @@ namespace DkalUnitTest
         [DeploymentItem("crocom.dkal")] 
         public void ParseInfonTest()
         {
-            MessageController msgcntroller = new MessageController();
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\crocom.dkal";
+            MessageController msgcntroller = new MessageController(dkalContext);
             ParsingCtx pctx = msgcntroller.ParsingContext;
             string infon = "_cro implied SITE can read R in records of trial T under the authority of _site";
             string expected = "_cro implied (SITE) can-read (R) in-records-of-trial (T) under-the-authority-of (_site)";

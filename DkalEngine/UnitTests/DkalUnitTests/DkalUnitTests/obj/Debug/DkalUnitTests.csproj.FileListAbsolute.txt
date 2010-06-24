@@ -6,3 +6,12 @@ C:\MS\ECM\CodePlex_DkalHost\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalEngine.xml
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\obj\Debug\DkalUnitTests.dll
 C:\MS\ECM\CodePlex_DkalHost\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\obj\Debug\DkalUnitTests.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\obj\Debug\ResolveAssemblyReference.cache
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\obj\Debug\DkalUnitTests.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalOrderedTest.orderedtest
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalUnitTests.dll.config
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalUnitTests.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalUnitTests.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalEngine.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalEngine.xml
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\obj\Debug\DkalUnitTests.pdb

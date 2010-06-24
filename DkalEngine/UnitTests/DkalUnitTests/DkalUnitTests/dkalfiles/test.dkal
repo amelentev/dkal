@@ -1,0 +1,8 @@
+﻿attribute [16] {int} is a good number
+attribute [16] i like {int}
+
+if _site knows
+  N is a good number
+then they send
+  to _physician
+    i like N

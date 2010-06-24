@@ -28,21 +28,27 @@ namespace DkalController
 
         public delegate void MyEventHandler(object sender, DkalInfoEventArgs e);
         public event MyEventHandler OnInfonProcessed;
-        private E.Engine eCro;
+        private E.Engine e;
         private ParsingCtx pctx;
         Dictionary<string, E.Engine> EngineLst = new Dictionary<string, E.Engine>();
 
         #endregion
 
-        public MessageController()
+        public MessageController(string contextPath)
         {
+            if (String.IsNullOrEmpty(contextPath))
+                throw new Exception("Please specify a dkal context");
+
+            this.ContextPath = contextPath;
             InitializeEngines();
         }
 
         void InitializeEngines()
         {
-            InitCroEngine();
+            InitEngine();
         }
+
+        public string ContextPath { get; set; }
 
         public ParsingCtx ParsingContext
         {
@@ -54,9 +60,8 @@ namespace DkalController
             return pctx.LookupOrAddPrincipal(principalName);
         }
 
-        void InitCroEngine()
+        void InitEngine()
         {
-            //******cro Engine******//
             // parsing the policy file
             var decls = new List<E.Ast.Assertion>();
             pctx = null;
@@ -73,7 +78,7 @@ namespace DkalController
                 {
                     string path=Environment.CurrentDirectory;//.Project.Properties.Item("ReferencePath").Value;
                     string s=Directory.GetCurrentDirectory();
-                    readFile = new StreamReader(@"..\..\..\DkalUnitTest\dkalfiles\crocom.dkal");
+                    readFile = new StreamReader(this.ContextPath);
 
                     // the “from-database.dkal” will be used in error messages
                     foreach (var a in pctx.ParseStream("from-database.dkal", readFile))
@@ -95,14 +100,11 @@ namespace DkalController
                 opts.PrivateSql = conString;
                 opts.Trace = 0;
 
-                eCro = E.Engine.Config(opts);
-                eCro.Reset();  // this starts a thread for the particular engine
+                e = E.Engine.Config(opts);
+                e.Reset();  // this starts a thread for the particular engine
                 foreach (var a in decls)
-                    eCro.AddAssertion(a);
-                eCro.AddDefaultFilter();
-
-                if (!EngineLst.ContainsKey("cro"))
-                    EngineLst.Add("cro", eCro);
+                    e.AddAssertion(a);
+                e.AddDefaultFilter();
             }
             catch (E.Util.SyntaxError se)
             {
@@ -118,9 +120,9 @@ namespace DkalController
 
         public void SendMessage(string msg, string principal)
         {
-            Ast.Principal principalObj = pctx.LookupOrAddPrincipal("_cro");
+            //Ast.Principal principalObj = pctx.LookupOrAddPrincipal(principal);
             Ast.Term termObj = pctx.ParseInfon(msg);
-            E.Engine e = GetEngine(principal);
+            //E.Engine e = GetEngine(principal);
             e.AddInfon(termObj);
             e.Talk(this);
         }
