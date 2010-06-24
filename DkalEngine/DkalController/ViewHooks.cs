@@ -114,6 +114,9 @@ namespace Microsoft.Research.DkalController
       Say("<b>WARNING</b> <blue>{0}</blue>\n", s);
     }
 
+    public void RequestFinished()
+    {
+    }
     #endregion
   }
 }

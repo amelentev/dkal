@@ -37,5 +37,7 @@ type ICommunicator =
   abstract Warning : string -> unit
   /// Called when there is an exception in execution of the current task.
   abstract ExceptionHandler : System.Exception -> unit
+  /// Called when the Engine is done processing a request
+  abstract RequestFinished : unit -> unit
 
 
