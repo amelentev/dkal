@@ -7,6 +7,7 @@ using System.Data.SqlClient;
 using DkalController;
 using Microsoft.Research.DkalEngine;
 using System.Threading;
+using System.Configuration;
 
 namespace DkalUnitTest
 {
@@ -70,12 +71,15 @@ namespace DkalUnitTest
         [TestMethod]
         public void SubstrateConnectionStringTest()
         {
-            string connectionString = @"Server=V-TUMEH1\R2SQLSERVER;Database=ECMDB;User ID=sa;Password=tu5hAr%#;Trusted_Connection=False;Encrypt=True;";
+            string conString = ConfigurationManager.AppSettings["SubstrateConnectionString"];
+
+            if (string.IsNullOrEmpty(conString))
+                throw new Exception("SubstrateConnectionString is null");
             SqlConnection con = new SqlConnection();
             bool isConnected = false;
             try
             {
-                con.ConnectionString=connectionString;
+                con.ConnectionString = conString;
                 con.Open();
                 isConnected = true;
                 con.Close();
