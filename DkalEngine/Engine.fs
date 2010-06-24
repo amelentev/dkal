@@ -300,13 +300,15 @@ type Engine =
     this.Invoke (fun () ->
       this.comm <- Some comm
       this.DoListen msg
-      this.DoTalk ())
+      this.DoTalk ()
+      this.Comm.RequestFinished ())
 
   /// See if some messages should be sent, and if so, sends them using comm.Send().
   member this.Talk (comm) =
     this.Invoke (fun () ->
       this.comm <- Some comm
-      this.DoTalk ())
+      this.DoTalk ()
+      this.Comm.RequestFinished ())
 
   /// Given an infon, possibly with free variables, return all the possible values
   /// for these variables using comm.QueryResults(i, results). 
@@ -315,7 +317,8 @@ type Engine =
       this.comm <- Some comm
       let bind (s:Subst) =
         i.Vars() |> Seq.map (fun v -> { formal = v; actual = s.[v.id].Apply s })
-      this.Comm.QueryResults (i, (this.Derive Map.empty i).All |> Seq.map bind))
+      this.Comm.QueryResults (i, (this.Derive Map.empty i).All |> Seq.map bind)
+      this.Comm.RequestFinished ())
     
   member private this.Invoke a = 
     if this.worker.IsNone then failwith "not yet started"
