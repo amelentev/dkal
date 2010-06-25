@@ -70,6 +70,9 @@
 <member name="">
 
 </member>
+<member name="">
+
+</member>
 <member name="M:Microsoft.Research.DkalEngine.Engine.Talk(Microsoft.Research.DkalEngine.ICommunicator)">
 <summary>
  See if some messages should be sent, and if so, sends them using comm.Send().
@@ -183,6 +186,11 @@
  Called when the engine needs to send a message. It should put the message the sending queue.
 </summary>
 </member>
+<member name="M:Microsoft.Research.DkalEngine.ICommunicator.RequestFinished">
+<summary>
+ Called when the Engine is done processing a request
+</summary>
+</member>
 <member name="M:Microsoft.Research.DkalEngine.ICommunicator.QueryResults(Microsoft.Research.DkalEngine.Ast.Term,System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{Microsoft.Research.DkalEngine.Binding}})">
 <summary>
  Called when results of an Ask query are available. It also provides the infon which was asked for.
@@ -279,6 +287,12 @@
  with all function declarations, it can be used to parse a single infon.
  The deserialization also depends on the function definitions accumulated here.
 </summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
 </member>
 <member name="">
 

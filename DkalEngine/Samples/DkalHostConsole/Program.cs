@@ -23,7 +23,8 @@ namespace DkalHostConsole
         {
             MessageController mcon = new MessageController();
             mcon.OnInfonProcessed += new MessageController.MyEventHandler(mcon_OnInfonProcessed);
-            mcon.SendMessage("_cro implied SITE can read R in records of trial T under the authority of _site", "_cro");
+            //mcon.SendMessage("_cro implied SITE can read R in records of trial T under the authority of _site", "_cro");
+            mcon.SendMessage("42 is a good number", "_dkalTestEngine");
         }
 
         static void mcon_OnInfonProcessed(object sender, DkalInfoEventArgs e)

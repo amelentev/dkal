@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using DkalController;
+using E = Microsoft.Research.DkalEngine;
 using Microsoft.Research.DkalEngine;
 
 namespace DkalUnitTest
@@ -41,13 +42,6 @@ namespace DkalUnitTest
             }
         }
 
-        //[ClassInitialize]
-        //public static void InitMessageController()
-        //{
-        //    msgcntroller = new MessageController();
-
-        //}
-
         #region Additional test attributes
         //
         // You can use the following additional attributes as you write your tests:
@@ -71,44 +65,83 @@ namespace DkalUnitTest
         #endregion
 
         /// <summary>
-        /// Test a list of Assertions after passing an Input dkal stream  as argument
+        /// Test verifies a list of Assertions after passing an Input dkal stream as argument
         /// </summary>
         [TestMethod]
         public void ParseStreamTest()
         {
-            //
-            // TODO: Add test logic here
-            //
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            MessageController msgcntroller = new MessageController(dkalContext);
+            List<E.Ast.Assertion> assertionsList = msgcntroller.AssertionsList;
+
+            if (assertionsList == null)
+                Assert.Fail("Assertions List is null");
+
+            bool val = (assertionsList.Count > 0);
+            Assert.IsTrue(val, "Assertions not found");
         }
 
         /// <summary>
-        /// Verify Term object by passing an infon as argument
+        /// Test verifies Term object by passing an infon as argument
         /// </summary>
         [TestMethod]
-        [DeploymentItem("crocom.dkal")] 
         public void ParseInfonTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\crocom.dkal";
-            MessageController msgcntroller = new MessageController(dkalContext);
-            ParsingCtx pctx = msgcntroller.ParsingContext;
-            string infon = "_cro implied SITE can read R in records of trial T under the authority of _site";
-            string expected = "_cro implied (SITE) can-read (R) in-records-of-trial (T) under-the-authority-of (_site)";
-            Ast.Term termObj = pctx.ParseInfon(infon);
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
 
-            if (termObj == null)
-                Assert.Fail("Term object is null");
-            Assert.AreEqual(expected, termObj.ToString());
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                ParsingCtx pctx = msgcntroller.ParsingContext;
+                string infon = "42 is a good number";
+                string expected = "(42) is-a-good-number";
+                Ast.Term termObj = pctx.ParseInfon(infon);
+
+                if (termObj == null)
+                    Assert.Fail("Term object is null");
+                Assert.AreEqual(expected, termObj.ToString());
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
         }
 
         /// <summary>
-        /// Verify Principal object by passing a name as argument. This should return a Principal. The Name property should match the name in the substrate
+        /// Test verifies Principal object by passing a name as argument. This should return a Principal. 
+        /// The Name property should match the name in the substrate
         /// </summary>
         [TestMethod]
         public void LookupOrAddPrincipalTest()
         {
-            //
-            // TODO: Add test logic here
-            //
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                ParsingCtx pctx = msgcntroller.ParsingContext;
+                string principalName = "_dkalTestEngine";
+                Ast.Principal principalObj = pctx.LookupOrAddPrincipal(principalName);
+
+                if (principalObj == null)
+                    Assert.Fail("Principal object is null");
+
+                Assert.AreEqual(principalName, principalObj.Name);
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
         }
 
     }

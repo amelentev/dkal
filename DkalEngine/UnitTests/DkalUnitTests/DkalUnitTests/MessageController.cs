@@ -24,16 +24,48 @@ namespace DkalController
 {
     public class MessageController : ICommunicator
     {
-        #region declare variables
+        #region Variables
 
         public delegate void MyEventHandler(object sender, DkalInfoEventArgs e);
         public event MyEventHandler OnInfonProcessed;
         private E.Engine e;
         private ParsingCtx pctx;
-        Dictionary<string, E.Engine> EngineLst = new Dictionary<string, E.Engine>();
+        List<E.Ast.Assertion> decls;
 
         #endregion
 
+        #region Properties
+
+
+        /// <summary>
+        /// returns Engine Instance
+        /// </summary>
+        public E.Engine EngineInstance
+        {
+            get
+            {
+                if (e == null)
+                    throw new Exception("Engine object not initialized yet");
+
+                return e;
+            }
+        }
+
+        /// <summary>
+        /// returns Assertion List
+        /// </summary>
+        public List<E.Ast.Assertion> AssertionsList
+        {
+            get
+            {
+                if (decls == null)
+                    throw new Exception("Assertions list not initialized yet");
+                return decls;
+            }
+        }
+        #endregion
+
+        #region Constructor
         public MessageController(string contextPath)
         {
             if (String.IsNullOrEmpty(contextPath))
@@ -42,7 +74,9 @@ namespace DkalController
             this.ContextPath = contextPath;
             InitializeEngines();
         }
+        #endregion
 
+        #region Methods
         void InitializeEngines()
         {
             InitEngine();
@@ -63,7 +97,7 @@ namespace DkalController
         void InitEngine()
         {
             // parsing the policy file
-            var decls = new List<E.Ast.Assertion>();
+            decls = new List<E.Ast.Assertion>();
             pctx = null;
             pctx = new E.ParsingCtx();
             string me = null;
@@ -76,8 +110,8 @@ namespace DkalController
                 System.IO.TextReader readFile = null;
                 try
                 {
-                    string path=Environment.CurrentDirectory;//.Project.Properties.Item("ReferencePath").Value;
-                    string s=Directory.GetCurrentDirectory();
+                    string path = Environment.CurrentDirectory;//.Project.Properties.Item("ReferencePath").Value;
+                    string s = Directory.GetCurrentDirectory();
                     readFile = new StreamReader(this.ContextPath);
 
                     // the “from-database.dkal” will be used in error messages
@@ -118,28 +152,18 @@ namespace DkalController
             }
         }
 
+        /// <summary>
+        /// Sends an infon to the current Engine instance
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="principal"></param>
         public void SendMessage(string msg, string principal)
         {
-            //Ast.Principal principalObj = pctx.LookupOrAddPrincipal(principal);
             Ast.Term termObj = pctx.ParseInfon(msg);
-            //E.Engine e = GetEngine(principal);
             e.AddInfon(termObj);
             e.Talk(this);
         }
-
-        E.Engine GetEngine(string principal)
-        {
-            switch (principal)
-            {
-                case "_cro":
-                    return EngineLst["cro"] as E.Engine;
-                case "_site":
-                    return EngineLst["site"] as E.Engine;
-                case "_physician":
-                    return EngineLst["physician"] as E.Engine;
-            }
-            return null;
-        }
+        #endregion
 
         #region ICommunicator Members
 
@@ -184,8 +208,16 @@ namespace DkalController
             throw new NotImplementedException();
         }
 
+        public void RequestFinished()
+        {
+            string s = "";
+        }
+
         #endregion
     }
+    /// <summary>
+    /// Class which carries PayLoad for Dkal Message
+    /// </summary>
     public class DkalInfoEventArgs : EventArgs
     {
         Ast.Message _dkalMessage = null;

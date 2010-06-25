@@ -36,7 +36,7 @@
   <ItemGroup>
     <Reference Include="DkalEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\MS\ECM\CodePlex_Dkal\DkalEngine\bin\Debug\DkalEngine.dll</HintPath>
+      <HintPath>..\..\bin\Debug\DkalEngine.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

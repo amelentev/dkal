@@ -31,8 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DkalEngine">
-      <HintPath>..\..\..\..\..\..\..\MS\ECM\CodePlex_Dkal\DkalEngine\bin\Debug\DkalEngine.dll</HintPath>
+    <Reference Include="DkalEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\bin\Debug\DkalEngine.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />

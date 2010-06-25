@@ -15,3 +15,4 @@ C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitT
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalEngine.pdb
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalEngine.xml
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\obj\Debug\DkalUnitTests.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\bin\Debug\DkalEngine.dll

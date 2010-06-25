@@ -66,15 +66,16 @@ namespace DkalUnitTest
         #endregion
 
         /// <summary>
-        /// Validate Substrate Connection String
+        /// Test validates Substrate Sql Connection String
         /// </summary>
         [TestMethod]
-        public void SubstrateConnectionStringTest()
+        public void TestConnectionString()
         {
             string conString = ConfigurationManager.AppSettings["SubstrateConnectionString"];
 
-            if (string.IsNullOrEmpty(conString))
-                throw new Exception("SubstrateConnectionString is null");
+            if (String.IsNullOrEmpty(conString))
+                Assert.Fail("SubstrateConnectionString not found in App.Config");
+
             SqlConnection con = new SqlConnection();
             bool isConnected = false;
             try
@@ -86,6 +87,7 @@ namespace DkalUnitTest
             }
             catch (Exception ex)
             {
+                Assert.Fail("Exception occurred in Sql Connection: " + ex.Message);
             }
             finally
             {
@@ -97,36 +99,63 @@ namespace DkalUnitTest
         }
 
         /// <summary>
-        /// Verify Engine object 
+        /// Test exercises creation and deletion of Engine 
         /// </summary>
         [TestMethod]
-        public void CreateEngineTest()
+        public void TestEngineCreation()
         {
-            //
-            // TODO: Add test logic here
-            //
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                Engine e = msgcntroller.EngineInstance;
+
+                Thread.Sleep(2000); // giving some time for the Engine to initalize
+
+                bool val = (e.communications.Count() > 0 && e.filters.Count() > 0);
+                Assert.IsTrue(val, "Failed to initialize Engine");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
         }
 
         /// <summary>
-        /// Verify AddInfon call to an Engine. This call should result in a Message object to a callback SendMessage() implemented from ICommunicator interface 
+        /// Test verifies AddInfon call to an Engine. This call should result in a Message object to a callback SendMessage() implemented from ICommunicator interface 
         /// </summary>
         [TestMethod]
         public void SendMessageTest()
         {
             string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
-            MessageController msgcntroller = new MessageController(dkalContext);
-            msgcntroller.OnInfonProcessed += new MessageController.MyEventHandler(msgcntroller_OnInfonProcessed);
 
-            ParsingCtx pctx = msgcntroller.ParsingContext;
-            string infon = "42 is a good number";
-            string expected = "i-like (42)";
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
 
-            msgcntroller.SendMessage(infon, null);
-            while(this.msg==null)
-                Thread.Sleep(1000);
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                msgcntroller.OnInfonProcessed += new MessageController.MyEventHandler(msgcntroller_OnInfonProcessed);
 
-            Microsoft.Research.DkalEngine.Ast.Message message= this.msg;
-            Assert.AreEqual(expected, this.msg.message.ToString());
+                //ParsingCtx pctx = msgcntroller.ParsingContext;
+                string infon = "42 is a good number";
+                string expected = "i-like (42)";
+
+                msgcntroller.SendMessage(infon, null);
+                while (this.msg == null)
+                    Thread.Sleep(1000);
+
+                Microsoft.Research.DkalEngine.Ast.Message message = this.msg;
+                Assert.AreEqual(expected, this.msg.message.ToString());
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
         }
 
         void msgcntroller_OnInfonProcessed(object sender, DkalInfoEventArgs e)
@@ -137,27 +166,36 @@ namespace DkalUnitTest
         }
 
         /// <summary>
-        /// Create 2 Engines and verify the message flow as a complete cycle
-        /// </summary>
-        [TestMethod]
-        public void EnginesCycleTest()
-        {
-            //
-            // TODO: Add test logic here
-            //
-        }
-
-        /// <summary>
-        /// Verify the Engine instance is not functional anymore by invoking its Close()
+        /// Test verifies the Engine instance is not functional anymore by invoking its Close method
         /// </summary>
         [TestMethod]
         public void KillEngineTest()
         {
-            //
-            // TODO: Add test logic here
-            //
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                Engine e = msgcntroller.EngineInstance;
+
+                Thread.Sleep(2000); // giving some time for the Engine to initalize
+
+                e.Close();
+                bool val = (e.communications.Count() == 0 && e.filters.Count() == 0);
+                Assert.IsTrue(val, "Engine is still running");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
         }
 
+        /// <summary>
+        /// Cleanup code
+        /// </summary>
         [TestCleanup]
         public void CleanUp()
         {
