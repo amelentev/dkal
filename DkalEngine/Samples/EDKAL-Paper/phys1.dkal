@@ -1,0 +1,15 @@
+phys1 knows
+  SITE tdonS
+    PHYS participates in TRIAL at SITE as a physician
+    PHYS is allocated patients P1 to P2 in TRIAL at SITE
+  keyManager tdonS key for record(N,TRIAL) is K
+
+if Phys1 knows
+   asInfon(P1 <= N && N <= P2)
+   asInfon(needInfo(N))
+then
+   say with justification to keyManager
+      phys1 requests to read record(N,TRIAL)
+   communicate with justification to keyManager
+      org(TRIAL) implied phys1 may read record(N,TRIAL)
+

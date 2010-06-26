@@ -1,0 +1,15 @@
+if org1 knows
+   asInfon(org(TRIAL) == org1)
+   asInfon(siteUnnotified(SITE,TRIAL))
+   asInfon(sitePatients(SITE,TRIAL,N1,N2))
+then
+   say with justification to SITE
+      SITE participates in TRIAL
+      SITE is allocated patients N1 to N2 in TRIAL
+   communicate with justification to SITE
+      if
+         asInfon(N1 <= N && N <= N2)
+         SITE implied PERSON may read record(N,TRIAL)
+      then
+         org1 implied PERSON may read record(N,TRIAL)
+

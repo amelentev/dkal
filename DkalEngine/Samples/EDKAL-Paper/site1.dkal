@@ -1,0 +1,25 @@
+site1 knows
+  org(TRIAL) tdonS
+     SITE participates in TRIAL
+     SITE is allocated patients N1 to N2 in TRIAL
+
+if site1 knows
+   site1 is allocated patients N1 to N2 in TRIAL
+   asInfon(physUnnotified(PHYS,Site1,TRIAL))
+   asInfon(physPatients(PHYS,Site1,TRIAL,P1,P2))
+   asInfon(N1 <= P1 && P2 <= N2)
+then
+   say with justification to PHYS
+      PHYS participates in TRIAL at site1 as a physician
+      PHYS is allocated patients P1 to P2 in TRIAL at site1
+      if
+        asInfon(P1 <= N && N <= P2)
+      then
+        PHYS may read record(N,TRIAL)
+   communicate with justification to PHYS
+      if
+         asInfon(P1 <= N && N <= P2)
+         site1 said PHYS may read record(N,TRIAL)
+      then
+         org(TRIAL) implied PHYS may read record(N,TRIAL)
+
