@@ -44,12 +44,12 @@ module Resolver =
         | Tok.App (_, ".", [Tok.Id (_, table); Tok.Id (_, column)]) ->
           Term.Const (Const.Column (table, column))
         | Tok.App (pos, name, [Tok.Group (_, ')', args)]) ->
-          resolveTerm ctx expectedType (Tok.App (pos, name, args))
+          resolveTerm ctx expectedType (Tok.App (pos, name, args |> List.filter (function Tok.Id (_, ",") -> false | _ -> true)))
         | Tok.App (_, name, args) ->
           match ctx.functions.TryGetValue name with
             | true, fn ->
               if fn.argTypes.Length <> args.Length then
-                err tok "wrong number of arguments"
+                err tok ("wrong number of arguments, expecting " + fn.argTypes.Length.ToString())
               else
                 let args = List.map2 (fun (v:Var) arg -> resolveTerm ctx v.typ arg) fn.argTypes args
                 Term.App (fn, args)

@@ -49,6 +49,7 @@ rule token = parse
                        StringLiteral (stringBuf.ToString()) }
 | lowercase alnum*   { Id (lexeme lexbuf) }
 | opstart opchar*    { Id (lexeme lexbuf) }
+| ','                { Id (",") }
 | uppercase alnum*   { Var (lexeme lexbuf) }
 | eof                { Eof }
 | _                  { Invalid (lexeme lexbuf) }

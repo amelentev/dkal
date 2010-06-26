@@ -13,8 +13,8 @@ attribute [16] {principal} requests to read {record}
 attribute [16] {int} is key for {record}
 attribute [16] {principal} participates in {trial}
 attribute [16] {principal} is allocated patients {int} to {int} in {trial}
-attribute [16] {principal} participates in {trial} at {site} as a physician
-attribute [16] {principal} is allocated patients {int} to {int} in {trial} at {site}
+attribute [16] {principal} participates in {trial} at {principal} as a physician
+attribute [16] {principal} is allocated patients {int} to {int} in {trial} at {principal}
 
 
 

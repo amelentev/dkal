@@ -1,3 +1,5 @@
+#include "common.dkal"
+
 function [2] needInfo ( {N:int} ) returns {R:record}
   is physPatients.id == N && physPatients.needInfo == R
 
