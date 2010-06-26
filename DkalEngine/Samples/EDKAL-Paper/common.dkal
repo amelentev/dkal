@@ -1,0 +1,20 @@
+type trial   // trials.id
+type patient // patients.id
+type record  // records.id
+
+function [2] org ( {T:trial} ) returns {P:principal}
+  is trials.id == T && trials.cro == P
+
+function [2] record ( {N:int} , {T:trial} ) returns {R:record}
+  is records.id == R && records.patient == N && records.trial == T
+
+attribute [16] {principal} may read {record}
+attribute [16] {principal} requests to read {record}
+attribute [16] {int} is key for {record}
+attribute [16] {principal} participates in {trial}
+attribute [16] {principal} is allocated patients {int} to {int} in {trial}
+attribute [16] {principal} participates in {trial} at {site} as a physician
+attribute [16] {principal} is allocated patients {int} to {int} in {trial} at {site}
+
+
+

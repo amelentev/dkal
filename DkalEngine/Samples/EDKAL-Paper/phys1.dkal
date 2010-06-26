@@ -1,3 +1,6 @@
+function [2] needInfo ( {N:int} ) returns {R:record}
+  is physPatients.id == N && physPatients.needInfo == R
+
 phys1 knows
   SITE tdonS
     PHYS participates in TRIAL at SITE as a physician
