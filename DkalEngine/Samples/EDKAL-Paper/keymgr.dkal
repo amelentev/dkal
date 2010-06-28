@@ -6,7 +6,7 @@ keyManager knows
 if keyManager knows
    PERSON said PERSON requests to read record(N,TRIAL)
    org(TRIAL) implied PERSON may read record(N,TRIAL)
-   asInfon(key(N,TRIAL) == K)
+   asInfon(key(record(N,TRIAL)) == K)
 then
    say to PERSON
      K is key for record(N,TRIAL)

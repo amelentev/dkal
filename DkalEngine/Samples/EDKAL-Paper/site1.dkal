@@ -6,9 +6,8 @@ function [2] physPatients ( {P:principal}, {T:trial}, {N1:int}, {N2:int} ) retur
   is physAssignments.phys == P && physAssignments.trial == T && physAssignments.n1 == N1 && physAssignments.n2 == N2 && R == true
 
 site1 knows
-  org(TRIAL) tdonS
-     SITE participates in TRIAL
-     SITE is allocated patients N1 to N2 in TRIAL
+  org(TRIAL) tdonS SITE participates in TRIAL
+  org(TRIAL) tdonS SITE is allocated patients N1 to N2 in TRIAL
 
 if site1 knows
    site1 is allocated patients N1 to N2 in TRIAL
