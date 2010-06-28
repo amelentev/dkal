@@ -1,5 +1,9 @@
 #include "common.dkal"
 
+function [2] key ( {R:record} ) returns {K:int}
+  is keys.record == R && keys.thekey == K
+
+
 keyManager knows
   org(TRIAL) tdonI PERSON may read record(N,TRIAL)
 
@@ -8,6 +12,6 @@ if keyManager knows
    org(TRIAL) implied PERSON may read record(N,TRIAL)
    asInfon(key(record(N,TRIAL)) == K)
 then
-   say to PERSON
+   say with justification to PERSON
      K is key for record(N,TRIAL)
 
