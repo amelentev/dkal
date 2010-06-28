@@ -61,7 +61,7 @@ type SqlConnector(connStr) =
       while reader.Read() do
         yield reader }
       
-  member this.ReadVar (getPrincipal : int -> Principal, rd:SqlDataReader, var:Var, idx:int) =
+  member this.ReadVar (getPrincipal : int -> Principal, rd:Common.DbDataReader, var:Var, idx:int) =
     try
       if var.typ.name = "bool" then
         match rd.GetValue idx with
