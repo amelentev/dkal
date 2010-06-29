@@ -164,6 +164,7 @@ module Ast =
   let private infonEmpty = addGlobalFunction Type.Infon "Infon.empty" []
   let private infonAsInfon = addGlobalFunction Type.Infon "asInfon" [Type.Bool]  
   let private infonCertified = addGlobalFunction Type.Infon "Infon.cert" [Type.Infon; Type.Evidence]
+  let private substrateEq = addGlobalFunction Type.Bool "==" [Type.Unbound; Type.Unbound]  
   
   // the int parameter is a placeholder for the actual cryptographic signature
   let private evSignature = addGlobalFunction Type.Evidence "Ev.signedBy" [Type.Principal; Type.Infon; Type.Int]
@@ -179,6 +180,7 @@ module Ast =
     static member Cert = infonCertified
     static member EvSignature = evSignature
     static member EvMp = evMp
+    static member Eq = substrateEq
   
   /// Principals are fully identified by name. New principals should be created only using
   /// ParsingCtx.LookupOrAddPrincipal method.

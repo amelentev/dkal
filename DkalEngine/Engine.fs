@@ -149,31 +149,37 @@ type Engine =
   
   member this.DoDerive pref (subst:AugmentedSubst) infon =
     if this.options.Trace > 0 then
-      System.Console.WriteLine ("derive: {0} under {1}", infon, substToString subst.subst)
+      System.Console.WriteLine ("derive: {0} under {1}  [", infon, substToString subst.subst)
     
     let sum f lst =
       List.fold (fun acc e -> f e @ acc) [] lst
-      
-    match infon with
-      | InfonAnd (i1, i2) ->
-        (this.DoDerive pref subst i1) |> sum (fun s1 -> this.DoDerive pref s1 i2)
-      | InfonEmpty _ -> [subst]
-      | InfonSaid (p, i) ->
-        this.DoDerive (Pref.Said p :: pref) subst i
-      | InfonImplied (p, i) ->
-        this.DoDerive (Pref.Implied p :: pref) subst i
-      | Infon.Var v when subst.subst.ContainsKey v.id ->
-        this.DoDerive pref subst subst.subst.[v.id]
-      | AsInfon e ->
-        if pref <> [] then
-          failwith "asInfon(...) under said/implied prefix"
-        [{ subst with assumptions = e :: subst.assumptions }]
-      | templ ->
-        let rec checkOne = function
-          | (subst, precond :: rest) ->
-            this.DoDerive [] subst precond |> sum (fun s -> checkOne (s, rest))
-          | (subst, []) -> [subst]
-        this.InfonsWithPrefix subst.subst pref templ |> List.map (fun (s, p) -> ({subst with subst = s }, p)) |> sum checkOne
+    
+    let res = 
+      match infon with
+        | InfonAnd (i1, i2) ->
+          (this.DoDerive pref subst i1) |> sum (fun s1 -> this.DoDerive pref s1 i2)
+        | InfonEmpty _ -> [subst]
+        | InfonSaid (p, i) ->
+          this.DoDerive (Pref.Said p :: pref) subst i
+        | InfonImplied (p, i) ->
+          this.DoDerive (Pref.Implied p :: pref) subst i
+        | Infon.Var v when subst.subst.ContainsKey v.id ->
+          this.DoDerive pref subst subst.subst.[v.id]
+        | AsInfon e ->
+          if pref <> [] then
+            failwith "asInfon(...) under said/implied prefix"
+          [{ subst with assumptions = e :: subst.assumptions }]
+        | templ ->
+          let rec checkOne = function
+            | (subst, precond :: rest) ->
+              this.DoDerive [] subst precond |> sum (fun s -> checkOne (s, rest))
+            | (subst, []) -> [subst]
+          this.InfonsWithPrefix subst.subst pref templ |> List.map (fun (s, p) -> ({subst with subst = s }, p)) |> sum checkOne
+
+    if this.options.Trace > 0 then
+      System.Console.WriteLine ("] result: {0}", res.Length)
+
+    res
 
   member private this.Send msg =
     if this.sentItems.ContainsKey msg then
@@ -268,7 +274,10 @@ type Engine =
   member this.AddAssertion (a:Assertion) = 
     this.Invoke (fun () ->
       this.me <- Some a.AssertionInfo.principal
-      match this.HandleCertifications a with
+      let a = a 
+              |> this.HandleCertifications 
+              |> this.PullOutFunctions
+      match a with
         | Knows k ->
           this.infonstrate <- k :: this.infonstrate
         | SendTo c ->
@@ -419,7 +428,7 @@ type Engine =
               if comm.certified = CertifiedSay then
                 Infon.Said (Infon.Const (Const.Principal this.Me.Value), comm.message)
               else comm.message            
-            match this.FinalOutcome comm.message with
+            match this.FinalOutcome msg with
                | InfonSaid (p, _)
                | InfonImplied (p, _) when this.IsMe p ->
                  { comm with message = Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg])) }
@@ -434,6 +443,37 @@ type Engine =
             comm
       Assertion.SendTo { comm with certified = Processed }
     | t -> t
+
+  member private this.PullOutFunctions asrt =
+    let pulledOut = dict()
+    let premises = vec()
+    let rec aux = function
+      | AsInfon _ as t -> t
+      | Term.App (f, args) as t ->
+        if f.retType.typ.name.StartsWith "*" then
+          Term.App (f, List.map aux args)
+        else
+          match pulledOut.TryGetValue t with
+            | true, v -> v
+            | false, _ ->
+              let v = Term.Var (this.FreshVar t.Type)
+              pulledOut.Add (t, v)
+              premises.Add (Term.App (Function.AsInfon, [Term.App (Function.Eq, [v; t])]))
+              v
+      | t -> t
+    let addPremises t =
+      Seq.fold (fun acc p -> Infon.Follows (p, acc)) t premises
+
+    match asrt with
+      | Assertion.Knows k ->
+        Assertion.Knows { k with infon = aux k.infon |> addPremises }
+      | Assertion.SendTo k ->
+        let k = { k with trigger = aux k.trigger 
+                         target = aux k.target
+                         message = aux k.message
+                         proviso = aux k.proviso }
+        Assertion.SendTo { k with message = k.message |> addPremises }
+      | a -> a
 
   member this.Certify = function
     | InfonSaid (p, _)

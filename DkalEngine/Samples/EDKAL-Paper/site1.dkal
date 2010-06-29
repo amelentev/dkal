@@ -25,7 +25,7 @@ then
    communicate with justification to PHYS
       if
          asInfon(P1 <= N && N <= P2)
-         site1 said PHYS may read record(N,TRIAL)
+         site1 implied PHYS may read record(N,TRIAL)
       then
          org(TRIAL) implied PHYS may read record(N,TRIAL)
 

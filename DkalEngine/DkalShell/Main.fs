@@ -63,13 +63,15 @@ and Context(filename, gctx:Global, tr) =
     member this.ExceptionHandler e =
       say ("exception: " + e.ToString())
     member this.Warning e = say ("warning: " + e)
-    member this.Knows _ = ()
+    member this.Knows inf =
+      if opts.Trace >= 1 then
+        say (xf "knows %O" (inf.infon.Sanitize()))
     member this.QueryResults (inf, res) = ()
     member this.SendMessage msg =
       match gctx.Contexts.TryGetValue msg.target.name with
         | true, target ->
-          let target = gctx.Contexts.[msg.target.name]
           let msg' = serializer.SerializeMessage msg
+          say (xf "say to %O:\n%O" target.Me (msg.message.Sanitize()))
           target.RecieveMessage msg'
         | _ ->
           say ("no such principal " + msg.target.ToString())
