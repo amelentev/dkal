@@ -50,7 +50,8 @@ type Engine =
     mutable infonstrate : list<Knows>
     mutable filters : list<Filter>
     mutable communications : list<Communication>
-    mutable nextId : int   
+    mutable nextId : int
+    mutable finish : bool   
   }
   
   /// Create a new engine instance.
@@ -63,6 +64,7 @@ type Engine =
         sql = None
         pending = new GQueue<_>()
         options = opts
+        finish = false
         }
     this
 
@@ -149,7 +151,7 @@ type Engine =
   
   member this.DoDerive pref (subst:AugmentedSubst) infon =
     if this.options.Trace > 0 then
-      System.Console.WriteLine ("derive: {0} under {1}  [", infon, substToString subst.subst)
+      System.Console.WriteLine ("{0}: [ derive: {1} under {2}", this.me.Value.name, infon, substToString subst.subst)
     
     let sum f lst =
       List.fold (fun acc e -> f e @ acc) [] lst
@@ -193,7 +195,7 @@ type Engine =
     let checkAssumptions (augS:AugmentedSubst) =
       let apply (t:Term) = t.Apply augS.subst
       let sqlExpr = SqlCompiler.compile this.options this.NextId (augS.assumptions |> List.map apply)
-      SqlCompiler.execQuery (this.sql.Value, this.Comm, sqlExpr, augS.subst, vars) |> Seq.toList      
+      SqlCompiler.execQuery (this.sql.Value, this.Comm, this.options, sqlExpr, augS.subst, vars) |> Seq.toList      
     { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.collect checkAssumptions }
   
   member private this.DoListen (msg:Message) =  
@@ -275,8 +277,8 @@ type Engine =
     this.Invoke (fun () ->
       this.me <- Some a.AssertionInfo.principal
       let a = a 
-              |> this.HandleCertifications 
               |> this.PullOutFunctions
+              |> this.HandleCertifications 
       match a with
         | Knows k ->
           this.infonstrate <- k :: this.infonstrate
@@ -328,7 +330,29 @@ type Engine =
         i.Vars() |> Seq.map (fun v -> { formal = v; actual = s.[v.id].Apply s })
       this.Comm.QueryResults (i, (this.Derive Map.empty i).All |> Seq.map bind)
       this.Comm.RequestFinished ())
-    
+  
+  /// Wait for all pending requests to finish, stop the worker thread and clean the state.
+  member this.Finish () =
+    this.Invoke (fun () ->
+      this.finish <- true)
+    match this.worker with
+      | Some w ->
+        w.Join()
+        this.worker <- None
+      | None -> ()
+    this.Close()
+
+  /// Block until all pending requests are finished.
+  member this.CheckPoint () =
+    let o = ref false
+    this.Invoke (fun () ->
+      lock o (fun () ->
+        o := true
+        System.Threading.Monitor.Pulse o))
+    lock o (fun () ->
+      if !o then ()
+      else System.Threading.Monitor.Wait o |> ignore)
+
   member private this.Invoke a = 
     if this.worker.IsNone then failwith "not yet started"
     let wrapped () =
@@ -340,7 +364,7 @@ type Engine =
       System.Threading.Monitor.Pulse this.pending)
   
   member private this.Work () =
-    while true do
+    while not this.finish do
       let act = 
         lock this.pending (fun () ->
           while this.pending.Count = 0 do
@@ -463,6 +487,8 @@ type Engine =
       | t -> t
     let addPremises t =
       Seq.fold (fun acc p -> Infon.Follows (p, acc)) t premises
+    let addSides t =
+      Seq.fold (fun acc p -> Infon.And (p, acc)) t premises
 
     match asrt with
       | Assertion.Knows k ->
@@ -472,7 +498,7 @@ type Engine =
                          target = aux k.target
                          message = aux k.message
                          proviso = aux k.proviso }
-        Assertion.SendTo { k with message = k.message |> addPremises }
+        Assertion.SendTo { k with trigger = k.trigger |> addSides }
       | a -> a
 
   member this.Certify = function

@@ -243,7 +243,7 @@ module SqlCompiler =
       log ("  Simplified " + body.ToString() + " @ " + String.concat ", " (List.map (fun (v:Var,e:Expr) -> v.ToString() + " -> " + e.ToString()) bindings))
     body, bindings
     
-  let execQuery (sql:SqlConnector, comm:ICommunicator, cc:CompiledQuery, subst:Subst, vars:list<Var>) =
+  let execQuery (sql:SqlConnector, comm:ICommunicator, opts:Options, cc:CompiledQuery, subst:Subst, vars:list<Var>) =
     if cc = (sqlTrue, []) then
       seq [subst]
     else
@@ -336,5 +336,5 @@ module SqlCompiler =
         let constVal = sql.ReadVar (comm.PrincipalById, rd, var, idx)
         (idx + 1, subst.Add (var.id, Term.Const constVal))
       
-      sql.ExecQuery (sb.ToString(), parms, true) |>
+      sql.ExecQuery (sb.ToString(), parms, opts.Trace >= 1) |>
         Seq.map (fun rd -> Seq.fold (addToSubst rd) (0, subst) resSubst |> snd)

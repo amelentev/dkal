@@ -57,6 +57,8 @@ and Context(filename, gctx:Global, tr) =
     let msg = serializer.DeserializeMessage ser
     eng.Listen (this, msg)
   member this.Talk () = eng.Talk this
+  member this.CheckPoint () = eng.CheckPoint ()
+  member this.Finish () = eng.Finish ()
 
   interface ICommunicator with
     member this.RequestFinished () = ()
@@ -83,17 +85,20 @@ module Main =
   let main () =
     let gctx = { Contexts = dict() }
     let ctxList = vec()
-    let trace = ref 0
-    let isFilename = function
-      | "-v" -> incr trace; false
-      | _ -> true
-    let args = System.Environment.GetCommandLineArgs() |> Seq.toList |> List.tail |> List.filter isFilename
-    try
-      for f in args do
-        let c = Context (f, gctx, !trace)
+    let rec aux tr = function
+      | "-v" :: rest -> aux (tr + 1) rest
+      | fn :: rest ->
+        let c = Context (fn, gctx, tr)
         gctx.Contexts.Add (c.Me.Name, c)
-        ctxList.Add c
+        ctxList.Add c        
+        aux 0 rest
+      | [] -> ()
+    let args = System.Environment.GetCommandLineArgs() |> Seq.toList |> List.tail
+    try
+      aux 0 args
       for c in ctxList do c.Talk()
+      for c in ctxList do c.CheckPoint()
+      for c in ctxList do c.Finish()
     with SyntaxError (p, s) ->
       System.Console.WriteLine ("syntax error: {0}: {1}", p, s)
       
