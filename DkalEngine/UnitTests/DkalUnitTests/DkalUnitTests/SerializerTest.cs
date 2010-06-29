@@ -3,6 +3,9 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using DkalController;
+using Microsoft.Research.DkalEngine;
+using System.Threading;
 
 namespace DkalUnitTest
 {
@@ -12,6 +15,7 @@ namespace DkalUnitTest
     [TestClass]
     public class SerializerTest
     {
+        Microsoft.Research.DkalEngine.Ast.Message msg;
         public SerializerTest()
         {
             //
@@ -68,9 +72,85 @@ namespace DkalUnitTest
         [TestMethod]
         public void SerializeDeserializeTermTest()
         {
-            //
-            // TODO: Add test logic here
-            //
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                ParsingCtx pctx = msgcntroller.ParsingContext;
+                string infon = "_testDriverEngine said hello to _dkalTestEngine";
+                Ast.Term termObj = pctx.ParseInfon(infon);
+
+                if (termObj == null)
+                    Assert.Fail("Term object is null");
+
+                Serializer obj = new Serializer(pctx);
+
+                string serializedTerm=obj.SerializeTerm(termObj);
+                Ast.Term resultTermObj = obj.DeserializeTerm(serializedTerm);
+
+                Assert.AreEqual(termObj, resultTermObj);
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Verifies Serialized calls on Message object
+        /// </summary>
+        [TestMethod]
+        public void SerializeDeserializeMessageTest()
+        {
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                msgcntroller.OnInfonProcessed += new MessageController.InfonProcessedHandler(msgcntroller_OnInfonProcessed);
+
+                ParsingCtx pctx = msgcntroller.ParsingContext;
+                string infon = "_testDriverEngine said hello to _dkalTestEngine";
+
+                msgcntroller.SendMessage(infon, null);
+                while (this.msg == null)
+                    Thread.Sleep(1000);
+
+                Microsoft.Research.DkalEngine.Ast.Message message = this.msg;
+                Serializer obj = new Serializer(pctx);
+
+                string serializedMessage = obj.SerializeMessage(this.msg);
+                Ast.Message resultMessageObj = obj.DeserializeMessage(serializedMessage);
+
+                Assert.AreEqual(this.msg, resultMessageObj);
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
+        }
+
+        void msgcntroller_OnInfonProcessed(object sender, DkalInfoEventArgs e)
+        {
+            if (e.DkalMessage == null)
+                throw new ArgumentNullException("DkalMessage");
+            msg = e.DkalMessage;
+        }
+
+        /// <summary>
+        /// Cleanup code
+        /// </summary>
+        [TestCleanup]
+        public void CleanUp()
+        {
+            this.msg = null;
         }
     }
 }

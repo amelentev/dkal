@@ -18,6 +18,8 @@ namespace DkalUnitTest
     public class EngineTest
     {
         Microsoft.Research.DkalEngine.Ast.Message msg;
+        string strmessageProcessed = String.Empty;
+
         public EngineTest()
         {
             //
@@ -139,11 +141,14 @@ namespace DkalUnitTest
             try
             {
                 MessageController msgcntroller = new MessageController(dkalContext);
-                msgcntroller.OnInfonProcessed += new MessageController.MyEventHandler(msgcntroller_OnInfonProcessed);
+                msgcntroller.OnInfonProcessed += new MessageController.InfonProcessedHandler(msgcntroller_OnInfonProcessed);
 
                 //ParsingCtx pctx = msgcntroller.ParsingContext;
-                string infon = "42 is a good number";
-                string expected = "i-like (42)";
+                //string infon = "42 is a good number";
+                //string expected = "i-like (42)";
+
+                string infon = "_testDriverEngine said hello to _dkalTestEngine";
+                string expected = "yes-i-am-alive";
 
                 msgcntroller.SendMessage(infon, null);
                 while (this.msg == null)
@@ -163,6 +168,47 @@ namespace DkalUnitTest
             if (e.DkalMessage == null)
                 throw new ArgumentNullException("DkalMessage");
             msg = e.DkalMessage;
+        }
+
+        /// <summary>
+        /// Test verifies the Engine processed the message sent
+        /// </summary>
+        [TestMethod]
+        public void ProcessMessageTest()
+        {
+            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+
+            if (!System.IO.File.Exists(dkalContext))
+                Assert.Fail("File not found: " + dkalContext);
+
+            try
+            {
+                MessageController msgcntroller = new MessageController(dkalContext);
+                msgcntroller.OnRequestProcessed += new MessageController.ProcessedMessageHandler(msgcntroller_OnRequestProcessed);
+
+                string infon = "_testDriverEngine said hello to _dkalTestEngine";
+                string expected = "message processed";
+
+                msgcntroller.SendMessage(infon, null);
+                //while (this.msg == null)
+                //    Thread.Sleep(1000);
+
+                //Microsoft.Research.DkalEngine.Ast.Message message = this.msg;
+                //Assert.AreEqual(expected, this.msg.message.ToString());
+
+                while (String.IsNullOrEmpty(this.strmessageProcessed))
+                    Thread.Sleep(1000);
+                Assert.AreEqual(expected, this.strmessageProcessed);
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Exception Occurred: " + ex.Message);
+            }
+        }
+
+        void msgcntroller_OnRequestProcessed(object sender, string e)
+        {
+            strmessageProcessed = e;
         }
 
         /// <summary>
@@ -200,6 +246,7 @@ namespace DkalUnitTest
         public void CleanUp()
         {
             this.msg = null;
+            strmessageProcessed = String.Empty;
         }
     }
 }

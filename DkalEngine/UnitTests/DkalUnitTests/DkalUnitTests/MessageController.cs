@@ -26,8 +26,10 @@ namespace DkalController
     {
         #region Variables
 
-        public delegate void MyEventHandler(object sender, DkalInfoEventArgs e);
-        public event MyEventHandler OnInfonProcessed;
+        public delegate void InfonProcessedHandler(object sender, DkalInfoEventArgs e);
+        public delegate void ProcessedMessageHandler(object sender, string e);
+        public event InfonProcessedHandler OnInfonProcessed;
+        public event ProcessedMessageHandler OnRequestProcessed;
         private E.Engine e;
         private ParsingCtx pctx;
         List<E.Ast.Assertion> decls;
@@ -210,7 +212,8 @@ namespace DkalController
 
         public void RequestFinished()
         {
-            string s = "";
+            if (OnRequestProcessed != null)
+                OnRequestProcessed(this,"message processed");
         }
 
         #endregion

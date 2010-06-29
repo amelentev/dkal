@@ -100,8 +100,9 @@ namespace DkalUnitTest
             {
                 MessageController msgcntroller = new MessageController(dkalContext);
                 ParsingCtx pctx = msgcntroller.ParsingContext;
-                string infon = "42 is a good number";
-                string expected = "(42) is-a-good-number";
+
+                string infon = "_testDriverEngine said hello to _dkalTestEngine";
+                string expected = "_testDriverEngine said hello-to (_dkalTestEngine)";
                 Ast.Term termObj = pctx.ParseInfon(infon);
 
                 if (termObj == null)
