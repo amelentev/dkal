@@ -349,6 +349,11 @@ module Ast =
       infon : Infon
     }
   
+  type CommKind =
+    | Processed
+    | Certified
+    | CertifiedSay
+
   type Communication =
     {
       ai : AssertionInfo
@@ -356,7 +361,7 @@ module Ast =
       message : Infon
       proviso : Infon
       trigger : Infon
-      certified : bool
+      certified : CommKind
     }
     
   type Filter =

@@ -411,11 +411,14 @@ type Engine =
         None                        
 
   member private this.HandleCertifications = function
-    | Assertion.SendTo ({ certified = true } as comm) ->
+    | Assertion.SendTo ({ certified = Certified|CertifiedSay } as comm) ->
       let comm =
         match comm.proviso with
           | InfonEmpty ->
-            let msg = comm.message
+            let msg = 
+              if comm.certified = CertifiedSay then
+                Infon.Said (Infon.Const (Const.Principal this.Me.Value), comm.message)
+              else comm.message            
             match this.FinalOutcome comm.message with
                | InfonSaid (p, _)
                | InfonImplied (p, _) when this.IsMe p ->
@@ -429,7 +432,7 @@ type Engine =
           | _ ->
             this.Comm.Warning ("certified provisional communication not supported at this time")
             comm
-      Assertion.SendTo { comm with certified = false }
+      Assertion.SendTo { comm with certified = Processed }
     | t -> t
 
   member this.Certify = function

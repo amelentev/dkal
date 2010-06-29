@@ -53,11 +53,11 @@ module Parser =
       ctx.MkVar "" (resolveType ctx toks tp)
     | toks -> errl toks ("expecting type name (at " + ts2s toks + ")")
   
-  let rec parseTypeList (ctx:Context) = function
+  let rec parseTypeList acc (ctx:Context) = function
     | Tok.Group (_, '}', typeName) :: rest ->
-      parseType ctx typeName :: parseTypeList ctx rest
-    | Tok.Id (_, ",") :: rest -> parseTypeList ctx rest
-    | [] -> []
+      parseTypeList (parseType ctx typeName :: acc) ctx rest
+    | Tok.Id (_, ",") :: rest -> parseTypeList acc ctx rest
+    | [] -> acc
     | lst -> errl lst "expecting comma-separated list of {types}"
 
   let addStandardRules (ctx:Context) = ()
@@ -120,7 +120,7 @@ module Parser =
           | _ ->
             self (name + "-*", Pat.Any :: rule, parseType ctx typeName :: args) rest
       | Tok.Group (_, ')', types) :: rest ->
-        self (name, Pat.Group ')' :: rule, parseTypeList ctx types @ args) rest
+        self (name, Pat.Group ')' :: rule, parseTypeList [] ctx types @ args) rest
       | Tok.Id (_, id) as t :: rest ->
         self (name + "-" + id, Pat.Id id :: rule, args) rest
       | x :: _ -> err x.Pos ("invalid token in syntax rule: " + x.ToString())
