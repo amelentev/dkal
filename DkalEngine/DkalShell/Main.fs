@@ -8,13 +8,13 @@ type Global =
     Contexts : Dict<string, Context>
   }
 
-and Context(filename, gctx:Global) =
+and Context(filename, gctx:Global, tr) =
   let pctx = ParsingCtx ()
   let opts = Options.Create ()
   let eng = Engine.Config opts
   let serializer = Serializer(pctx)
 
-  let msg (s:string) = 
+  let say (s:string) = 
     System.Console.WriteLine ("{0}: {1}", pctx.Me.Name, s)
   let xf = sprintf
 
@@ -27,7 +27,8 @@ and Context(filename, gctx:Global) =
       while reader.Read() do
         let id = reader.GetInt32 0
         let name = (reader.GetString 1).Trim(' ')
-        System.Console.WriteLine("{0} -> {1}", id,name)
+        if opts.Trace > 1 then
+          System.Console.WriteLine("{0} -> {1}", id,name)
         principalId.Add (name, id)
         principalName.Add (id, name)
 
@@ -44,10 +45,11 @@ and Context(filename, gctx:Global) =
   do
     let assertions = pctx.ParsePrelude () @ pctx.ParseFile filename
     opts.PrivateSql <- pctx.Options.["private_sql"]
+    opts.Trace <- tr
     eng.Reset ()
     List.iter eng.AddAssertion assertions
     eng.AddDefaultFilter ()
-    msg "loaded"
+    say "loaded"
 
   member this.Me = pctx.Me
   member this.Id = principalId this.Me
@@ -59,14 +61,18 @@ and Context(filename, gctx:Global) =
   interface ICommunicator with
     member this.RequestFinished () = ()
     member this.ExceptionHandler e =
-      msg ("exception: " + e.ToString())
-    member this.Warning e = msg ("warning: " + e)
+      say ("exception: " + e.ToString())
+    member this.Warning e = say ("warning: " + e)
     member this.Knows _ = ()
     member this.QueryResults (inf, res) = ()
     member this.SendMessage msg =
-      let target = gctx.Contexts.[msg.target.name]
-      let msg' = serializer.SerializeMessage msg
-      target.RecieveMessage msg'
+      match gctx.Contexts.TryGetValue msg.target.name with
+        | true, target ->
+          let target = gctx.Contexts.[msg.target.name]
+          let msg' = serializer.SerializeMessage msg
+          target.RecieveMessage msg'
+        | _ ->
+          say ("no such principal " + msg.target.ToString())
     member this.PrincipalById id = principalById id  
     member this.PrincipalId (p:Ast.Principal) = principalId p
 
@@ -75,9 +81,14 @@ module Main =
   let main () =
     let gctx = { Contexts = dict() }
     let ctxList = vec()
+    let trace = ref 0
+    let isFilename = function
+      | "-v" -> incr trace; false
+      | _ -> true
+    let args = System.Environment.GetCommandLineArgs() |> Seq.toList |> List.tail |> List.filter isFilename
     try
-      for f in System.Environment.GetCommandLineArgs() |> Seq.toList |> List.tail do
-        let c = Context (f, gctx)
+      for f in args do
+        let c = Context (f, gctx, !trace)
         gctx.Contexts.Add (c.Me.Name, c)
         ctxList.Add c
       for c in ctxList do c.Talk()
