@@ -1,15 +1,16 @@
 #include "common.dkal"
 
-function [2] needInfo ( {N:int} ) returns {R:record}
-  is physPatients.id == N && physPatients.needInfo == R
+function [2] needInfo ( {N:int} ) returns {R:bool}
+  is physPatients.id == N && physPatients.needInfo == true && R == true
 
 phys1 knows
-  SITE tdonS
-    PHYS participates in TRIAL at SITE as a physician
-    PHYS is allocated patients P1 to P2 in TRIAL at SITE
-  keyManager tdonS key for record(N,TRIAL) is K
+  SITE tdonS PHYS participates in TRIAL at SITE as a physician
+  SITE tdonS PHYS is allocated patients P1 to P2 in TRIAL at SITE
+  keyManager tdonS K is key for record(N,TRIAL)
 
-if Phys1 knows
+if phys1 knows
+   PHYS participates in TRIAL at SITE as a physician
+   PHYS is allocated patients P1 to P2 in TRIAL at SITE
    asInfon(P1 <= N && N <= P2)
    asInfon(needInfo(N))
 then

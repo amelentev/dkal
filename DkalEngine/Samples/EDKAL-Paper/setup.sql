@@ -1,3 +1,4 @@
+IF OBJECT_ID('dbo.physPatients','U') IS NOT NULL drop table physPatients;
 IF OBJECT_ID('dbo.siteAssignments','U') IS NOT NULL drop table siteAssignments;
 IF OBJECT_ID('dbo.physAssignments','U') IS NOT NULL drop table physAssignments;
 IF OBJECT_ID('dbo.keys','U') IS NOT NULL drop table keys;
@@ -67,4 +68,13 @@ create table siteAssignments (
 create clustered index siteAssignmentsI1 on siteAssignments ( thesite, trial );
 insert into siteAssignments values
   ( 2, 42, 1, 1000, 1250 );
+
+create table physPatients (
+  id int primary key,
+  needInfo bit
+);
+insert into physPatients values
+  ( 1015, 1 ),
+  ( 1100, 1 );
+
 
