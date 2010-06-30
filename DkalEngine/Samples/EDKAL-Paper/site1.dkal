@@ -18,16 +18,16 @@ then
    say with justification to PHYS
       PHYS participates in TRIAL at site1 as a physician
       PHYS is allocated patients P1 to P2 in TRIAL at site1
-      if
-        asInfon(P1 <= N && N <= P2)
-        asInfon(R == record(N,TRIAL))
-      then
-        PHYS may read R
    communicate with justification to PHYS
+      if
+         asInfon(P1 <= N && N <= P2)
+         asInfon(R == record(N,TRIAL))
+      then
+         site1 implied PHYS may read R
+
       if
          asInfon(N1 <= N && N <= N2)
          asInfon(R == record(N,TRIAL))
          site1 implied PHYS may read R
       then
          org(TRIAL) implied PHYS may read R
-
