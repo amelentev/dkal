@@ -33,7 +33,7 @@ create table records (
 insert into records values
   ( 101, 1005, 42, 'ala ma kota' ),
   ( 102, 1015, 42, 'kot ma ale' ),
-  ( 103, 1015, 42, 'abecadlo' ),
+  ( 103, 1016, 42, 'abecadlo' ),
   ( 104, 1100, 42, 'z pieca spadlo' );
 
 
@@ -75,6 +75,7 @@ create table physPatients (
 );
 insert into physPatients values
   ( 1015, 1 ),
+  ( 1016, 1 ),
   ( 1100, 1 );
 
 
