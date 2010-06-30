@@ -46,6 +46,7 @@ module Util =
   
   let dict() = new Dict<_,_>()
   let vec() = new Vec<_>()
+  let l2s l = "[" + String.concat "; " (List.map (fun o -> o.ToString()) l) + "]"
 
   let getDefl (dict:Dict<_,_>) k d =
     match dict.TryGetValue k with

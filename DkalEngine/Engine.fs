@@ -50,7 +50,8 @@ type Engine =
     mutable infonstrate : list<Knows>
     mutable filters : list<Filter>
     mutable communications : list<Communication>
-    mutable nextId : int   
+    mutable nextId : int
+    mutable finish : bool   
   }
   
   /// Create a new engine instance.
@@ -63,6 +64,7 @@ type Engine =
         sql = None
         pending = new GQueue<_>()
         options = opts
+        finish = false
         }
     this
 
@@ -145,35 +147,102 @@ type Engine =
     
     List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, this.Freshen k.infon)) this.infonstrate
     !res
-      
   
+  member this.DeriveCertification subst = 
+    let streight goal =
+      let aux = function
+        | { infon = InfonCert (inf, pr) } -> this.TryDerive subst pr (goal, inf)
+        | _ -> []
+      List.collect aux this.infonstrate
+    function
+    | AsInfon (t) as goal ->
+      [({subst with assumptions = t :: subst.assumptions}, Term.App (Function.EvAsInfon, [goal]))]
+    | InfonAnd (i1, i2) as goal ->
+      let left (subst, prl) =
+        let aux (subst, prr) =
+          (subst, Term.App (Function.EvAnd, [prl; prr]))
+        this.DeriveCertification subst i2 |> List.map aux
+      streight goal @ (this.DeriveCertification subst i1 |> List.collect left)
+    | goal -> streight goal
+
+  member this.TryDerive (subst:AugmentedSubst) pr =
+    let streight (goal, premise) = 
+      if this.options.Trace > 0 then
+        System.Console.WriteLine ("streight compare: {0} vs {1}", goal, premise)
+      match unifyTerms subst.subst (goal, premise) with
+        | Some s -> [({ subst with subst = s }, pr)]
+        | None -> 
+          if this.options.Trace > 0 then
+            System.Console.WriteLine ("NOPE")
+          []
+    function
+    (*
+    | (InfonSaid (p1, i1), InfonSaid (p2, i2), pr)
+    | (InfonImplied (p1, i1), InfonSaid (p2, i2), pr)
+    | (InfonImplied (p1, i1), InfonImplied (p2, i2), pr) ->
+      match unifyTerms subst t1 t2 with
+        | Some subst -> None          
+        | None -> None
+    *)
+    | (goal, InfonFollows (i1, i2)) as p ->
+      let v = this.FreshVar Type.Evidence
+      let derivePremise (subst, (goalPr:Term)) =
+        if this.options.Trace > 0 then
+          System.Console.WriteLine ("[ looking for premise: {0} vs {1} -> {2}", goal, i1, i2)
+        let updateProof (subst, premisePr) =
+          if this.options.Trace > 0 then
+            System.Console.WriteLine ("found premise")
+          let repl = Term.App (Function.EvMp, [premisePr; pr])
+          (subst, goalPr.Apply (Map.add v.id repl Map.empty))
+        let tmp = this.DeriveCertification subst i1 
+        if this.options.Trace > 0 then
+          System.Console.WriteLine ("] done looking, {0}", tmp.Length)
+        tmp |> List.map updateProof
+      streight p @ List.collect derivePremise (this.TryDerive subst (Term.Var v) (goal, i2))
+    | p -> streight p
+
   member this.DoDerive pref (subst:AugmentedSubst) infon =
     if this.options.Trace > 0 then
-      System.Console.WriteLine ("derive: {0} under {1}", infon, substToString subst.subst)
+      System.Console.WriteLine ("{0}: [ derive: {1} under {2}", this.me.Value.name, infon, substToString subst.subst)
     
     let sum f lst =
       List.fold (fun acc e -> f e @ acc) [] lst
-      
-    match infon with
-      | InfonAnd (i1, i2) ->
-        (this.DoDerive pref subst i1) |> sum (fun s1 -> this.DoDerive pref s1 i2)
-      | InfonEmpty _ -> [subst]
-      | InfonSaid (p, i) ->
-        this.DoDerive (Pref.Said p :: pref) subst i
-      | InfonImplied (p, i) ->
-        this.DoDerive (Pref.Implied p :: pref) subst i
-      | Infon.Var v when subst.subst.ContainsKey v.id ->
-        this.DoDerive pref subst subst.subst.[v.id]
-      | AsInfon e ->
-        if pref <> [] then
-          failwith "asInfon(...) under said/implied prefix"
-        [{ subst with assumptions = e :: subst.assumptions }]
-      | templ ->
-        let rec checkOne = function
-          | (subst, precond :: rest) ->
-            this.DoDerive [] subst precond |> sum (fun s -> checkOne (s, rest))
-          | (subst, []) -> [subst]
-        this.InfonsWithPrefix subst.subst pref templ |> List.map (fun (s, p) -> ({subst with subst = s }, p)) |> sum checkOne
+    
+    let res = 
+      match infon with
+        | InfonAnd (i1, i2) ->
+          (this.DoDerive pref subst i1) |> sum (fun s1 -> this.DoDerive pref s1 i2)
+        | InfonEmpty _ -> [subst]
+        | InfonSaid (p, i) ->
+          this.DoDerive (Pref.Said p :: pref) subst i
+        | InfonImplied (p, i) ->
+          this.DoDerive (Pref.Implied p :: pref) subst i
+        | Infon.Var v when subst.subst.ContainsKey v.id ->
+          this.DoDerive pref subst subst.subst.[v.id]
+        | AsInfon e ->
+          if pref <> [] then
+            failwith "asInfon(...) under said/implied prefix"
+          [{ subst with assumptions = e :: subst.assumptions }]
+        | InfonCert (inf, ev) when pref = [] ->
+          let unifyEv (subst:AugmentedSubst, pr) =
+            match unifyTerms subst.subst (ev, pr) with
+              | Some s -> [{ subst with subst = s }]
+              | None -> 
+                if this.options.Trace > 0 then
+                  System.Console.WriteLine ("the requested evidence: {0} doesn't match the actual {1}", ev, pr)                 
+                []
+          this.DeriveCertification subst inf |> List.collect unifyEv
+        | templ ->
+          let rec checkOne = function
+            | (subst, precond :: rest) ->
+              this.DoDerive [] subst precond |> sum (fun s -> checkOne (s, rest))
+            | (subst, []) -> [subst]
+          this.InfonsWithPrefix subst.subst pref templ |> List.map (fun (s, p) -> ({subst with subst = s }, p)) |> sum checkOne
+
+    if this.options.Trace > 0 then
+      System.Console.WriteLine ("result:{0} ] {1}", res.Length, l2s res)
+
+    res
 
   member private this.Send msg =
     if this.sentItems.ContainsKey msg then
@@ -187,7 +256,7 @@ type Engine =
     let checkAssumptions (augS:AugmentedSubst) =
       let apply (t:Term) = t.Apply augS.subst
       let sqlExpr = SqlCompiler.compile this.options this.NextId (augS.assumptions |> List.map apply)
-      SqlCompiler.execQuery (this.sql.Value, this.Comm, sqlExpr, augS.subst, vars) |> Seq.toList      
+      SqlCompiler.execQuery (this.sql.Value, this.Comm, this.options, sqlExpr, augS.subst, vars) |> Seq.toList      
     { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.collect checkAssumptions }
   
   member private this.DoListen (msg:Message) =  
@@ -211,7 +280,8 @@ type Engine =
                   let acc = vec()
                   match this.EvidenceCheck acc e with
                     | Some _ ->
-                      Seq.toList acc
+                      [acc.[acc.Count - 1]; acc.[acc.Count - 2]]
+                      //Seq.toList acc
                     | _ ->
                       this.Comm.Warning ("fake certified infon")
                       []
@@ -268,7 +338,10 @@ type Engine =
   member this.AddAssertion (a:Assertion) = 
     this.Invoke (fun () ->
       this.me <- Some a.AssertionInfo.principal
-      match this.HandleCertifications a with
+      let a = a 
+              |> this.PullOutFunctions
+              |> this.HandleCertifications 
+      match a with
         | Knows k ->
           this.infonstrate <- k :: this.infonstrate
         | SendTo c ->
@@ -319,7 +392,29 @@ type Engine =
         i.Vars() |> Seq.map (fun v -> { formal = v; actual = s.[v.id].Apply s })
       this.Comm.QueryResults (i, (this.Derive Map.empty i).All |> Seq.map bind)
       this.Comm.RequestFinished ())
-    
+  
+  /// Wait for all pending requests to finish, stop the worker thread and clean the state.
+  member this.Finish () =
+    this.Invoke (fun () ->
+      this.finish <- true)
+    match this.worker with
+      | Some w ->
+        w.Join()
+        this.worker <- None
+      | None -> ()
+    this.Close()
+
+  /// Block until all pending requests are finished.
+  member this.CheckPoint () =
+    let o = ref false
+    this.Invoke (fun () ->
+      lock o (fun () ->
+        o := true
+        System.Threading.Monitor.Pulse o))
+    lock o (fun () ->
+      if !o then ()
+      else System.Threading.Monitor.Wait o |> ignore)
+
   member private this.Invoke a = 
     if this.worker.IsNone then failwith "not yet started"
     let wrapped () =
@@ -331,7 +426,7 @@ type Engine =
       System.Threading.Monitor.Pulse this.pending)
   
   member private this.Work () =
-    while true do
+    while not this.finish do
       let act = 
         lock this.pending (fun () ->
           while this.pending.Count = 0 do
@@ -406,17 +501,31 @@ type Engine =
           | _ ->
             this.Comm.Warning ("malformed mp")
             None
+      | App (f, [a; b]) when f === Function.EvAnd ->
+        match this.EvidenceCheck acc a, this.EvidenceCheck acc b with
+          | Some i1, Some i2 ->
+            ret (Infon.And (i1, i2))
+          | _ ->
+            this.Comm.Warning ("malformed and")
+            None
+      | App (f, [AsInfon (_) as t]) when f === Function.EvAsInfon ->
+        // TODO check it
+        this.Comm.Warning ("asInfon evidence: " + t.ToString())
+        ret t
       | _ ->
         this.Comm.Warning ("unhandled evidence constructor")
         None                        
 
   member private this.HandleCertifications = function
-    | Assertion.SendTo ({ certified = true } as comm) ->
+    | Assertion.SendTo ({ certified = Certified|CertifiedSay } as comm) ->
       let comm =
         match comm.proviso with
           | InfonEmpty ->
-            let msg = comm.message
-            match this.FinalOutcome comm.message with
+            let msg = 
+              if comm.certified = CertifiedSay then
+                Infon.Said (Infon.Const (Const.Principal this.Me.Value), comm.message)
+              else comm.message            
+            match this.FinalOutcome msg with
                | InfonSaid (p, _)
                | InfonImplied (p, _) when this.IsMe p ->
                  { comm with message = Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg])) }
@@ -429,8 +538,41 @@ type Engine =
           | _ ->
             this.Comm.Warning ("certified provisional communication not supported at this time")
             comm
-      Assertion.SendTo { comm with certified = false }
+      Assertion.SendTo { comm with certified = Processed }
     | t -> t
+
+  member private this.PullOutFunctions asrt =
+    let pulledOut = dict()
+    let premises = vec()
+    let rec aux = function
+      | AsInfon _ as t -> t
+      | Term.App (f, args) as t ->
+        if f.retType.typ.name.StartsWith "*" then
+          Term.App (f, List.map aux args)
+        else
+          match pulledOut.TryGetValue t with
+            | true, v -> v
+            | false, _ ->
+              let v = Term.Var (this.FreshVar t.Type)
+              pulledOut.Add (t, v)
+              premises.Add (Term.App (Function.AsInfon, [Term.App (Function.Eq, [v; t])]))
+              v
+      | t -> t
+    let addPremises t =
+      Seq.fold (fun acc p -> Infon.Follows (p, acc)) t premises
+    let addSides t =
+      Seq.fold (fun acc p -> Infon.And (p, acc)) t premises
+
+    match asrt with
+      | Assertion.Knows k ->
+        Assertion.Knows { k with infon = aux k.infon |> addPremises }
+      | Assertion.SendTo k ->
+        let k = { k with trigger = aux k.trigger 
+                         target = aux k.target
+                         message = aux k.message
+                         proviso = aux k.proviso }
+        Assertion.SendTo { k with trigger = k.trigger |> addSides }
+      | a -> a
 
   member this.Certify = function
     | InfonSaid (p, _)

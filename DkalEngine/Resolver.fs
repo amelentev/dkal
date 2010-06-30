@@ -44,13 +44,14 @@ module Resolver =
         | Tok.App (_, ".", [Tok.Id (_, table); Tok.Id (_, column)]) ->
           Term.Const (Const.Column (table, column))
         | Tok.App (pos, name, [Tok.Group (_, ')', args)]) ->
-          resolveTerm ctx expectedType (Tok.App (pos, name, args))
+          resolveTerm ctx expectedType (Tok.App (pos, name, args |> List.filter (function Tok.Id (_, ",") -> false | _ -> true)))
         | Tok.App (_, name, args) ->
           match ctx.functions.TryGetValue name with
             | true, fn ->
               if fn.argTypes.Length <> args.Length then
-                err tok "wrong number of arguments"
+                err tok ("wrong number of arguments, expecting " + fn.argTypes.Length.ToString() + " got " + args.Length.ToString())
               else
+                //System.Console.WriteLine ("{0} <-> {1}", l2s fn.argTypes, l2s args)
                 let args = List.map2 (fun (v:Var) arg -> resolveTerm ctx v.typ arg) fn.argTypes args
                 Term.App (fn, args)
             | _ -> err tok "undefined function"
@@ -116,7 +117,13 @@ module Resolver =
         let who = getPrincipal ctx who          
         let precond = resolveProviso ctx precond
         let doTarget = function
-          | Tok.App (_, ("send_target"|"send_target_cert" as name), [target; what]) ->
+          | Tok.App (_, name, [target; what]) ->
+            let kind = 
+              match name with
+                | "send_target" -> CommKind.Processed
+                | "send_target_cert" -> CommKind.Certified
+                | "say_target_cert" -> CommKind.CertifiedSay
+                | _ -> err t "expecting 'to' after 'then they send'"
             let target = resolveTerm ctx Type.Principal target
             let singleComm t =
               resolveSentInfon ctx t |> List.map (fun (sendTemplate, proviso) ->
@@ -125,7 +132,7 @@ module Resolver =
                                    message = sendTemplate
                                    proviso = proviso
                                    trigger = precond
-                                   certified = name.Contains "cert" })
+                                   certified = kind })
                                    
             splitList singleComm what
           | t ->

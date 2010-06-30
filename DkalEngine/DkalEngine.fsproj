@@ -21,7 +21,8 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <OtherFlags>--standalone</OtherFlags>
+    <OtherFlags>
+    </OtherFlags>
     <DocumentationFile>bin\Debug\DkalEngine.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

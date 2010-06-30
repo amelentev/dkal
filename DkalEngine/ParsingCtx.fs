@@ -64,7 +64,9 @@ type ParsingCtx() =
     ctx.functions.[name]
 
   member this.LookupType name =
-    ctx.types.[name]
+    match ctx.types.TryGetValue name with
+      | true, t -> t
+      | _ -> failwith ("unknown type " + name)
 
   member this.MakeVar name tp =
     ctx.MkVar name tp
