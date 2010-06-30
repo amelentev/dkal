@@ -147,8 +147,60 @@ type Engine =
     
     List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, this.Freshen k.infon)) this.infonstrate
     !res
-      
   
+  member this.DeriveCertification subst = 
+    let streight goal =
+      let aux = function
+        | { infon = InfonCert (inf, pr) } -> this.TryDerive subst pr (goal, inf)
+        | _ -> []
+      List.collect aux this.infonstrate
+    function
+    | AsInfon (t) as goal ->
+      [({subst with assumptions = t :: subst.assumptions}, Term.App (Function.EvAsInfon, [goal]))]
+    | InfonAnd (i1, i2) as goal ->
+      let left (subst, prl) =
+        let aux (subst, prr) =
+          (subst, Term.App (Function.EvAnd, [prl; prr]))
+        this.DeriveCertification subst i2 |> List.map aux
+      streight goal @ (this.DeriveCertification subst i1 |> List.collect left)
+    | goal -> streight goal
+
+  member this.TryDerive (subst:AugmentedSubst) pr =
+    let streight (goal, premise) = 
+      if this.options.Trace > 0 then
+        System.Console.WriteLine ("streight compare: {0} vs {1}", goal, premise)
+      match unifyTerms subst.subst (goal, premise) with
+        | Some s -> [({ subst with subst = s }, pr)]
+        | None -> 
+          if this.options.Trace > 0 then
+            System.Console.WriteLine ("NOPE")
+          []
+    function
+    (*
+    | (InfonSaid (p1, i1), InfonSaid (p2, i2), pr)
+    | (InfonImplied (p1, i1), InfonSaid (p2, i2), pr)
+    | (InfonImplied (p1, i1), InfonImplied (p2, i2), pr) ->
+      match unifyTerms subst t1 t2 with
+        | Some subst -> None          
+        | None -> None
+    *)
+    | (goal, InfonFollows (i1, i2)) as p ->
+      let v = this.FreshVar Type.Evidence
+      let derivePremise (subst, (goalPr:Term)) =
+        if this.options.Trace > 0 then
+          System.Console.WriteLine ("[ looking for premise: {0} vs {1} -> {2}", goal, i1, i2)
+        let updateProof (subst, premisePr) =
+          if this.options.Trace > 0 then
+            System.Console.WriteLine ("found premise")
+          let repl = Term.App (Function.EvMp, [premisePr; pr])
+          (subst, goalPr.Apply (Map.add v.id repl Map.empty))
+        let tmp = this.DeriveCertification subst i1 
+        if this.options.Trace > 0 then
+          System.Console.WriteLine ("] done looking, {0}", tmp.Length)
+        tmp |> List.map updateProof
+      streight p @ List.collect derivePremise (this.TryDerive subst (Term.Var v) (goal, i2))
+    | p -> streight p
+
   member this.DoDerive pref (subst:AugmentedSubst) infon =
     if this.options.Trace > 0 then
       System.Console.WriteLine ("{0}: [ derive: {1} under {2}", this.me.Value.name, infon, substToString subst.subst)
@@ -171,6 +223,15 @@ type Engine =
           if pref <> [] then
             failwith "asInfon(...) under said/implied prefix"
           [{ subst with assumptions = e :: subst.assumptions }]
+        | InfonCert (inf, ev) when pref = [] ->
+          let unifyEv (subst:AugmentedSubst, pr) =
+            match unifyTerms subst.subst (ev, pr) with
+              | Some s -> [{ subst with subst = s }]
+              | None -> 
+                if this.options.Trace > 0 then
+                  System.Console.WriteLine ("the requested evidence: {0} doesn't match the actual {1}", ev, pr)                 
+                []
+          this.DeriveCertification subst inf |> List.collect unifyEv
         | templ ->
           let rec checkOne = function
             | (subst, precond :: rest) ->
@@ -179,7 +240,7 @@ type Engine =
           this.InfonsWithPrefix subst.subst pref templ |> List.map (fun (s, p) -> ({subst with subst = s }, p)) |> sum checkOne
 
     if this.options.Trace > 0 then
-      System.Console.WriteLine ("] result: {0}", res.Length)
+      System.Console.WriteLine ("result:{0} ] {1}", res.Length, l2s res)
 
     res
 
@@ -439,6 +500,17 @@ type Engine =
           | _ ->
             this.Comm.Warning ("malformed mp")
             None
+      | App (f, [a; b]) when f === Function.EvAnd ->
+        match this.EvidenceCheck acc a, this.EvidenceCheck acc b with
+          | Some i1, Some i2 ->
+            ret (Infon.And (i1, i2))
+          | _ ->
+            this.Comm.Warning ("malformed and")
+            None
+      | App (f, [AsInfon (_) as t]) when f === Function.EvAsInfon ->
+        // TODO check it
+        this.Comm.Warning ("asInfon evidence: " + t.ToString())
+        ret t
       | _ ->
         this.Comm.Warning ("unhandled evidence constructor")
         None                        

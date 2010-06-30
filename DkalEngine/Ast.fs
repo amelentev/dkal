@@ -169,6 +169,8 @@ module Ast =
   // the int parameter is a placeholder for the actual cryptographic signature
   let private evSignature = addGlobalFunction Type.Evidence "Ev.signedBy" [Type.Principal; Type.Infon; Type.Int]
   let private evMp = addGlobalFunction Type.Evidence "Ev.mp" [Type.Evidence; Type.Evidence]
+  let private evAsInfon = addGlobalFunction Type.Evidence "Ev.asInfon" [Type.Infon]
+  let private evAnd = addGlobalFunction Type.Evidence "Ev.and" [Type.Evidence; Type.Evidence]
   
   type Function with
     static member And = infonAnd
@@ -177,10 +179,12 @@ module Ast =
     static member Implied = infonImplied
     static member Empty = infonEmpty
     static member AsInfon = infonAsInfon
+    static member Eq = substrateEq
     static member Cert = infonCertified
     static member EvSignature = evSignature
     static member EvMp = evMp
-    static member Eq = substrateEq
+    static member EvAsInfon = evAsInfon
+    static member EvAnd = evAnd
   
   /// Principals are fully identified by name. New principals should be created only using
   /// ParsingCtx.LookupOrAddPrincipal method.
@@ -429,6 +433,9 @@ module Ast =
                   Some (s.[v.id].Apply s) 
                 | _ -> None)
       
+  let substToString (s:Subst) =
+    s |> Map.fold (fun acc k v -> (k.ToString() + " -> " + v.ToString()) :: acc) [] |> List.rev |> String.concat ", " 
+    
   type AugmentedSubst =
     {
       subst : Subst
@@ -437,10 +444,9 @@ module Ast =
     
     static member Empty = { subst = Map.empty; assumptions = [] }
     static member NoAssumptions s = { subst = s; assumptions = [] }
+    override this.ToString() =
+      substToString this.subst + " ::: " + l2s this.assumptions
   
-  let substToString (s:Subst) =
-    s |> Map.fold (fun acc k v -> (k.ToString() + " -> " + v.ToString()) :: acc) [] |> List.rev |> String.concat ", " 
-    
   let rec unifyList unify s = function
     | [] -> s
     | x :: xs ->
