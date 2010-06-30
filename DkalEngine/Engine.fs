@@ -280,7 +280,8 @@ type Engine =
                   let acc = vec()
                   match this.EvidenceCheck acc e with
                     | Some _ ->
-                      Seq.toList acc
+                      [acc.[acc.Count - 1]; acc.[acc.Count - 2]]
+                      //Seq.toList acc
                     | _ ->
                       this.Comm.Warning ("fake certified infon")
                       []
