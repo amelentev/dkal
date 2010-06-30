@@ -1,0 +1,61 @@
+# DKAL S-expr syntax
+
+policy ::= policy-stmt*
+
+policy-stmt ::= 
+  "(" "type" id ")"
+  "(" "me" id ")"
+  "(" "fun" type id type* ")"
+  "(" "macro" type id vardecl term ")"
+  "(" "comm" infon+ target+ ")"
+  "(" "knows" infon+ ")"
+
+type ::= 
+  id
+  "principal"
+  "infon"
+  "bool"
+  "any"
+  "int" # not strictly necessary
+
+vardecl ::=
+  "(" type id ")"
+
+target ::=
+  "(" "to" principal infon* ")" 
+  "(" "say" principal infon* ")" 
+  "(" "say*" principal infon* ")"  # send with no evidence
+
+infon ::= 
+  "(" "empty" ")"
+  "(" "and" infon* ")"
+  "(" "follows" infon infon ")"
+  "(" "said" principal infon ")"
+  "(" "implied" principal infon ")"
+  "(" "asInfon" bool-term ")"
+  "(" "certified" infon term ")"
+  "(" "tdonS" principal infon ")"
+  "(" "tdonI" principal infon ")"
+  "(" id term* ")"
+
+principal ::= term
+bool-term ::= term
+
+term ::= 
+  "(" id term* ")"
+  id                 # variable, constants look like "(foo)"
+
+# Predefined functions:
+(fun int ^ int int)
+(fun int * int int)
+(fun int / int int)
+(fun int % int int)
+(fun int + int int)
+(fun int - int int)
+(fun bool <= int int)
+(fun bool >= int int)
+(fun bool == any any)
+(fun bool && bool bool)
+(fun bool || bool bool)
+(fun bool true)
+(fun bool false)
