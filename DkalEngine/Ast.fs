@@ -346,10 +346,6 @@ module Ast =
 
     member this.ToSX() =
       let app (n, a) = SX.App (fakePos, n, a)
-      let rec split = function
-        | InfonAnd (i1, i2) ->
-          split i1 @ split i2
-        | i -> [i.ToSX()]
       let target() =        
         let args = [this.target.ToSX(); this.message.ToSX()]
         match this.certified with
@@ -358,7 +354,7 @@ module Ast =
           | Processed -> app ("say*", args)
       match this.proviso with
         | InfonEmpty ->           
-          app ("comm", split this.trigger @ [target()])
+          app ("comm", [this.trigger.ToSX(); target()])
         | _ ->
           failwith "provisional communication not supported for SExpressions"
     
