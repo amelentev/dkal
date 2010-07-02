@@ -10,7 +10,10 @@ policy-stmt ::=
   "(" "comm" infon+ target+ ")"
   "(" "knows" infon+ ")"
 
-type ::= 
+type ::=
+  "(" type-name ")"
+
+type-name ::= 
   id
   "principal"
   "infon"
@@ -19,7 +22,7 @@ type ::=
   "int" # not strictly necessary
 
 vardecl ::=
-  "(" type id ")"
+  "(" type-name id ")"
 
 target ::=
   "(" "to" principal infon* ")" 

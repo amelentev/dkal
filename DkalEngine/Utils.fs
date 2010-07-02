@@ -48,6 +48,11 @@ module Util =
   let vec() = new Vec<_>()
   let l2s l = "[" + String.concat "; " (List.map (fun o -> o.ToString()) l) + "]"
 
+  let tempStringBuilder f =
+    let sb = StringBuilder ()
+    f sb
+    sb.ToString()
+
   let getDefl (dict:Dict<_,_>) k d =
     match dict.TryGetValue k with
       | true, r -> r

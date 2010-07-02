@@ -547,7 +547,7 @@ type Engine =
     let rec aux = function
       | AsInfon _ as t -> t
       | Term.App (f, args) as t ->
-        if f.retType.typ.name.StartsWith "*" then
+        if f.IsFree then
           Term.App (f, List.map aux args)
         else
           match pulledOut.TryGetValue t with

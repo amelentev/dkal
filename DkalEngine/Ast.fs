@@ -23,6 +23,9 @@ module Ast =
   // The real final AST
   //
   
+  type PP = SExpr.PP
+  type SX = SExpr.SX
+
   type Type =
     {
       id : int
@@ -31,68 +34,16 @@ module Ast =
     
     override this.ToString() =
       this.name
+
+    member this.ToSX() =
+      SX.App (fakePos, this.name, [])
   
   type Var =
     { id : int; name : string; mutable typ : Type }
     
     override this.ToString() = this.name
-
-  type PP =
-    | PString of string
-    | PBlock of int * list<PP>
-
-    member this.Append str =
-      match this with
-        | PString s -> PString (s + str)
-        | PBlock (n, lst) ->
-          match List.rev lst with
-            | x :: xs ->
-              PBlock (n + str.Length, List.rev (x.Append str :: xs))
-            | [] -> PString str          
-
-    member this.Prepend (str:string) =
-      match this with
-        | PString s -> PString (str + s)
-        | PBlock (n, x :: xs) ->
-          PBlock (n + str.Length, x.Prepend str :: xs)
-        | PBlock (_, []) -> PString str
-
-    member this.Length =
-      match this with
-        | PString s -> s.Length
-        | PBlock (n, _) -> n
-
-    member this.Print (sb:System.Text.StringBuilder) margin =
-      let wr (s:string) = sb.Append s |> ignore
-      let rec wrpp = function
-        | PP.PString s -> wr s
-        | PP.PBlock (_, l) ->
-          match List.rev l with
-            | x :: xs ->
-              for x in List.rev xs do
-                wrpp x
-                wr " "
-              wrpp x
-            | [] -> () 
-      let rec line ind = function
-        | PP.PString s ->
-          wr (String(' ', ind))
-          wr s
-          wr "\n"
-        | PP.PBlock (len, x :: xs) as pp ->
-          if len + ind > margin then
-            line ind x
-            List.iter (line (ind + 2)) xs
-          else
-            wr (String(' ', ind))
-            wrpp pp
-            wr "\n"
-        | PP.PBlock (_, []) -> ()
-      line 0 this
-    
-    static member Block lst =
-      let lst = lst |> List.filter (function PString "" -> false | _ -> true)
-      PBlock (List.map (fun (s:PP) -> s.Length) lst |> List.sum, lst)
+    member this.ToSXRef() = SX.Var (fakePos, this.name)
+    member this.ToSXDecl() = SX.App (fakePos, this.typ.name, [this.ToSXRef()])
 
   [<ReferenceEquality; NoComparison>]
   type Function =
@@ -103,6 +54,8 @@ module Ast =
       argTypes : list<Var>
       mutable body : obj
     }
+
+    member this.IsFree = this.body = null
     
     member this.WriteAsInfix (lst:list<PP>) =
       if this.name.IndexOf '*' < 0 then
@@ -126,12 +79,13 @@ module Ast =
           let par (p:PP) = (p.Prepend "(").Append ")"
           let args = List.fold2 (fun acc a b -> toPP b :: par a :: acc) [toPP (List.head words)] lst (List.tail words) 
           PP.Block (List.rev args)
+
                   
   let private nextId =
     let curr = ref 0
     function () -> incr curr; !curr
   
-  let private infon : Type = { id = nextId(); name = "*infon*" }
+  let private infon : Type = { id = nextId(); name = "infon" }
   let private assertion : Type = { id = nextId(); name = "*assertion*" }
   let private unbound : Type = { id = nextId(); name = "*unbound*" }
   let private evidence : Type = { id = nextId(); name = "*evidence*" }
@@ -157,13 +111,13 @@ module Ast =
     globalFunctions.Add (fn.name, fn)
     fn
     
-  let private infonAnd = addGlobalFunction Type.Infon "Infon.&&" [Type.Infon; Type.Infon]
-  let private infonFollows = addGlobalFunction Type.Infon "Infon.==>" [Type.Infon; Type.Infon]
-  let private infonSaid = addGlobalFunction Type.Infon "Infon.said" [Type.Principal; Type.Infon]
-  let private infonImplied = addGlobalFunction Type.Infon "Infon.implied" [Type.Principal; Type.Infon]
-  let private infonEmpty = addGlobalFunction Type.Infon "Infon.empty" []
+  let private infonAnd = addGlobalFunction Type.Infon "and" [Type.Infon; Type.Infon]
+  let private infonFollows = addGlobalFunction Type.Infon "follows" [Type.Infon; Type.Infon]
+  let private infonSaid = addGlobalFunction Type.Infon "said" [Type.Principal; Type.Infon]
+  let private infonImplied = addGlobalFunction Type.Infon "implied" [Type.Principal; Type.Infon]
+  let private infonEmpty = addGlobalFunction Type.Infon "empty" []
   let private infonAsInfon = addGlobalFunction Type.Infon "asInfon" [Type.Bool]  
-  let private infonCertified = addGlobalFunction Type.Infon "Infon.cert" [Type.Infon; Type.Evidence]
+  let private infonCertified = addGlobalFunction Type.Infon "certified" [Type.Infon; Type.Evidence]
   let private substrateEq = addGlobalFunction Type.Bool "==" [Type.Unbound; Type.Unbound]  
   
   // the int parameter is a placeholder for the actual cryptographic signature
@@ -251,14 +205,34 @@ module Ast =
       !varList |> List.rev
         
     override this.ToString() =
-      let sb = new StringBuilder()
-      !termToStringCallback (sb, (this :> obj))
-      sb.ToString()
+      tempStringBuilder (fun sb -> !termToStringCallback (sb, (this :> obj)))
     
     static member True = Const (Const.Bool true)
+
+    member this.ToSX () =
+      match this with
+        | App (f, args) -> SX.App (fakePos, f.name, args |> List.map (fun t -> t.ToSX()))
+        | Var (v) -> SX.Var (fakePos, v.name)
+        | Const (Const.Int k) -> SX.Int (fakePos, k)
+        | Const (Const.Principal p) -> SX.App (fakePos, p.name, [])
+        | Const (Const.Bool true) -> SX.App (fakePos, "true", [])
+        | Const (Const.Bool false) -> SX.App (fakePos, "false", [])
+        | Const (Const.Column (t,c)) -> SX.App (fakePos, t + "." + c, [])
       
   type PrincipalTerm = Term  
   type Infon = Term
+
+  let optimizeSX = SX.OptimizeList
+
+  type Function with
+    member this.ToSX() =
+      let app (a, n) = SX.App (fakePos, a, n)
+      let pref = [this.retType.typ.ToSX(); SX.Var (fakePos, this.name)]
+      if this.body = null then
+        app ("fun", pref @ (this.argTypes |> List.map (fun v -> v.typ.ToSX())))
+      else
+        app ("macro", pref @ (this.argTypes |> List.map (fun v -> v.ToSXDecl())) @ [(this.body :?> Term).ToSX()])
+
   
   let (===) = LanguagePrimitives.PhysicalEquality
   
@@ -305,7 +279,7 @@ module Ast =
 
   let private infonToString (sb, (t_:obj)) =
     let par pp = ((PP.Block pp).Append ")").Prepend "("
-    let s s = PString s
+    let s s = PP.PString s
     let rec pr = function
       | InfonFollows (InfonSaid (p, a), a') when a = a' ->
         par [s (p.ToString()); s "tdonS"; pr a]
@@ -324,7 +298,7 @@ module Ast =
         f.WriteAsInfix (List.map pr args)
       | Var v -> s (v.name)
       | Const p -> s (p.ToString())
-    (pr (t_ :?> Term)).Print sb 90
+    (pr (t_ :?> Term)).Print 90 sb
     if sb.Chars (sb.Length - 1) = '\n' then
       sb.Length <- sb.Length - 1
 
@@ -369,6 +343,24 @@ module Ast =
       trigger : Infon
       certified : CommKind
     }
+
+    member this.ToSX() =
+      let app (n, a) = SX.App (fakePos, n, a)
+      let rec split = function
+        | InfonAnd (i1, i2) ->
+          split i1 @ split i2
+        | i -> [i.ToSX()]
+      let target() =        
+        let args = [this.target.ToSX(); this.message.ToSX()]
+        match this.certified with
+          | Certified -> app ("to", args)
+          | CertifiedSay -> app ("say", args)
+          | Processed -> app ("say*", args)
+      match this.proviso with
+        | InfonEmpty ->           
+          app ("comm", split this.trigger @ [target()])
+        | _ ->
+          failwith "provisional communication not supported for SExpressions"
     
   type Filter =
     {
@@ -409,6 +401,13 @@ module Ast =
         | SendTo c -> c.ai
         | ReceiveFrom f -> f.ai
 
+    member this.ToSX() =
+      let app (n, a) = SX.App (fakePos, n, a)
+      match this with
+        | Knows k -> app ("knows", [k.infon.ToSX()])
+        | SendTo c -> c.ToSX()
+        | ReceiveFrom _ -> failwith "filters not supported"
+          
     override this.ToString() =
       match this with
         | Knows k ->

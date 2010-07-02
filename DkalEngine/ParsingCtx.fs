@@ -26,7 +26,9 @@ open Microsoft.Research.DkalEngine.Ast
 type ParsingCtx() =
   let ctx = PreAst.Context.Make()
   let mutable me = None
+  let mutable firstId = ctx.id
   let parseAssertions toks = 
+    firstId <- ctx.id
     let toks = toks |> Parser.addRules ctx |> Parser.applyRules ctx
     Resolver.resolveFunctions ctx
     let decls = List.collect (Resolver.resolve ctx) toks
@@ -51,6 +53,9 @@ type ParsingCtx() =
     match me with
       | Some v -> v
       | None -> raise (SyntaxError (fakePos, "principal identity not provided"))
+
+  member this.LateFunctions () =
+    ctx.functions.Values |> Seq.filter (fun f -> f.id > firstId) |> Seq.sortBy (fun f -> f.id)
 
   /// Lookup or create a new named principal.
   member this.LookupOrAddPrincipal name =

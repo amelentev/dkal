@@ -73,25 +73,34 @@ and Context(filename, gctx:Global, tr) =
       match gctx.Contexts.TryGetValue msg.target.name with
         | true, target ->
           let msg' = serializer.SerializeMessage msg
-          say (xf "say to %O:\n%O" target.Me (msg.message.Sanitize()))
+          say (xf "say to %O:\n%O" target.Me (msg.message.Sanitize().ToSX()))
           target.RecieveMessage msg'
         | _ ->
           say ("no such principal " + msg.target.ToString())
     member this.PrincipalById id = principalById id  
     member this.PrincipalId (p:Ast.Principal) = principalId p
 
-
 module Main =
   let main () =
     let gctx = { Contexts = dict() }
     let ctxList = vec()
+    let dumpSx = ref false
     let rec aux tr = function
       | "-v" :: rest -> aux (tr + 1) rest
+      | "-sx" :: rest -> dumpSx := true; aux tr rest
       | fn :: rest ->
-        let c = Context (fn, gctx, tr)
-        gctx.Contexts.Add (c.Me.Name, c)
-        ctxList.Add c        
-        aux 0 rest
+        if !dumpSx then
+          let pctx = ParsingCtx ()
+          let prelude = pctx.ParsePrelude ()
+          let body = pctx.ParseFile fn
+          let decls =
+            [for a in pctx.LateFunctions() -> a.ToSX()] @ [for a in body -> a.ToSX()]
+          decls |> Ast.optimizeSX |>  Seq.iter System.Console.Write 
+        else
+          let c = Context (fn, gctx, tr)
+          gctx.Contexts.Add (c.Me.Name, c)
+          ctxList.Add c        
+          aux 0 rest
       | [] -> ()
     let args = System.Environment.GetCommandLineArgs() |> Seq.toList |> List.tail
     try
