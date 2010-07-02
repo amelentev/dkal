@@ -1,0 +1,16 @@
+(macro (bool) needInfo (int N)
+  (&& (== (physPatients.id) N) (== (physPatients.needInfo) (true)) (== R (true))))
+
+(knows
+  (tdonS SITE (*-participates-in-*-at-*-as-a-physician PHYS TRIAL SITE))
+  (tdonS SITE (*-is-allocated-patients-*-to-*-in-*-at-* PHYS P1 P2 TRIAL SITE))
+  (tdonS (keyManager) (*-is-key-for-* K (record N TRIAL))))
+
+(comm
+  (and
+    (*-participates-in-*-at-*-as-a-physician PHYS TRIAL SITE)
+    (*-is-allocated-patients-*-to-*-in-*-at-* PHYS P1 P2 TRIAL SITE)
+    (asInfon (&& (<= P1 N) (<= N P2))) 
+    (asInfon (needInfo N)))
+  (to (keyManager) (said (phys1) (*-requests-to-read-* (phys1) (record N TRIAL))))
+  (to (keyManager) (implied (org TRIAL) (*-may-read-* (phys1) (record N TRIAL)))))
