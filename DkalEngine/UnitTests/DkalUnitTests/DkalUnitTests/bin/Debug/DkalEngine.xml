@@ -73,6 +73,12 @@
 <member name="">
 
 </member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
 <member name="M:Microsoft.Research.DkalEngine.Engine.Talk(Microsoft.Research.DkalEngine.ICommunicator)">
 <summary>
  See if some messages should be sent, and if so, sends them using comm.Send().
@@ -88,6 +94,9 @@
 <summary>
  First close the Engine, and then start a new substrate connection and a worker thread(s).
 </summary>
+</member>
+<member name="">
+
 </member>
 <member name="">
 
@@ -112,6 +121,14 @@
 </member>
 <member name="">
 
+</member>
+<member name="">
+
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.Finish">
+<summary>
+ Wait for all pending requests to finish, stop the worker thread and clean the state.
+</summary>
 </member>
 <member name="">
 
@@ -142,6 +159,11 @@
 <member name="M:Microsoft.Research.DkalEngine.Engine.Close">
 <summary>
  Kill all the worker threads. Close the substrate SQL connection. Clear infostrate and the current policy.
+</summary>
+</member>
+<member name="M:Microsoft.Research.DkalEngine.Engine.CheckPoint">
+<summary>
+ Block until all pending requests are finished.
 </summary>
 </member>
 <member name="">
@@ -248,6 +270,15 @@
 <member name="">
 
 </member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
 <member name="M:Microsoft.Research.DkalEngine.ParsingCtx.ParseStream(System.String,System.IO.TextReader)">
 <summary>
  Returns a list of Assertions from the specified stream. The filename is only used for error messages.
@@ -274,6 +305,9 @@
 <summary>
  Lookup or create a new named principal.
 </summary>
+</member>
+<member name="">
+
 </member>
 <member name="">
 
@@ -326,6 +360,12 @@
  Term&lt;-&gt;string serialization/deserialization. Requires a parsing context with
  function definitions.
 </summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
 </member>
 <member name="">
 
@@ -595,6 +635,24 @@
 <member name="">
 
 </member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
 <member name="T:Microsoft.Research.DkalEngine.Ast.Term">
 <summary>
  Represent substrate terms as well as infons.
@@ -638,6 +696,24 @@
  Principals are fully identified by name. New principals should be created only using
  ParsingCtx.LookupOrAddPrincipal method.
 </summary>
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
 </member>
 <member name="">
 
@@ -1083,6 +1159,9 @@
 <member name="">
 
 </member>
+<member name="">
+
+</member>
 <member name="T:Microsoft.Research.DkalEngine.PreAst">
 
 </member>
@@ -1165,6 +1244,111 @@
 
 </member>
 <member name="T:Microsoft.Research.DkalEngine.Resolver">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.ResolverSX">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.SExpr">
 
 </member>
 <member name="">
@@ -1275,7 +1459,85 @@
 <member name="">
 
 </member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="T:Microsoft.Research.DkalEngine.SxLexer">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
+
+</member>
 <member name="T:Microsoft.Research.DkalEngine.Tokenizer">
+
+</member>
+<member name="">
+
+</member>
+<member name="">
 
 </member>
 <member name="">

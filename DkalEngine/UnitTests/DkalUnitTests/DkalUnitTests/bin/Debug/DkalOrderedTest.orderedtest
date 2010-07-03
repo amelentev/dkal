@@ -11,5 +11,6 @@
     <TestLink id="93a14a7f-1d46-a28b-2eb5-03953f6094aa" name="ParseInfonTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <TestLink id="08977f97-d1ca-45cb-2992-e0c78b9fb63e" name="ParseStreamTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <TestLink id="f6365f55-c0b2-032d-0d7e-1dfa91a40943" name="SerializeDeserializeMessageTest" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="6bfd531c-34bf-1e69-17a8-c5a4ecaaecf9" name="ProcessMessageTest" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   </TestLinks>
 </OrderedTest>

@@ -171,7 +171,7 @@ namespace DkalUnitTest
         }
 
         /// <summary>
-        /// Test verifies the Engine processed the message sent
+        /// Test verifies the Engine processed the message. ACK call
         /// </summary>
         [TestMethod]
         public void ProcessMessageTest()
@@ -190,11 +190,6 @@ namespace DkalUnitTest
                 string expected = "message processed";
 
                 msgcntroller.SendMessage(infon, null);
-                //while (this.msg == null)
-                //    Thread.Sleep(1000);
-
-                //Microsoft.Research.DkalEngine.Ast.Message message = this.msg;
-                //Assert.AreEqual(expected, this.msg.message.ToString());
 
                 while (String.IsNullOrEmpty(this.strmessageProcessed))
                     Thread.Sleep(1000);
