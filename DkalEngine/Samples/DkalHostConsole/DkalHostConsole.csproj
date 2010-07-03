@@ -34,11 +34,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DkalEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\bin\Debug\DkalEngine.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -51,9 +48,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DkalHost\DkalHost.csproj">
-      <Project>{9EDBE1FC-FFA2-4E25-81C1-FEC8C5C9D24D}</Project>
-      <Name>DkalHost</Name>
+    <ProjectReference Include="..\DkalLib\DkalLib.csproj">
+      <Project>{DD3C7363-AED6-44DD-B132-1DA7FD1363FD}</Project>
+      <Name>DkalLib</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

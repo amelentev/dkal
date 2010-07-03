@@ -22,11 +22,8 @@ C:\MS\ECM\CodePlex_DkalHost\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHos
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHostConsole.exe.config
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHostConsole.exe
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHostConsole.pdb
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalEngine.dll
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHost.dll
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalHost.pdb
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalEngine.pdb
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalEngine.xml
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\ResolveAssemblyReference.cache
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\DkalHostConsole.exe
 C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\obj\x86\Debug\DkalHostConsole.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalLib.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalHostConsole\bin\Debug\DkalLib.pdb

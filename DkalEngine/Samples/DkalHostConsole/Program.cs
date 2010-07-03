@@ -13,26 +13,79 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DkalController;
+using System.ComponentModel.Composition;
+using DkalLib;
+using System.ComponentModel.Composition.Hosting;
+using System.IO;
+using System.ComponentModel.Composition.Primitives;
+using System.Reflection;
+//using DkalController;
+//using DkalLib;
 
 namespace DkalHostConsole
 {
     class Program
     {
+        [Import]
+        public IDkalMessage invokeObj { get; set; }
+
         static void Main(string[] args)
         {
-            MessageController mcon = new MessageController();
-            mcon.OnInfonProcessed += new MessageController.MyEventHandler(mcon_OnInfonProcessed);
-            //mcon.SendMessage("_cro implied SITE can read R in records of trial T under the authority of _site", "_cro");
-            mcon.SendMessage("42 is a good number", "_dkalTestEngine");
+            Program program = new Program();
+            program.Compose();
+            program.Run();
+
+            //MessageController mcon = new MessageController();
+            //mcon.OnInfonProcessed += new MessageController.MyEventHandler(mcon_OnInfonProcessed);
+            //mcon.SendMessage("42 is a good number", "_dkalTestEngine");
+
+            //MessageCaller caller = new MessageCaller();
+            //caller.SendMessage("42 is a good number", "_dkalTestEngine");
         }
 
-        static void mcon_OnInfonProcessed(object sender, DkalInfoEventArgs e)
+        void Compose()
         {
-            if (e.DkalMessage == null)
-                throw new ArgumentNullException("DkalMessage");
-            Microsoft.Research.DkalEngine.Ast.Message msg = e.DkalMessage;
+            try
+            {
+                DirectoryCatalog catalog =
+                    new DirectoryCatalog(AppDomain.CurrentDomain.BaseDirectory);
+
+                AggregateCatalog agcatalogue =
+                    new AggregateCatalog(new ComposablePartCatalog[] {catalog,
+                   new AssemblyCatalog(Assembly.GetExecutingAssembly())});
+
+                CompositionContainer container = new CompositionContainer(agcatalogue);
+
+                CompositionBatch batch = new CompositionBatch();
+
+                batch.AddPart(this);
+
+                container.Compose(batch);
+            }
+            catch (FileNotFoundException fnfex)
+            {
+                throw new Exception(fnfex.Message);
+            }
+            catch (CompositionException cex)
+            {
+                throw new Exception(cex.Message);
+            }
         }
+
+        void Run()
+        {
+            if (invokeObj != null)
+            {
+                invokeObj.InvokeMessage();
+            }
+        }
+
+        //static void mcon_OnInfonProcessed(object sender, DkalInfoEventArgs e)
+        //{
+        //    if (e.DkalMessage == null)
+        //        throw new ArgumentNullException("DkalMessage");
+        //    Microsoft.Research.DkalEngine.Ast.Message msg = e.DkalMessage;
+        //}
     }
 }
 
