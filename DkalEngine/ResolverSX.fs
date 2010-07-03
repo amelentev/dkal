@@ -131,7 +131,7 @@ module ResolverSX =
       | SX.App (_, "comm", precond :: targets) ->
         let precond = resolveInfon ctx precond
         let doTarget = function
-          | SX.App (_, name, [target; what]) as t ->
+          | SX.App (_, name, target :: what) as t ->
             let kind = 
               match name with
                 | "say*" -> CommKind.Processed
@@ -139,15 +139,16 @@ module ResolverSX =
                 | "say" -> CommKind.CertifiedSay
                 | _ -> err t "expecting (to ...) or (say ...) after (comm ...)"
             let target = resolveTerm ctx Type.Principal target
-            Assertion.SendTo { ai = ai t
-                               target = target
-                               message = resolveInfon ctx what
-                               proviso = Infon.Empty
-                               trigger = precond
-                               certified = kind }
+            what |> List.map (fun what ->
+                Assertion.SendTo { ai = ai t
+                                   target = target
+                                   message = resolveInfon ctx what
+                                   proviso = Infon.Empty
+                                   trigger = precond
+                                   certified = kind })
           | t ->
             err t "expecting 'to' after 'then they send'"
-        targets |> List.map doTarget
+        targets |> List.collect doTarget
       | t ->
         err t "invalid top-level assertion"
         

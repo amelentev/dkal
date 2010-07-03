@@ -3,15 +3,12 @@
 policy ::= policy-stmt*
 
 policy-stmt ::= 
-  "(" "type" id ")"
-  "(" "me" id ")"
-  "(" "fun" type id type* ")"
-  "(" "macro" type id vardecl term ")"
-  "(" "comm" infon+ target+ ")"
-  "(" "knows" infon+ ")"
-
-type ::=
-  "(" type-name ")"
+  "(" "type" id ")"                              # type declaration
+  "(" "me" id ")"                                # declaration for whom the policy is
+  "(" "fun" vardecl id vardecl ")"               # uninterpreted function (including infon relations)
+  "(" "macro" vardecl id vardecl* bool-term ")"  # SQL-interpreted function
+  "(" "comm" infon+ target+ ")"                  # communication rule
+  "(" "knows" infon+ ")"                         # knowledge assertion
 
 type-name ::= 
   id
@@ -23,6 +20,7 @@ type-name ::=
 
 vardecl ::=
   "(" type-name id ")"
+  "(" type-name ")"
 
 target ::=
   "(" "to" principal infon* ")" 
@@ -36,29 +34,33 @@ infon ::=
   "(" "said" principal infon ")"
   "(" "implied" principal infon ")"
   "(" "asInfon" bool-term ")"
-  "(" "certified" infon term ")"
   "(" "tdonS" principal infon ")"
   "(" "tdonI" principal infon ")"
-  "(" id term* ")"
+  "(" id term* ")"                 # id is function name of type (infon)
+
+term ::= 
+  "(" "." id id ")"  # SQL column reference
+  "(" id term* ")"   # function application
+  id                 # variable, constants look like "(foo)"
+
+  # predefined functions follow
+  "(" "^" int-term int-term ")"
+  "(" "*" int-term int-term ")"
+  "(" "/" int-term int-term ")"
+  "(" "%" int-term int-term ")"
+  "(" "+" int-term int-term ")"
+  "(" "-" int-term int-term ")"
+
+  "(" "<=" int-term int-term ")"
+  "(" ">=" int-term int-term ")"
+
+  "(" "==" term term ")"
+
+  "(" "&&" bool-term* ")"
+  "(" "||" bool-term* ")"
+  "(" "true" ")"
+  "(" "false" ")"
 
 principal ::= term
 bool-term ::= term
-
-term ::= 
-  "(" id term* ")"
-  id                 # variable, constants look like "(foo)"
-
-# Predefined functions:
-(fun int ^ int int)
-(fun int * int int)
-(fun int / int int)
-(fun int % int int)
-(fun int + int int)
-(fun int - int int)
-(fun bool <= int int)
-(fun bool >= int int)
-(fun bool == any any)
-(fun bool && bool bool)
-(fun bool || bool bool)
-(fun bool true)
-(fun bool false)
+int-term  ::= term
