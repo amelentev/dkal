@@ -128,6 +128,7 @@ module PreAst =
       mutable pendingFunctions : list<Function>;
       mutable id : int;
       mutable trace : int;
+      mutable me : option<Principal>;
     }    
     
     member this.AddRule r =
@@ -155,7 +156,8 @@ module PreAst =
       this.vars.Add (name, { name = name; id = this.NextId(); typ = Type.Unbound })
         
     static member Make() =
-      let ctx = { options = dict(); types = dict(); functions = dict(); rules = dict(); principals = dict(); vars = dict(); id = 100; pendingFunctions = []; trace = 0 }
+      let ctx = { options = dict(); types = dict(); functions = dict(); rules = dict(); principals = dict(); vars = dict(); id = 100; pendingFunctions = []; trace = 0; me = None }
+      ctx.types.Add ("infon", Type.Infon)
       ctx.types.Add ("principal", Type.Principal)
       ctx.types.Add ("int", Type.Int)
       ctx.types.Add ("bool", Type.Bool)

@@ -33,7 +33,7 @@ module Ast =
     }
     
     override this.ToString() =
-      this.name
+      this.name + this.id.ToString()
 
     member this.ToSX() =
       SX.App (fakePos, this.name, [])

@@ -81,6 +81,13 @@ type SX =
   | Int of Pos * int
   | String of Pos * string
 
+  member this.Pos =
+    match this with
+      | App (p, _, _)
+      | Var (p, _)
+      | Int (p, _)
+      | String (p, _) -> p
+
   member this.WriteTo (sb:StringBuilder) =
     let wr (s:string) = sb.Append s |> ignore
     match this with
@@ -107,19 +114,35 @@ type SX =
         (PP.Block (PP.PString ("(" + n) :: List.map aux args)).Append ")"
       | t ->
         PP.PString (tempStringBuilder t.WriteTo)
-    tempStringBuilder ((aux this).Print 90)
+    let r = tempStringBuilder ((aux this).Print 90)
+    if r.Length > 0 && r.IndexOf '\n' = r.Length - 1 then
+      r.Substring (0, r.Length - 1)
+    else r
+
 
   override this.ToString() = this.PrettyPrint()
 
+  static member IsAssoc = function
+    | "and" | "&&" | "||" -> true
+    | _ -> false
+
+  member this.UnAssoc() =
+    match this with
+      | App (p, name, [a]) when SX.IsAssoc name -> a.UnAssoc()
+      | App (p, name, (_ :: _ :: _ :: _ as args)) when SX.IsAssoc name ->
+        args |> List.rev |> List.reduce (fun a b -> App (p, name, [b; a]))
+      | App (p, "tdonS", [w; i]) ->
+        App (p, "follows", [App (p, "said", [w; i]); i])
+      | App (p, "tdonI", [w; i]) ->
+        App (p, "follows", [App (p, "implied", [w; i]); i])
+      | t -> t
+
   member this.Optimize() =
-    let isAssoc = function
-      | "and" | "&&" | "||" -> true
-      | _ -> false
     let opt (t:SX) = t.Optimize()
     match this with
-      | App (p, name, App (_, name', a1) :: a2) when isAssoc name && name = name' ->
+      | App (p, name, App (_, name', a1) :: a2) when SX.IsAssoc name && name = name' ->
         opt (App (p, name, a1 @ a2))
-      | App (p, name, [a1; App (_, name', a2)]) when isAssoc name && name = name' ->
+      | App (p, name, [a1; App (_, name', a2)]) when SX.IsAssoc name && name = name' ->
         opt (App (p, name, a1 :: a2))
       | App (p, name, args) ->
         App (p, name, List.map opt args)
@@ -129,7 +152,7 @@ type SX =
     let opt (t:SX) = t.Optimize()
     lst |> Seq.toList |> List.map opt
 
-  static member FromLexbuf filename lexbuf =
+  static member private FromLexbuf filename lexbuf =
     let err pos s = raise (SyntaxError (pos, s))
     let rec shift() =
       let tok = SxLexer.token lexbuf

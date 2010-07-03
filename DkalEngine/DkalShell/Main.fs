@@ -8,7 +8,11 @@ type Global =
     Contexts : Dict<string, Context>
   }
 
-and Context(filename, gctx:Global, tr) =
+  static member ParseSx (filename:string) =
+    use f = new System.IO.StreamReader(filename)
+    SExpr.SX.FromStream filename f
+
+and Context(includes, filename:string, gctx:Global, tr) =
   let pctx = ParsingCtx ()
   let opts = Options.Create ()
   let eng = Engine.Config opts
@@ -43,7 +47,12 @@ and Context(filename, gctx:Global, tr) =
       | _ -> failwith ("principal '" + p.name + "' not in database")
 
   do
-    let assertions = pctx.ParsePrelude () @ pctx.ParseFile filename
+    let assertions = pctx.ParsePrelude ()
+    let assertions =
+      if filename.EndsWith "sx" then        
+        assertions @ pctx.SXToAssertions (includes @ Global.ParseSx filename)
+      else
+        assertions @ pctx.ParseFile filename
     opts.PrivateSql <- pctx.Options.["private_sql"]
     opts.Trace <- tr
     eng.Reset ()
@@ -85,8 +94,12 @@ module Main =
     let gctx = { Contexts = dict() }
     let ctxList = vec()
     let dumpSx = ref false
+    let includes = ref []
     let rec aux tr = function
       | "-v" :: rest -> aux (tr + 1) rest
+      | "-i" :: fn :: rest ->
+        includes := Global.ParseSx fn @ !includes
+        aux tr rest
       | "-sx" :: rest -> dumpSx := true; aux tr rest
       | fn :: rest ->
         if !dumpSx then
@@ -95,9 +108,9 @@ module Main =
           let body = pctx.ParseFile fn
           let decls =
             [for a in pctx.LateFunctions() -> a.ToSX()] @ [for a in body -> a.ToSX()]
-          decls |> Ast.optimizeSX |>  Seq.iter System.Console.Write 
+          decls |> Ast.optimizeSX |>  Seq.iter System.Console.WriteLine
         else
-          let c = Context (fn, gctx, tr)
+          let c = Context (!includes, fn, gctx, tr)
           gctx.Contexts.Add (c.Me.Name, c)
           ctxList.Add c        
           aux 0 rest

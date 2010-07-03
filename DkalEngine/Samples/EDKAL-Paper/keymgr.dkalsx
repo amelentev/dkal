@@ -1,4 +1,5 @@
-(macro (int) key (record R) (&& (== (keys.record) R) (== (keys.thekey) K)))
+(me keyManager)
+(macro (int K) key (record R) (&& (== (. keys record) R) (== (. keys thekey) K)))
 (knows
   (follows
     (implied (org TRIAL) (*-may-read-* PERSON (record N TRIAL)))

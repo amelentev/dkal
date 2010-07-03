@@ -1,5 +1,7 @@
-(macro (bool) needInfo (int N)
-  (&& (== (physPatients.id) N) (== (physPatients.needInfo) (true)) (== R (true))))
+(me phys1)
+
+(macro (bool R) needInfo (int N)
+  (&& (== (. physPatients id) N) (== (. physPatients needInfo) (true)) (== R (true))))
 
 (knows
   (tdonS SITE (*-participates-in-*-at-*-as-a-physician PHYS TRIAL SITE))

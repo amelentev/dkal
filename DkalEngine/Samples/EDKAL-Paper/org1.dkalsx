@@ -1,15 +1,16 @@
-(macro (bool) siteUnnotified (principal S) (trial T)
+(me org1)
+(macro (bool R) siteUnnotified (principal S) (trial T)
   (&&
-    (== (siteAssignments.thesite) S)
-    (== (siteAssignments.trial) T)
-    (== (siteAssignments.unnotified) (true))
+    (== (. siteAssignments thesite) S)
+    (== (. siteAssignments trial) T)
+    (== (. siteAssignments unnotified) (true))
     (== R (true))))
-(macro (bool) sitePatients (principal S) (trial T) (int N1) (int N2)
+(macro (bool R) sitePatients (principal S) (trial T) (int N1) (int N2)
   (&&
-    (== (siteAssignments.thesite) S)
-    (== (siteAssignments.trial) T)
-    (== (siteAssignments.n1) N1)
-    (== (siteAssignments.n2) N2)
+    (== (. siteAssignments thesite) S)
+    (== (. siteAssignments trial) T)
+    (== (. siteAssignments n1) N1)
+    (== (. siteAssignments n2) N2)
     (== R (true))))
 (comm
   (and

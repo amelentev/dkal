@@ -59,6 +59,7 @@
     <Compile Include="Tokenizer.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="Resolver.fs" />
+    <Compile Include="ResolverSX.fs" />
     <Compile Include="SqlConnector.fs" />
     <Compile Include="SqlCompiler.fs" />
     <Compile Include="Engine.fs" />

@@ -52,7 +52,10 @@ type ParsingCtx() =
   member this.Me = 
     match me with
       | Some v -> v
-      | None -> raise (SyntaxError (fakePos, "principal identity not provided"))
+      | None -> 
+        if ctx.me.IsSome then me <- ctx.me; me.Value
+        else
+          raise (SyntaxError (fakePos, "principal identity not provided"))
 
   member this.LateFunctions () =
     ctx.functions.Values |> Seq.filter (fun f -> f.id > firstId) |> Seq.sortBy (fun f -> f.id)
@@ -109,3 +112,9 @@ type ParsingCtx() =
       | [PreAst.Tok.NewLine _]
       | [] -> raise (SyntaxError (fakePos, "infon expected"))
       | _ -> raise (SyntaxError (fakePos, "only one infon expected"))
+
+  member this.SXToAssertions s =
+    List.collect (fun t -> ResolverSX.resolve ctx t) s
+
+  member this.SXToInfon s =
+    ResolverSX.resolveInfon ctx s

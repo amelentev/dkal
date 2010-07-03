@@ -1,15 +1,17 @@
-(macro (bool) physUnnotified (principal P) (trial T)
+(me site1)
+
+(macro (bool R) physUnnotified (principal P) (trial T)
   (&&
-    (== (physAssignments.phys) P)
-    (== (physAssignments.trial) T)
-    (== (physAssignments.unnotified) (true))
+    (== (. physAssignments phys) P)
+    (== (. physAssignments trial) T)
+    (== (. physAssignments unnotified) (true))
     (== R (true))))
-(macro (bool) physPatients (principal P) (trial T) (int N1) (int N2)
+(macro (bool R) physPatients (principal P) (trial T) (int N1) (int N2)
   (&&
-    (== (physAssignments.phys) P)
-    (== (physAssignments.trial) T)
-    (== (physAssignments.n1) N1)
-    (== (physAssignments.n2) N2)
+    (== (. physAssignments phys) P)
+    (== (. physAssignments trial) T)
+    (== (. physAssignments n1) N1)
+    (== (. physAssignments n2) N2)
     (== R (true))))
 
 (knows
