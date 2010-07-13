@@ -71,7 +71,7 @@ namespace DkalController
                 string conString = ConfigurationManager.AppSettings["SubstrateConnectionString"];
 
                 if (string.IsNullOrEmpty(conString))
-                    throw new Exception("SubstrateConnectionString is null");
+                    throw new ConfigurationErrorsException("SubstrateConnectionString is null");
                 opts.PrivateSql = conString;
                 opts.Trace = 0;
 
