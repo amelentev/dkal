@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<TestRun id="e9ea6af5-5c14-481d-8045-61ab51dcf9c2" name="v-tumeh@V-TUMEH1 2010-06-29 01:12:03" runUser="REDMOND\v-tumeh" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <TestSettings name="Local" id="aa7ca958-bc02-4a3e-86a2-63a3cd7daa4e">
+    <Description>These are default test settings for a local test run.</Description>
+    <Deployment enabled="false" runDeploymentRoot="v-tumeh_V-TUMEH1 2010-06-29 01_12_03">
+      <DeploymentItem filename="C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\bin\Debug\DkalEngine.dll" />
+    </Deployment>
+    <Execution>
+      <TestTypeSpecific />
+      <AgentRule name="Execution Agents">
+      </AgentRule>
+    </Execution>
+  </TestSettings>
+  <Times creation="2010-06-29T01:12:03.3954804-07:00" queuing="2010-06-29T01:12:04.0875200-07:00" start="2010-06-29T01:12:04.2085269-07:00" finish="2010-06-29T01:12:12.3619933-07:00" />
+  <ResultSummary outcome="Failed">
+    <Counters total="10" executed="8" passed="6" error="0" failed="2" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="2" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+  <TestDefinitions>
+    <UnitTest name="LookupOrAddPrincipalTest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="64bdf410-c12b-a7e2-0829-ffeec4d8ebed">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.ParsingCtxTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="LookupOrAddPrincipalTest" />
+    </UnitTest>
+    <UnitTest name="SerializeDeserializeTermTest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="8617e8a9-a262-cb3d-57a1-1dcc22ca2547">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.SerializerTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="SerializeDeserializeTermTest" />
+    </UnitTest>
+    <UnitTest name="TestEngineCreation" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="a49ce50d-cc4d-6845-52a8-39854801f598">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.EngineTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="TestEngineCreation" />
+    </UnitTest>
+    <UnitTest name="ParseInfonTest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="93a14a7f-1d46-a28b-2eb5-03953f6094aa">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.ParsingCtxTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="ParseInfonTest" />
+    </UnitTest>
+    <UnitTest name="TestConnectionString" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="1a881233-9787-776d-b05e-db4780753788">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.EngineTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="TestConnectionString" />
+    </UnitTest>
+    <UnitTest name="SendMessageTest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="a9768f2f-1695-87b2-26aa-19e3828c53ab">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.EngineTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="SendMessageTest" />
+    </UnitTest>
+    <UnitTest name="KillEngineTest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="94e8466b-2146-2d50-b1ad-876dd20c357b">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.EngineTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="KillEngineTest" />
+    </UnitTest>
+    <UnitTest name="SerializeDeserializeMessageTest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="f6365f55-c0b2-032d-0d7e-1dfa91a40943">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.SerializerTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="SerializeDeserializeMessageTest" />
+    </UnitTest>
+    <OrderedTest name="dkalorderedtest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\dkalorderedtest.orderedtest" id="4fa28735-c6ec-4066-9797-88f7e357cbb9">
+      <Execution id="d66705ee-fae4-40e4-85d2-83500454b57d" />
+      <TestLinks>
+        <TestLink id="64bdf410-c12b-a7e2-0829-ffeec4d8ebed" name="LookupOrAddPrincipalTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="a49ce50d-cc4d-6845-52a8-39854801f598" name="TestEngineCreation" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="94e8466b-2146-2d50-b1ad-876dd20c357b" name="KillEngineTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="1a881233-9787-776d-b05e-db4780753788" name="TestConnectionString" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="a9768f2f-1695-87b2-26aa-19e3828c53ab" name="SendMessageTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="8617e8a9-a262-cb3d-57a1-1dcc22ca2547" name="SerializeDeserializeTermTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="93a14a7f-1d46-a28b-2eb5-03953f6094aa" name="ParseInfonTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="08977f97-d1ca-45cb-2992-e0c78b9fb63e" name="ParseStreamTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestLink id="f6365f55-c0b2-032d-0d7e-1dfa91a40943" name="SerializeDeserializeMessageTest" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+      </TestLinks>
+    </OrderedTest>
+    <UnitTest name="ParseStreamTest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\bin\debug\dkalunittests.dll" id="08977f97-d1ca-45cb-2992-e0c78b9fb63e">
+      <TestMethod codeBase="C:/MS/ECM/CodePlex_MyWorkspace/dkal/DkalEngine/UnitTests/DkalUnitTests/DkalUnitTests/bin/Debug/DkalUnitTests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="DkalUnitTest.ParsingCtxTest, DkalUnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="ParseStreamTest" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <TestEntries>
+    <TestEntry testId="4fa28735-c6ec-4066-9797-88f7e357cbb9" executionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d">
+      <TestEntries>
+        <TestEntry testId="64bdf410-c12b-a7e2-0829-ffeec4d8ebed" executionId="9960fcba-4573-4f2d-92b0-0b2da6267b25" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="a49ce50d-cc4d-6845-52a8-39854801f598" executionId="c6d14c5a-1cf5-490a-9f6e-4e4c86c77130" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="94e8466b-2146-2d50-b1ad-876dd20c357b" executionId="0d4ef49d-52aa-439b-b2c6-69781fde643a" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="1a881233-9787-776d-b05e-db4780753788" executionId="cc21b7f3-ccab-413f-bf47-6e5fe836ee61" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="a9768f2f-1695-87b2-26aa-19e3828c53ab" executionId="6f9af4cd-a83d-42c9-832a-b512151c15ef" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="8617e8a9-a262-cb3d-57a1-1dcc22ca2547" executionId="c4ca18df-7bf9-4399-9a22-28ebed1079ef" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="93a14a7f-1d46-a28b-2eb5-03953f6094aa" executionId="3a394846-429a-4046-862f-b91bf5894ada" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="08977f97-d1ca-45cb-2992-e0c78b9fb63e" executionId="6e417132-2eb6-46df-a803-28dfae70b23b" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+        <TestEntry testId="f6365f55-c0b2-032d-0d7e-1dfa91a40943" executionId="da95ea9c-d7ad-452d-9565-406a82c43615" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+      </TestEntries>
+    </TestEntry>
+  </TestEntries>
+  <Results>
+    <TestResultAggregation executionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="4fa28735-c6ec-4066-9797-88f7e357cbb9" testName="dkalorderedtest" computerName="V-TUMEH1" duration="00:00:06.3601788" startTime="2010-06-29T01:12:04.3515351-07:00" endTime="2010-06-29T01:12:10.8199051-07:00" testType="ec4800e8-40e5-4ab3-8510-b8bf29b1904d" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d66705ee-fae4-40e4-85d2-83500454b57d">
+      <Counters error="0" failed="1" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="2" disconnected="0" warning="0" passed="6" completed="0" inProgress="0" pending="0" />
+      <InnerResults>
+        <UnitTestResult executionId="9960fcba-4573-4f2d-92b0-0b2da6267b25" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="64bdf410-c12b-a7e2-0829-ffeec4d8ebed" testName="LookupOrAddPrincipalTest" computerName="V-TUMEH1" duration="00:00:00.3457474" startTime="2010-06-29T01:12:04.4585412-07:00" endTime="2010-06-29T01:12:05.4175961-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9960fcba-4573-4f2d-92b0-0b2da6267b25">
+          <Output>
+          </Output>
+        </UnitTestResult>
+        <UnitTestResult executionId="c6d14c5a-1cf5-490a-9f6e-4e4c86c77130" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="a49ce50d-cc4d-6845-52a8-39854801f598" testName="TestEngineCreation" computerName="V-TUMEH1" duration="00:00:02.0094214" startTime="2010-06-29T01:12:05.4185961-07:00" endTime="2010-06-29T01:12:07.4467121-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c6d14c5a-1cf5-490a-9f6e-4e4c86c77130">
+          <Output>
+          </Output>
+        </UnitTestResult>
+        <UnitTestResult executionId="0d4ef49d-52aa-439b-b2c6-69781fde643a" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="94e8466b-2146-2d50-b1ad-876dd20c357b" testName="KillEngineTest" computerName="V-TUMEH1" duration="00:00:02.1368425" startTime="2010-06-29T01:12:07.4467121-07:00" endTime="2010-06-29T01:12:09.6218366-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0d4ef49d-52aa-439b-b2c6-69781fde643a">
+          <Output>
+          </Output>
+        </UnitTestResult>
+        <UnitTestResult executionId="cc21b7f3-ccab-413f-bf47-6e5fe836ee61" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="1a881233-9787-776d-b05e-db4780753788" testName="TestConnectionString" computerName="V-TUMEH1" duration="00:00:00.0147073" startTime="2010-06-29T01:12:09.6228366-07:00" endTime="2010-06-29T01:12:09.6478380-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cc21b7f3-ccab-413f-bf47-6e5fe836ee61">
+          <Output>
+          </Output>
+        </UnitTestResult>
+        <UnitTestResult executionId="6f9af4cd-a83d-42c9-832a-b512151c15ef" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="a9768f2f-1695-87b2-26aa-19e3828c53ab" testName="SendMessageTest" computerName="V-TUMEH1" duration="00:00:01.0365380" startTime="2010-06-29T01:12:09.6488381-07:00" endTime="2010-06-29T01:12:10.6998982-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6f9af4cd-a83d-42c9-832a-b512151c15ef">
+          <Output>
+          </Output>
+        </UnitTestResult>
+        <UnitTestResult executionId="c4ca18df-7bf9-4399-9a22-28ebed1079ef" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="8617e8a9-a262-cb3d-57a1-1dcc22ca2547" testName="SerializeDeserializeTermTest" computerName="V-TUMEH1" duration="00:00:00.0527968" startTime="2010-06-29T01:12:10.6998982-07:00" endTime="2010-06-29T01:12:10.7649019-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c4ca18df-7bf9-4399-9a22-28ebed1079ef">
+          <Output>
+          </Output>
+        </UnitTestResult>
+        <UnitTestResult executionId="3a394846-429a-4046-862f-b91bf5894ada" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="93a14a7f-1d46-a28b-2eb5-03953f6094aa" testName="ParseInfonTest" computerName="V-TUMEH1" duration="00:00:00.0474055" startTime="2010-06-29T01:12:10.7649019-07:00" endTime="2010-06-29T01:12:10.8179050-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3a394846-429a-4046-862f-b91bf5894ada">
+          <Output>
+            <ErrorInfo>
+              <Message>Assert.Fail failed. Exception Occurred: Exception of type 'Microsoft.Research.DkalEngine.Util+SyntaxError' was thrown.</Message>
+              <StackTrace>   at DkalUnitTest.ParsingCtxTest.ParseInfonTest() in C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\UnitTests\DkalUnitTests\DkalUnitTests\ParsingCtxTest.cs:line 113
+</StackTrace>
+            </ErrorInfo>
+          </Output>
+        </UnitTestResult>
+        <TestResult executionId="6e417132-2eb6-46df-a803-28dfae70b23b" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="08977f97-d1ca-45cb-2992-e0c78b9fb63e" testName="ParseStreamTest" computerName="V-TUMEH1" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e417132-2eb6-46df-a803-28dfae70b23b" />
+        <TestResult executionId="da95ea9c-d7ad-452d-9565-406a82c43615" parentExecutionId="d66705ee-fae4-40e4-85d2-83500454b57d" testId="f6365f55-c0b2-032d-0d7e-1dfa91a40943" testName="SerializeDeserializeMessageTest" computerName="V-TUMEH1" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="da95ea9c-d7ad-452d-9565-406a82c43615" />
+      </InnerResults>
+    </TestResultAggregation>
+  </Results>
+</TestRun>
