@@ -1,0 +1,12 @@
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\bin\Debug\MEF.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\bin\Debug\MEF.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\obj\Debug\ResolveAssemblyReference.cache
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\obj\Debug\MEF.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\obj\Debug\MEF.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\SamplePart\bin\Debug\SamplePart.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\SamplePart\bin\Debug\SamplePart.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\SamplePart\bin\Debug\DkalLib.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\SamplePart\bin\Debug\DkalLib.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\SamplePart\obj\Debug\ResolveAssemblyReference.cache
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\SamplePart\obj\Debug\SamplePart.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\SamplePart\obj\Debug\SamplePart.pdb

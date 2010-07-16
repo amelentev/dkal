@@ -1,0 +1,10 @@
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalLib\bin\Debug\DkalLib.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalLib\bin\Debug\DkalLib.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalLib\obj\Debug\ResolveAssemblyReference.cache
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalLib\obj\Debug\DkalLib.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\DkalLib\obj\Debug\DkalLib.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalLib\bin\Debug\DkalLib.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalLib\bin\Debug\DkalLib.pdb
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalLib\obj\Debug\ResolveAssemblyReference.cache
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalLib\obj\Debug\DkalLib.dll
+C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalLib\obj\Debug\DkalLib.pdb
