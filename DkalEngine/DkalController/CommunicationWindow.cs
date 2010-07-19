@@ -48,7 +48,7 @@ namespace Microsoft.Research.DkalController
     void InitialMessage(string f)
     {
       Say(string.Format(
-        "<b>LOADED DKAL FILE</b> <blue>{0}</blue> ({1} infons, {2} comm.rules, {3} filters)\n", f, eng.infonstrate.Length, eng.communications.Length, eng.filters.Length));
+        "<b>LOADED DKAL FILE</b> <blue>{0}</blue> ({1} infons, {2} comm.rules, {3} filters)\n", f, eng.infostrate.Length, eng.communications.Length, eng.filters.Length));
 
       string inp = null;
       if (pctx.Options.TryGetValue("initial_input", out inp)) {
@@ -179,7 +179,7 @@ namespace Microsoft.Research.DkalController
     private void button1_Click_1(object sender, EventArgs e)
     {
       if (textBox1.Text == "ALL") {
-        foreach (var i in eng.infonstrate)
+          foreach (var i in eng.infostrate)
           this.Say(string.Format("<b>INFON:</b>\n{0}\n", i.infon));
         return;
       }
