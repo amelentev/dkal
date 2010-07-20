@@ -367,7 +367,7 @@ type Engine =
         }
       this.filters <- filter :: this.filters)
   
-  /// Add incomming message to the infostrate. Will call comm.Knows() for each
+  /// Add incomming message to the infostrate. Will call comm.Knows() for each 
   /// new infons learned. Will call Talk() at the end.
   member this.Listen (comm, msg:Message) =
     this.Invoke (fun () ->
