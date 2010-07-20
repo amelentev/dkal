@@ -47,7 +47,7 @@ type Engine =
     sentItems : Dict<Message, bool>
     pending : GQueue<unit -> unit>
     options : Options
-    mutable infonstrate : list<Knows>
+    mutable infostrate : list<Knows>
     mutable filters : list<Filter>
     mutable communications : list<Communication>
     mutable nextId : int
@@ -58,7 +58,7 @@ type Engine =
   static member Config (opts:Options) =
     let this =
       { me = None; worker = None;
-        infonstrate = []; filters = []; communications = []; nextId = 0;
+        infostrate = []; filters = []; communications = []; nextId = 0;
         comm = None;
         sentItems = dict()
         sql = None
@@ -145,7 +145,7 @@ type Engine =
         stripPrefix subst prefixUnif preconds suff (pref, subst.[v.id])
       | t -> immediate t
     
-    List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, this.Freshen k.infon)) this.infonstrate
+    List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, this.Freshen k.infon)) this.infostrate
     !res
   
   member this.DeriveCertification subst = 
@@ -153,7 +153,7 @@ type Engine =
       let aux = function
         | { infon = InfonCert (inf, pr) } -> this.TryDerive subst pr (goal, inf)
         | _ -> []
-      List.collect aux this.infonstrate
+      List.collect aux this.infostrate
     function
     | AsInfon (t) as goal ->
       [({subst with assumptions = t :: subst.assumptions}, Term.App (Function.EvAsInfon, [goal]))]
@@ -302,7 +302,7 @@ type Engine =
         | None -> []
     let newInfons = this.filters |> List.collect matches
     List.iter this.Comm.Knows newInfons
-    this.infonstrate <- newInfons @ this.infonstrate
+    this.infostrate <- newInfons @ this.infostrate
     
   member this.Me = this.me
   
@@ -332,9 +332,9 @@ type Engine =
   /// Add an infon to the infostrate.
   member this.AddInfon i =
     this.Invoke (fun () ->
-       this.infonstrate <- { ai = this.FakeAI(); infon = i } :: this.infonstrate)
+       this.infostrate <- { ai = this.FakeAI(); infon = i } :: this.infostrate)
   
-  /// Add a policy assertion to the infonstrate.
+  /// Add a policy assertion to the infostrate.
   member this.AddAssertion (a:Assertion) = 
     this.Invoke (fun () ->
       this.me <- Some a.AssertionInfo.principal
@@ -343,7 +343,7 @@ type Engine =
               |> this.HandleCertifications 
       match a with
         | Knows k ->
-          this.infonstrate <- k :: this.infonstrate
+          this.infostrate <- k :: this.infostrate
         | SendTo c ->
           this.communications <- c :: this.communications
         | ReceiveFrom f ->
@@ -351,7 +351,7 @@ type Engine =
       )
   
 
-  /// Add the default, permissive filter to the infonstrate.
+  /// Add the default, permissive filter to the infostrate.
   member this.AddDefaultFilter () =
     this.Invoke (fun () ->
       let src = this.FreshVar Type.Principal
@@ -367,7 +367,7 @@ type Engine =
         }
       this.filters <- filter :: this.filters)
   
-  /// Add incomming message to the infostrate. Will call comm.Knows() for each
+  /// Add incomming message to the infostrate. Will call comm.Knows() for each 
   /// new infons learned. Will call Talk() at the end.
   member this.Listen (comm, msg:Message) =
     this.Invoke (fun () ->
@@ -448,7 +448,7 @@ type Engine =
     this.pending.Clear()
     this.sentItems.Clear()
     this.comm <- None
-    this.infonstrate <- []
+    this.infostrate <- []
     this.filters <- []
     this.communications <- []
     this.nextId <- 0
