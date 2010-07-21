@@ -54,7 +54,7 @@ namespace Microsoft.Research.DkalController
       if (pctx.Options.TryGetValue("initial_input", out inp)) {
         textBox1.Text = inp;
         textBox1.SelectAll();
-      }
+      } 
 
       Text += ": " + pctx.Me.name;
 

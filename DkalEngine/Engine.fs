@@ -37,7 +37,7 @@ type SubstSet =
 
 type Action = delegate of unit -> unit
 
-/// DKAL execution engine. Corresponds to a infostrate and substrate of a single principal.
+/// DKAL execution engine. Corresponds to a infostrate and substrate of a single principal
 type Engine =
   {
     mutable sql : option<SqlConnector>
