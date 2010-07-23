@@ -155,5 +155,38 @@ namespace DkalUnitTest
             }
         }
 
+        /// <summary>
+        /// Test verifies a list of Assertions after passing an Input dkal stream as argument from SExpressions file
+        /// </summary>
+        [TestMethod]
+        public void SXAssertionsTest()
+        {
+            string dkalSxContext = @"..\..\..\DkalUnitTests\sxfiles\common.dkalsx"; // Combined common+org1 .dkalsx
+
+            try
+            {
+                if (!System.IO.File.Exists(dkalSxContext))
+                    Assert.Fail("File not found: " + dkalSxContext);
+
+                MessageController msgcntroller = new MessageController(dkalSxContext);
+                ParsingCtx pctx = msgcntroller.ParsingContext;
+
+                TextReader readfile = null;
+                readfile = new StreamReader(msgcntroller.ContextPath);
+                Microsoft.FSharp.Collections.FSharpList<SExpr.SX> s = SExpr.SX.FromStream(msgcntroller.ContextPath, readfile);
+                Microsoft.FSharp.Collections.FSharpList<Ast.Assertion> assertionsLst = pctx.SXToAssertions(s);
+
+                if (assertionsLst == null)
+                    Assert.Fail("Assertions List is null");
+
+                bool val = (assertionsLst.Count() > 0);
+                Assert.IsTrue(val, "Assertions not found");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+        }
+
     }
 }

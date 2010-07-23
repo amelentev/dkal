@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<OrderedTest name="dkalorderedtest" storage="c:\ms\ecm\codeplex_myworkspace\dkal\dkalengine\unittests\dkalunittests\dkalunittests\dkalorderedtest.orderedtest" id="4fa28735-c6ec-4066-9797-88f7e357cbb9" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+<OrderedTest name="dkalorderedtest" storage="c:\ms\ecm\dkalsxworkspace\dkalengine\tests\unittests\dkalunittests\dkalunittests\dkalorderedtest.orderedtest" id="4fa28735-c6ec-4066-9797-88f7e357cbb9" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
   <Execution id="8a012398-2bc2-4998-a88f-2d7b6a39934d" />
   <TestLinks>
     <TestLink id="1a881233-9787-776d-b05e-db4780753788" name="TestConnectionString" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
@@ -12,5 +12,6 @@
     <TestLink id="f6365f55-c0b2-032d-0d7e-1dfa91a40943" name="SerializeDeserializeMessageTest" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <TestLink id="6bfd531c-34bf-1e69-17a8-c5a4ecaaecf9" name="ProcessMessageTest" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <TestLink id="94e8466b-2146-2d50-b1ad-876dd20c357b" name="KillEngineTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="57459b33-82c0-4ba5-953f-68750b255965" name="SXAssertionsTest" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   </TestLinks>
 </OrderedTest>
