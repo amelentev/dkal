@@ -19,8 +19,7 @@ using System.ComponentModel.Composition.Hosting;
 using System.IO;
 using System.ComponentModel.Composition.Primitives;
 using System.Reflection;
-//using DkalController;
-//using DkalLib;
+using DkalController;
 
 namespace DkalHostConsole
 {
@@ -31,45 +30,9 @@ namespace DkalHostConsole
 
         static void Main(string[] args)
         {
-            Program program = new Program();
-            program.Compose();
-            program.Run();
-
-            //MessageController mcon = new MessageController();
-            //mcon.OnInfonProcessed += new MessageController.MyEventHandler(mcon_OnInfonProcessed);
-            //mcon.SendMessage("42 is a good number", "_dkalTestEngine");
-
-            //MessageCaller caller = new MessageCaller();
-            //caller.SendMessage("42 is a good number", "_dkalTestEngine");
-        }
-
-        void Compose()
-        {
-            try
-            {
-                DirectoryCatalog catalog =
-                    new DirectoryCatalog(AppDomain.CurrentDomain.BaseDirectory);
-
-                AggregateCatalog agcatalogue =
-                    new AggregateCatalog(new ComposablePartCatalog[] {catalog,
-                   new AssemblyCatalog(Assembly.GetExecutingAssembly())});
-
-                CompositionContainer container = new CompositionContainer(agcatalogue);
-
-                CompositionBatch batch = new CompositionBatch();
-
-                batch.AddPart(this);
-
-                container.Compose(batch);
-            }
-            catch (FileNotFoundException fnfex)
-            {
-                throw new Exception(fnfex.Message);
-            }
-            catch (CompositionException cex)
-            {
-                throw new Exception(cex.Message);
-            }
+            MessageController mcon = new MessageController();
+            mcon.OnInfonProcessed += new MessageController.MyEventHandler(mcon_OnInfonProcessed);
+            mcon.SendMessage("42 is a good number", "_dkalTestEngine");
         }
 
         void Run()
@@ -80,12 +43,12 @@ namespace DkalHostConsole
             }
         }
 
-        //static void mcon_OnInfonProcessed(object sender, DkalInfoEventArgs e)
-        //{
-        //    if (e.DkalMessage == null)
-        //        throw new ArgumentNullException("DkalMessage");
-        //    Microsoft.Research.DkalEngine.Ast.Message msg = e.DkalMessage;
-        //}
+        static void mcon_OnInfonProcessed(object sender, DkalInfoEventArgs e)
+        {
+            if (e.DkalMessage == null)
+                throw new ArgumentNullException("DkalMessage");
+            Microsoft.Research.DkalEngine.Ast.Message msg = e.DkalMessage;
+        }
     }
 }
 
