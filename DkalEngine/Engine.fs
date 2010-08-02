@@ -37,7 +37,7 @@ type SubstSet =
 
 type Action = delegate of unit -> unit
 
-/// DKAL execution engine. Corresponds to a infostrate and substrate of a single principal.
+/// DKAL execution engine. Corresponds to a infostrate and substrate of a single principal
 type Engine =
   {
     mutable sql : option<SqlConnector>
@@ -367,7 +367,7 @@ type Engine =
         }
       this.filters <- filter :: this.filters)
   
-  /// Add incomming message to the infostrate. Will call comm.Knows() for each
+  /// Add incomming message to the infostrate. Will call comm.Knows() for each 
   /// new infons learned. Will call Talk() at the end.
   member this.Listen (comm, msg:Message) =
     this.Invoke (fun () ->

@@ -48,13 +48,13 @@ namespace Microsoft.Research.DkalController
     void InitialMessage(string f)
     {
       Say(string.Format(
-        "<b>LOADED DKAL FILE</b> <blue>{0}</blue> ({1} infons, {2} comm.rules, {3} filters)\n", f, eng.infostrate.Length, eng.communications.Length, eng.filters.Length));
+        "<b>LOADED DKAL FILE</b> <blue>{0}</blue> ({1} infons, {2} comm.rules, {3} filters)\n", f, eng.infostrate.Length, eng.communications.Length, eng.filters.Length)); 
 
       string inp = null;
       if (pctx.Options.TryGetValue("initial_input", out inp)) {
         textBox1.Text = inp;
         textBox1.SelectAll();
-      }
+      } 
 
       Text += ": " + pctx.Me.name;
 
