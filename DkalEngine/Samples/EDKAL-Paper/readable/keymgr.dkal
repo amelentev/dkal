@@ -3,9 +3,9 @@
 function [2] key ( {R:record} ) returns {K:int}
   is keys.record == R && keys.thekey == K
 
-
-keyManager knows
-  org(TRIAL) tdonI PERSON may read record(N,TRIAL)
+// (the following knowledge is redundant, provided the comm rule just need to know that org(TRIAL) _implied_ PERSON may read...)
+// keyManager knows
+  // org(TRIAL) tdonI PERSON may read record(N,TRIAL)
 
 if keyManager knows
    PERSON said PERSON requests to read record(N,TRIAL)

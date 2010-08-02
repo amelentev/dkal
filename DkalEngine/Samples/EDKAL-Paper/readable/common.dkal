@@ -17,4 +17,4 @@ attribute [16] {principal} is allocated patients {int} to {int} in {trial}
 attribute [14] {principal} is allocated patients {int} to {int} in {trial} at {principal}
 
 
-#include "passwords.dkal"
+#include "passwords_local.dkal"
