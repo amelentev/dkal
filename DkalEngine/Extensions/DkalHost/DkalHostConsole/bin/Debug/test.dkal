@@ -1,8 +1,0 @@
-attribute [16] {int} is a good number
-attribute [16] i like {int}
-
-if _dkalTestEngine knows
-  N is a good number
-then they send
-  to _driverEngine
-    i like N
