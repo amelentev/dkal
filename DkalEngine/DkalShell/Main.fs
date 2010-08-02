@@ -56,6 +56,7 @@ and Context(includes, filename:string, gctx:Global, tr) =
     opts.PrivateSql <- pctx.Options.["private_sql"]
     opts.Trace <- tr
     eng.Reset ()
+    fillPrincipals()
     List.iter eng.AddAssertion assertions
     eng.AddDefaultFilter ()
     say "loaded"
