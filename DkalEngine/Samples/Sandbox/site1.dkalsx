@@ -1,0 +1,39 @@
+(me site1)
+
+(macro (bool R) physUnnotified (principal P) (trial T)
+  (&&
+    (== (. physAssignments phys) P)
+    (== (. physAssignments trial) T)
+    (== (. physAssignments unnotified) (true))
+    (== R (true))))
+(macro (bool R) physPatients (principal P) (trial T) (int N1) (int N2)
+  (&&
+    (== (. physAssignments phys) P)
+    (== (. physAssignments trial) T)
+    (== (. physAssignments n1) N1)
+    (== (. physAssignments n2) N2)
+    (== R (true))))
+
+(knows
+  (tdonS (org TRIAL) (*-participates-in-* SITE TRIAL))
+  (tdonS (org TRIAL) (*-is-allocated-patients-*-to-*-in-* SITE N1 N2 TRIAL)))
+
+(comm
+  (and
+    (*-is-allocated-patients-*-to-*-in-* (site1) N1 N2 TRIAL)
+    (asInfon (physUnnotified PHYS TRIAL))
+    (asInfon (physPatients PHYS TRIAL P1 P2)) 
+    (asInfon (&& (<= N1 P1) (<= P2 N2))))
+  (say PHYS (*-participates-in-*-at-*-as-a-physician PHYS TRIAL (site1)))
+  (say PHYS (*-is-allocated-patients-*-to-*-in-*-at-* PHYS P1 P2 TRIAL (site1)))
+  (to PHYS
+    (follows
+      (and (asInfon (&& (<= P1 N) (<= N P2))) (asInfon (== R (record N TRIAL))))
+      (implied (site1) (*-may-read-* PHYS R))))
+  (to PHYS
+    (follows
+      (and
+        (asInfon (&& (<= N1 N) (<= N N2)))
+        (asInfon (== R (record N TRIAL)))
+        (implied (site1) (*-may-read-* PHYS R)))
+      (implied (org TRIAL) (*-may-read-* PHYS R)))))
