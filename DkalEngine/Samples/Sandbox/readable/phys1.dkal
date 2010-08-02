@@ -1,0 +1,20 @@
+#include "common.dkal"
+
+function [2] needInfo ( {N:int} ) returns {R:bool}
+  is physPatients.id == N && physPatients.needInfo == true && R == true
+
+phys1 knows
+  SITE tdonS PHYS participates in TRIAL at SITE as a physician
+  SITE tdonS PHYS is allocated patients P1 to P2 in TRIAL at SITE
+  keyManager tdonS K is key for record(N,TRIAL)
+
+if phys1 knows
+   PHYS participates in TRIAL at SITE as a physician
+   PHYS is allocated patients P1 to P2 in TRIAL at SITE
+   asInfon(P1 <= N && N <= P2)
+   asInfon(needInfo(N))
+then
+   communicate with justification to keyManager
+      phys1 said phys1 requests to read record(N,TRIAL)
+      org(TRIAL) implied phys1 may read record(N,TRIAL)
+

@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DkalHost</RootNamespace>
-    <AssemblyName>DkalHostPart</AssemblyName>
+    <AssemblyName>DkalHost</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -33,7 +33,6 @@
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
-    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -50,10 +49,6 @@
     <ProjectReference Include="..\..\..\..\DkalEngine.fsproj">
       <Project>{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}</Project>
       <Name>DkalEngine</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DkalLib\DkalLib.csproj">
-      <Project>{DD3C7363-AED6-44DD-B132-1DA7FD1363FD}</Project>
-      <Name>DkalLib</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

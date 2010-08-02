@@ -1,0 +1,13 @@
+(type trial)   // trials.id
+(type patient) // patients.id
+(type record)  // records.id
+(macro (principal P) org (trial T) (&& (== (. trials id) T) (== (. trials cro) P)))
+(macro (record R) record (int N) (trial T)
+  (&& (== (. records id) R) (== (. records patient) N) (== (. records trial) T)))
+(fun (infon) *-may-read-* (principal) (record))
+(fun (infon) *-requests-to-read-* (principal) (record))
+(fun (infon) *-is-key-for-* (int) (record))
+(fun (infon) *-participates-in-* (principal) (trial))
+(fun (infon) *-participates-in-*-at-*-as-a-physician (principal) (trial) (principal))
+(fun (infon) *-is-allocated-patients-*-to-*-in-* (principal) (int) (int) (trial))
+(fun (infon) *-is-allocated-patients-*-to-*-in-*-at-* (principal) (int) (int) (trial) (principal))
