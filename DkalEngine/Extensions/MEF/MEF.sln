@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsole", "MEF\TestCons
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageCaller", "MEF\MessageCaller\MessageCaller.csproj", "{11BA2BC5-90C3-4A05-B434-24375CA395BF}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "DkalEngine", "..\..\DkalEngine.fsproj", "{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,16 @@ Global
 		{11BA2BC5-90C3-4A05-B434-24375CA395BF}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{11BA2BC5-90C3-4A05-B434-24375CA395BF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{11BA2BC5-90C3-4A05-B434-24375CA395BF}.Release|x86.ActiveCfg = Release|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

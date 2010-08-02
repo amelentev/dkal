@@ -1,0 +1,1 @@
+C:\MS\ECM\DkalLatestCP\DkalEngine\Extensions\MEF\MEF\MessageCaller\obj\Release\ResolveAssemblyReference.cache

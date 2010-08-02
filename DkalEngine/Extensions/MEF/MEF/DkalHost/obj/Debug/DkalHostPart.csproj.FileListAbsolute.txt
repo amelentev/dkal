@@ -1,7 +1,0 @@
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalHost\bin\Debug\DkalHostPart.dll
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalHost\bin\Debug\DkalHostPart.pdb
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalHost\bin\Debug\DkalLib.dll
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalHost\bin\Debug\DkalLib.pdb
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalHost\obj\Debug\ResolveAssemblyReference.cache
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalHost\obj\Debug\DkalHostPart.dll
-C:\MS\ECM\CodePlex_MyWorkspace\dkal\DkalEngine\Samples\MEF\MEF\DkalHost\obj\Debug\DkalHostPart.pdb

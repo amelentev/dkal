@@ -31,10 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DkalEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\bin\Debug\DkalEngine.dll</HintPath>
-    </Reference>
     <Reference Include="FSharp.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -51,6 +47,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\DkalEngine.fsproj">
+      <Project>{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}</Project>
+      <Name>DkalEngine</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DkalLib\DkalLib.csproj">
       <Project>{DD3C7363-AED6-44DD-B132-1DA7FD1363FD}</Project>
       <Name>DkalLib</Name>
