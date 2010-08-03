@@ -1,0 +1,7 @@
+#include "common.dkal"
+
+if martin knows
+  asInfon(0 == 1)
+then
+  say with justification to martin
+    asInfon(0 == 0)

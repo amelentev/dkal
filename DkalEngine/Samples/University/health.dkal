@@ -1,0 +1,10 @@
+#include "common.dkal"
+
+if health knows
+  asInfon(assignedSubject(SUBJECT) == health)
+  asInfon(lecturer(SUBJECT) == PROFESSOR)
+  asInfon(professorUnnotified(PROFESSOR,SUBJECT))
+then
+  say with justification to PROFESSOR
+    PROFESSOR gives lectures in SUBJECT
+

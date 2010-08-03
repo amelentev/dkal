@@ -1,0 +1,27 @@
+#include "common.dkal"
+
+// Student trusts its department
+paul knows
+  cs tdonI PROFESSOR is lecturer of SUBJECT
+  cs tdonI paul enroled in SUBJECT
+
+// (Option 1) Student tries to obtain the exams he is interested in, and he knows who created it
+/*if paul knows
+  paul enroled in SUBJECT
+  PROFESSOR is lecturer of SUBJECT
+  asInfon(interestedInExam(paul,EXAM))
+  asInfon(examSubject(EXAM) == SUBJECT)
+  asInfon(examCreator(EXAM) == PROFESSOR)
+then
+  say with justification to PROFESSOR
+    paul requests contents of exam EXAM*/
+
+// (Option 2) Student tries to obtain the exams he is interested in, and he tries any professor in the subject
+if paul knows
+  paul enroled in SUBJECT
+  PROFESSOR is lecturer of SUBJECT
+  asInfon(interestedInExam(paul,EXAM))
+  asInfon(examSubject(EXAM) == SUBJECT)
+then
+  say with justification to PROFESSOR
+    paul requests contents of exam EXAM

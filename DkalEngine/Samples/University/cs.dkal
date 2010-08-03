@@ -1,0 +1,46 @@
+#include "common.dkal"
+
+// Communicate professors their assignments
+if cs knows
+  asInfon(assignedSubject(SUBJECT) == cs)
+  asInfon(lecturer(SUBJECT,PROFESSOR))
+then
+  // Tell professor that he is lecturer of a subject
+  say with justification to PROFESSOR
+    PROFESSOR is lecturer of SUBJECT
+  
+  // Give professor the right to say in department's name that he/she is lecturer of a subject
+  communicate with justification to PROFESSOR
+    if 
+      PROFESSOR said PROFESSOR is lecturer of SUBJECT
+    then
+      cs implied PROFESSOR is lecturer of SUBJECT
+
+  // Give professor the right to say in department's name that students are assigned to a subject
+  communicate with justification to PROFESSOR
+    if 
+      PROFESSOR said STUDENT enroled in SUBJECT
+    then
+      cs implied STUDENT enroled in SUBJECT
+
+// Communicate professors their colleagues
+if cs knows
+  asInfon(assignedSubject(SUBJECT) == cs)
+  asInfon(lecturer(SUBJECT,PROFESSOR1))
+  asInfon(lecturer(SUBJECT,PROFESSOR2))
+  asInfon(PROFESSOR1 != PROFESSOR2)
+then
+  // Tell professor1 that he is lecturer jointly with professor2
+  say with justification to PROFESSOR1
+    PROFESSOR2 is lecturer of SUBJECT
+
+
+// Communicate professor who his students are
+if cs knows
+  asInfon(assignedSubject(SUBJECT) == cs)
+  asInfon(lecturer(SUBJECT,PROFESSOR))
+  asInfon(enroled(STUDENT,SUBJECT))
+then
+  // Tell him (by extension) who are his students
+  say with justification to PROFESSOR
+    STUDENT enroled in SUBJECT

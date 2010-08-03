@@ -1,0 +1,46 @@
+#include "common.dkal"
+
+// Professor trusts its department
+clapton knows
+  cs tdonS PROFESSOR is lecturer of SUBJECT
+  cs tdonS STUDENT enroled in SUBJECT
+
+// Professor trusts any person requesting exam texts (does not mean he will comply)
+clapton knows
+  PERSON tdonS PERSON requests contents of exam EXAM
+
+// Communicate students their assignments
+if clapton knows
+  clapton is lecturer of SUBJECT
+  STUDENT enroled in SUBJECT
+then
+  communicate with justification to STUDENT
+    if 
+      PROFESSOR said STUDENT enroled in SUBJECT
+    then
+      cs implied STUDENT enroled in SUBJECT
+    clapton said STUDENT enroled in SUBJECT
+    if 
+      PROFESSOR said PROFESSOR is lecturer of SUBJECT
+    then
+      cs implied PROFESSOR is lecturer of SUBJECT
+    clapton said clapton is lecturer of SUBJECT
+
+// Professor will request collegues to reveal any exams that they have created
+if clapton knows
+ clapton is lecturer of SUBJECT
+ PROFESSOR is lecturer of SUBJECT
+ asInfon(PROFESSOR != clapton)
+ asInfon(examCreator(EXAM) == PROFESSOR)
+then
+  say with justification to PROFESSOR
+    clapton requests contents of exam EXAM
+
+// Professor will not give contents of exams he didn't create
+if clapton knows
+  PERSON requests contents of exam EXAM
+  asInfon(examCreator(EXAM) == PROFESSOR)
+  asInfon(PROFESSOR != clapton)
+then
+  say with justification to PERSON
+    exam EXAM was created by PROFESSOR

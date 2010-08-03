@@ -1,0 +1,7 @@
+#include "common.dkal"
+
+if jones knows
+  asInfon(0 == 1)
+then
+  say with justification to jones
+    asInfon(0 == 0)

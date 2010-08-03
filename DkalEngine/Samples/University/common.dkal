@@ -1,0 +1,51 @@
+type department   // departments.id
+type professor // professors.id
+type student // students.id
+type subject // subjects.id
+type exam // exams.id
+
+// Subject S is lectured in department D
+function [2] assignedSubject ( {S:subject} ) returns {D:department}
+  is subjects.id == S && subjects.department == D
+
+// Professor P is lecturer of subject S
+function [2] lecturer ( {S:subject} , {P:principal} ) returns {R:bool}
+  is professors.id == P && professors.subject == S && R == true
+
+// Student T is enroled in subject S
+function [2] enroled ( {T:principal} , {S:subject} ) returns {R:bool}
+  is students_subjects.student == T && students_subjects.subject == S && R == true
+
+// Student T is interested in exam E
+function [2] interestedInExam ( {T:principal} , {E:exam} ) returns {R:bool}
+  is students_exams_interested.student == T && students_exams_interested.exam == E && R == true
+
+// Exam E corresponds to subject S
+function [2] examSubject ( {E:exam} ) returns {S:subject}
+  is exams.id == E && exams.subject == S
+
+// Professor P created the contents of exam E
+function [2] examCreator ( {E:exam} ) returns {P:principal}
+  is exams.id == E && exams.professor == P
+
+// Contents of exam E are C
+function [2] examContents ( {E:exam} ) returns {C:int}
+  is exams.id == E && exams.contents == C
+  
+// Student S took exam E
+function [2] studentTookExam ( {S:principal} , {E:exam} ) returns {R:bool}
+  is students_exams.student == S && students_exams.exam == E && R == true
+
+// Student S failed exam E
+function [2] studentExamGrade ( {S:principal} , {E:exam} ) returns {G:int}
+  is students_exams.student == S && students_exams.exam == E && G == students_exams.grade
+
+  
+attribute [16] {principal} is lecturer of {subject}
+attribute [16] {principal} enroled in {subject}
+attribute [16] {principal} requests contents of exam {exam}
+attribute [16] exam {exam} contents are {int}
+attribute [16] exam {exam} was created by {principal}
+
+
+#include "passwords_local.dkal"

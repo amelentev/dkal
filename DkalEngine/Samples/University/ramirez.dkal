@@ -1,0 +1,7 @@
+#include "common.dkal"
+
+if ramirez knows
+  asInfon(0 == 1)
+then
+  say with justification to ramirez
+    asInfon(0 == 0)
