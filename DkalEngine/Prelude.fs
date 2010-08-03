@@ -51,6 +51,7 @@ function [6] {int} - {int} returns {int}
 function [8] {int} <= {int} returns {bool}
 function [8] {int} >= {int} returns {bool}
 function [8] {anytype} == {anytype} returns {bool}
+function [8] {anytype} != {anytype} returns {bool}
 function [10] {bool} && {bool} returns {bool}
 function [10] {bool} || {bool} returns {bool}
 attribute [2] asInfon ( {bool} )
