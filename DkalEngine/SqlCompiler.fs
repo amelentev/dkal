@@ -120,8 +120,8 @@ module SqlCompiler =
     addSqlOp ">" ">"
     addSqlOp "==" "="
     addSqlOp "!=" "<>"
-    addPrefixSqlOp "true" "1"
-    addPrefixSqlOp "false" "0"
+    addPrefixSqlOp "true" "1=1"
+    addPrefixSqlOp "false" "0=1"
   
   do init()
   
