@@ -1,0 +1,23 @@
+﻿Build started 8/3/2010 11:28:00 AM.
+     1>Project "C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Store\SampleStore.vcxproj" on node 3 (rebuild target(s)).
+     1>_PrepareForClean:
+         Deleting file "Debug\LocalStoreProvider.lastbuildstate".
+       InitializeBuildStatus:
+         Creating "Debug\LocalStoreProvider.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ZI /nologo /W4 /WX /Od /Oy- /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt LocalStoreProvider.cpp
+         LocalStoreProvider.cpp
+       Link:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Debug\LocalStoreProvider.dll" /NOLOGO crypt32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /DEF:"localstoreprovider.def" /MANIFEST /ManifestFile:"Debug\LocalStoreProvider.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Debug\LocalStoreProvider.pdb" /TLBID:1 /DYNAMICBASE:NO /IMPLIB:"C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Debug\LocalStoreProvider.lib" /MACHINE:X86 /DLL Debug\LocalStoreProvider.obj
+            Creating library C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Debug\LocalStoreProvider.lib and object C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Debug\LocalStoreProvider.exp
+         SampleStore.vcxproj -> C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Debug\LocalStoreProvider.dll
+       Manifest:
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Debug\LocalStoreProvider.dll;#2" /manifest Debug\LocalStoreProvider.dll.intermediate.manifest
+       FinalizeBuildStatus:
+         Deleting file "Debug\LocalStoreProvider.unsuccessfulbuild".
+         Touching "Debug\LocalStoreProvider.lastbuildstate".
+     1>Done Building Project "C:\Program Files\Microsoft SDKs\Windows\v7.0\Samples\security\cryptoapi\SampleStoreProvider\CPP\Store\SampleStore.vcxproj" (rebuild target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:02.54
