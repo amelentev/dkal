@@ -3,7 +3,7 @@
 // Professor trusts its department
 clapton knows
   cs tdonS PROFESSOR is lecturer of SUBJECT
-  cs tdonS STUDENT enroled in SUBJECT
+  cs tdonS STUDENT enrolled in SUBJECT
 
 // Professor trusts any person requesting exam texts (does not mean he will comply)
 clapton knows
@@ -12,14 +12,14 @@ clapton knows
 // Communicate students their assignments
 if clapton knows
   clapton is lecturer of SUBJECT
-  STUDENT enroled in SUBJECT
+  STUDENT enrolled in SUBJECT
 then
   communicate with justification to STUDENT
     if 
-      PROFESSOR said STUDENT enroled in SUBJECT
+      PROFESSOR said STUDENT enrolled in SUBJECT
     then
-      cs implied STUDENT enroled in SUBJECT
-    clapton said STUDENT enroled in SUBJECT
+      cs implied STUDENT enrolled in SUBJECT
+    clapton said STUDENT enrolled in SUBJECT
     if 
       PROFESSOR said PROFESSOR is lecturer of SUBJECT
     then

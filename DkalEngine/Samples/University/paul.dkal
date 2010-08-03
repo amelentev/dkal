@@ -3,11 +3,11 @@
 // Student trusts its department
 paul knows
   cs tdonI PROFESSOR is lecturer of SUBJECT
-  cs tdonI paul enroled in SUBJECT
+  cs tdonI paul enrolled in SUBJECT
 
 // (Option 1) Student tries to obtain the exams he is interested in, and he knows who created it
 /*if paul knows
-  paul enroled in SUBJECT
+  paul enrolled in SUBJECT
   PROFESSOR is lecturer of SUBJECT
   asInfon(interestedInExam(paul,EXAM))
   asInfon(examSubject(EXAM) == SUBJECT)
@@ -18,7 +18,7 @@ then
 
 // (Option 2) Student tries to obtain the exams he is interested in, and he tries any professor in the subject
 if paul knows
-  paul enroled in SUBJECT
+  paul enrolled in SUBJECT
   PROFESSOR is lecturer of SUBJECT
   asInfon(interestedInExam(paul,EXAM))
   asInfon(examSubject(EXAM) == SUBJECT)

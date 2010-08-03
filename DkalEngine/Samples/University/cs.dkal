@@ -19,9 +19,9 @@ then
   // Give professor the right to say in department's name that students are assigned to a subject
   communicate with justification to PROFESSOR
     if 
-      PROFESSOR said STUDENT enroled in SUBJECT
+      PROFESSOR said STUDENT enrolled in SUBJECT
     then
-      cs implied STUDENT enroled in SUBJECT
+      cs implied STUDENT enrolled in SUBJECT
 
 // Communicate professors their colleagues
 if cs knows
@@ -39,8 +39,8 @@ then
 if cs knows
   asInfon(assignedSubject(SUBJECT) == cs)
   asInfon(lecturer(SUBJECT,PROFESSOR))
-  asInfon(enroled(STUDENT,SUBJECT))
+  asInfon(enrolled(STUDENT,SUBJECT))
 then
   // Tell him (by extension) who are his students
   say with justification to PROFESSOR
-    STUDENT enroled in SUBJECT
+    STUDENT enrolled in SUBJECT

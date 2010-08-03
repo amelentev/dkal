@@ -12,8 +12,8 @@ function [2] assignedSubject ( {S:subject} ) returns {D:department}
 function [2] lecturer ( {S:subject} , {P:principal} ) returns {R:bool}
   is professors.id == P && professors.subject == S && R == true
 
-// Student T is enroled in subject S
-function [2] enroled ( {T:principal} , {S:subject} ) returns {R:bool}
+// Student T is enrolled in subject S
+function [2] enrolled ( {T:principal} , {S:subject} ) returns {R:bool}
   is students_subjects.student == T && students_subjects.subject == S && R == true
 
 // Student T is interested in exam E
@@ -42,7 +42,7 @@ function [2] studentExamGrade ( {S:principal} , {E:exam} ) returns {G:int}
 
   
 attribute [16] {principal} is lecturer of {subject}
-attribute [16] {principal} enroled in {subject}
+attribute [16] {principal} enrolled in {subject}
 attribute [16] {principal} requests contents of exam {exam}
 attribute [16] exam {exam} contents are {int}
 attribute [16] exam {exam} was created by {principal}

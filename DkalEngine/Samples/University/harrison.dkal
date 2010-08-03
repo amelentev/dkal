@@ -3,7 +3,7 @@
 // Professor trusts its department
 harrison knows
   cs tdonS PROFESSOR is lecturer of SUBJECT
-  cs tdonS STUDENT enroled in SUBJECT
+  cs tdonS STUDENT enrolled in SUBJECT
 
 // Professor trusts any person requesting exams (does not mean he will comply)
 harrison knows
@@ -12,14 +12,14 @@ harrison knows
 // Communicate students their assignments
 if harrison knows
   harrison is lecturer of SUBJECT
-  STUDENT enroled in SUBJECT
+  STUDENT enrolled in SUBJECT
 then
   communicate with justification to STUDENT
     if 
-      PROFESSOR said STUDENT enroled in SUBJECT
+      PROFESSOR said STUDENT enrolled in SUBJECT
     then
-      cs implied STUDENT enroled in SUBJECT
-    harrison said STUDENT enroled in SUBJECT
+      cs implied STUDENT enrolled in SUBJECT
+    harrison said STUDENT enrolled in SUBJECT
     if 
       PROFESSOR said PROFESSOR is lecturer of SUBJECT
     then
