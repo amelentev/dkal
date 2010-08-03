@@ -26,6 +26,8 @@ namespace DkalUnitTest
     public class SerializerTest
     {
         Microsoft.Research.DkalEngine.Ast.Message msg;
+        string basePath = @"..\\..\\..\\DkalUnitTests\\dkalfiles\\";
+
         public SerializerTest()
         {
             //
@@ -80,9 +82,10 @@ namespace DkalUnitTest
         /// the Serialized string in Term object and comparing objects
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void SerializeDeserializeTermTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath+@"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
@@ -114,9 +117,10 @@ namespace DkalUnitTest
         /// Verifies Serialized calls on Message object
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void SerializeDeserializeMessageTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath + @"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);

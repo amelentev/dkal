@@ -26,6 +26,8 @@ namespace DkalUnitTest
     [TestClass]
     public class ParsingCtxTest
     {
+        string basePath = @"..\\..\\..\\DkalUnitTests\\dkalfiles\\";
+
         public ParsingCtxTest()
         {
             //
@@ -78,9 +80,10 @@ namespace DkalUnitTest
         /// Test verifies a list of Assertions after passing an Input dkal stream as argument
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void ParseStreamTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath+@"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
@@ -99,9 +102,10 @@ namespace DkalUnitTest
         /// Test verifies Term object by passing an infon as argument
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void ParseInfonTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath + @"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
@@ -130,9 +134,10 @@ namespace DkalUnitTest
         /// The Name property should match the name in the substrate
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void LookupOrAddPrincipalTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath + @"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
@@ -159,9 +164,10 @@ namespace DkalUnitTest
         /// Test verifies a list of Assertions after passing an Input dkal stream as argument from SExpressions file
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\sxfiles\\common.dkalsx")]
         public void SXAssertionsTest()
         {
-            string dkalSxContext = @"..\..\..\DkalUnitTests\sxfiles\common.dkalsx"; // Combined common+org1 .dkalsx
+            string dkalSxContext = @"..\\..\\..\\DkalUnitTests\\sxfiles\\common.dkalsx"; // Combined common+org1 .dkalsx
 
             try
             {

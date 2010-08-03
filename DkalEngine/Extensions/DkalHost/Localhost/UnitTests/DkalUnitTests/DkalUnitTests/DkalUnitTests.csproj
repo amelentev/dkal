@@ -33,11 +33,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DkalEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\bin\Debug\DkalEngine.dll</HintPath>
-    </Reference>
     <Reference Include="FSharp.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Interop.SSCE">
+      <HintPath>..\..\..\..\..\..\..\..\DkalSqlCESubstrate\DkalSqlCeSubstrate\UnitTests\DkalUnitTests\DkalUnitTests\obj\Debug\Interop.SSCE.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.configuration" />
@@ -45,6 +45,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
+    <Reference Include="System.Web.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDependentAssemblyPaths Condition=" '$(VS100COMNTOOLS)' != '' " Include="$(VS100COMNTOOLS)..\IDE\PrivateAssemblies">
@@ -63,10 +64,23 @@
     <None Include="dkalfiles\crocom.dkal" />
     <None Include="dkalfiles\physiciancom.dkal" />
     <None Include="dkalfiles\sitecom.dkal" />
-    <None Include="dkalfiles\test.dkal" />
+    <EntityDeploy Include="dkalfiles\test.dkal">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EntityDeploy>
     <None Include="DkalOrderedTest.orderedtest">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="sxfiles\common.dkalsx" />
+    <None Include="sxfiles\keymgr.dkalsx" />
+    <None Include="sxfiles\org1.dkalsx" />
+    <None Include="sxfiles\phys1.dkalsx" />
+    <None Include="sxfiles\site1.dkalsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\DkalEngine.fsproj">
+      <Project>{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}</Project>
+      <Name>DkalEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -29,6 +29,7 @@ namespace DkalUnitTest
     {
         Microsoft.Research.DkalEngine.Ast.Message msg;
         string strmessageProcessed = String.Empty;
+        string basePath = @"..\\..\\..\\DkalUnitTests\\dkalfiles\\";
 
         public EngineTest()
         {
@@ -114,9 +115,10 @@ namespace DkalUnitTest
         /// Test exercises creation and deletion of Engine 
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void TestEngineCreation()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath+@"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
@@ -141,9 +143,10 @@ namespace DkalUnitTest
         /// Test verifies AddInfon call to an Engine. This call should result in a Message object to a callback SendMessage() implemented from ICommunicator interface 
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void SendMessageTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath+@"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
@@ -184,9 +187,10 @@ namespace DkalUnitTest
         /// Test verifies the Engine processed the message. ACK call
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void ProcessMessageTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath+@"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
@@ -220,9 +224,10 @@ namespace DkalUnitTest
         /// Test verifies the Engine instance is not functional anymore by invoking its Close method
         /// </summary>
         [TestMethod]
+        [DeploymentItem("DkalUnitTests\\dkalfiles\\test.dkal")]
         public void KillEngineTest()
         {
-            string dkalContext = @"..\..\..\DkalUnitTests\dkalfiles\test.dkal";
+            string dkalContext = basePath+@"test.dkal";
 
             if (!System.IO.File.Exists(dkalContext))
                 Assert.Fail("File not found: " + dkalContext);
