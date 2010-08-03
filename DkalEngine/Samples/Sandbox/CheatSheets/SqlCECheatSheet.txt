@@ -1,0 +1,36 @@
+
+Objective: Create Substrate data in Sql Server Compact Edition for DkalEngine.
+
+
+Prerequisites:
+
+1. Microsoft Sql Server 2008 or higher
+2. Microsoft Sql Server Management Studio
+
+
+Operating Systems Supported:
+
+* Microsoft Windows XP
+* Microsoft Windows Server 2003
+* Microsoft Windows Server 2000
+* Windows Vista 
+
+
+Steps to create Sql CE Substrate Data
+======================================
+
+1. Download Microsoft SQL Server 2005 Compact Edition from the link below:
+   http://www.microsoft.com/downloads/en/confirmation.aspx?familyId=85e0c3ce-3fa1-453a-8ce9-af6ca20946c3&displayLang=en
+
+2. The above installation would add several binaries at ~\Program Files (x86)\Microsoft SQL Server Compact Edition\v3.5 location
+
+3. Open Sql Server Management Studio
+
+4. From the menu:
+   a. click File - Connect Object Explorer. 
+   b. Select Server Type as Sql Server Compact
+   c. From the Database File dropdown select <New Database...>. Choose a location and create SubstrateData.sdf, enter Password and click Ok
+
+5. Step above will create a Sql Server Compact Edition database.
+
+6. To manage the above database file. Open \DkalEngine\Samples\Sandbox\SqlCeSubstrateScripts.sqlce file in Sql Server Management Studio and execute it.       This will create tables and insert data in the SubstrateData.sdf file.
