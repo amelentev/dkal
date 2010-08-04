@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<OrderedTest name="dkalorderedtest" storage="c:\ms\ecm\dkalsqlcesubstrate\dkalsqlcesubstrate\unittests\dkalunittests\dkalunittests\dkalorderedtest.orderedtest" id="4fa28735-c6ec-4066-9797-88f7e357cbb9" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Execution id="a56eb223-3d88-48ad-bac0-96707882a77d" />
+  <TestLinks>
+    <TestLink id="c5983bfe-4bc1-3c45-38fc-e35de92b4fd8" name="TestSQLCEConnectionString" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="a49ce50d-cc4d-6845-52a8-39854801f598" name="TestEngineCreation" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="a9768f2f-1695-87b2-26aa-19e3828c53ab" name="SendMessageTest" storage="bin\debug\dkalunittest.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="6bfd531c-34bf-1e69-17a8-c5a4ecaaecf9" name="ProcessMessageTest" storage="bin\debug\dkalunittests.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  </TestLinks>
+</OrderedTest>

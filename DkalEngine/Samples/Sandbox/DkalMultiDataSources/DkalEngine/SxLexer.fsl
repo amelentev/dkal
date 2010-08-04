@@ -1,0 +1,83 @@
+﻿// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+{
+module Microsoft.Research.DkalEngine.SxLexer
+
+open Microsoft.Research.DkalEngine.PreToken
+open Microsoft.FSharp.Text.Lexing
+
+type SxTok =
+  | IntLiteral of int
+  | StringLiteral of string
+  | Id of string
+  | LParen
+  | RParen
+  | Eof
+  | Invalid of string
+
+  override this.ToString() =
+    let xf = sprintf
+    match this with
+      | IntLiteral n -> xf "'%d'" n
+      | StringLiteral s -> xf "\"%s\"" s
+      | Id n -> xf "'%s'" n
+      | LParen -> "'('"
+      | RParen -> "')'"
+      | Eof -> "end of file"
+      | Invalid s -> xf "'%s' (invalid token)" s
+
+let lexeme  (lexbuf : LexBuffer<char>) = new System.String(lexbuf.Lexeme)
+let newline (lexbuf:LexBuffer<char>) = lexbuf.EndPos <- lexbuf.EndPos.NextLine
+let stringBuf = new System.Text.StringBuilder()
+let add (ch:char) = stringBuf.Append ch |> ignore
+}
+
+// Base regular expressions
+let digit = ['0'-'9']
+let lowercase = (['a'-'z'] | '_')
+let uppercase = ['A'-'Z']
+let alnum = (digit | lowercase | uppercase)
+let whitespace = [' ']
+let newline = ('\n' | '\r' '\n')
+let opstart = ['!' '%' '^' '&' '*' '/' '<' '>' '=' '?' '|' '+' '-' '.' ':' '#' ]
+let idstart = (lowercase | uppercase | opstart)
+let idchar = (idstart | digit)
+
+rule token = parse
+| [' ']+             { token lexbuf }
+| newline            { newline lexbuf; token lexbuf }
+| ['-']?digit+       { IntLiteral (System.Int32.Parse(lexeme lexbuf)) }
+| "("                { LParen }
+| ")"                { RParen }
+| '/' '*'            { comment lexbuf }
+| '/' '/' [^ '\n']*  { token lexbuf }
+| ';' [^ '\n']*      { token lexbuf }
+| '"'                { stringBuf.Length <- 0;
+                       string lexbuf;
+                       StringLiteral (stringBuf.ToString()) }
+| idstart idchar*    { Id (lexeme lexbuf) }
+| eof                { Eof }
+| _                  { Invalid (lexeme lexbuf) }
+and comment = parse 
+| "*/"               { token lexbuf }
+| newline            { newline lexbuf; comment lexbuf }
+| eof                { Eof }
+| _                  { comment lexbuf }
+and string = parse
+  '"' { () }
+| '\\' 'n' { add '\n'; string lexbuf }
+| '\\' 'r' { add '\r'; string lexbuf }
+| '\\' 't' { add '\t'; string lexbuf }
+| '\\' _ { add (lexbuf.Lexeme.[1]); string lexbuf }
+| [^ '\\' '"']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
+| _ { add (lexbuf.Lexeme.[0]); string lexbuf }
+| eof { () }
