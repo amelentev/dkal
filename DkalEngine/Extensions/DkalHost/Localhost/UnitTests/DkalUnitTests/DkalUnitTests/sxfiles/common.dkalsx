@@ -1,0 +1,44 @@
+(type trial)   // trials.id
+(type patient) // patients.id
+(type record)  // records.id
+(macro (principal P) org (trial T) (&& (== (. trials id) T) (== (. trials cro) P)))
+(macro (record R) record (int N) (trial T)
+  (&& (== (. records id) R) (== (. records patient) N) (== (. records trial) T)))
+(fun (infon) *-may-read-* (principal) (record))
+(fun (infon) *-requests-to-read-* (principal) (record))
+(fun (infon) *-is-key-for-* (int) (record))
+(fun (infon) *-participates-in-* (principal) (trial))
+(fun (infon) *-participates-in-*-at-*-as-a-physician (principal) (trial) (principal))
+(fun (infon) *-is-allocated-patients-*-to-*-in-* (principal) (int) (int) (trial))
+(fun (infon) *-is-allocated-patients-*-to-*-in-*-at-* (principal) (int) (int) (trial) (principal))
+
+
+(me org1)
+(macro (bool R) siteUnnotified (principal S) (trial T)
+  (&&
+    (== (. siteAssignments thesite) S)
+    (== (. siteAssignments trial) T)
+    (== (. siteAssignments unnotified) (true))
+    (== R (true))))
+(macro (bool R) sitePatients (principal S) (trial T) (int N1) (int N2)
+  (&&
+    (== (. siteAssignments thesite) S)
+    (== (. siteAssignments trial) T)
+    (== (. siteAssignments n1) N1)
+    (== (. siteAssignments n2) N2)
+    (== R (true))))
+(comm
+  (and
+    (asInfon (== (org TRIAL) (org1)))
+    (asInfon (siteUnnotified SITE TRIAL))
+    (asInfon (sitePatients SITE TRIAL N1 N2)))
+  (say SITE (*-participates-in-* SITE TRIAL))
+  (say SITE (*-is-allocated-patients-*-to-*-in-* SITE N1 N2 TRIAL))
+  (to
+    SITE
+    (follows
+      (and
+        (asInfon (&& (<= N1 N) (<= N N2)))
+        (asInfon (== R (record N TRIAL)))
+        (implied SITE (*-may-read-* PERSON R)))
+      (implied (org1) (*-may-read-* PERSON R)))))

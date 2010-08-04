@@ -1,0 +1,34 @@
+
+Objective: Create Substrate data in Sql Server/ Sql Express/ Sql Azure for DkalEngine.
+
+
+Prerequisites:
+
+1. Microsoft Sql Client
+2. Microsoft Sql Server Management Studio
+
+
+Operating Systems Supported:
+
+* Microsoft Windows XP
+* Microsoft Windows Server 2003
+* Microsoft Windows Server 2000
+* Windows Vista 
+
+
+Steps to create Sql Server Substrate Data
+=========================================
+
+1. Open Sql Server Management Studio
+
+2. From the main menu:
+   a. click File - Connect Object Explorer. 
+   b. Select Server Type as Database Engine.
+   c. Select Server Name as the database instance for either Sql Server/ Sql Express or Sql Server 2008 R2 instance for Sql Azure
+   d. Authentication Type -
+      - For Sql Server/ Sql Express - choose either Windows or Sql Authentication
+      - For Sql Azure - choose Sql Authentication
+
+3. To create a new substrate database. Open \DkalEngine\Samples\Sandbox\CreateSubstrateDatabase.sql file in Sql Server Management Studio and execute it. This will create a new database SubstrateData. 
+
+4. To insert records to SubstrateData database Open \DkalEngine\Samples\Sandbox\CreateSubstrate.sql file in Sql Server Management Studio and execute it.

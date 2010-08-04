@@ -1,0 +1,38 @@
+
+Objective: How to run and create unit tests for DkalEngine.
+
+
+Prerequisites:
+
+1. Microsoft Visual Studio 2010 - Professional editions and higher
+
+
+Operating Systems Supported:
+
+* Microsoft Windows XP
+* Microsoft Windows 7
+* Microsoft Windows Server 2003
+* Microsoft Windows Server 2008
+* Windows Vista 
+
+
+Steps to create & run DkalUnit Tests
+======================================
+
+1. Open DkalUnitTests solution in MS Visual Studio 2010 from \DkalEngine\Extensions\DkalHost\Localhost\UnitTests\DkalUnitTests folder
+
+2. Build Solution. Tests could be executed individually or in a group from Test List Editor. Open Test List Editor. Check a set of Tests and click on Execute button. The result of the test would be executed in Test Results window.
+
+3. Every test method has to be annotated with [TestMethod] attribute. Results of a Test Method could be verified through Assert class and respective properties.
+4. A new test class could be added by right clicking Project and adding a new Unit Test file. 
+
+5. The Test Methods in Unit Tests could be tested via Test List Editor.
+
+6. Ordered test could also be created by grouping a set of test methods. Running an ordered test would execute the methods in an ascending order of test methods.
+
+
+7. Tests could also be executed using Test View. It will display all the ordered tests and individual tests.
+
+8. Users could Run tests or debug test methods.
+
+9. All Unit Tests are deployed in an Output deployment directory on every execution.

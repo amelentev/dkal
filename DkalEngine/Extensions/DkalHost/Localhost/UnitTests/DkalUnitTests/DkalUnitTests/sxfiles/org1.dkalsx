@@ -1,0 +1,29 @@
+(me org1)
+(macro (bool R) siteUnnotified (principal S) (trial T)
+  (&&
+    (== (. siteAssignments thesite) S)
+    (== (. siteAssignments trial) T)
+    (== (. siteAssignments unnotified) (true))
+    (== R (true))))
+(macro (bool R) sitePatients (principal S) (trial T) (int N1) (int N2)
+  (&&
+    (== (. siteAssignments thesite) S)
+    (== (. siteAssignments trial) T)
+    (== (. siteAssignments n1) N1)
+    (== (. siteAssignments n2) N2)
+    (== R (true))))
+(comm
+  (and
+    (asInfon (== (org TRIAL) (org1)))
+    (asInfon (siteUnnotified SITE TRIAL))
+    (asInfon (sitePatients SITE TRIAL N1 N2)))
+  (say SITE (*-participates-in-* SITE TRIAL))
+  (say SITE (*-is-allocated-patients-*-to-*-in-* SITE N1 N2 TRIAL))
+  (to
+    SITE
+    (follows
+      (and
+        (asInfon (&& (<= N1 N) (<= N N2)))
+        (asInfon (== R (record N TRIAL)))
+        (implied SITE (*-may-read-* PERSON R)))
+      (implied (org1) (*-may-read-* PERSON R)))))
