@@ -1,0 +1,9 @@
+﻿attribute [16] hello to {principal}
+attribute [16] yes i am alive
+
+if _dkalTestEngine knows
+   _testDriverEngine said hello to _dkalTestEngine
+then they send
+  to _testDriverEngine
+      yes i am alive
+

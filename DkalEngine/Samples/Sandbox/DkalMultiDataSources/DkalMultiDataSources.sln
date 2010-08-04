@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DkalUnitTests", "DkalUnitTests\DkalUnitTests.csproj", "{64BBD0AE-44BC-45E9-9FA7-631D51FBFC51}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "DkalEngine", "DkalEngine\DkalEngine.fsproj", "{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{64BBD0AE-44BC-45E9-9FA7-631D51FBFC51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64BBD0AE-44BC-45E9-9FA7-631D51FBFC51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64BBD0AE-44BC-45E9-9FA7-631D51FBFC51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64BBD0AE-44BC-45E9-9FA7-631D51FBFC51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C30286D-019D-4E25-AAFD-B9D521DB3DA1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
