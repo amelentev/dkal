@@ -354,7 +354,7 @@ module Ast =
           | Processed -> app ("say*", args)
       match this.proviso with
         | InfonEmpty ->           
-          app ("comm", [this.trigger.ToSX(); target()])
+          app ("send", [this.trigger.ToSX(); target()])
         | _ ->
           failwith "provisional communication not supported for SExpressions"
     

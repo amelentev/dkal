@@ -74,7 +74,7 @@ function [proviso 30] if you know {block assertion} then {block assertion} retur
 function [==> 30] if {block assertion} then {block assertion} returns {assertion}
 
 function [send 30] if {principal} knows {block assertion} then {block assertion} returns {assertion}
-function [send_target_cert 28] communicate with justification to {principal} {block assertion} returns {assertion}
+function [send_target_cert 28] send with justification to {principal} {block assertion} returns {assertion}
 function [say_target_cert 28] say with justification to {principal} {block assertion} returns {assertion}
 
 attribute [10] {infon} --> {infon}

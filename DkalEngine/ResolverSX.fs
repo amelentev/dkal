@@ -128,7 +128,7 @@ module ResolverSX =
       | SX.App (_, "set", [SX.Var (_, name); SX.String (_, s)]) ->
         ctx.options.[name] <- s
         []
-      | SX.App (_, "comm", precond :: targets) ->
+      | SX.App (_, "send", precond :: targets) ->
         let precond = resolveInfon ctx precond
         let doTarget = function
           | SX.App (_, name, target :: what) as t ->
@@ -137,7 +137,7 @@ module ResolverSX =
                 | "say*" -> CommKind.Processed
                 | "to" -> CommKind.Certified
                 | "say" -> CommKind.CertifiedSay
-                | _ -> err t "expecting (to ...) or (say ...) after (comm ...)"
+                | _ -> err t "expecting (to ...) or (say ...) after (send ...)"
             let target = resolveTerm ctx Type.Principal target
             what |> List.map (fun what ->
                 Assertion.SendTo { ai = ai t
