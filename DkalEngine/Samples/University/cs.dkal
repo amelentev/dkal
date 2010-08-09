@@ -10,14 +10,14 @@ then
     PROFESSOR is lecturer of SUBJECT
   
   // Give professor the right to say in department's name that he/she is lecturer of a subject
-  communicate with justification to PROFESSOR
+  send with justification to PROFESSOR
     if 
       PROFESSOR said PROFESSOR is lecturer of SUBJECT
     then
       cs implied PROFESSOR is lecturer of SUBJECT
 
   // Give professor the right to say in department's name that students are assigned to a subject
-  communicate with justification to PROFESSOR
+  send with justification to PROFESSOR
     if 
       PROFESSOR said STUDENT enrolled in SUBJECT
     then

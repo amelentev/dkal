@@ -14,7 +14,7 @@ if harrison knows
   harrison is lecturer of SUBJECT
   STUDENT enrolled in SUBJECT
 then
-  communicate with justification to STUDENT
+  send with justification to STUDENT
     if 
       PROFESSOR said STUDENT enrolled in SUBJECT
     then
