@@ -12,7 +12,7 @@
     (== (. siteAssignments n1) N1)
     (== (. siteAssignments n2) N2)
     (== R (true))))
-(comm
+(send
   (and
     (asInfon (== (org TRIAL) (org1)))
     (asInfon (siteUnnotified SITE TRIAL))

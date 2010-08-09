@@ -18,7 +18,7 @@
   (tdonS (org TRIAL) (*-participates-in-* SITE TRIAL))
   (tdonS (org TRIAL) (*-is-allocated-patients-*-to-*-in-* SITE N1 N2 TRIAL)))
 
-(comm
+(send
   (and
     (*-is-allocated-patients-*-to-*-in-* (site1) N1 N2 TRIAL)
     (asInfon (physUnnotified PHYS TRIAL))

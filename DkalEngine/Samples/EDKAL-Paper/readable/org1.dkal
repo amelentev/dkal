@@ -13,7 +13,7 @@ then
    say with justification to SITE
       SITE participates in TRIAL
       SITE is allocated patients N1 to N2 in TRIAL
-   communicate with justification to SITE
+   send with justification to SITE
       if
          asInfon(N1 <= N && N <= N2)
          asInfon(R == record(N, TRIAL))

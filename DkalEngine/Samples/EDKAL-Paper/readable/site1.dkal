@@ -18,7 +18,7 @@ then
    say with justification to PHYS
       PHYS participates in TRIAL at site1 as a physician
       PHYS is allocated patients P1 to P2 in TRIAL at site1
-   communicate with justification to PHYS
+   send with justification to PHYS
       if
          asInfon(P1 <= N && N <= P2)
          asInfon(R == record(N,TRIAL))

@@ -8,7 +8,7 @@
   (tdonS SITE (*-is-allocated-patients-*-to-*-in-*-at-* PHYS P1 P2 TRIAL SITE))
   (tdonS (keyManager) (*-is-key-for-* K (record N TRIAL))))
 
-(comm
+(send
   (and
     (*-participates-in-*-at-*-as-a-physician PHYS TRIAL SITE)
     (*-is-allocated-patients-*-to-*-in-*-at-* PHYS P1 P2 TRIAL SITE)

@@ -4,7 +4,7 @@
   (follows
     (implied (org TRIAL) (*-may-read-* PERSON (record N TRIAL)))
     (*-may-read-* PERSON (record N TRIAL))))
-(comm
+(send
   (and
     (said PERSON (*-requests-to-read-* PERSON (record N TRIAL)))
     (implied (org TRIAL) (*-may-read-* PERSON (record N TRIAL)))
