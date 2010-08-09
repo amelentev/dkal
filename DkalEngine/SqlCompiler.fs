@@ -120,13 +120,15 @@ module SqlCompiler =
     addSqlOp ">" ">"
     addSqlOp "==" "="
     addSqlOp "!=" "<>"
-    addPrefixSqlOp "true" "1=1"
-    addPrefixSqlOp "false" "0=1"
+    addPrefixSqlOp "true" "1"
+    addPrefixSqlOp "false" "0"
   
   do init()
   
   let sqlEq (a, b) = Op (sqlOps.["=="], [a;b])
+  let sqlNeq (a, b) = Op (sqlOps.["!="], [a;b])
   let sqlTrue = Op (sqlOps.["true"], [])
+  let sqlFalse = Op (sqlOps.["false"], [])
   let sqlAnd a b = 
     if a = sqlTrue then b
     elif b = sqlTrue then a
@@ -218,7 +220,10 @@ module SqlCompiler =
                 if opts.Trace >= 2 then
                   log ("Body " + body.ToString() + " =====> " + res.ToString())
                 localCtx.pendingEqs <- res :: newCtx.pendingEqs @ localCtx.pendingEqs
-                Expr.Var resV
+                if fn.retType.typ = Type.Bool then
+                  sqlNeq (Expr.Var resV, sqlFalse)
+                else
+                  Expr.Var resV
               | _ when sqlOps.ContainsKey fn.name ->
                 Expr.Op (sqlOps.[fn.name], args)
               | _ -> err t ("no translation to SQL for '" + fn.name + "'")
