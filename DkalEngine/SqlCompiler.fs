@@ -277,6 +277,7 @@ module SqlCompiler =
           pr c
         | Expr.Const (Const.Bool true) -> print sqlTrue
         | Expr.Const (Const.Bool false) -> pr "NOT "; print sqlTrue
+        | Expr.Const (Const.Text s) -> parm s
         | Expr.Const (Const.Int i) -> parm i
         | Expr.Const (Const.Principal p) ->
           parm (comm.PrincipalId p)
@@ -309,7 +310,7 @@ module SqlCompiler =
       print expr
       let whereClause = sb.ToString()
       sb.Length <- 0
-      pr "SELECT DISTINCT "
+      pr "SELECT "
       
       let resExprs = dict()
       unbound |> List.iter (fun (v, e) -> resExprs.Add (v.id, e))      

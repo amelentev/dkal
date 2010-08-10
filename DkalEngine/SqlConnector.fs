@@ -68,6 +68,8 @@ type SqlConnector(connStr) =
           | :? bool as b -> Const.Bool b
           | :? int as i -> Const.Bool (i <> 0)
           | _ -> Const.Bool (rd.GetBoolean idx)
+      elif var.typ.name = "text" then
+        Const.Text (rd.GetString idx)
       elif var.typ.name = "principal" then
         Const.Principal (getPrincipal (rd.GetInt32 idx))
       else

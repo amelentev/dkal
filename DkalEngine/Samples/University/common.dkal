@@ -29,7 +29,7 @@ function [2] examCreator ( {E:exam} ) returns {P:principal}
   is exams.id == E && exams.professor == P
 
 // Contents of exam E are C
-function [2] examContents ( {E:exam} ) returns {C:int}
+function [2] examContents ( {E:exam} ) returns {C:text}
   is exams.id == E && exams.contents == C
   
 // Student S took exam E
@@ -44,7 +44,7 @@ function [2] studentExamGrade ( {S:principal} , {E:exam} ) returns {G:int}
 attribute [16] {principal} is lecturer of {subject}
 attribute [16] {principal} enrolled in {subject}
 attribute [16] {principal} requests contents of exam {exam}
-attribute [16] exam {exam} contents are {int}
+attribute [16] exam {exam} contents are {text}
 attribute [16] exam {exam} was created by {principal}
 
 

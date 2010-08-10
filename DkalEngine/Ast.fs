@@ -92,6 +92,7 @@ module Ast =
   let private principal : Type = { id = nextId(); name = "principal" }
   let private intType : Type = { id = nextId(); name = "int" }
   let private boolType : Type = { id = nextId(); name = "bool" }
+  let private textType : Type = { id = nextId(); name = "text" }
   
   type Type with
     static member Infon = infon
@@ -100,6 +101,7 @@ module Ast =
     static member Principal = principal
     static member Int = intType
     static member Bool = boolType
+    static member Text = textType
     static member Evidence = evidence
   
   let globalFunctions = dict() // accessed from ParsingCtx
@@ -153,6 +155,7 @@ module Ast =
     | Principal of Principal
     | Int of int
     | Bool of bool
+    | Text of string
     | Column of string * string
     
     override this.ToString() =
@@ -160,6 +163,7 @@ module Ast =
         | Int i -> i.ToString()
         | Principal p -> p.ToString()
         | Column (a, b) -> a + "." + b
+        | Text s -> "\"" + s + "\""
         | Bool true -> "true"
         | Bool false -> "false"
   
@@ -191,6 +195,7 @@ module Ast =
         | Const (Const.Int _) -> Type.Int
         | Const (Const.Principal _) -> Type.Principal
         | Const (Const.Bool _) -> Type.Bool
+        | Const (Const.Text _) -> Type.Text
         | Const (Const.Column _) -> Type.Unbound
         
     member this.Vars() =
@@ -217,6 +222,7 @@ module Ast =
         | Const (Const.Principal p) -> SX.App (fakePos, p.name, [])
         | Const (Const.Bool true) -> SX.App (fakePos, "true", [])
         | Const (Const.Bool false) -> SX.App (fakePos, "false", [])
+        | Const (Const.Text s ) -> SX.String (fakePos, s)
         | Const (Const.Column (t,c)) -> SX.App (fakePos, t + "." + c, [])
       
   type PrincipalTerm = Term  

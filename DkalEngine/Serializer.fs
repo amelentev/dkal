@@ -35,6 +35,7 @@ type Serializer(ctx:ParsingCtx) =
     let rec aux = function
       | Term.Const (Int i) -> wr "#"; wr i
       | Term.Const (Bool b) -> wr "@"; wr (if b then "T" else "F")
+      | Term.Const (Text s) -> wr "\""; wr s; wr "\""
       | Term.Const (Principal p) -> wr "%"; quote p.name
       | Term.Const (Column _) -> failwith "cannot serilize column"
       | Term.Var v -> 
@@ -73,9 +74,21 @@ type Serializer(ctx:ParsingCtx) =
         else cur
       let theEnd = findEnd i
       (theEnd, System.Int32.Parse (s.Substring (i, theEnd - i)))
+    let parseText i =
+      let sb = System.Text.StringBuilder()
+      let wr (s:obj) = sb.Append s |> ignore
+      let rec loop i =
+        if s.[i] <> '"' then
+          wr s.[i]; loop (i + 1)
+        else
+          (i+1, sb.ToString())
+      loop i
     let vars = dict()
     let rec parseTerm i =
       match s.[i] with
+        | '"' ->
+          let (i, v) = parseText (i + 1)
+          (i, Term.Const (Const.Text v))
         | '#' ->
           let (i, v) = parseInt (i + 1)
           (i, Term.Const (Const.Int v))

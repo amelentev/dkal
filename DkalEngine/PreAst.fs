@@ -161,6 +161,7 @@ module PreAst =
       ctx.types.Add ("principal", Type.Principal)
       ctx.types.Add ("int", Type.Int)
       ctx.types.Add ("bool", Type.Bool)
+      ctx.types.Add ("text", Type.Text)
       for k in Ast.globalFunctions.Keys do
         ctx.functions.Add (k, Ast.globalFunctions.[k])
       ctx
