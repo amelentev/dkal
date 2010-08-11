@@ -27,13 +27,13 @@ then
     harrison said harrison is lecturer of SUBJECT
 
 // (option 1a) Professor always gives the contents of the exams he wrote to anyone
-/*if harrison knows
-  PERSON requests contents of exam EXAM
-  asInfon(examCreator(EXAM) == harrison)
-  asInfon(examContents(EXAM) == S)
-then
-  say with justification to PERSON
-    exam EXAM contents are S*/
+// if harrison knows
+//   PERSON requests contents of exam EXAM
+//   asInfon(examCreator(EXAM) == harrison)
+//   asInfon(examContents(EXAM) == S)
+// then
+//   say with justification to PERSON
+//     exam EXAM contents are S
 
 // (option 1b) Professor always gives the contents of the exams he wrote to other professors in the subject
 if harrison knows
@@ -47,14 +47,14 @@ then
     exam EXAM contents are S
 
 // (option 2) Professor gives the contents of the exams he wrote, only to students who already took the exam
-/*if harrison knows
-  STUDENT requests contents of exam EXAM
-  asInfon(examCreator(EXAM) == harrison)
-  asInfon(studentTookExam(STUDENT,EXAM))
-  asInfon(examContents(EXAM) == S)
-then
-  say with justification to STUDENT
-    exam EXAM contents are S*/
+// if harrison knows
+//   STUDENT requests contents of exam EXAM
+//   asInfon(examCreator(EXAM) == harrison)
+//   asInfon(studentTookExam(STUDENT,EXAM))
+//   asInfon(examContents(EXAM) == S)
+// then
+//   say with justification to STUDENT
+//     exam EXAM contents are S
 
 // (option 3) Professor gives the contents of the exams he wrote, only to students who already took the exam and failed (grade <= 3)
 if harrison knows
@@ -69,11 +69,11 @@ then
     exam EXAM contents are S
 
 // (option 4) Professor gives the contents of the exams he wrote, only if all the class has already taken the exam
-/*if harrison knows
-  XXX not working
-  STUDENT requests contents of exam EXAM
-  asInfon(examCreator(EXAM) == harrison)
-then
-  say with justification to STUDENT
-    exam EXAM contents are S*/
+// if harrison knows
+//   XXX not working
+//   STUDENT requests contents of exam EXAM
+//   asInfon(examCreator(EXAM) == harrison)
+// then
+//   say with justification to STUDENT
+//     exam EXAM contents are S
 
