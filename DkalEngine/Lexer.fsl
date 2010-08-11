@@ -27,13 +27,13 @@ let digit = ['0'-'9']
 let lowercase = (['a'-'z'] | '_')
 let uppercase = ['A'-'Z']
 let alnum = (digit | lowercase | uppercase)
-let whitespace = [' ']
 let newline = ('\n' | '\r' '\n')
 let opstart = ['!' '%' '^' '&' '*' '/' '<' '>' '=' '?' '|' '+' '-' '.' ':' '#' ]
 let opchar = opstart
 
 rule token = parse
-| [' ']+             { Spaces (lexeme lexbuf).Length }
+| ' '+               { Spaces (lexeme lexbuf).Length }
+| '\t'+              { Spaces ((lexeme lexbuf).Length * 4)}
 | newline            { newline lexbuf; NewLine }
 | ['-']?digit+       { Int (System.Int32.Parse(lexeme lexbuf)) }
 | "("                { LParen ')' }

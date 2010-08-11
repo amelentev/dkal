@@ -61,6 +61,8 @@ module ResolverSX =
           if v.typ = Type.Unbound then
             v.typ <- expectedType
           Term.Var v
+        | SX.String (_, s) -> 
+          Term.Const (Const.Text s)
         | SX.Int (_, i) ->
           Term.Const (Const.Int i)
         | _ -> err tok "expecting a term"

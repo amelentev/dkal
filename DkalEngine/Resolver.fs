@@ -67,6 +67,8 @@ module Resolver =
           if v.typ = Type.Unbound then
             v.typ <- expectedType
           Term.Var v
+        | Tok.StringLiteral (_, s) -> 
+          Term.Const (Const.Text s)
         | Tok.Int (_, i) ->
           Term.Const (Const.Int i)
         | _ -> err tok "expecting a term"

@@ -46,7 +46,6 @@ let digit = ['0'-'9']
 let lowercase = (['a'-'z'] | '_')
 let uppercase = ['A'-'Z']
 let alnum = (digit | lowercase | uppercase)
-let whitespace = [' ']
 let newline = ('\n' | '\r' '\n')
 let opstart = ['!' '%' '^' '&' '*' '/' '<' '>' '=' '?' '|' '+' '-' '.' ':' '#' ]
 let idstart = (lowercase | uppercase | opstart)
@@ -54,6 +53,7 @@ let idchar = (idstart | digit)
 
 rule token = parse
 | [' ']+             { token lexbuf }
+| ['\t']+             { token lexbuf }
 | newline            { newline lexbuf; token lexbuf }
 | ['-']?digit+       { IntLiteral (System.Int32.Parse(lexeme lexbuf)) }
 | "("                { LParen }
