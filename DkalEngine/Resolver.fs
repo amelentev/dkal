@@ -71,6 +71,7 @@ module Resolver =
           Term.Const (Const.Text s)
         | Tok.Int (_, i) ->
           Term.Const (Const.Int i)
+        | Tok.Group(_,c,ts) -> resolveTerm ctx expectedType ts.[0]
         | _ -> err tok "expecting a term"
     //System.Console.WriteLine ("resolved: " + tok.ToString() + " -> " + res.ToString() + ":" + res.Type.ToString() + " (expecting " + expectedType.ToString() + ")")
     if expectedType <> Type.Unbound && expectedType <> res.Type then

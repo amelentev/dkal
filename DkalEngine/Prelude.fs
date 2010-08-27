@@ -37,6 +37,7 @@ module Prelude =
 type principal
 type int
 type bool
+type text
 type infon
 type assertion
 
@@ -50,13 +51,19 @@ function [6] {int} + {int} returns {int}
 function [6] {int} - {int} returns {int}
 function [8] {int} <= {int} returns {bool}
 function [8] {int} >= {int} returns {bool}
+function [8] {int} < {int} returns {bool}
+function [8] {int} > {int} returns {bool}
 function [8] {anytype} == {anytype} returns {bool}
 function [8] {anytype} != {anytype} returns {bool}
 function [10] {bool} && {bool} returns {bool}
 function [10] {bool} || {bool} returns {bool}
+function [9] not ( {bool} ) returns {bool}
 attribute [2] asInfon ( {bool} )
 function [2] true returns {bool}
 function [2] false returns {bool}
+function [2] int_null returns {int}
+function [2] string_null returns {text}
+function [2] bool_null returns {bool}
 
 function [2] __tuple ({int}) returns {int}
 

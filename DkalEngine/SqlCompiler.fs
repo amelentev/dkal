@@ -120,8 +120,12 @@ module SqlCompiler =
     addSqlOp ">" ">"
     addSqlOp "==" "="
     addSqlOp "!=" "<>"
+    addPrefixSqlOp "not" "NOT"
     addPrefixSqlOp "true" "1"
     addPrefixSqlOp "false" "0"
+    addPrefixSqlOp "int_null" "NULL"
+    addPrefixSqlOp "string_null" "NULL"
+    addPrefixSqlOp "double_null" "NULL"
   
   do init()
   
@@ -294,6 +298,17 @@ module SqlCompiler =
         | Expr.Op (op, [tr;a]) 
         | Expr.Op (op, [a;tr]) when op = sqlOps.["&&"] && tr = sqlTrue -> print a
         
+        | Expr.Op (op, [a;b]) when op = sqlOps.["=="] || op = sqlOps.["!="] || op = sqlOps.[">"] || op = sqlOps.[">="] || op = sqlOps.["<"] || op = sqlOps.["<="] ->
+          pr "("
+          print a
+          pr " IS NOT NULL AND "
+          print b
+          pr " IS NOT NULL AND "
+          print a
+          pr op.name
+          pr " "
+          print b
+          pr ")"
         | Expr.Op (op, [a;b]) when op.infix ->
           pr "("
           print a
@@ -302,8 +317,12 @@ module SqlCompiler =
           pr " "
           print b
           pr ")"
+        | Expr.Op (op, [a]) when not op.infix -> 
+          pr (op.name + " (")
+          print a
+          pr ")"
         | Expr.Op (op, []) -> pr op.name
-        | Expr.Op (_, _) -> failwith "impossible"
+        | Expr.Op (op, es) -> failwith ("impossible " + op.name + " " + es.Length.ToString())
       
       let bound, unbound = snd cc |> List.partition (fun (v, _) -> subst.ContainsKey v.id)
       let expr = bound |> List.fold (fun sofar (v, expr) -> sqlAnd sofar (sqlEq (expr, Expr.Var v))) (fst cc)
