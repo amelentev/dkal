@@ -44,7 +44,7 @@ type Engine =
     mutable me : option<Principal>
     mutable worker : option<System.Threading.Thread>
     mutable comm : option<ICommunicator>
-    sentItems : Dict<Message, bool>
+    avoidMessages : Dict<Message, bool>
     pending : GQueue<unit -> unit>
     options : Options
     mutable infostrate : list<Knows>
@@ -60,7 +60,7 @@ type Engine =
       { me = None; worker = None;
         infostrate = []; filters = []; communications = []; nextId = 0;
         comm = None;
-        sentItems = dict()
+        avoidMessages = dict()
         sql = None
         pending = new GQueue<_>()
         options = opts
@@ -95,7 +95,7 @@ type Engine =
   member private this.FakeAI () =
     { origin = fakePos; principal = this.me.Value }
     
-  member private this.InfonsWithPrefix subst pref template =
+  member private this.InfonsWithPrefix subst pref template tmpInfons =
     let res = ref []
     let rec stripPrefix subst prefixUnif preconds suff = 
       let simpl s (t:Term) = t.Apply s
@@ -145,7 +145,7 @@ type Engine =
         stripPrefix subst prefixUnif preconds suff (pref, subst.[v.id])
       | t -> immediate t
     
-    List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, this.Freshen k.infon)) this.infostrate
+    List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, this.Freshen k.infon)) (this.infostrate @ tmpInfons)
     !res
   
   member this.DeriveCertification subst = 
@@ -201,7 +201,7 @@ type Engine =
       streight p @ List.collect derivePremise (this.TryDerive subst (Term.Var v) (goal, i2))
     | p -> streight p
 
-  member this.DoDerive pref (subst:AugmentedSubst) infon =
+  member this.DoDerive pref (subst:AugmentedSubst) infon tmpInfons =
     if this.options.Trace > 0 then
       System.Console.WriteLine ("{0}: [ derive: {1} under {2}", this.me.Value.name, infon, substToString subst.subst)
     
@@ -211,16 +211,17 @@ type Engine =
     let res = 
       match infon with
         | InfonAnd (i1, i2) ->
-          (this.DoDerive pref subst i1) |> sum (fun s1 -> this.DoDerive pref s1 i2)
+          (this.DoDerive pref subst i1 tmpInfons) |> sum (fun s1 -> this.DoDerive pref s1 i2 tmpInfons)
         | InfonEmpty _ -> [subst]
         | InfonSaid (p, i) ->
-          this.DoDerive (Pref.Said p :: pref) subst i
+          this.DoDerive (Pref.Said p :: pref) subst i tmpInfons
         | InfonImplied (p, i) ->
-          this.DoDerive (Pref.Implied p :: pref) subst i
+          this.DoDerive (Pref.Implied p :: pref) subst i tmpInfons
         | Infon.Var v when subst.subst.ContainsKey v.id ->
-          this.DoDerive pref subst subst.subst.[v.id]
+          this.DoDerive pref subst subst.subst.[v.id] tmpInfons
         | AsInfon e ->
           if pref <> [] then
+            printfn "%O" (e.ToSX())
             failwith "asInfon(...) under said/implied prefix"
           [{ subst with assumptions = e :: subst.assumptions }]
         | InfonCert (inf, ev) when pref = [] ->
@@ -235,9 +236,9 @@ type Engine =
         | templ ->
           let rec checkOne = function
             | (subst, precond :: rest) ->
-              this.DoDerive [] subst precond |> sum (fun s -> checkOne (s, rest))
+              this.DoDerive [] subst precond tmpInfons |> sum (fun s -> checkOne (s, rest))
             | (subst, []) -> [subst]
-          this.InfonsWithPrefix subst.subst pref templ |> List.map (fun (s, p) -> ({subst with subst = s }, p)) |> sum checkOne
+          this.InfonsWithPrefix subst.subst pref templ tmpInfons |> List.map (fun (s, p) -> ({subst with subst = s }, p)) |> sum checkOne
 
     if this.options.Trace > 0 then
       System.Console.WriteLine ("result:{0} ] {1}", res.Length, l2s res)
@@ -245,19 +246,19 @@ type Engine =
     res
 
   member private this.Send msg =
-    if this.sentItems.ContainsKey msg then
+    if this.avoidMessages.ContainsKey msg then
       ()
     else
-      this.sentItems.Add (msg, true)
+      this.avoidMessages.Add (msg, true)
       this.Comm.SendMessage msg
       
-  member this.Derive s (infon:Term) =
+  member this.Derive s (infon:Term) tmpInfons =
     let vars = (infon.Apply s).Vars()
     let checkAssumptions (augS:AugmentedSubst) =
       let apply (t:Term) = t.Apply augS.subst
       let sqlExpr = SqlCompiler.compile this.options this.NextId (augS.assumptions |> List.map apply)
       SqlCompiler.execQuery (this.sql.Value, this.Comm, this.options, sqlExpr, augS.subst, vars) |> Seq.toList      
-    { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon |> List.collect checkAssumptions }
+    { substs = this.DoDerive [] (AugmentedSubst.NoAssumptions s) infon tmpInfons |> List.collect checkAssumptions }
   
   member private this.DoListen (msg:Message) =  
     let src = Term.Const (Const.Principal msg.source)
@@ -298,28 +299,59 @@ type Engine =
           
       match subst with
         | Some s ->
-          (this.Derive s filter.trigger).All |> List.collect apply
+          (this.Derive s filter.trigger []).All |> List.collect apply
         | None -> []
     let newInfons = this.filters |> List.collect matches
     List.iter this.Comm.Knows newInfons
-    this.infostrate <- newInfons @ this.infostrate
+    match this.options.Learning with
+    | "learn" -> 
+      this.infostrate <- newInfons @ this.infostrate
+      []
+    | "discard" ->
+      newInfons
+    | l ->
+      failwith ("Unknown learning option: " + l)
     
   member this.Me = this.me
   
-  member private this.DoTalk () =
-    let runCommFor (comm:Communication) (subst:Subst) =
+  member private this.DoTalk (tmpInfons: Knows list) =
+    let constructMessage (comm:Communication) (subst:Subst) =
       match comm.target.Apply subst with
         | Term.Const (Const.Principal p) ->
-          let msg = ({ source = this.me.Value
-                       target = p
-                       message = comm.message.Apply subst
-                       proviso = comm.proviso.Apply subst
-                     } : Message).Canonical()
-          this.Send msg
+          ({ source = this.me.Value
+             target = p
+             message = comm.message.Apply subst
+             proviso = comm.proviso.Apply subst
+            } : Message).Canonical()
         | t ->
-          System.Console.WriteLine ("attempting broadcast message: " + t.ToString())
-          
-    this.communications |> List.iter (fun comm -> (this.Derive Map.empty comm.trigger).All |> List.iter (runCommFor comm))
+          failwith ("attempting broadcast message: " + t.ToString())
+
+    // construct a list of all the messages that should be sent, including the applied CommRule 
+    let intendedMessages = 
+      List.collect (fun (comm: Communication) -> 
+                        List.map (fun subst -> (comm, subst)) (this.Derive Map.empty comm.trigger tmpInfons).All) this.communications
+
+    match this.options.Dispatcher with
+    | "all"  -> 
+      // send every message
+      for comm, subst in intendedMessages do
+        this.Send (constructMessage comm subst)
+    | "first" ->
+      // send the first unavoided message, mark the rest as "avoid"
+      let mutable sent = false
+      for comm, subst in intendedMessages do
+        let msg = constructMessage comm subst
+        if sent then
+          // a message has already been sent, just mark the rest as avoid
+          if not (this.avoidMessages.ContainsKey msg) then
+            this.avoidMessages.Add(msg, true)
+        else
+          // a message has not been sent yet, sent the message (automatically marked as avoid)
+          if not (this.avoidMessages.ContainsKey msg) then
+            this.Send msg
+            sent <- true
+    | d ->
+      failwith ("Dispatcher not recognized: " + this.options.Dispatcher)
   
   /// First close the Engine, and then start a new substrate connection and a worker thread(s).
   member this.Reset () =
@@ -343,11 +375,11 @@ type Engine =
               |> this.HandleCertifications 
       match a with
         | Knows k ->
-          this.infostrate <- k :: this.infostrate
+          this.infostrate <- this.infostrate @ [k]
         | SendTo c ->
-          this.communications <- c :: this.communications
+          this.communications <- this.communications @ [c]
         | ReceiveFrom f ->
-          this.filters <- f :: this.filters      
+          this.filters <- this.filters @ [f]
       )
   
 
@@ -372,15 +404,16 @@ type Engine =
   member this.Listen (comm, msg:Message) =
     this.Invoke (fun () ->
       this.comm <- Some comm
-      this.DoListen msg
-      this.DoTalk ()
-      this.Comm.RequestFinished ())
+      let tmpInfons = this.DoListen msg
+      this.DoTalk (tmpInfons)
+      this.Comm.RequestFinished ()
+      )
 
   /// See if some messages should be sent, and if so, sends them using comm.Send().
   member this.Talk (comm) =
     this.Invoke (fun () ->
       this.comm <- Some comm
-      this.DoTalk ()
+      this.DoTalk ([])
       this.Comm.RequestFinished ())
 
   /// Given an infon, possibly with free variables, return all the possible values
@@ -390,7 +423,7 @@ type Engine =
       this.comm <- Some comm
       let bind (s:Subst) =
         i.Vars() |> Seq.map (fun v -> { formal = v; actual = s.[v.id].Apply s })
-      this.Comm.QueryResults (i, (this.Derive Map.empty i).All |> Seq.map bind)
+      this.Comm.QueryResults (i, (this.Derive Map.empty i []).All |> Seq.map bind)
       this.Comm.RequestFinished ())
   
   /// Wait for all pending requests to finish, stop the worker thread and clean the state.
@@ -446,7 +479,7 @@ type Engine =
     this.sql <- None
     this.me <- None
     this.pending.Clear()
-    this.sentItems.Clear()
+    this.avoidMessages.Clear()
     this.comm <- None
     this.infostrate <- []
     this.filters <- []
