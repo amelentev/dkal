@@ -1,0 +1,9 @@
+XACMLPolicy "policy6"
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"string-equal" (
+				"string-one-and-only" ( Action string "action-id" )
+				string "compile"
+			)
+		Permit

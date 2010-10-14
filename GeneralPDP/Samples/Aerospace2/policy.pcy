@@ -1,0 +1,22 @@
+XACMLPolicy "policy-2395"
+	ResourceTarget 
+		"string-equal"
+			Resource string "document-id" = string "doc-2395"
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"and" (
+				"string-equal" (
+					"string-one-and-only" ( Action string "action-id" )
+					string "read"
+				)
+				"string-equal" (
+					"string-one-and-only" ( Subject string "company-id" MustBePresent )
+					string "contoso"
+				)
+			)
+		Permit
+	Rule 
+		Deny
+			
+	

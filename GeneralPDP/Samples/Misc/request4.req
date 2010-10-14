@@ -1,0 +1,11 @@
+XACMLRequest 
+	Subject as "access-subject" 
+		"subject-id" = string "guido"
+		"role" = string "pc-chair"
+	Resource 
+		"resource-id" = string "paper-23"
+	Action 
+		"action-type" = string "delete"
+	Environment
+
+

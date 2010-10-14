@@ -1,0 +1,101 @@
+﻿{
+module Microsoft.Research.GeneralPDP.XACML.Lexer
+
+open System
+open Microsoft.FSharp.Text.Lexing
+
+open Parser
+
+let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
+let stringBuf = new System.Text.StringBuilder()
+let add (ch:char) = stringBuf.Append ch |> ignore
+}
+
+// These are some regular expression definitions
+let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+rule tokenize = parse
+// Whitespace
+| whitespace		{ tokenize lexbuf }
+| newline			{ tokenize lexbuf }
+
+// Comments
+| '/' '*'            { comment lexbuf }
+| '/' '/' [^ '\n']*  { tokenize lexbuf }
+
+// Operators, delimiters
+| "="				{ EQ }
+| "("				{ LPAR }
+| ")"				{ RPAR }
+
+// Request keywords
+| "XACMLRequest"	{ REQUEST }
+| "by"				{ BY }
+
+// Attribute categories
+| "Subject"			{ SUBJECT }
+| "Resource"		{ RESOURCE }
+| "Action"			{ ACTION }
+| "Environment"		{ ENVIRONMENT }
+
+// Types
+| "int"				{ INTTYPE }
+| "bool"			{ BOOLTYPE }
+| "double"			{ DOUBLETYPE }
+| "string"			{ STRINGTYPE }
+
+// Response keywords
+| "XACMLResponse"	{ RESPONSE }
+| "Permit"			{ PERMIT }
+| "Deny"			{ DENY }
+| "Indeterminate"	{ INDETERMINATE }
+| "NotApplicable"	{ NOTAPPLICABLE }
+| "Code"			{ CODE }
+| "Message"			{ MESSAGE }
+| "Status"			{ STATUS }
+| "Obligation"		{ OBLIGATION }
+| "on"				{ ON }
+| "do"				{ DO }
+
+// Policy keywords
+| "XACMLPolicy"						{ POLICY }
+| "XACMLPolicySet"					{ POLICYSET }
+| "RuleCombinator"					{ RULECOMBINATOR }
+| "PolicyCombinator"				{ POLICYCOMBINATOR }
+| "Rule"							{ RULE }
+| "Target"							{ TARGET }
+| "Condition"						{ CONDITION }
+| "SubjectTarget"					{ SUBJECTTARGET }
+| "ResourceTarget"					{ RESOURCETARGET }
+| "ActionTarget"					{ ACTIONTARGET }
+| "MustBePresent"					{ MUSTBEPRESENT }
+
+// Policy request keywords
+| "XACMLPolicyRequest"				{ POLICYREQUEST }
+
+// Literals
+| ['-']?digit+									{ INT32 (Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit+('.'digit+)?(['e''E']digit+)?		{ FLOAT (Double.Parse(lexeme lexbuf)) }
+| '"'                { stringBuf.Length <- 0;
+                       string lexbuf;
+                       STRING (stringBuf.ToString()) }
+
+// EOF
+| eof   { EOF }
+
+and comment = parse 
+| "*/"               { tokenize lexbuf }
+| eof                { EOF }
+| _                  { comment lexbuf }
+
+and string = parse
+| '"' { () }
+| '\\' 'n' { add '\n'; string lexbuf }
+| '\\' 'r' { add '\r'; string lexbuf }
+| '\\' 't' { add '\t'; string lexbuf }
+| '\\' _ { add (lexbuf.Lexeme.[1]); string lexbuf }
+| [^ '\\' '"']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
+| _ { add (lexbuf.Lexeme.[0]); string lexbuf }
+| eof { () }

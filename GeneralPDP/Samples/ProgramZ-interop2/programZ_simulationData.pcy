@@ -1,0 +1,55 @@
+XACMLPolicy "policy-programZ-simulationData"
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"and" (
+				"or" (
+					"string-equal" (
+						"string-one-and-only" ( Subject string "nationality" MustBePresent )
+						string "us"
+					)
+					"string-equal" (
+						"string-one-and-only" ( Subject string "nationality" MustBePresent )
+						string "french"
+					)
+				)
+				"or" (
+					"and" (
+						"string-equal" (
+							"string-one-and-only" ( Subject string "company-id" MustBePresent )
+							string "spad"
+						)
+						"or" (
+							"string-equal" (
+								"string-one-and-only" ( Action string "action-id" MustBePresent )
+								string "read"
+							)
+							"string-equal" (
+								"string-one-and-only" ( Action string "action-id" MustBePresent )
+								string "write"
+							)
+						)
+					)
+					"and" (
+						"or" (
+							"string-equal" (
+								"string-one-and-only" ( Subject string "company-id" MustBePresent )
+								string "curtis"
+							)
+							"string-equal" (
+								"string-one-and-only" ( Subject string "company-id" MustBePresent )
+								string "packard"
+							)
+						)
+						"string-equal" (
+							"string-one-and-only" ( Action string "action-id" MustBePresent )
+							string "read"
+						)
+					)
+				)
+			)
+		Permit
+	Rule 
+		Deny
+			
+	

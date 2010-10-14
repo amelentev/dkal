@@ -1,0 +1,35 @@
+XACMLPolicySet "PPS_paper_rc"
+	PolicyCombinator "first-applicable"
+	
+	XACMLPolicy "policy"
+		SubjectTarget 
+			"string-equal"
+				Subject string "role" = string "pc-chair"
+		ActionTarget
+			"string-equal"
+				Action string "action-type" = string "delete"
+		RuleCombinator "first-applicable"
+		Rule Permit
+	
+	XACMLPolicy "policy"
+		SubjectTarget 
+			"string-equal"
+				Subject string "role" = string "pc-member"
+		ResourceTarget
+			"string-equal"
+				Resource string "isEq-meetingPaper-resId" = string "true"
+		ActionTarget
+			"string-equal"
+				Action string "action-type" = string "read"
+		RuleCombinator "first-applicable"
+		Rule Permit
+			
+	XACMLPolicy "policy"
+		SubjectTarget 
+			"string-equal"
+				Subject string "role" = string "pc-member"
+		ActionTarget
+			"string-equal"
+				Action string "action-type" = string "create"
+		RuleCombinator "first-applicable"
+		Rule Permit

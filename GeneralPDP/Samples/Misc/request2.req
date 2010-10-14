@@ -1,0 +1,10 @@
+XACMLRequest 
+	Subject as "access-subject" 
+		"subject-id" = "john" by "authority"
+	Suject as "grantor-subject" 
+	Resource 
+		"resource-id" = "c:/home"
+	Action 
+		"action-id" = "delete"
+	Environment 
+

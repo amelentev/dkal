@@ -1,0 +1,19 @@
+#include "common.dkal"
+
+dkal knows
+  if 
+    req R issued by P
+	req R by P has "subject" attribute string "subject-id" valued "robert"
+	P said 02468 is break glass key
+  then
+    req R by P decision "Permit"
+
+dkal knows
+  if 
+    req R issued by P
+	req R by P has "subject" attribute string "subject-id" valued V
+	asInfon(not(V == "robert"))
+  then
+    req R by P decision "NotApplicable"
+
+	

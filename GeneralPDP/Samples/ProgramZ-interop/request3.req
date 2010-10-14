@@ -1,0 +1,7 @@
+XACMLRequest 3
+	Resource "document-id" = string "doc-4985"
+
+	Action "action-id" = string "read"
+
+	Subject "subject-id" = string "matt"
+	Subject "company-id" = string "packard"

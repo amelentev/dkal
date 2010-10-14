@@ -1,0 +1,11 @@
+XACMLRequest 
+	Subject as "access-subject" 
+		"subject-id" = string "guido" by "authority"
+	Subject as "grantor-subject" 
+	Resource 
+		"resource-id" = string "c:/home"
+	Action 
+		"action-id" = string "delete"
+	Environment 
+		"temperature" = int "100"
+

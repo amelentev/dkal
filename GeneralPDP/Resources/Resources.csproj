@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{D7682291-03E0-466B-BE58-2C758DC36675}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Resources</RootNamespace>
+    <AssemblyName>Resources</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Main.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Main.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Main.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Main.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\first.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\last.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\message.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\next.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\open.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\prev.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icon_general_pdp.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_3.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_4.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_5.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_6.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_7.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_8.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_9.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_10.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_1b.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_1g.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_1gr.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_1o.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_1p.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_5b.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_5g.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_5gr.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_5o.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_5p.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_7b.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_7g.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_7gr.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_7o.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_7p.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_9b.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_9g.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_9gr.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_9o.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_9p.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_s.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_sb.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_sg.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_sgr.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_so.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ep_sp.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

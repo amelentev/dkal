@@ -1,0 +1,35 @@
+XACMLPolicy "printerPolicy"
+	ResourceTarget 
+		"string-equal"
+			Resource string "document-id" = string "ABC-2-98827"
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"and" (
+				"integer-less-than" (
+					"integer-one-and-only" ( Environment int "system-load" )
+					int "75"
+				)
+				"string-equal" (
+					"string-one-and-only" ( Action string "action-id" )
+					string "copy"
+				)
+			)
+		Permit
+	Rule 
+		Condition
+			"and" (
+				"integer-less-than" (
+					"integer-one-and-only" ( Environment int "system-load" )
+					int "90"
+				)
+				"string-equal" (
+					"string-one-and-only" ( Action string "action-id" )
+					string "print"
+				)
+			)
+		Permit
+	Rule 
+		Deny
+			
+	

@@ -1,0 +1,19 @@
+<scenario name="XacmlToDkalCommRulesPrinter">
+	<endpoint id="pep" />
+	<endpoint id="pap" />
+	<endpoint id="engine" type="dkal" learning="discard" dispatcher="first" xacml="aware" policyId="empty" >
+		<trustrulesfrom id="pdp" />
+	</endpoint>
+	<endpoint id="pdp" type="xacml->dkal" translateToRules="true" dkalId="engine" />
+
+	<!-- XACML policy -->
+	<message from="pap" to="pdp" type="xacmlPolicy" file="policy.pcy" />
+	<sleep amount="750" />
+
+	<!-- XACML requests -->
+	<message from="pep" to="pdp" type="xacmlRequest" file="request1.req" />
+	<sleep amount="750" />
+	<message from="pep" to="pdp" type="xacmlRequest" file="request2.req" />
+	<sleep amount="750" />
+	<message from="pep" to="pdp" type="xacmlRequest" file="request3.req" />
+</scenario>

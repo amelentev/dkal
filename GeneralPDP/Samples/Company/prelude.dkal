@@ -1,0 +1,2 @@
+attribute [16] employee {text} follows {text} orders
+attribute [16] employee {text} under {text} command

@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{b52042e8-26ba-4034-a198-0caa314561e1}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Scenario</RootNamespace>
+    <AssemblyName>Scenario</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <Name>Scenario</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Scenario.XML</DocumentationFile>
+    <StartArguments>../../../Samples/policy5.pcy ../../../Samples/request5.req ../../../Samples/dkal_policy1.dkal</StartArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Scenario.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DkalEngine">
+      <HintPath>..\DkalEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
+    <Reference Include="Microsoft.Msagl">
+      <HintPath>..\Microsoft.Msagl.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Msagl.Drawing">
+      <HintPath>..\Microsoft.Msagl.Drawing.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Msagl.GraphViewerGdi">
+      <HintPath>..\Microsoft.Msagl.GraphViewerGdi.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="EndPointImageFactory.fs" />
+    <Compile Include="Basics.fs" />
+    <Compile Include="Message.fs" />
+    <Compile Include="RequestInfo.fs" />
+    <Compile Include="EndPoint.fs" />
+    <Compile Include="Scenario.fs" />
+    <Compile Include="BasicEndPoint.fs" />
+    <Compile Include="DataStorageEndPoint.fs" />
+    <Compile Include="EnforcementEndPoint.fs" />
+    <Compile Include="PolicyRepositoryEndPoint.fs" />
+    <Compile Include="AttributeRepositoryEndPoint.fs" />
+    <Compile Include="XacmlEndPoint.fs" />
+    <Compile Include="DkalEndPoint.fs" />
+    <Compile Include="AdjudicationEndPoint.fs" />
+    <Compile Include="XacmlToDkalEndPoint.fs" />
+    <Compile Include="DkalToXacmlEndPoint.fs" />
+    <Compile Include="ScenarioViewer.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Data\Data.fsproj">
+      <Name>Data</Name>
+      <Project>{53ea2d63-e4aa-4d6f-b489-20c66fb9b2e0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\DkalEngineInterface\DkalEngineInterface.fsproj">
+      <Name>DkalEngineInterface</Name>
+      <Project>{9c8e7001-75da-4c39-b5cd-0cb403ee809a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Resources\Resources.csproj">
+      <Name>Resources</Name>
+      <Project>{d7682291-03e0-466b-be58-2c758dc36675}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\TranslationToDkal\TranslationToDkal.fsproj">
+      <Name>TranslationToDkal</Name>
+      <Project>{1cf1ad49-c7eb-413f-a0fc-662e5b2b32d0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\TranslationToXacml\TranslationToXacml.fsproj">
+      <Name>TranslationToXacml</Name>
+      <Project>{e889714e-e765-49a3-bccc-845b7934bc6f}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.fsproj">
+      <Name>Utils</Name>
+      <Project>{bb497ae2-caaa-4c13-b499-ebc47c721763}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\XacmlParser\XacmlParser.fsproj">
+      <Name>XacmlParser</Name>
+      <Project>{0a1792dd-825c-4e27-964b-e276286cd4ce}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\XacmlPdp\XacmlPdp.fsproj">
+      <Name>XacmlPdp</Name>
+      <Project>{7e9438ef-003e-496f-8b26-38c602a84cee}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Xacml\Xacml.fsproj">
+      <Name>Xacml</Name>
+      <Project>{4cf85418-8b94-4b3d-bafb-1299b0edc9b2}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

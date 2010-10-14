@@ -1,0 +1,4 @@
+req 4 issued by pep 
+req 4 by pep has "resource" attribute string "document-id" valued "GDC-6-84723"
+req 4 by pep has "action" attribute string "action-id" valued "copy"
+req 4 by pep has "environment" attribute int "system-load" valued 1

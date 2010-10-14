@@ -1,0 +1,36 @@
+_me knows
+  pdp tdonS req R1 issued by P
+  pdp tdonS req R2 by P has CATEGORY2 attribute string NAME2 valued VALUE2
+  pdp tdonS req R3 by P has CATEGORY3 attribute int NAME3 valued VALUE3
+  
+_me knows
+  if 
+    req R issued by P
+	req R by P has "resource" attribute string "document-id" valued "ZJF-1-19394"
+  then
+    req R by P decision "Permit"
+
+_me knows
+  if 
+    req R issued by P
+	req R by P has "resource" attribute string "document-id" valued DOC
+	asInfon(not(DOC == "ZJF-1-19394"))
+  then
+    req R by P decision "NotApplicable"
+
+if _me knows
+  req R issued by P
+  req R by P decision D
+then
+  say with justification to pdp
+    req R by P decision D
+	
+	
+	
+	
+	
+	
+//  pdp tdonS req R2 by pep has CATEGORY2 attribute string NAME2 valued VALUE2
+//  pdp tdonS req R3 by pep has CATEGORY3 attribute int NAME3 valued VALUE3
+	
+

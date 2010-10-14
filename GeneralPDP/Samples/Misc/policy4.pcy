@@ -1,0 +1,43 @@
+XACMLPolicySet "policy4"
+	PolicyCombinator "deny-overrides"
+	
+	XACMLPolicy "policy1"
+		ResourceTarget 
+			"string-equal"
+				Resource string "paper-id" MustBePresent = string "ABC-2-98827"
+		RuleCombinator "deny-overrides"
+		Rule 
+			Condition
+				"integer-less-than" (
+					Environment int "temperature"
+					int "10"
+				)
+			Deny
+		Rule 
+			Condition
+				"integer-less-than" (
+					Environment int "temperature"
+					int "20"
+				)
+			Deny
+			
+	XACMLPolicy "policy2"
+		ResourceTarget 
+			"string-equal"
+				Resource string "paper-id" MustBePresent = string "ZAY-2-39221"
+		RuleCombinator "first-applicable"
+		Rule 
+			Condition
+				"integer-less-than" (
+					Environment int "temperature"
+					int "30"
+				)
+			Permit
+		Rule 
+			Condition
+				"integer-less-than" (
+					Environment int "temperature"
+					int "40"
+				)
+			Deny
+

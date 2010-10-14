@@ -1,0 +1,3 @@
+XACMLResponse
+    Result Permit
+        Code="a" Message="b" Status="c"

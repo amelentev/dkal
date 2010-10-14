@@ -1,0 +1,7 @@
+
+if plainDkal knows
+  req R issued by PEP
+  req R by PEP has "subject" attribute string "subject-id" valued "guido"
+then
+  say with justification to plainDkal
+    req R by PEP decision "permit"

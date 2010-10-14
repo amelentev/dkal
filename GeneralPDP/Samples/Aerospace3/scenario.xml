@@ -1,0 +1,26 @@
+<scenario name="Aerospace3">
+	<endpoint id="user" />
+	<endpoint id="pep" type="enforcement" />
+	<endpoint id="pap" />
+	
+	<!-- Repositories -->
+	<endpoint id="ar" type="attributerepository" />
+	<endpoint id="pr" type="policyrepository" />
+	
+	<!-- Decision points -->
+	<endpoint id="pdp1" type="xacml" attributeRepositoryId="ar" />
+	<endpoint id="pdp2" type="xacml" attributeRepositoryId="ar" />
+	<endpoint id= "pdp" type="adjudication" >
+		<pdp id="pdp1" />
+		<pdp id="pdp2" />
+	</endpoint>
+	
+	<!-- XACML policy -->
+	<message from="pap" to="pr" type="xacmlPolicy" file="policy.pcy" />
+	<sleep amount="750" />
+
+	<!-- XACML requests -->
+	<message from="user" to="pep" type="xacmlRequest" file="request2.req" />
+	<sleep amount="750" />
+	<message from="user" to="pep" type="xacmlRequest" file="request3.req" />
+</scenario>

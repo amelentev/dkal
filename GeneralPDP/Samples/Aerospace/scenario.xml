@@ -1,0 +1,16 @@
+<scenario name="Aerospace">
+	<endpoint id="pep" />
+	<endpoint id="pap" />
+	<endpoint id="ar" type="attributerepository" />
+	<endpoint id="pr" type="policyrepository" />
+	<endpoint id="pdp" type="xacml" attributeRepositoryId="ar" />
+
+	<!-- XACML policy -->
+	<message from="pap" to="pr" type="xacmlPolicy" file="policy.pcy" />
+	<sleep amount="750" />
+
+	<!-- XACML requests -->
+	<message from="pep" to="pdp" type="xacmlRequest" file="request1.req" />
+	<sleep amount="750" />
+	<message from="pep" to="pdp" type="xacmlRequest" file="request2.req" />
+</scenario>

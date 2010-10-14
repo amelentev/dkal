@@ -1,0 +1,30 @@
+XACMLPolicy "companyPolicy"
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"and" (
+				"integer-less-than" (
+					"integer-one-and-only" ( Resource int "document-classification" )
+					int "2"
+				)
+				"string-equal" (
+					"string-one-and-only" ( Action string "action-id" )
+					string "read"
+				)
+			)
+		Permit
+	Rule 
+		Condition
+			"and" (
+				"integer-less-than" (
+					"integer-one-and-only" ( Resource int "document-classification" )
+					int "4"
+				)
+				"string-equal" (
+					"string-one-and-only" ( Subject string "subject-role" )
+					string "manager"
+				)
+			)
+		Permit
+			
+	

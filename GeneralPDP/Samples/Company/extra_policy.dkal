@@ -1,0 +1,45 @@
+#include "prelude.dkal"
+
+#set dispatcher "first"
+#set learning "discard"
+
+dkal knows
+  pdp tdonS req R1 issued by P
+  pdp tdonS req R2 by P has CATEGORY2 attribute string NAME2 valued VALUE2
+  pdp tdonS req R3 by P has CATEGORY3 attribute int NAME3 valued VALUE3
+
+dkal knows
+  employee "guido" follows "nikolaj" orders
+  employee "nikolaj" follows "wolfram" orders
+  if
+    employee E1 follows E2 orders
+  then
+    employee E1 under E2 command
+  if 
+    employee E1 follows E2 orders
+    employee E2 under E3 command
+  then
+    employee E1 under E3 command
+  
+dkal knows
+  if 
+    req R issued by P
+    req R by P has "subject" attribute string "subject-id" valued V
+    employee V under "wolfram" command
+  then
+    req R by P decision "Permit"
+
+if dkal knows
+  req R issued by P
+  req R by P decision D
+then
+  say with justification to pdp
+    req R by P decision D
+
+if dkal knows
+  req R issued by P
+then
+  say with justification to pdp
+    req R by P decision "NotApplicable"
+
+

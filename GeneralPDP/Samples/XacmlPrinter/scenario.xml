@@ -1,0 +1,16 @@
+<scenario name="XacmlPrinter">
+	<endpoint id="pep" />
+	<endpoint id="pap" />
+	<endpoint id="pdp" type="xacml" />
+
+	<!-- XACML policy -->
+	<message from="pap" to="pdp" type="xacmlPolicy" file="policy.pcy" />
+
+	<!-- XACML requests -->
+	<message from="pep" to="pdp" type="xacmlRequest" file="request1.req" />
+	<sleep amount="750" />
+	<message from="pep" to="pdp" type="xacmlRequest" file="request2.req" />
+	<sleep amount="750" />
+	<message from="pep" to="pdp" type="xacmlRequest" file="request3.req" />
+	<!-- <message from="pep" to="pdp" type="xacmlRequest" file="request4.req" /> -->
+</scenario>

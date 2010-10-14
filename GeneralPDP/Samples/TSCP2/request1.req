@@ -1,0 +1,10 @@
+XACMLRequest 1
+	Resource "document-id" = string "doc-2395"
+	Resource "content" = string "The detailed design is based on a design pattern known as ..."
+	Resource "labels" = string "programZ-detailedDesign,packard-ip"
+	
+	Action "action-id" = string "write"
+
+	Subject "subject-id" = string "paula"
+	Subject "company-id" = string "packard"
+	Subject "signed-packard-nda" = string "true" by "packard_ar"

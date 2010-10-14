@@ -1,0 +1,5 @@
+XACMLRequest 3
+	Resource "policies" = string "printer-policy@pr"
+	Resource "document-id" = string "ZJF-1-19394"
+	Action "action-id" = string "print"
+	Environment "system-load" = int "3"

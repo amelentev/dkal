@@ -1,0 +1,176 @@
+﻿%{
+open Microsoft.Research.GeneralPDP.XACML.Ast
+
+open System
+
+let parseAtomValue (dt: Datatype) (s: string) =
+  match dt with
+    | IntDatatype -> IntAtomValue (Int32.Parse s)
+    | BoolDatatype -> BoolAtomValue (Boolean.Parse s)
+    | DoubleDatatype -> DoubleAtomValue (Double.Parse s)
+    | StringDatatype -> StringAtomValue s
+
+%}
+
+// The start tokens become parser functions in the compiled code:
+%start Request
+%start Response
+%start Policy
+%start PolicyRequest
+
+// These are the terminal tokens of the grammar along with the types of
+// the data carried by each token:
+%token <System.Int32> INT32
+%token <System.Double> FLOAT
+%token <System.String> STRING
+%token REQUEST SUBJECT RESOURCE ACTION ENVIRONMENT ATTRIBUTE
+%token BY
+%token EQ LPAR RPAR
+%token INTTYPE BOOLTYPE DOUBLETYPE STRINGTYPE
+%token RESPONSE PERMIT DENY INDETERMINATE NOTAPPLICABLE 
+%token CODE MESSAGE STATUS OBLIGATION ON DO
+%token POLICY POLICYSET RULECOMBINATOR POLICYCOMBINATOR RULE TARGET CONDITION
+%token SUBJECTTARGET RESOURCETARGET ACTIONTARGET MUSTBEPRESENT
+%token POLICYREQUEST
+%token EOF
+
+// This is the type of the data produced by successful reductions of each 'start' symbol:
+%type < RequestContext > Request
+%type < ResponseContext > Response
+%type < Policy > Policy
+%type < PolicyRequestContext > PolicyRequest
+
+%%
+
+// These are the rules of the grammar 
+Request: REQUEST INT32 Attribs EOF { RequestContext($2, $3) }
+
+Attribs:
+	| Attrib Attribs		{ $1 :: $2 }  
+	| 						{ [] }
+
+Attrib:
+	| AttributeCategory STRING EQ AttributeValue					{ Ast.Attribute($1, $2, $4) }
+	| AttributeCategory STRING EQ AttributeValue BY STRING			{ Ast.Attribute($1, $2, $4, $6) }
+
+AttributeCategory:
+	| SUBJECT				{ SubjectCategory }
+	| RESOURCE				{ ResourceCategory }
+	| ACTION				{ ActionCategory }
+	| ENVIRONMENT			{ EnvironmentCategory }
+
+AttributeValue:
+	| Datatype STRING			{ parseAtomValue $1 $2 }
+
+Datatype:
+	| INTTYPE					{IntDatatype}
+	| BOOLTYPE					{BoolDatatype}
+	| DOUBLETYPE				{DoubleDatatype}
+	| STRINGTYPE				{StringDatatype}
+
+Response:
+	| RESPONSE INT32 Decision Status Obligations EOF		{ ResponseContext($2, $3, $4, $5) }
+
+Decision:
+	| PERMIT			{ Permit }
+	| DENY				{ Deny }
+	| INDETERMINATE		{ Indeterminate }
+	| NOTAPPLICABLE		{ NotApplicable }
+
+Status:
+	| CODE EQ STRING MESSAGE EQ STRING STATUS EQ STRING		{ Status($3, $6, $9) }
+
+Obligations:
+	| Obligation Obligations	{ $1 :: $2 }
+	|							{ [] }
+
+Obligation:
+	| OBLIGATION ON Decision DO STRING		{ Obligation($3, $5) }
+
+PolicyRequest:
+	| POLICYREQUEST STRING EOF				{ PolicyRequestContext($2) }
+
+Policy:
+	| AnyPolicy	EOF			{ $1 }
+
+AnyPolicy:
+	| POLICY STRING Target RULECOMBINATOR STRING Rules Obligations				{ Policy($2, $3, $5, $6, $7) }
+	| POLICYSET STRING Target POLICYCOMBINATOR STRING Policies Obligations		{ PolicySet($2, $3, $5, $6, $7) }
+
+Policies:
+	| AnyPolicy Policies			{ $1 :: $2 }
+	|								{ [] }
+
+Target:
+	| SubjectTargets ResourceTargets ActionTargets				{ Some(Target($1, $2, $3)) }
+	|															{ None }
+
+SubjectTargets:
+	| SubjectTarget SubjectTargets			{ $1 :: $2 }  
+	|			 							{ [] }
+
+SubjectTarget:
+	| SUBJECTTARGET SubjectMatchs			{ SubjectTarget($2) }
+
+SubjectMatchs:
+	| SubjectMatch SubjectMatchs			{ $1 :: $2 }  
+	|			 							{ [] }
+
+SubjectMatch:
+	| STRING Expression EQ AttributeValue 		{ SubjectMatch($1, $4, $2) }
+
+ResourceTargets:
+	| ResourceTarget ResourceTargets			{ $1 :: $2 }  
+	|			 								{ [] }
+
+ResourceTarget:
+	| RESOURCETARGET ResourceMatchs			{ ResourceTarget($2) }
+
+ResourceMatchs:
+	| ResourceMatch ResourceMatchs			{ $1 :: $2 }  
+	|			 							{ [] }
+
+ResourceMatch:
+	| STRING Expression EQ AttributeValue 		{ ResourceMatch($1, $4, $2) }
+
+ActionTargets:
+	| ActionTarget ActionTargets			{ $1 :: $2 }  
+	|			 							{ [] }
+
+ActionTarget:
+	| ACTIONTARGET ActionMatchs			{ ActionTarget($2) }
+
+ActionMatchs:
+	| ActionMatch ActionMatchs			{ $1 :: $2 }  
+	|			 						{ [] }
+
+ActionMatch:
+	| STRING Expression EQ AttributeValue 		{ ActionMatch($1, $4, $2) }
+
+Rules:
+	| Rule Rules						{ $1 :: $2 }
+	|									{ [] }
+
+Rule:
+	| RULE Target ExpressionOpt Decision			{ Rule($2, $3, $4) }
+
+ExpressionOpt:
+	| CONDITION Expression				{ Some($2) }
+	|									{ None }
+
+Expressions:
+	| Expression Expressions			{ $1 :: $2 }
+	|									{ [] }
+
+Expression:
+	| STRING LPAR Expressions RPAR										{ ApplyExp($1, $3) }
+	| AttributeValue													{ ValueExp($1) }
+	| AttributeCategory Datatype STRING Issuer MustBePresent			{ AttributeDesignatorExp($1, $2, $3, $4, $5) }
+
+Issuer:
+	| BY STRING				{ Some($2) }
+	|						{ None }
+
+MustBePresent:
+	| MUSTBEPRESENT			{ true }
+	|						{ false }

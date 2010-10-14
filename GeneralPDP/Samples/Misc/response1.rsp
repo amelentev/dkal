@@ -1,0 +1,6 @@
+XACMLResponse
+    Result Permit
+        Code="a" Message="b" Status="c"
+        Obligation on Deny do "report"
+        Obligation on Deny do "too"
+

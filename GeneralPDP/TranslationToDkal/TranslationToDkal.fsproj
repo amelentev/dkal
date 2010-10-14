@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{1cf1ad49-c7eb-413f-a0fc-662e5b2b32d0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Translation</RootNamespace>
+    <AssemblyName>TranslationToDKAL</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <Name>TranslationToDKAL</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Translation.XML</DocumentationFile>
+    <StartArguments>"c:\Users\t-guide\Documents\Visual Studio 2010\Projects\GeneralPDP\policy3.pcy"</StartArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Translation.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DkalEngine">
+      <HintPath>..\DkalEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Crawlers.fs" />
+    <Compile Include="Context.fs" />
+    <Compile Include="ExpressionTranslator.fs" />
+    <Compile Include="XacmlToExps.fs" />
+    <Compile Include="XacmlToDisjointExps.fs" />
+    <Compile Include="XacmlPolicyTranslator.fs" />
+    <Compile Include="XacmlRequestTranslator.fs" />
+    <Compile Include="XacmlResponseTranslator.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DkalEngineInterface\DkalEngineInterface.fsproj">
+      <Name>DkalEngineInterface</Name>
+      <Project>{9c8e7001-75da-4c39-b5cd-0cb403ee809a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.fsproj">
+      <Name>Utils</Name>
+      <Project>{bb497ae2-caaa-4c13-b499-ebc47c721763}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\XACML\XACML.fsproj">
+      <Name>XACML</Name>
+      <Project>{4cf85418-8b94-4b3d-bafb-1299b0edc9b2}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

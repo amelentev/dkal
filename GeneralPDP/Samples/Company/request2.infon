@@ -1,0 +1,5 @@
+req 2 issued by pep 
+req 2 by pep has "resource" attribute int "document-classification" valued 9
+req 2 by pep has "action" attribute string "action-id" valued "read"
+req 2 by pep has "subject" attribute string "subject-role" valued "programmer"
+req 2 by pep has "subject" attribute string "subject-id" valued "guido"

@@ -1,0 +1,4 @@
+req 3 issued by pep 
+req 3 by pep has "resource" attribute string "document-id" valued "ZJF-1-19394"
+req 3 by pep has "action" attribute string "action-id" valued "print"
+req 3 by pep has "environment" attribute int "system-load" valued 3

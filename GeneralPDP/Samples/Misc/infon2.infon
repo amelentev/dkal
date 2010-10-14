@@ -1,0 +1,3 @@
+req 2355 issued by pep 
+req 2355 by pep has "subject" attribute string "subject-id" valued "guido"
+req 2355 by pep has "resource" attribute string "resource-id" valued "paper-for-conference"

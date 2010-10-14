@@ -1,0 +1,4 @@
+XACMLRequest 
+	Resource "paper-id" = string "ABC-2-98827"
+	Action "action-id" = string "display"
+	Environment "system-load" = int "9"

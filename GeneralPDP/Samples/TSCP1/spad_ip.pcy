@@ -1,0 +1,30 @@
+XACMLPolicy "policy-spad-ip"
+	ResourceTarget 
+		"string-equal"
+			Resource string "document-ip" = string "spad" 
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"or" (
+				"string-equal" (
+					"string-one-and-only" ( Subject string "company-id" MustBePresent )
+					string "spad"
+				)
+				"and" (
+					"not" (
+						"string-equal" (
+							"string-one-and-only" ( Subject string "company-id" MustBePresent )
+							string "spad"
+						)
+					)
+					"string-equal" (
+						"string-one-and-only" ( Subject string "signed-spad-nda" by "spad_ar" MustBePresent )
+						string "true"
+					)
+				)
+			)
+		Permit
+	Rule 
+		Deny
+			
+	

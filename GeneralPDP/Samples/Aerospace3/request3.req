@@ -1,0 +1,7 @@
+XACMLRequest 3
+	Resource "document-id" = string "doc-1234"
+	Resource "decision-point" = string "pdp"
+	Resource "policies" = string "policy-1234@pr"
+	Action "action-id" = string "read"
+	Subject "subject-id" = string "robert"
+	

@@ -1,0 +1,53 @@
+<scenario name="TSCP1">
+
+	<!-- ***************** -->
+	<!--     ENDPOINTS     -->
+	<!-- ***************** -->
+
+	<!-- Curtis: green -->
+	<endpoint id="curtis_pap" color="green" />
+	<endpoint id="curtis_pr" type="policyrepository" color="green" />
+	<endpoint id="curtis_sharepoint" type="enforcement" sharePoint="true" color="green" />
+	<endpoint id="curtis_pdp" type="xacml" attributeRepositoryId="cloud_ar" color="green" />
+	<endpoint id="curtis_dkal_pdp" type="xacml->dkal" dkalId="curtis_dkal" policyFile="curtis_common.dkal" color="green" /> 
+	<endpoint id="curtis_dkal" type="dkal" xacml="basicTrust" pepId="curtis_dkal_pdp" policyFile="curtis_ip.dkal" color="green" />
+
+	<!-- Packard: blue -->
+	<endpoint id="packard_pap" color="blue" />
+	<endpoint id="packard_pr" type="policyrepository" color="blue" />
+	<endpoint id="packard_ar" type="attributerepository" color="blue" />
+	
+	<!-- Spad: purple -->
+	<endpoint id="spad_pap" color="purple" />
+	<endpoint id="spad_pr" type="policyrepository" color="purple" />
+	<endpoint id="spad_ar" type="attributerepository" color="purple" />
+
+	<!-- Cloud -->
+	<endpoint id="cloud_sharepoint" sharePoint="true" type="enforcement" />
+	<endpoint id="cloud_pdp" type="xacml" attributeRepositoryId="cloud_ar" />
+	<endpoint id="cloud_ar" type="attributerepository" />
+
+	<!-- Request makers -->
+	<endpoint id="user1" />
+	<endpoint id="user2" />
+
+	<!-- **************** -->
+	<!--     MESSAGES     -->
+	<!-- **************** -->
+
+	<!-- Curtis loads projectZ label policies (authored in XACML) -->
+	<message from="curtis_pap" to="curtis_pr" type="xacmlPolicy" file="programZ_highLevelDesign.pcy" /> 
+	<message from="curtis_pap" to="curtis_pr" type="xacmlPolicy" file="programZ_detailedDesign.pcy" /> 
+	<message from="curtis_pap" to="curtis_pr" type="xacmlPolicy" file="programZ_simulationData.pcy" /> 
+
+	<!-- Packard loads policy for its IP -->
+	<message from="packard_pap" to="packard_pr" type="xacmlPolicy" file="packard_ip.pcy" /> 
+
+	<!-- Spad loads policy for its IP -->
+	<message from="spad_pap" to="spad_pr" type="xacmlPolicy" file="spad_ip.pcy" /> 
+	
+	<!-- XACML requests -->
+	<message from="user1" to="cloud_sharepoint" type="xacmlRequest" file="request1.req" />
+	<sleep amount="750" />
+	<message from="user2" to="curtis_sharepoint" type="xacmlRequest" file="request2.req" />
+</scenario>

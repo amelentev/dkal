@@ -1,0 +1,16 @@
+if _me knows
+  req R issued by P
+  req R by P has "subject" attribute string "nationality" valued N
+  req R by P has "subject" attribute string "company-id" valued C
+  req R by P has "action" attribute string "action-id" valued A
+  asInfon(N == "us" || N == "french")
+  asInfon((C == "curtis" && (A == "read" || A == "write")) || (C == "packard" && A == "read"))
+then
+  say with justification to P
+    req R by P decision "Permit"
+
+if _me knows
+  req R issued by P
+then
+  say with justification to P
+    req R by P decision "Deny"

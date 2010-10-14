@@ -1,0 +1,4 @@
+XACMLRequest 1
+	Resource "document-id" = string "ABC-2-98827"
+	Action "action-id" = string "copy"
+	Environment "system-load" = int "9"

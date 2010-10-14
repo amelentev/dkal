@@ -1,0 +1,4 @@
+req 2 issued by pep 
+req 2 by pep has "resource" attribute string "document-id" valued "ABC-2-98827"
+req 2 by pep has "action" attribute string "action-id" valued "copy"
+req 2 by pep has "environment" attribute int "system-load" valued 80

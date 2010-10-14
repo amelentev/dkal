@@ -1,0 +1,28 @@
+<scenario name="scenario1">
+	<endpoint id="pep" />
+	<endpoint id="pap" type="basic" />
+	<endpoint id="purePdp" type="xacml" />
+	<endpoint id="engine" type="dkal" xacmlTrusts="frontEndPdp" />
+	<endpoint id="frontEndPdp" type="xacml->dkal" dkalId="engine" />
+
+	<endpoint id="plainDkal" type="dkal" xacmlAware="true" policyFile="dkal_policy2.dkal" />
+	<endpoint id="myPurePdp" type="xacml" />
+	<endpoint id="frontEndDkal" type="dkal->xacml" dkalId="plainDkal" xacmlId="myPurePdp" policyFile="dkal_policy1.dkal" />
+	<endpoint id="dkalEp" />
+	<endpoint id="other" />
+
+	<!-- pure XACML policy authoring followed by request -->
+	<message from="pap" to="purePdp" type="xacmlPolicy" file="policy5.pcy" />
+	<message from="pep" to="purePdp" type="xacmlRequest" file="request5.req" />
+
+	<!-- XACML based on DKAL policy authoring followed by request -->
+	<message from="pap" to="frontEndPdp" type="xacmlPolicy" file="policy5.pcy" />
+	<message from="pep" to="frontEndPdp" type="xacmlRequest" file="request5.req" />
+	
+	<!-- DKAL based on XACML request (policy already installed on endpoint startup) -->
+	<message from="dkalEp" to="frontEndDkal" type="infon" file="infon2.infon" />
+
+	<!-- DKAL infon passthrough do to not containing an XACML request -->
+	<message from="other" to="frontEndDkal" type="infon" file="infon1.infon" />
+	
+</scenario>

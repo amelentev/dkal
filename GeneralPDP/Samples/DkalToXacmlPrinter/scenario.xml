@@ -1,0 +1,12 @@
+<scenario name="DkalToXacmlPrinter">
+	<endpoint id="pep" />
+	<endpoint id="dkal" type="dkal" policyId="extra-printer-policy" xacml="aware" file="extra_policy.dkal" />
+	<endpoint id="xacml" type="xacml" />
+	<endpoint id="pdp" type="dkal->xacml" dkalId="dkal" xacmlId="xacml" xacml="aware" policyId="printer-policy" file="policy.dkal" />
+
+	<!-- XACML requests (policy already installed on pdp startup) -->
+	<message from="pep" to="pdp" type="infon" file="request1.infon" />
+	<message from="pep" to="pdp" type="infon" file="request2.infon" />
+	<message from="pep" to="pdp" type="infon" file="request3.infon" />
+	<!-- <message from="pep" to="pdp" type="infon" file="request4.infon" /> -->
+</scenario>

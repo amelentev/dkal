@@ -1,0 +1,47 @@
+XACMLPolicySet "PPS_paper_rc"
+	PolicyCombinator "deny-overrides"
+	
+	XACMLPolicy "policy"
+		ResourceTarget 
+			"string-equal"
+				Resource string "paper-id" MustBePresent = string "ABC-2-98827"
+		RuleCombinator "first-applicable"
+		Rule 
+			SubjectTarget 
+				"string-equal"
+					Subject string "role" MustBePresent = string "pc-chair"
+			Condition
+				"integer-greater-than" (
+					Environment int "temperature"
+					int "10"
+				)
+			Permit
+		Rule 
+			SubjectTarget 
+				"string-equal"
+					Subject string "role" MustBePresent = string "intruder"
+			Condition
+				"integer-greater-than" (
+					int "400"
+					int "10"
+				)
+			Deny
+		Rule 
+			SubjectTarget 
+				"string-equal"
+					Subject string "role" MustBePresent = string "pc-member"
+			ActionTarget 
+				"string-equal"
+					Action string "action-id" MustBePresent = string "read"
+			Permit
+		Rule 
+			Condition
+				"and" (
+					"integer-greater-than" (
+						Environment int "temperature"
+						int "10"
+					)
+					bool "false"
+				)
+			Permit
+

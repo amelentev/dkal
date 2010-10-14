@@ -1,0 +1,11 @@
+XACMLRequest 2
+	Resource "document-id" = string "doc-4985"
+	Resource "document-content" = string "programZ-highLevelDesign" 
+	Resource "document-ip" = string "curtis" 
+	Resource "decision-point" = string "curtis_pdp"
+	Resource "policies" = string "policy-programZ-highLevelDesign@curtis_pr,curtis_dkal_pdp"
+
+	Action "action-id" = string "read"
+
+	Subject "subject-id" = string "matt"
+	Subject "company-id" = string "packard"

@@ -1,0 +1,37 @@
+if _me knows
+  req R issued by PEP
+  req R by PEP has "resource" attribute string "document-id" valued "ABC-2-98827"
+  req R by PEP has "environment" attribute int "system-load" valued LOAD
+  req R by PEP has "action" attribute string "action-id" valued "copy"
+  asInfon(LOAD < 75)
+then
+  say with justification to PEP
+    req R by PEP decision "permit"
+
+if _me knows
+  req R issued by PEP
+  req R by PEP has "resource" attribute string "document-id" valued "ABC-2-98827"
+  req R by PEP has "environment" attribute int "system-load" valued LOAD
+  req R by PEP has "action" attribute string "action-id" valued "print"
+  asInfon(LOAD < 90)
+then
+  say with justification to PEP
+    req R by PEP decision "permit"
+	
+if _me knows
+  req R issued by PEP
+  req R by PEP has "resource" attribute string "document-id" valued "ABC-2-98827"
+  req R by PEP has "environment" attribute int "system-load" valued LOAD
+  req R by PEP has "action" attribute string "action-id" valued ACTION
+  asInfon((not(ACTION == "copy") && not(ACTION == "print")) || (ACTION == "copy" && LOAD >= 75) || (ACTION == "print" && LOAD >= 90))
+then
+  say with justification to PEP
+    req R by PEP decision "deny"
+	
+if _me knows
+  req R issued by PEP
+  req R by PEP has "resource" attribute string "document-id" valued RESOURCE
+  asInfon(not(RESOURCE == "ABC-2-98827"))
+then
+  say with justification to PEP
+    req R by PEP decision "notapplicable"

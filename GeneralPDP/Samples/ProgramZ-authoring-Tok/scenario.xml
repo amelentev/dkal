@@ -1,0 +1,97 @@
+<scenario name="ProgramZ-authoring-Tok">
+
+	<!-- ***************** -->
+	<!--     ENDPOINTS     -->
+	<!-- ***************** -->
+
+	<!-- Curtis: green -->
+	<endpoint id="curtis_pap" color="green" />
+	<endpoint id="curtis_pr" type="policyrepository" color="green" />
+	<endpoint id="curtis_sharepoint" sharePoint="true" type="datastorage" color="green" >
+		<!-- Sync -->
+		<sync syncId="cloud_sharepoint" />
+		<!-- Program Z labels -->
+		<label labelId="programZ-highLevelDesign" policyPointer="policy-programZ-highLevelDesign@curtis_pr">
+			<pdp pdpId="curtis_pdp" /> <!-- highLevelDesign only served by on-premise PDP -->
+		</label>
+		<label labelId="programZ-detailedDesign" policyPointer="policy-programZ-detailedDesign@curtis_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<label labelId="programZ-simulationData" policyPointer="policy-programZ-simulationData@curtis_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<!-- IP labels -->
+		<label labelId="curtis-ip" policyPointer="curtis_dkal_pdp">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<label labelId="packard-ip" policyPointer="policy-packard-ip@packard_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<label labelId="spad-ip" policyPointer="policy-spad-ip@spad_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+	</endpoint>
+
+	<!-- Packard: blue -->
+	<endpoint id="packard_pap" color="blue" />
+	<endpoint id="packard_pr" type="policyrepository" color="blue" />
+	
+	<!-- Cloud -->
+	<endpoint id="cloud_sharepoint" sharePoint="true" type="datastorage" >
+		<!-- Sync -->
+		<sync syncId="curtis_sharepoint" />
+		<!-- Program Z labels -->
+		<label labelId="programZ-highLevelDesign" policyPointer="policy-programZ-highLevelDesign@curtis_pr">
+			<pdp pdpId="curtis_pdp" /> <!-- highLevelDesign only served by on-premise PDP -->
+		</label>
+		<label labelId="programZ-detailedDesign" policyPointer="policy-programZ-detailedDesign@curtis_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<label labelId="programZ-simulationData" policyPointer="policy-programZ-simulationData@curtis_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<!-- IP labels -->
+		<label labelId="curtis-ip" policyPointer="curtis_dkal_pdp">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<label labelId="packard-ip" policyPointer="policy-packard-ip@packard_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+		<label labelId="spad-ip" policyPointer="policy-spad-ip@spad_pr">
+			<pdp pdpId="curtis_pdp" />
+			<pdp pdpId="cloud_pdp" />
+		</label>
+	</endpoint>
+	<endpoint id="cloud_pdp" type="xacml" />
+
+	<!-- Request makers -->
+	<endpoint id="paula@packard" />
+	<endpoint id="john@curtis" />
+	
+	<!-- **************** -->
+	<!--     MESSAGES     -->
+	<!-- **************** -->
+
+	<!-- Curtis loads projectZ label policies (authored in XACML) -->
+	<message from="curtis_pap" to="curtis_pr" type="xacmlPolicy" file="programZ_highLevelDesign.pcy" /> 
+	<message from="curtis_pap" to="curtis_pr" type="xacmlPolicy" file="programZ_detailedDesign.pcy" /> 
+	<message from="curtis_pap" to="curtis_pr" type="xacmlPolicy" file="programZ_simulationData.pcy" /> 
+
+	<!-- Packard loads policy for its IP -->
+	<message from="packard_pap" to="packard_pr" type="xacmlPolicy" file="packard_ip.pcy" /> 
+
+	<!-- Resource loading -->
+	<message from="paula@packard" to="cloud_sharepoint" type="xacmlRequest" file="request1.req" />
+	<sleep amount="750" />
+	<!-- Resource requests -->
+	<message from="john@curtis" to="curtis_sharepoint" type="xacmlRequest" file="request2.req" />
+</scenario>

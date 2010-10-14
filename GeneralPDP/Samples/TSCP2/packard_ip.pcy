@@ -1,0 +1,27 @@
+XACMLPolicy "policy-packard-ip"
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"or" (
+				"string-equal" (
+					"string-one-and-only" ( Subject string "company-id" MustBePresent )
+					string "packard"
+				)
+				"and" (
+					"not" (
+						"string-equal" (
+							"string-one-and-only" ( Subject string "company-id" MustBePresent )
+							string "packard"
+						)
+					)
+					"string-equal" (
+						"string-one-and-only" ( Subject string "signed-packard-nda" by "packard_ar" MustBePresent )
+						string "true"
+					)
+				)
+			)
+		Permit
+	Rule 
+		Deny
+			
+	

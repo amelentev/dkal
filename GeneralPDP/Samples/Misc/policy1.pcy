@@ -1,0 +1,28 @@
+XACMLPolicy "policy-1"
+    RuleCombinator "permit-overrides"
+    Rule
+        "and" (
+            "integer-greaterthan" (
+                int "100"
+                int "9"
+            )
+	    "string-equal" (
+                string "guido"
+		"string-one-and-only" (
+	                SubjectAttributeDesignator as "access-subject" string "subject-id" MustBePresent
+		)
+            )
+	    "integer-greaterthan" (
+		int "99"
+		"integer-one-and-only" (
+			EnvironmentAttributeDesignator int "temperature"
+		)
+	    )
+        )
+        Permit
+     Rule
+	bool "true"
+	Deny
+     Obligation on Deny do "log in secure file system"
+
+
