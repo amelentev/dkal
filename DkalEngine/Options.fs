@@ -21,8 +21,10 @@ open Microsoft.FSharp.Collections
 type Options =
   {
     mutable PrivateSql : string
+    mutable Dispatcher : string
+    mutable Learning : string
     mutable Trace : int
   }
-
+  
   static member Create() = 
-    { PrivateSql = ""; Trace = 0 }
+    { PrivateSql = ""; Dispatcher = "all"; Learning = "learn"; Trace = 0 }
