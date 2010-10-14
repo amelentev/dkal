@@ -106,12 +106,12 @@ type ParsingCtx() =
   member this.ParseInfon s =
     let toks = Tokenizer.fromString s
     let toks = Parser.applyRules ctx toks
+    let rec parse t = match t with
+                      | PreAst.Tok.NewLine _ -> []
+                      | t -> [Resolver.resolveInfon ctx t]
     match toks with
-      | [t]
-      | [t; PreAst.Tok.NewLine _] -> Resolver.resolveInfon ctx t
-      | [PreAst.Tok.NewLine _]
       | [] -> raise (SyntaxError (fakePos, "infon expected"))
-      | _ -> raise (SyntaxError (fakePos, "only one infon expected"))
+      | ts -> Resolver.multiAnd (List.collect parse ts)
 
   member this.SXToAssertions s =
     List.collect (fun t -> ResolverSX.resolve ctx t) s
