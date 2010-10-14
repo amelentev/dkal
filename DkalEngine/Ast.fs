@@ -471,8 +471,9 @@ module Ast =
         else Some (subst.Add (v.id, t))
     | (t, (Term.Var _ as t')) ->
       unifyTerms subst (t', t)
-    | (Term.App (f, args), Term.App (f', args')) when f.id = f'.id ->
+    | (Term.App (f, args), Term.App (f', args')) when f.name = f'.name ->
       unifyList unifyTerms (Some subst) (List.zip args args')
+    | (Term.Const (Principal p1), Term.Const (Principal p2)) when p1.name = p2.name -> Some subst
     | (Term.Const p1, Term.Const p2) when p1 = p2 -> Some subst
     | _ -> None
     
