@@ -102,9 +102,6 @@
     <None Include="Resources\ep_9.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\ep_10.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\ep_1.png" />
   </ItemGroup>
   <ItemGroup>
