@@ -25,7 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Main.XML</DocumentationFile>
     <StartArguments>scenario.xml</StartArguments>
-    <StartWorkingDirectory>C:\Users\t-guide\Desktop\fse\main\DKAL\GeneralPDP\Samples\XacmlPrinter\</StartWorkingDirectory>
+    <StartWorkingDirectory>C:\Users\t-guide\Desktop\fse\main\DKAL\GeneralPDP\Samples\ProgramZ-interop2\</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>

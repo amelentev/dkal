@@ -93,6 +93,7 @@ module Ast =
   let private intType : Type = { id = nextId(); name = "int" }
   let private boolType : Type = { id = nextId(); name = "bool" }
   let private textType : Type = { id = nextId(); name = "text" }
+  let private floatType : Type = { id = nextId(); name = "float" }
   
   type Type with
     static member Infon = infon
@@ -101,6 +102,7 @@ module Ast =
     static member Principal = principal
     static member Int = intType
     static member Bool = boolType
+    static member Float = floatType
     static member Text = textType
     static member Evidence = evidence
   
@@ -155,6 +157,7 @@ module Ast =
     | Principal of Principal
     | Int of int
     | Bool of bool
+    | Float of float
     | Text of string
     | Column of string * string
     
@@ -166,6 +169,7 @@ module Ast =
         | Text s -> "\"" + s + "\""
         | Bool true -> "true"
         | Bool false -> "false"
+        | Float f -> f.ToString()
   
   // YUCK!!!
   let private termToStringCallback = ref (fun (sb:StringBuilder, t:obj) -> failwith "should be assigned"; ())
@@ -196,6 +200,7 @@ module Ast =
         | Const (Const.Principal _) -> Type.Principal
         | Const (Const.Bool _) -> Type.Bool
         | Const (Const.Text _) -> Type.Text
+        | Const (Const.Float _) -> Type.Float
         | Const (Const.Column _) -> Type.Unbound
         
     member this.Vars() =
@@ -222,7 +227,8 @@ module Ast =
         | Const (Const.Principal p) -> SX.App (fakePos, p.name, [])
         | Const (Const.Bool true) -> SX.App (fakePos, "true", [])
         | Const (Const.Bool false) -> SX.App (fakePos, "false", [])
-        | Const (Const.Text s ) -> SX.String (fakePos, s)
+        | Const (Const.Float f) -> SX.Float (fakePos, f)
+        | Const (Const.Text s) -> SX.String (fakePos, s)
         | Const (Const.Column (t,c)) -> SX.App (fakePos, t + "." + c, [])
       
   type PrincipalTerm = Term  

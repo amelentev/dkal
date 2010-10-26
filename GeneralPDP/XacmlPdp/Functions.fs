@@ -18,7 +18,11 @@ module Functions =
   // ------------ Equality ------------
   let valueEq vs =
     match vs with
-      | [a; b] -> BoolAtomValue (unbag a = unbag b)
+      | [a; b] -> 
+        match unbag a, unbag b with
+        | IndeterminateValue, _ -> IndeterminateValue
+        | _, IndeterminateValue -> IndeterminateValue
+        | a, b -> BoolAtomValue (a = b)
       | _ -> IndeterminateValue
 
   // ------------ Bag functions ------------
@@ -89,10 +93,78 @@ module Functions =
         | _ -> IndeterminateValue
       | _ -> IndeterminateValue
 
+  let integerAdd vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | IntAtomValue i1, IntAtomValue i2 -> IntAtomValue (i1 + i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+  let integerSubtract vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | IntAtomValue i1, IntAtomValue i2 -> IntAtomValue (i1 - i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+  // ------------ Double functions ------------
+  let doubleGreaterThanOrEqual vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | DoubleAtomValue i1, DoubleAtomValue i2 -> BoolAtomValue (i1 >= i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+  let doubleGreaterThan vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | DoubleAtomValue i1, DoubleAtomValue i2 -> BoolAtomValue (i1 > i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+  let doubleLessThanOrEqual vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | DoubleAtomValue i1, DoubleAtomValue i2 -> BoolAtomValue (i1 <= i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+  let doubleLessThan vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | DoubleAtomValue i1, DoubleAtomValue i2 -> BoolAtomValue (i1 < i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+  let doubleAdd vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | DoubleAtomValue i1, DoubleAtomValue i2 -> DoubleAtomValue (i1 + i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+  let doubleSubtract vs = 
+    match vs with 
+      | [v1; v2] -> 
+        match unbag v1, unbag v2 with
+        | DoubleAtomValue i1, DoubleAtomValue i2 -> DoubleAtomValue (i1 - i2)
+        | _ -> IndeterminateValue
+      | _ -> IndeterminateValue
+
+
   // ------------ Do the function environment filling ------------
+  funcEnv.Add("anyURI-equal", valueEq)
   funcEnv.Add("string-equal", valueEq)
   funcEnv.Add("boolean-equal", valueEq)
   funcEnv.Add("integer-equal", valueEq)
+  funcEnv.Add("double-equal", valueEq)
 
   funcEnv.Add("or", logicalOr)
   funcEnv.Add("and", logicalAnd)
@@ -102,7 +174,19 @@ module Functions =
   funcEnv.Add("integer-greater-than", integerGreaterThan)
   funcEnv.Add("integer-less-than-or-equal", integerLessThanOrEqual)
   funcEnv.Add("integer-less-than", integerLessThan)
+  
+  funcEnv.Add("double-greater-than-or-equal", doubleGreaterThanOrEqual)
+  funcEnv.Add("double-greater-than", doubleGreaterThan)
+  funcEnv.Add("double-less-than-or-equal", doubleLessThanOrEqual)
+  funcEnv.Add("double-less-than", doubleLessThan)
+
+  funcEnv.Add("integer-add", integerAdd)
+  funcEnv.Add("integer-subtract", integerSubtract)
+
+  funcEnv.Add("double-add", doubleAdd)
+  funcEnv.Add("double-subtract", doubleSubtract)
 
   funcEnv.Add("integer-one-and-only", bagOneAndOnly)
   funcEnv.Add("string-one-and-only", bagOneAndOnly)
+  funcEnv.Add("double-one-and-only", bagOneAndOnly)
 

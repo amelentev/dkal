@@ -37,6 +37,7 @@ module Prelude =
 type principal
 type int
 type bool
+type float
 type text
 type infon
 type assertion
@@ -63,6 +64,7 @@ function [2] true returns {bool}
 function [2] false returns {bool}
 function [2] int_null returns {int}
 function [2] string_null returns {text}
+function [2] float_null returns {float}
 function [2] bool_null returns {bool}
 
 function [2] __tuple ({int}) returns {int}

@@ -17,6 +17,7 @@ open Microsoft.FSharp.Text.Lexing
 
 type SxTok =
   | IntLiteral of int
+  | FloatLiteral of float
   | StringLiteral of string
   | Id of string
   | LParen
@@ -28,6 +29,7 @@ type SxTok =
     let xf = sprintf
     match this with
       | IntLiteral n -> xf "'%d'" n
+      | FloatLiteral f -> xf "'%f'" f
       | StringLiteral s -> xf "\"%s\"" s
       | Id n -> xf "'%s'" n
       | LParen -> "'('"
@@ -56,6 +58,7 @@ rule token = parse
 | ['\t']+             { token lexbuf }
 | newline            { newline lexbuf; token lexbuf }
 | ['-']?digit+       { IntLiteral (System.Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit*'.'?digit+	{ FloatLiteral (System.Double.Parse(lexeme lexbuf)) }
 | "("                { LParen }
 | ")"                { RParen }
 | '/' '*'            { comment lexbuf }

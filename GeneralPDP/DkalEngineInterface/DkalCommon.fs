@@ -4,7 +4,7 @@ module DkalCommon =
 
   // edit the following line so that it points to a SQL server on which you have permissions to run queries
   // replace MACHINE, PORT, DATABASE, USER, PASSWORD
-  let privateSql = "#set private_sql \"Server=tcp:MACHINE,PORT;Database=DATABASE;User ID=USER;Password=PASSWORD;TrustServerCertificate=true;Trusted_Connection=False;Encrypt=True;\""
+  let privateSql = "#set private_sql \"Server=tcp:A2006546.redmond.corp.microsoft.com,6414;Database=dkal_xacml;User ID=dkal_xacml_user;Password=dkal;TrustServerCertificate=true;Trusted_Connection=False;Encrypt=True;\""
 
   let identity (name: string) = "if " + name + " knows\n  asInfon(0==1)\nthen\n  to " + name + "\n    asInfon(true)"
 
@@ -18,6 +18,7 @@ attribute [16] req {int} issued by {principal}
 // requests: attributes
 attribute [16] req {int} by {principal} has {text} attribute string {text} valued {text}
 attribute [16] req {int} by {principal} has {text} attribute int {text} valued {int}
+attribute [16] req {int} by {principal} has {text} attribute double {text} valued {float}
 
 "
 
@@ -30,6 +31,7 @@ attribute [16] req {int} by {principal} has {text} attribute int {text} valued {
       // trust the PEP on attributes from his/her requests
       "  " + pep + " tdonS req R3 by " + pep + " has CATEGORY3 attribute string NAME3 valued VALUE3\n" +
       "  " + pep + " tdonS req R4 by " + pep + " has CATEGORY4 attribute int NAME4 valued VALUE4\n" +
+      "  " + pep + " tdonS req R5 by " + pep + " has CATEGORY5 attribute double NAME5 valued VALUE5\n" +
       ""
 
   let singleCommRuleDkalAssertions dkal pap = 

@@ -15,10 +15,10 @@ module XacmlRequestTranslator =
 
   type XacmlRequestTranslator (pctx: ParsingCtx) =
 
-    member this.TranslateRequest (reqId: int) (pep: string) (req: RequestContext) 
+    member this.TranslateRequest (pep: string) (req: RequestContext) 
                                  (fullAttributes: HashSet<AttributeDesignator>) =
       let translator = ExpressionTranslator(pctx)
-      let reqId' = Const(Int(reqId))
+      let reqId' = Const(Int(req.Id))
       let pep' = Const(Principal(pctx.LookupOrAddPrincipal(pep)))
 
       let unfold = 

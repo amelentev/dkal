@@ -79,6 +79,7 @@ type SX =
   | App of Pos * string * list<SX>
   | Var of Pos * string
   | Int of Pos * int
+  | Float of Pos * float
   | String of Pos * string
 
   member this.Pos =
@@ -86,6 +87,7 @@ type SX =
       | App (p, _, _)
       | Var (p, _)
       | Int (p, _)
+      | Float (p, _)
       | String (p, _) -> p
 
   member this.WriteTo (sb:StringBuilder) =
@@ -100,6 +102,7 @@ type SX =
         wr ")"
       | Var (_, n) -> wr n
       | Int (_, k) -> wr (k.ToString())
+      | Float (_, f) -> wr (f.ToString())
       | String (_, p) -> 
         wr "\""
         // TODO quote

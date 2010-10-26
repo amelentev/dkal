@@ -26,6 +26,9 @@ module ExpressionTranslator =
                | "string-equal" -> "=="
                | "integer-equal" -> "=="
                | "boolean-equal" -> "=="
+               | "anyURI-equal" -> "=="
+               | "integer-subtract" -> "-"
+               | "integer-add" -> "+"
                | f -> f
       pctx.LookupFunction(f')
 
@@ -39,6 +42,7 @@ module ExpressionTranslator =
       | IntAtomValue(i) -> Const(Int(i))
       | StringAtomValue(s) -> Const(Text(s))
       | BoolAtomValue(b) -> App(pctx.LookupFunction(b.ToString().ToLower()), [])
+      | DoubleAtomValue(f) -> Const(Float(f))
       | _ -> failwith ("No translation to DKAL for " + value.DataType.ToString())
 
 

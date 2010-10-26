@@ -14,6 +14,7 @@ namespace Microsoft.Research.DkalEngine
 module PreToken =
   type Tok0 =
     | Int of int
+    | Float of float
     | Id of string  // non-capitalized
     | Var of string // capitalized
     | StringLiteral of string

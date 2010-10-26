@@ -36,6 +36,7 @@ rule token = parse
 | '\t'+              { Spaces ((lexeme lexbuf).Length * 4)}
 | newline            { newline lexbuf; NewLine }
 | ['-']?digit+       { Int (System.Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit*'.'?digit+	{ Float (System.Double.Parse(lexeme lexbuf)) }
 | "("                { LParen ')' }
 | ")"                { RParen ')' }
 | "["                { LParen ']' }

@@ -11,9 +11,8 @@ module Matchs =
   /// An match function environment which stores XACML match definitions used in targets
   let matchEnv = new Dictionary<string, FunctionF>()
 
-  // ------------ Do the match environment filling ------------
-  matchEnv.Add("string-equal", valueEq)
-  matchEnv.Add("boolean-equal", valueEq)
-  matchEnv.Add("integer-equal", valueEq)
+  // copy the functions from the function environemnt
+  for kvp in funcEnv do
+    matchEnv.Add(kvp.Key, kvp.Value)
 
 

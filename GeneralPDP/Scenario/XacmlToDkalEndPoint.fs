@@ -72,7 +72,7 @@ module XacmlToDkalEndPoint =
 
     member private ep.SendRequestToDkal (reqId: int, req: RequestContext) =
       let tr = XacmlRequestTranslator(pctx)
-      let infon = tr.TranslateRequest reqId id req attributesNeeded
+      let infon = tr.TranslateRequest id req attributesNeeded
       ep.Send({sender= ep.Id;
                receiver= dkalId;
                content= InfonContent(infon)})
