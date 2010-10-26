@@ -1,6 +1,6 @@
 #include "common.dkal"
 
-dkal knows
+_me knows
   if 
     req R issued by P
 	req R by P has "subject" attribute string "subject-id" valued "robert"
@@ -8,7 +8,7 @@ dkal knows
   then
     req R by P decision "Permit"
 
-dkal knows
+_me knows
   if 
     req R issued by P
 	req R by P has "subject" attribute string "subject-id" valued V

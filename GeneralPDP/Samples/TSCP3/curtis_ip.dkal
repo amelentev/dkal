@@ -3,11 +3,11 @@
 #set dispatcher "first"
 #set learning "discard"
 
-curtis_dkal knows
+_me knows
   "matt" from "packard" has signed curtis nda
 
 // signed nda --> permit
-if curtis_dkal knows
+if _me knows
   req R issued by P
   req R by P has "subject" attribute string "subject-id" valued S
   req R by P has "subject" attribute string "company-id" valued C
@@ -17,7 +17,7 @@ then
     req R by P decision "Permit"
 
 // any other case -> deny
-if curtis_dkal knows
+if _me knows
   req R issued by P
 then
   say with justification to curtis_dkal_pdp

@@ -4,5 +4,5 @@ XACMLRequest 3
 	Resource "policies" = string "policy-1234@pr"
 	Action "action-id" = string "read"
 	Subject "subject-id" = string "robert"
-	Subject "infon" = string "02468 is break glass key"
+	Subject "infon" = string "2468 is break glass key"
 	
