@@ -62,7 +62,7 @@ module DkalToXacmlEndPoint =
               if m.Sender = dkalId then
                   // infon comes from my dkal engine, it must be a response
                   try
-                    let reqId, reqPpal, resp = dkalResponseTranslator.TranslateResponse(infon)
+                    let reqPpal, resp = dkalResponseTranslator.TranslateResponse(infon)
                     let strippedResponseInfon = (DkalTermTranslator()).StripSignatures(infon)
                     let impostedInfon = match strippedResponseInfon with
                                         | App(f, [_; d]) when f.name = "said" -> App(f, [Const(Principal(ppalMe)); d])

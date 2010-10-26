@@ -28,7 +28,7 @@ module XacmlToDkalEndPoint =
 
     let attributesNeeded = new HashSet<AttributeDesignator>()
     let mutable nextRequestId = 3000
-    let mutable pendingRequests = new Dictionary<int, EndPointId * int>()
+    let pendingRequests = new Dictionary<int, EndPointId * int>()
 
     let ppalMe = pctx.LookupOrAddPrincipal(id)
     let ppalDkal = pctx.LookupOrAddPrincipal(dkalId)
@@ -49,11 +49,12 @@ module XacmlToDkalEndPoint =
               ep.InstallPolicyOnDkal(pcy)
       | InfonContent(infon) ->
               let tr = DkalResponseTranslator()
-              let reqId, pep, response = tr.TranslateResponse(infon)
-              let found, (reqSender, origId) = pendingRequests.TryGetValue(reqId)
+              let pep, response = tr.TranslateResponse(infon)
+              let found, t = pendingRequests.TryGetValue(response.Id)
               if pep <> id || not found then
                 failwith (ep.Id + ": I received a response from DKAL to a request I didn't make") 
-              pendingRequests.Remove(reqId) |> ignore
+              let reqSender, origId = t in
+              pendingRequests.Remove(response.Id) |> ignore
               // adjust local request to original request number
               let response = ResponseContext(origId, response.Decision, response.Status, response.Obligations)
               ep.Send({sender= id;
@@ -72,6 +73,7 @@ module XacmlToDkalEndPoint =
 
     member private ep.SendRequestToDkal (reqId: int, req: RequestContext) =
       let tr = XacmlRequestTranslator(pctx)
+      let req = RequestContext(reqId, req.Attributes)
       let infon = tr.TranslateRequest id req attributesNeeded
       ep.Send({sender= ep.Id;
                receiver= dkalId;
