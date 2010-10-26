@@ -43,6 +43,7 @@ module Tokenizer =
         | Tok0.Var _
         | Tok0.Id _
         | Tok0.Int _
+        | Tok0.Float _
         | Tok0.LParen _
         | Tok0.RParen _ -> handleLine newAcc
     
@@ -73,6 +74,7 @@ module Tokenizer =
           | Tok0.Id n -> cont (Tok.Id (pos, n))
           | Tok0.Var n -> cont (Tok.Var (pos, n))
           | Tok0.Int i -> cont (Tok.Int (pos, i))
+          | Tok0.Float f -> cont (Tok.Float (pos, f))
           | Tok0.NewLine -> cont (Tok.NewLine pos)
           | Tok0.StringLiteral s -> cont (Tok.StringLiteral (pos, s))
           

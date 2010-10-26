@@ -54,6 +54,7 @@ module PreAst =
     | Block of Pos * list<Tok>
     | NewLine of Pos
     | Int of Pos * int
+    | Float of Pos * float
     | Id of Pos * string  // non-capitalized
     | Var of Pos * string // capitalized
     | StringLiteral of Pos * string
@@ -66,6 +67,7 @@ module PreAst =
         | Block (p, _)
         | NewLine p
         | Int (p, _)
+        | Float (p, _)
         | Id (p, _)
         | StringLiteral (p, _)
         | Var (p, _)
@@ -92,6 +94,7 @@ module PreAst =
           wr " NL\n"
           wr (new String (' ', l))
         | Int (_, i) -> wr i; wr " "
+        | Float (_, f) -> wr f; wr " "
         | Var (_, s) -> wr "$"; wr s; wr " "
         | Id (_, s) -> wr s; wr " "
         | StringLiteral (_, s) -> wr "\""; wr s; wr "\""

@@ -34,6 +34,7 @@ type Serializer(ctx:ParsingCtx) =
     let visitedVars = dict()
     let rec aux = function
       | Term.Const (Int i) -> wr "#"; wr i
+      | Term.Const (Float f) -> wr "&"; wr f
       | Term.Const (Bool b) -> wr "@"; wr (if b then "T" else "F")
       | Term.Const (Text s) -> wr "\""; wr s; wr "\""
       | Term.Const (Principal p) -> wr "%"; quote p.name
@@ -74,6 +75,12 @@ type Serializer(ctx:ParsingCtx) =
         else cur
       let theEnd = findEnd i
       (theEnd, System.Int32.Parse (s.Substring (i, theEnd - i)))
+    let parseFloat i =
+      let rec findEnd cur =
+        if (i = cur && s.[i] = '-') || Char.IsDigit s.[cur] || s.[i] = '.' then findEnd (cur + 1)
+        else cur
+      let theEnd = findEnd i
+      (theEnd, System.Double.Parse (s.Substring (i, theEnd - i)))
     let parseText i =
       let sb = System.Text.StringBuilder()
       let wr (s:obj) = sb.Append s |> ignore
@@ -92,6 +99,9 @@ type Serializer(ctx:ParsingCtx) =
         | '#' ->
           let (i, v) = parseInt (i + 1)
           (i, Term.Const (Const.Int v))
+        | '&' ->
+          let (i, v) = parseFloat (i + 1)
+          (i, Term.Const (Const.Float v))
         | '@' ->
           (i + 2, Term.Const (Const.Bool (s.[i+1] = 'T')))
         | '%' ->

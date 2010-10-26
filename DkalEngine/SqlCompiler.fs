@@ -283,6 +283,7 @@ module SqlCompiler =
         | Expr.Const (Const.Bool false) -> pr "NOT "; print sqlTrue
         | Expr.Const (Const.Text s) -> parm s
         | Expr.Const (Const.Int i) -> parm i
+        | Expr.Const (Const.Float f) -> parm f
         | Expr.Const (Const.Principal p) ->
           parm (comm.PrincipalId p)
         | Expr.Const (Const.Column _) -> failwith "impossible"
@@ -299,16 +300,40 @@ module SqlCompiler =
         | Expr.Op (op, [a;tr]) when op = sqlOps.["&&"] && tr = sqlTrue -> print a
         
         | Expr.Op (op, [a;b]) when op = sqlOps.["=="] || op = sqlOps.["!="] || op = sqlOps.[">"] || op = sqlOps.[">="] || op = sqlOps.["<"] || op = sqlOps.["<="] ->
-          pr "("
-          print a
-          pr " IS NOT NULL AND "
-          print b
-          pr " IS NOT NULL AND "
-          print a
-          pr op.name
-          pr " "
-          print b
-          pr ")"
+          let notNull e = match e with
+                          | Expr.Const _
+                          | Expr.Var _ -> print e; pr " IS NOT NULL"
+                          | Expr.Op (f, _) when f.name= "NULL" -> pr "0 = 1"
+                          | _ -> pr "0 = 0"
+          
+          if b = sqlTrue && op = sqlOps.["=="] then
+            pr "("
+            notNull a
+            pr ")"
+          elif b = sqlFalse && op = sqlOps.["=="] then
+            pr "NOT ("
+            notNull a
+            pr ")"
+          elif b = sqlTrue && op = sqlOps.["!="] then
+            pr "NOT ("
+            notNull a
+            pr ")"
+          elif b = sqlFalse && op = sqlOps.["!="] then
+            pr "("
+            notNull a
+            pr ")"
+          else
+            pr "("
+            notNull a
+            pr " AND "
+            notNull b
+            pr " AND "
+            print a
+            pr " "
+            pr op.name
+            pr " "
+            print b
+            pr ")"
         | Expr.Op (op, [a;b]) when op.infix ->
           pr "("
           print a
@@ -359,7 +384,6 @@ module SqlCompiler =
       
       let addToSubst rd (idx, subst:Subst) var =
         let constVal = sql.ReadVar (comm.PrincipalById, rd, var, idx)
-        (idx + 1, subst.Add (var.id, Term.Const constVal))
-      
+        (idx + 1, subst.Add (var.id, Term.Const constVal))  
       sql.ExecQuery (sb.ToString(), parms, opts.Trace >= 1) |>
         Seq.map (fun rd -> Seq.fold (addToSubst rd) (0, subst) resSubst |> snd)

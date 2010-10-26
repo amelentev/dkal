@@ -201,6 +201,7 @@ module Parser =
       | Tok.Id (_, _)
       | Tok.Var (_, _)
       | Tok.Int (_, _)
+      | Tok.Float (_, _)
       | Tok.StringLiteral (_, _)
       | Tok.NewLine _ as t -> t
       | Tok.App (_, _, _) as a ->
