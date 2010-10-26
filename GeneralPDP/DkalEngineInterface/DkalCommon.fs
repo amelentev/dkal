@@ -4,7 +4,7 @@ module DkalCommon =
 
   // edit the following line so that it points to a SQL server on which you have permissions to run queries
   // replace MACHINE, PORT, DATABASE, USER, PASSWORD
-  let privateSql = "#set private_sql \"Server=tcp:A2006546.redmond.corp.microsoft.com,6414;Database=dkal_xacml;User ID=dkal_xacml_user;Password=dkal;TrustServerCertificate=true;Trusted_Connection=False;Encrypt=True;\""
+  let privateSql = "#set private_sql \"Server=tcp:MACHINE,PORT;Database=DATABASE;User ID=USER;Password=PASSWORD;TrustServerCertificate=true;Trusted_Connection=False;Encrypt=True;\""
 
   let identity (name: string) = "if " + name + " knows\n  asInfon(0==1)\nthen\n  to " + name + "\n    asInfon(true)"
 
