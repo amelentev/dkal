@@ -56,7 +56,7 @@ module Main =
       // create DKAL engine and install policy
       let heardFromDkal = ref false
       let engine = DkalEngineInterface("engine", fun msg -> 
-                                                   let _, _, response' = rspTranslator.TranslateResponse msg.message
+                                                   let _, response' = rspTranslator.TranslateResponse msg.message
                                                    printfn "DKAL CommRules response:\n%O" response'
                                                    heardFromDkal.Value <- true
                                                    if response.Decision <> response'.Decision then
@@ -87,7 +87,7 @@ module Main =
       let pctx, assertions = xacmlSingleCommRuleCtx "engine" "engine" "engine"
       heardFromDkal.Value <- false
       let engine = DkalEngineInterface("engine", fun msg -> 
-                                                   let _, _, response' = rspTranslator.TranslateResponse msg.message
+                                                   let _, response' = rspTranslator.TranslateResponse msg.message
                                                    printfn "DKAL Infons response:\n%O" response'
                                                    heardFromDkal.Value <- true
                                                    if response.Decision <> response'.Decision then

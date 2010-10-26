@@ -21,5 +21,5 @@ module DkalResponseTranslator =
           this.TranslateResponse t
       | App(f, [Const(Int(i)); Const(Principal(pep)); Const(Text(s))]) when f.name = "req-*-by-*-decision-*" -> 
           let pep' = pep.Name
-          i, pep', ResponseContext(i, Decision.FromString(s), Status("ok", "", ""), [])
+          pep', ResponseContext(i, Decision.FromString(s), Status("ok", "", ""), [])
       | _ -> fail "a decision infon" (infon.ToSX().ToString()) 
