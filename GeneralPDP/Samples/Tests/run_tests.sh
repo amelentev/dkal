@@ -8,8 +8,10 @@ for i in $( ls *Request.xml ); do
 	elif [ "$res" = "1" ]; then
 		status="Result from XACML engine differs from expected!!!!"
 	elif [ "$res" = "2" ]; then
-		status="Result from DKAL engine differs from expected!!!!"
+		status="Result from DKAL using COMM RULES differs from expected!!!!"
 	elif [ "$res" = "3" ]; then
+		status="Result from DKAL using INFONS differs from expected!!!!"
+	elif [ "$res" = "4" ]; then
 		status="Abnormal termination!"
 	else
 		status="Unknown"
