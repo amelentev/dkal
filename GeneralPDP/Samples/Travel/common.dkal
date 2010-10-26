@@ -1,0 +1,3 @@
+attribute [16] is travel grant to {text} using {int} allowed
+attribute [16] travel to {text} using {int} is allowed
+attribute [16] travel to {text} using {int} is not allowed

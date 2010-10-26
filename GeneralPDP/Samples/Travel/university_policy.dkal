@@ -1,0 +1,14 @@
+#include "common.dkal"
+
+if _me knows
+  DEPT said is travel grant to D using M allowed
+//  travel to D is allowed
+then 
+  say with justification to DEPT
+    travel to D using M is allowed
+
+if _me knows
+  DEPT said is travel grant to D using M allowed
+then 
+  say with justification to DEPT
+    travel to D using M is not allowed

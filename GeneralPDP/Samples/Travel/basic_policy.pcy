@@ -1,0 +1,14 @@
+XACMLPolicy "basic-policy"
+	ActionTarget 
+		"string-equal"
+			Action string "action-id" = string "request-travel-grant"
+	RuleCombinator "permit-overrides"
+	Rule 
+		Condition
+			"integer-less-than-or-equal" (
+				"integer-one-and-only" ( Resource int "grant-amount" )
+				int "500"
+			)
+		Permit
+			
+	

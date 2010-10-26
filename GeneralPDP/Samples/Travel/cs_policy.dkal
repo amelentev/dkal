@@ -1,0 +1,35 @@
+#include "common.dkal"
+
+_me knows
+  u_dkal tdonS travel to D using M is allowed
+  u_dkal tdonS travel to D using M is not allowed
+
+if _me knows
+  req R issued by P
+  req R by P has "resource" attribute string "destination" valued D
+  req R by P has "resource" attribute int "grant-amount" valued RM
+  travel to D using AM is allowed
+  asInfon(RM <= AM)
+then
+  say with justification to P
+    req R by P decision "Permit"
+
+if _me knows
+  req R issued by P
+  req R by P has "resource" attribute string "destination" valued D
+  req R by P has "resource" attribute int "grant-amount" valued RM
+  travel to D using AM is not allowed
+  asInfon(RM >= AM)
+then
+  say with justification to P
+    req R by P decision "Deny"
+	
+if _me knows
+  req R issued by P
+  req R by P has "resource" attribute string "destination" valued D
+  req R by P has "resource" attribute int "grant-amount" valued M
+then
+  say with justification to u_dkal
+    is travel grant to D using M allowed
+
+	
