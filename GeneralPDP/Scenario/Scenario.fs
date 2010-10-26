@@ -35,12 +35,12 @@ module Scenario =
         Seq.iter (fun (v: IScenarioViewer) -> v.NotifyNewEndPoint ep) viewers
 
       member sc.Route(m: IMessage) =
-        if endPoints.ContainsKey(m.Receiver) then
+        if endPoints.ContainsKey(m.Receiver) && endPoints.ContainsKey(m.Sender) then
           lock printingLock 
             (fun () -> Seq.iter (fun (v: IScenarioViewer) -> v.NotifyNewMessage m) viewers)
           endPoints.[m.Receiver].Receive(m)
         else
-          failwith ("Message target is not in scenario: " + m.Receiver) 
+          failwith ("Message sender and/or target are not in the scenario: " + m.Sender + ", " + m.Receiver) 
 
     member sc.Name = 
       (sc :> IScenario).Name
