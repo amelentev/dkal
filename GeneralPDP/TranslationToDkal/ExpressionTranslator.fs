@@ -23,12 +23,19 @@ module ExpressionTranslator =
                | "integer-less-than" -> "<"
                | "integer-greater-than-or-equal" -> ">="
                | "integer-greater-than" -> ">"
+               | "double-less-than-or-equal" -> "<="
+               | "double-less-than" -> "<"
+               | "double-greater-than-or-equal" -> ">="
+               | "double-greater-than" -> ">"
                | "string-equal" -> "=="
                | "integer-equal" -> "=="
                | "boolean-equal" -> "=="
+               | "double-equal" -> "=="
                | "anyURI-equal" -> "=="
                | "integer-subtract" -> "-"
                | "integer-add" -> "+"
+               | "double-subtract" -> "-"
+               | "double-add" -> "+"
                | f -> f
       pctx.LookupFunction(f')
 

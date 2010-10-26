@@ -27,7 +27,8 @@ module Context =
                         | IntDatatype -> Type.Int
                         | StringDatatype -> Type.Text
                         | BoolDatatype -> Type.Bool
-                        | _ -> failwith ("Datatype not supported by DKAL: " + dt.ToString())
+                        | DoubleDatatype -> Type.Float
+                        // | _ -> failwith ("Datatype not supported by DKAL: " + dt.ToString())
                     | _ -> failwith "Expecting Attribute designator when adding to context"
       let var = pctx.MakeVar ("Var" + id.ToString()) varType
       ads_vars.Add(ad, var)
