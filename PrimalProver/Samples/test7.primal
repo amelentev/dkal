@@ -1,0 +1,17 @@
+/* Test input file for the primal algorithm */
+
+Principals p,q,r;
+
+Literals	x: Infon,
+			y: Infon,
+			z: Infon;
+
+
+p said Var1 -> Var1;
+q said Var2 -> Var2;
+p said (x -> y);
+q said (y -> z);
+x;
+
+? z;
+

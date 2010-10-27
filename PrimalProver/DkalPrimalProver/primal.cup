@@ -1,0 +1,313 @@
+// *********************************************************
+
+//
+
+//    Copyright (c) Microsoft. All rights reserved.
+
+//    This code is licensed under the Apache License, Version 2.0.
+
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+
+//
+
+// *********************************************************
+
+
+
+using TUVienna.CS_CUP.Runtime;
+
+using System;
+
+using System.IO;
+
+using DkalPrimalProver;
+
+using System.Collections.Generic;
+
+using System.Collections;
+
+
+
+action code {:
+
+
+	SpecList specs = new SpecList();
+	StringList principalList = new StringList();
+	FunctionDictionary functions = new FunctionDictionary();
+
+
+	public StringList getPrincipalList(){
+
+		return principalList;
+
+	}
+
+	public FunctionDictionary getFunctions(){
+
+		return functions;
+
+	}
+
+
+	/* Completes the type of the variables looking at the declared type
+
+	*/
+
+	void fillVariableTypes(Function f){
+
+
+
+		if (functions.ContainsKey(f.getName())){
+
+			ArrayList declaredArgs;
+
+            functions.TryGetValue(f.getName(), out declaredArgs);
+
+			
+
+			if (declaredArgs.Count != f.getArguments().Count + 1){
+
+                throw new Exception("The function " + f.getName() + " was previously specified with a different number of arguments");
+
+			}
+
+			for (int i = 0; i < f.getArguments().Count; i++){
+
+				if (f.getArguments()[i] is Variable){
+
+					((Variable)(f.getArguments()[i])).setType((string)declaredArgs[i]);
+
+				}
+
+			}
+
+		} else{
+
+            throw new Exception("The function " + f.getName() + " was not declared");
+
+		}
+
+	
+
+	}
+
+:}
+
+
+
+init with {:
+
+	//built-in functions
+
+	//tdonP and tdonS
+	action_obj.getFunctions().Add(Resources.TdonSName, Resources.TdonArgs);
+	action_obj.getFunctions().Add(Resources.TdonIName, Resources.TdonArgs);
+:}
+
+
+
+parser code {:
+
+
+
+	public StringList getPrincipalList(){
+
+		return action_obj.getPrincipalList();
+
+	}
+
+	
+
+	public FunctionDictionary getFunctions(){
+
+		return action_obj.getFunctions();
+
+	}
+
+:}
+
+
+
+terminal string COMMA, SEMI, PLUS, IMPLIES, TRUE, KNOWS, SAID, IMPLIED, PROVISO, CONDITIONAL, RBRACKET, EQUAL, FIX;
+
+terminal string TOKEN, VARIABLE, LBRACKET, LPAREN, RPAREN, COLON, TO, FROM, QUESTION, PRINCIPAL, FUNCTION, NUMBER;
+
+
+
+non terminal Infon infon, regular;
+
+non terminal Spec assertion;
+
+non terminal To communication;
+
+non terminal From filter;
+
+non terminal Principal principal;
+
+non terminal Proviso body;
+
+non terminal Query query;
+
+non terminal Fact fact;
+
+non terminal System.Collections.ArrayList regularList, typeList, principalList, functionList;
+
+non terminal StringList argList;
+
+non terminal SaidImplied speech;
+
+non terminal SpecList spec, declarations, main;
+
+non terminal string value;
+
+
+
+
+precedence left PLUS;
+
+precedence left IMPLIES;
+
+precedence left SAID;
+
+precedence left IMPLIED;
+
+precedence left PROVISO;
+
+
+
+start with main;
+
+
+
+main ::= declarations spec:s {: RESULT = s; :};
+
+
+declarations ::= PRINCIPAL principalList SEMI FUNCTION functionList SEMI;
+
+principalList ::= TOKEN:p {: principalList.Add(p); :} | principalList COMMA TOKEN:p {: principalList.Add(p); :};
+
+functionList ::= TOKEN:name COLON typeList:tList {: 
+					if ( principalList.Contains(name) || functions.ContainsKey(name))
+					{
+						throw new Exception("The name " + name + " was already used");
+					}
+					functions.Add(name, tList); 
+				:} 
+				| functionList COMMA TOKEN:name COLON typeList:tList {: 
+					if ( principalList.Contains(name) || functions.ContainsKey(name))
+					{
+						throw new Exception("The name " + name + " was already used");
+					}
+					functions.Add(name, tList); 
+				:};
+
+
+
+typeList ::= VARIABLE:type {: 
+
+			RESULT = new ArrayList(); 
+			RESULT.Add(type); 
+
+			:} 
+
+		| typeList:list IMPLIES VARIABLE:type {: 
+
+			list.Add(type); 
+			RESULT = list; 
+
+		:};
+
+
+infon ::= regular:r {: RESULT = r; :}
+
+		| principal:p speech:sp  {: sp.setPrincipal(p); RESULT = sp; :}
+
+		| infon:i1 PLUS infon:i2 {: RESULT = new Plus(i1, i2); :} 
+
+		| infon:i1 IMPLIES infon:i2 {: RESULT = new Implies(i1, i2); :}
+
+		| TRUE {: RESULT = new TrueInfon(); :}
+
+		| LPAREN infon:i RPAREN {: RESULT = i; :};
+
+
+principal ::= TOKEN:t {: 
+					if ( !principalList.Contains(t) )
+					{
+						throw new Exception("Principal " + t + " not declared");
+					}
+					RESULT = new Principal(t); 
+					:};
+
+speech ::= SAID infon:i {: RESULT = new Said(i); :}| IMPLIED infon:i {: RESULT = new Implied(i); :};
+
+
+
+regular ::= 
+			VARIABLE:v {: RESULT = new Variable(v); ((Variable)RESULT).setType("Infon");:} |
+
+			TOKEN:constant {: 
+
+					Function function =  new Function(constant); 
+
+					if (!functions.ContainsKey(constant) && !principalList.Contains(constant)) { 
+
+						throw new Exception( constant + " not declared");
+
+					}
+					else if (principalList.Contains(constant))
+					{
+						function.setReturnType("Principal");
+					}
+					else
+					{
+						ArrayList declaredArgs;
+						functions.TryGetValue(constant, out declaredArgs);
+
+						function.setReturnType((string)declaredArgs[declaredArgs.Count-1]);
+					}
+					
+					RESULT = function;
+				:}
+
+			| TOKEN:name LPAREN regularList:arguments RPAREN {: 
+
+					RESULT = new Function(name,arguments); 
+
+					fillVariableTypes((Function)RESULT);
+					
+					ArrayList declaredArgs;
+					functions.TryGetValue(name, out declaredArgs);
+					((Function)RESULT).setReturnType((string)declaredArgs[declaredArgs.Count-1]);
+			  :};
+
+			
+
+regularList ::= regularList:arguments COMMA regular:reg {: arguments.Add(reg); RESULT = arguments; :}
+
+				| regular:r {: System.Collections.ArrayList arguments = new System.Collections.ArrayList(); arguments.Add(r); RESULT = arguments; :};
+
+
+
+spec ::= spec assertion:assert {: specs.Add(assert); RESULT = specs; :} | assertion:assert {: specs.Add(assert); RESULT = specs; :};
+
+
+
+assertion ::=	fact:f {: RESULT = f; :}
+//				| communication:c {: RESULT = c; :}
+//				| filter:f {: RESULT = f; :}
+				| query:q {: RESULT = q; :};
+
+
+
+fact ::= infon:i SEMI {: RESULT = new Fact(i); :};
+
+
+query ::= QUESTION fact:f {: RESULT = new Query(f); :};
+

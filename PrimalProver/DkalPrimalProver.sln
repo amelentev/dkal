@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DkalPrimalProver", "DkalPrimalProver\DkalPrimalProver.csproj", "{8E818407-4246-4AB8-8F64-4D40959203CA}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "DkalToDatalog", "DkalToDatalog\DkalToDatalog.fsproj", "{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{8E818407-4246-4AB8-8F64-4D40959203CA}.Release|x86.ActiveCfg = Release|Any CPU
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Debug|x86.ActiveCfg = Debug|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Debug|x86.Build.0 = Debug|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Release|Any CPU.ActiveCfg = Release|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Release|Mixed Platforms.Build.0 = Release|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Release|x86.ActiveCfg = Release|x86
+		{5A29C84E-5E2A-4DEE-9798-AF30D222DB2E}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(SpecExplorer.ActivityCompletionStatus) = preSolution
+		SpecExplorer.ActivityCompletionStatus = 
+	EndGlobalSection
+EndGlobal
