@@ -1,0 +1,15 @@
+/* Test input file for the primal algorithm */
+
+Principals p,q,r;
+
+Literals	x: Infon,
+			y: Infon,
+			z: Infon;
+
+p said X -> X;
+p said (q said Y -> Y);
+q said (r said Z -> Z);
+r said x;
+
+? x;
+
