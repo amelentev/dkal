@@ -394,7 +394,8 @@ module ScenarioViewer =
       reDraw()
    
     let centerGraphOn (e: Edge) = 
-      graphViewer.ShowGroup([| e.SourceNode :> DrawingObject; e :> DrawingObject; e.TargetNode :> DrawingObject |])
+      if graphViewer.ZoomF > 1.5 then
+        graphViewer.ShowGroup([| e.SourceNode :> DrawingObject; e :> DrawingObject; e.TargetNode :> DrawingObject |])
 
     let doReset _ =
       for i in [0..currIndex] do

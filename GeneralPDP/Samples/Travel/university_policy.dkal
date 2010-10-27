@@ -1,40 +1,26 @@
 #include "common.dkal"
 
-// TODO: approve depending on city and requester position
-
-// Basic knowledge about cities in the world
-_me knows
-  "London" is international city
-  "Bangalore" is international city
-  "San Francisco" is us city
-
-// Limit on US destinations
+function [2] maximumAllowance ( {DEST:text}, {POSITION:text} ) returns {M:int}
+  is allowances.destination == DEST && allowances.position == POSITION && allowances.max == M
+  
+// Read maximum allowance from DB
 _me knows
   if
-    DEST is us city
-    asInfon(M <= 700)
+    asInfon(M <= maximumAllowance(DEST,POS))
   then
-    travel to DEST on M dollars is allowed
-
-// Limit on international destinations
-_me knows
-  if
-    DEST is international city
-    asInfon(M <= 3000)
-  then
-    travel to DEST on M dollars is allowed
+    travel for POS to DEST on M dollars is allowed
 
 // Communicate approvals
 if _me knows
-  DEPT said is travel grant to DEST on M dollars allowed
-  travel to DEST on M dollars is allowed
+  DEPT said is travel grant for POS to DEST on M dollars allowed
+  travel for POS to DEST on M dollars is allowed
 then 
   say with justification to DEPT
-    travel to DEST on M dollars is allowed
+    travel for POS to DEST on M dollars is allowed
 
 // Communicate disapprovals
 if _me knows
-  DEPT said is travel grant to DEST on M dollars allowed
+  DEPT said is travel grant for POS to DEST on M dollars allowed
 then 
   say with justification to DEPT
-    travel to DEST on M dollars is not allowed
+    travel for POS to DEST on M dollars is not allowed

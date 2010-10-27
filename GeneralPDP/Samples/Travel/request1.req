@@ -3,4 +3,5 @@ XACMLRequest 1
 	Resource "grant-amount" = int "450"
 	Action "action-id" = string "request-travel-grant"
 	Subject "subject-id" = string "smith"
+	Subject "position" = string "faculty"
 	
