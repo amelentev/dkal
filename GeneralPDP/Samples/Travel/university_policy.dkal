@@ -1,14 +1,40 @@
 #include "common.dkal"
 
-if _me knows
-  DEPT said is travel grant to D using M allowed
-//  travel to D is allowed
-then 
-  say with justification to DEPT
-    travel to D using M is allowed
+// TODO: approve depending on city and requester position
 
+// Basic knowledge about cities in the world
+_me knows
+  "London" is international city
+  "Bangalore" is international city
+  "San Francisco" is us city
+
+// Limit on US destinations
+_me knows
+  if
+    DEST is us city
+    asInfon(M <= 700)
+  then
+    travel to DEST on M dollars is allowed
+
+// Limit on international destinations
+_me knows
+  if
+    DEST is international city
+    asInfon(M <= 3000)
+  then
+    travel to DEST on M dollars is allowed
+
+// Communicate approvals
 if _me knows
-  DEPT said is travel grant to D using M allowed
+  DEPT said is travel grant to DEST on M dollars allowed
+  travel to DEST on M dollars is allowed
 then 
   say with justification to DEPT
-    travel to D using M is not allowed
+    travel to DEST on M dollars is allowed
+
+// Communicate disapprovals
+if _me knows
+  DEPT said is travel grant to DEST on M dollars allowed
+then 
+  say with justification to DEPT
+    travel to DEST on M dollars is not allowed

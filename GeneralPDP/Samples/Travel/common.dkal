@@ -1,3 +1,6 @@
-attribute [16] is travel grant to {text} using {int} allowed
-attribute [16] travel to {text} using {int} is allowed
-attribute [16] travel to {text} using {int} is not allowed
+attribute [16] {text} is us city
+attribute [16] {text} is international city
+
+attribute [16] is travel grant to {text} on {int} dollars allowed
+attribute [16] travel to {text} on {int} dollars is allowed
+attribute [16] travel to {text} on {int} dollars is not allowed

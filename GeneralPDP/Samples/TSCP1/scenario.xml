@@ -10,7 +10,8 @@
 	<endpoint id="curtis_sharepoint" type="enforcement" sharePoint="true" color="green" />
 	<endpoint id="curtis_pdp" type="xacml" attributeRepositoryId="cloud_ar" color="green" />
 	<endpoint id="curtis_dkal_pdp" type="xacml->dkal" dkalId="curtis_dkal" policyFile="curtis_common.dkal" color="green" /> 
-	<endpoint id="curtis_dkal" type="dkal" xacml="basicTrust" pepId="curtis_dkal_pdp" policyFile="curtis_ip.dkal" color="green" />
+	<endpoint id="curtis_dkal" type="dkal" xacml="basicTrust" pepId="curtis_dkal_pdp" policyId="curtis-ip" policy="curtis_ip.dkal" color="green"    
+		sql="connection_string.txt" />
 
 	<!-- Packard: blue -->
 	<endpoint id="packard_pap" color="blue" />

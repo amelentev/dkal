@@ -1,7 +1,7 @@
 <scenario name="XacmlToDkalCommRulesPrinter">
 	<endpoint id="pep" />
 	<endpoint id="pap" />
-	<endpoint id="engine" type="dkal" learning="discard" dispatcher="first" xacml="aware" policyId="empty" >
+	<endpoint id="engine" type="dkal" learning="discard" dispatcher="first" xacml="aware" policyId="empty" sql="connection_string.txt" >
 		<trustrulesfrom id="pdp" />
 	</endpoint>
 	<endpoint id="pdp" type="xacml->dkal" translateToRules="true" dkalId="engine" />

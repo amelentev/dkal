@@ -15,7 +15,7 @@ open System.Collections.Generic
 
 module DkalEndPoint =
 
-  type DkalEndPoint(id: EndPointId, ?dkalPolicy: DkalPolicy) = 
+  type DkalEndPoint(id: EndPointId, sql: string, ?dkalPolicy: DkalPolicy) = 
     inherit EndPoint(id)
 
     let trustCommRulesFrom = new HashSet<EndPointId>()
@@ -73,7 +73,7 @@ module DkalEndPoint =
                                       receiver = im.target.name;
                                       content = InfonContent(im.message)})
       ep.StopEngine()
-      dkalEngineInterface <- Some(DkalEngineInterface(id, deliverDkalInfonMessage))
+      dkalEngineInterface <- Some(DkalEngineInterface(id, sql, deliverDkalInfonMessage))
       
       // set engine options
       match dispatcher with

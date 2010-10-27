@@ -1,6 +1,7 @@
 <scenario name="DkalToXacmlPrinter">
 	<endpoint id="pep" />
-	<endpoint id="dkal" type="dkal" policyId="extra-printer-policy" xacml="aware" file="extra_policy.dkal" />
+	<endpoint id="dkal" type="dkal" policyId="extra-printer-policy" xacml="aware" file="extra_policy.dkal"   
+		sql="connection_string.txt" />
 	<endpoint id="xacml" type="xacml" />
 	<endpoint id="pdp" type="dkal->xacml" dkalId="dkal" xacmlId="xacml" xacml="aware" policyId="printer-policy" file="policy.dkal" />
 

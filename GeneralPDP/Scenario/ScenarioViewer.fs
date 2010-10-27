@@ -146,8 +146,8 @@ module ScenarioViewer =
 
       let height = Resources.Main.ep_1.Height
       let width = Resources.Main.ep_1.Width
-      geomGraph.LayerSeparation <- (float) (height / 3)
-      geomGraph.NodeSeparation <-  (float) (width / 3)
+      geomGraph.LayerSeparation <- (float) (height / 4)
+      geomGraph.NodeSeparation <-  (float) (width / 4)
 
       // first nodes
       for node in graph.NodeMap.Values do
@@ -393,6 +393,9 @@ module ScenarioViewer =
       highlightedEdge <- edge
       reDraw()
    
+    let centerGraphOn (e: Edge) = 
+      graphViewer.ShowGroup([| e.SourceNode :> DrawingObject; e :> DrawingObject; e.TargetNode :> DrawingObject |])
+
     let doReset _ =
       for i in [0..currIndex] do
         makeInvisible (edges.[i])
@@ -411,12 +414,15 @@ module ScenarioViewer =
         highlightEdge (Some edge)
         updateMessageLabels currIndex edge.UserData
         statusLabel.Text <- edge.Source + " --> " + edge.Target + ": " + edge.LabelText
+        updateControls()
+        centerGraphOn edge
       else
         highlightEdge None
         descrLabel.Text <- ""
         msgHeaderLabel.Text <- ""
         statusLabel.Text <- ""
-      updateControls()
+        updateControls()
+
           
     let doForward _ = 
       currIndex <- currIndex + 1
@@ -426,6 +432,7 @@ module ScenarioViewer =
       updateMessageLabels currIndex edge.UserData
       statusLabel.Text <- edge.Source + " --> " + edge.Target + ": " + edge.LabelText
       updateControls()
+      centerGraphOn edge
 
     let doNow _ =
       for i in [currIndex + 1 .. edges.Count - 1] do
@@ -436,6 +443,7 @@ module ScenarioViewer =
       updateMessageLabels currIndex edge.UserData
       statusLabel.Text <- edge.Source + " --> " + edge.Target + ": " + edge.LabelText
       updateControls()
+      centerGraphOn edge
 
     let handleJumpToThisMessage (edge: Edge) =
       let index = edges.IndexOf edge
@@ -446,6 +454,7 @@ module ScenarioViewer =
       updateMessageLabels currIndex edge.UserData
       statusLabel.Text <- edge.Source + " --> " + edge.Target + ": " + edge.LabelText
       updateControls()
+      centerGraphOn edge
 
     let handleGraphClick (args: EventArgs) =
       contextMenu.MenuItems.Clear()
@@ -489,12 +498,17 @@ module ScenarioViewer =
 
     do         
       // set the graph viewer
-      graphViewer.LayoutEditingEnabled <- false
+      //graphViewer.LayoutEditingEnabled <- false
       graphViewer.ToolBarIsVisible <- false
       graphViewer.ContextMenu <- contextMenu
       graphViewer.Graph <- graph
 
       // graph viewer events
+      graphViewer.MouseWheel.Add(fun e -> 
+                                  if e.Delta > 0 then
+                                    graphViewer.ZoomF <- graphViewer.ZoomF + 0.1
+                                  else
+                                    graphViewer.ZoomF <- graphViewer.ZoomF - 0.1)
       graphViewer.MouseDown.Add(handleGraphClick)
       graphViewer.MouseCaptureChanged.Add(fun _ -> underMouse <- null)
       graphViewer.SelectionChanged.Add(

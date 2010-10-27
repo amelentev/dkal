@@ -3,12 +3,12 @@
 #set dispatcher "first"
 #set learning "discard"
 
-dkal knows
+_me knows
   pdp tdonS req R1 issued by P
   pdp tdonS req R2 by P has CATEGORY2 attribute string NAME2 valued VALUE2
   pdp tdonS req R3 by P has CATEGORY3 attribute int NAME3 valued VALUE3
 
-dkal knows
+_me knows
   employee "guido" follows "nikolaj" orders
   employee "nikolaj" follows "wolfram" orders
   if
@@ -21,7 +21,7 @@ dkal knows
   then
     employee E1 under E3 command
   
-dkal knows
+_me knows
   if 
     req R issued by P
     req R by P has "subject" attribute string "subject-id" valued V
@@ -29,14 +29,14 @@ dkal knows
   then
     req R by P decision "Permit"
 
-if dkal knows
+if _me knows
   req R issued by P
   req R by P decision D
 then
   say with justification to pdp
     req R by P decision D
 
-if dkal knows
+if _me knows
   req R issued by P
 then
   say with justification to pdp

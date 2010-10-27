@@ -9,7 +9,8 @@
 	
 	<!-- Decision points -->
 	<endpoint id="pdp1" type="xacml" attributeRepositoryId="ar" />
-	<endpoint id="dkal" type="dkal" xacml="singleRule" pepId="pdp2" papId="pdp2" policyId="extra-policy" file="extra_policy.dkal" />
+	<endpoint id="dkal" type="dkal" xacml="singleRule" pepId="pdp2" papId="pdp2" policyId="extra-policy" file="extra_policy.dkal"  
+		sql="connection_string.txt" />
 	<endpoint id="pdp2" type="xacml->dkal" dkalId="dkal" policyFile="common.dkal" />
 	<endpoint id= "pdp" type="adjudication" >
 		<pdp id="pdp1" />

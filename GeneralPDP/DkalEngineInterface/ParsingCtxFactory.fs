@@ -12,7 +12,7 @@ module ParsingCtxFactory =
 
     let pctx = ParsingCtx()
     let assertions = pctx.ParsePrelude() 
-                      @ (pctx.ParseStream "" (new StringReader(privateSql)))
+                      //@ (pctx.ParseStream "" (new StringReader(privateSql)))
                       @ (pctx.ParseStream "" (new StringReader(identity ppalName)))
     pctx, assertions
 

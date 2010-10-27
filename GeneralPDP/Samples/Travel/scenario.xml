@@ -1,13 +1,10 @@
 <scenario name="Travel">
 	<endpoint id="smith" />
 	
-	<!-- Repositories
-	<endpoint id="ar" type="attributerepository" color="purple" />
-	<endpoint id="pr" type="policyrepository" color="purple" /> -->
-	
 	<!-- CS Department -->
 	<endpoint id="cs_xacml" type="xacml" color="purple" />
-	<endpoint id="cs_dkal" type="dkal" xacml="basicTrust" pepId="cs_x2d" policyId="cs-policy" file="cs_policy.dkal" dispatcher="first" color="purple" />
+	<endpoint id="cs_dkal" type="dkal" xacml="basicTrust" pepId="cs_x2d" policyId="cs-policy" file="cs_policy.dkal" dispatcher="first" color="purple"   
+		sql="connection_string.txt" />
 	<endpoint id="cs_x2d" type="xacml->dkal" dkalId="cs_dkal" policyFile="common.dkal" color="purple" />
 	<endpoint id= "cs_pdp" type="adjudication" color="purple" >
 		<pdp id="cs_xacml" />
@@ -15,11 +12,12 @@
 	</endpoint>
 
 	<!-- University -->
-	<endpoint id="u_dkal" type="dkal" policyId="university-policy" file="university_policy.dkal" dispatcher="first" color="green" />
-	<endpoint id="u_pap" color="green" />
+	<endpoint id="uni_dkal" type="dkal" policyId="university-policy" file="university_policy.dkal" dispatcher="first" color="green"   
+		sql="connection_string.txt" />
+	<endpoint id="uni_pap" color="green" />
 	
 	<!-- XACML policy -->
-	<message from="u_pap" to="cs_xacml" type="xacmlPolicy" file="basic_policy.pcy" />
+	<message from="uni_pap" to="cs_xacml" type="xacmlPolicy" file="basic_policy.pcy" />
 	<sleep amount="750" />
 
 	<!-- XACML requests -->

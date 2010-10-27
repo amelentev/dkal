@@ -157,7 +157,8 @@ module Parsing =
                     let xacml = readStringAttribute n "xacml" (Some "")
                     let pctx, assertions = constructPctx n id
                     let policy = loadDkalPolicy n id pctx assertions
-                    let ep = DkalEndPoint(id, policy)
+                    let sql = File.ReadAllText (readStringAttribute n "sql" None)
+                    let ep = DkalEndPoint(id, sql, policy)
                     // engine options from policy file
                     if pctx.Options.ContainsKey "dispatcher" then
                       ep.SetDispatcher (pctx.Options.["dispatcher"])

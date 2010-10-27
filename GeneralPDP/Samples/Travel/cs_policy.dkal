@@ -1,35 +1,41 @@
 #include "common.dkal"
 
-_me knows
-  u_dkal tdonS travel to D using M is allowed
-  u_dkal tdonS travel to D using M is not allowed
+// TODO: add infostrate learning filters so to avoid learning unnecessary infons
 
+// Trust the decisions from the University
+_me knows
+  uni_dkal tdonS travel to DEST on AMOUNT dollars is allowed
+  uni_dkal tdonS travel to DEST on AMOUNT dollars is not allowed
+
+// If the same city was approved on the same or larger amount, approve
 if _me knows
   req R issued by P
-  req R by P has "resource" attribute string "destination" valued D
+  req R by P has "resource" attribute string "destination" valued DEST
   req R by P has "resource" attribute int "grant-amount" valued RM
-  travel to D using AM is allowed
+  travel to DEST on AM dollars is allowed
   asInfon(RM <= AM)
 then
   say with justification to P
     req R by P decision "Permit"
 
+// If the same city was disapproved on the same or smaller amount, disapprove
 if _me knows
   req R issued by P
-  req R by P has "resource" attribute string "destination" valued D
+  req R by P has "resource" attribute string "destination" valued DEST
   req R by P has "resource" attribute int "grant-amount" valued RM
-  travel to D using AM is not allowed
+  travel to DEST on AM dollars is not allowed
   asInfon(RM >= AM)
 then
   say with justification to P
     req R by P decision "Deny"
-	
+
+// If there is no knowledge, ask the university
 if _me knows
   req R issued by P
-  req R by P has "resource" attribute string "destination" valued D
+  req R by P has "resource" attribute string "destination" valued DEST
   req R by P has "resource" attribute int "grant-amount" valued M
 then
-  say with justification to u_dkal
-    is travel grant to D using M allowed
+  say with justification to uni_dkal
+    is travel grant to DEST on M dollars allowed
 
 	

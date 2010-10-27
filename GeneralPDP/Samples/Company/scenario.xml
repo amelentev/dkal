@@ -1,7 +1,8 @@
 <scenario name="Company">
 	<endpoint id="pep" />
 	<endpoint id="pap" />
-	<endpoint id="dkal" type="dkal" xacml="aware" policyFile="extra_policy.dkal" />
+	<endpoint id="dkal" type="dkal" xacml="aware" policyId="extra-policy" file="extra_policy.dkal"  
+		sql="connection_string.txt" />
 	<endpoint id="xacml" type="xacml" />
 	<endpoint id="pdp" type="dkal->xacml" dkalId="dkal" xacmlId="xacml" policy="prelude.dkal" />
 

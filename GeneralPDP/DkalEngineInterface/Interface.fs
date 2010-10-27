@@ -27,8 +27,8 @@ module Interface =
 
   /// Actual DKAL Engine Interface.
   /// cb is a callback that's invoked every time the engine has something to say
-  type DkalEngineInterface(ppalName:string, cb: Message -> unit) =
-    let pctx, initialAssertions = xacmlAwareParsingCtx(ppalName)
+  type DkalEngineInterface(ppalName:string, sql: string, cb: Message -> unit) =
+    let pctx, initialAssertions = xacmlAwareParsingCtx ppalName
     let eng = Engine.Config (Options.Create())
     let comm = Comm(pctx, eng, cb)
 
@@ -46,7 +46,7 @@ module Interface =
       | a -> a
 
     do
-      eng.options.PrivateSql <- pctx.Options.["private_sql"]
+      eng.options.PrivateSql <- sql
       eng.Reset ()
       // Load initial commrules from prelude 
       List.iter eng.AddAssertion (List.map instantiateAssertion initialAssertions)

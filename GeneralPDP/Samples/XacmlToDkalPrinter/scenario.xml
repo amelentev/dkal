@@ -1,7 +1,8 @@
 <scenario name="XacmlToDkalPrinter">
 	<endpoint id="pep" />
 	<endpoint id="pap" />
-	<endpoint id="engine" type="dkal" xacml="singleRule" papId="pdp" pepId="pdp"  policyId="singleRule" />
+	<endpoint id="engine" type="dkal" xacml="singleRule" papId="pdp" pepId="pdp"  policyId="singleRule"   
+		sql="connection_string.txt" />
 	<endpoint id="pdp" type="xacml->dkal" dkalId="engine" />
 
 	<!-- XACML policy -->
