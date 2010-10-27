@@ -217,11 +217,12 @@ module Translator =
             rightArgs.[i] <- qArgs.[i]
 
       // Satisfaction by compatibility
-      for v in [0 .. varsCounter.MaxVars()-1] do
-        let vars = List.map (fun i -> VarTerm("var" + i.ToString())) [0 .. v-1]
-        program.AddRulePart(RulePart(ImpliesRule(Relation(Names.PrimalRel v, qArgs @ vars @ tVarArgs [0]), 
-                                      [Relation(Names.PrimalRel (v+1), qArgs @ (List.replicate (v+1) WildcardTerm) @ tVarArgs [1]);
-                                        Relation(Names.CompatibleRel v, tVarArgs [0] @ vars @ tVarArgs [1])])))
+      for v1 in varsCounter.MaxCombinations() do
+        for v2 in [v1+1..varsCounter.MaxVars()] do
+          let vars = List.map (fun i -> VarTerm("var" + i.ToString())) [0 .. v1-1]
+          program.AddRulePart(RulePart(ImpliesRule(Relation(Names.PrimalRel v1, qArgs @ vars @ tVarArgs [0]), 
+                                        [Relation(Names.PrimalRel (v2), qArgs @ (List.replicate (v2) WildcardTerm) @ tVarArgs [1]);
+                                          Relation(Names.CompatibleRel v1, tVarArgs [0] @ vars @ tVarArgs [1])])))
 
       // Primal deflation/inflation (consider the case on which substituted term has variables itself)
       if varsCounter.MaxVars() > 0 then
