@@ -51,7 +51,8 @@
     <Compile Include="Datalog.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="VarsCounter.fs" />
-    <Compile Include="Translator.fs" />
+    <Compile Include="TranslatorInfonVars.fs" />
+    <Compile Include="TranslatorObjectVars.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

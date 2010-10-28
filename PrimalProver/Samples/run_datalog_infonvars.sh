@@ -1,5 +1,5 @@
 #!/bin/bash
-../DkalToDatalog/bin/Debug/DkalToDatalog $1 | tee $1.datalog
+../DkalToDatalog/bin/Debug/DkalToDatalog InfonVars $1 | tee $1.datalog
 echo
 echo "-------------------------------------------------------"
 echo

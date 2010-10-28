@@ -1,6 +1,5 @@
 ﻿namespace Microsoft.Research.Dkal2Datalog
 
-open Utils
 open DkalPrimalProver
 
 open System
@@ -8,7 +7,7 @@ open System.Collections.Generic
 
 module VarsCounter = 
   
-  type VarsCounter() = 
+  type VarsCounter(counter) = 
     let mutable plusVars = 0, 0
     let mutable impliesVars = 0, 0
     let mutable saidVars = 0
@@ -20,22 +19,22 @@ module VarsCounter =
     member vc.Add(i: Infon) = 
       match i with
       | :? SaidImplied as si ->
-        let v = numberOfVars (si.getKnowledge())
+        let v = counter (si.getKnowledge())
         match si with
         | :? Said -> saidVars <- Math.Max(saidVars, v)
         | :? Implied -> impliedVars <- Math.Max(impliedVars, v)
         | _ -> failwith "impossible"
         vc.Add(si.getKnowledge()) |> ignore
       | :? Plus as p ->
-        let vl = numberOfVars (p.getLeft())
+        let vl = counter (p.getLeft())
         vc.Add(p.getLeft())
-        let vr = numberOfVars (p.getRight())
+        let vr = counter (p.getRight())
         vc.Add(p.getRight())
         plusVars <- pairMax plusVars (vl, vr)
       | :? Implies as i ->
-        let vl = numberOfVars (i.getLeft())
+        let vl = counter (i.getLeft())
         vc.Add(i.getLeft())
-        let vr = numberOfVars (i.getRight())
+        let vr = counter (i.getRight())
         vc.Add(i.getRight())
         impliesVars <- pairMax impliesVars (vl, vr)
       | _ -> ()

@@ -4,17 +4,6 @@ open System.Collections.Generic
 
 module Datalog =
   
-  type Names = 
-    static member PrimalRel (v: int) = "Primal_" + v.ToString()
-    static member AndRel (vl: int) (vr: int) = "And_" + vl.ToString() + "_" + vr.ToString()
-    static member ImpliesRel (vl: int) (vr: int) = "Implies_" + vl.ToString() + "_" + vr.ToString()
-    static member SaidRel (ppal: string) (v: int) = "Said_" + ppal + "_" + v.ToString()
-    static member ImpliedRel (ppal: string) (v: int) = "Implied_" + ppal + "_" + v.ToString()
-    static member ConstRel = "IsConst"
-    static member VarRel = "IsVar"
-    static member CompatibleRel (v: int) = "Comp_" + v.ToString()
-    static member QueryRel (i: int) = "Query_" + i.ToString()
-
   type Term = 
   | VarTerm of string
   | AtomTerm of string
@@ -32,6 +21,8 @@ module Datalog =
       | WildcardTerm -> "_"
 
   let tVarArgs = List.map (fun (arg: int) -> VarTerm("t" + arg.ToString())) 
+  let fVarArgs = List.map (fun (arg: int) -> VarTerm("f" + arg.ToString())) 
+  let pVarArgs = List.map (fun (arg: int) -> VarTerm("p" + arg.ToString())) 
   let qVarArgs = List.map (fun (arg: int) -> VarTerm("q" + arg.ToString())) 
   let atomArgs = List.map (fun (arg: string) -> AtomTerm(arg)) 
 

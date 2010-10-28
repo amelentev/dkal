@@ -9,6 +9,14 @@ open System.Collections.Generic
 
 module Utils = 
 
+  let arrayListToList (al: System.Collections.ArrayList) = 
+    let mutable ret = []
+    for a in al do
+      match a with
+      | :? Infon as  i -> ret <- ret @ [i]
+      | _ -> failwith "expecting infons"
+    ret
+  
   let extendArgs (n: int) (args: Term seq) =
     if n <= Seq.length args then
       Seq.take n args |> Seq.toList
@@ -75,20 +83,30 @@ module Utils =
     | _ -> []
 
   // collects the variables and constants that appear in an infon in the same order they appear from left to right (with duplicates)
-  let rec varsConsts (i: Infon) (subformulas: Mapping<Infon>) = 
+  let rec varsConsts (i: Infon) = 
     match i with
     | :? SaidImplied as si -> 
-      varsConsts (si.getKnowledge()) subformulas
+      varsConsts (si.getKnowledge()) 
     | :? Plus as p -> 
-      varsConsts (p.getLeft()) subformulas @ varsConsts (p.getRight()) subformulas
+      varsConsts (p.getLeft()) @ varsConsts (p.getRight())
     | :? Implies as i ->
-      varsConsts (i.getLeft()) subformulas @ varsConsts (i.getRight()) subformulas
+      varsConsts (i.getLeft()) @ varsConsts (i.getRight())
     | :? Variable as v ->
       [VarTerm (v.getName().ToLower())]
     | :? Function as f ->
-      [AtomTerm (f.ToString())]
+      if f.getArguments().Count = 0 then 
+        [AtomTerm (f.ToString())]
+      else
+        List.map (fun a -> 
+                   match (a: Infon) with
+                   | :? Function as g -> AtomTerm (g.ToString())
+                   | :? Variable as v -> VarTerm (v.getName().ToLower())
+                   | _ -> failwith "expecting constant or variable arguments in function"
+                  ) (arrayListToList (f.getArguments()))
     | _ -> []
 
   let numberOfVars (i: Infon) = 
     (vars i).Length
 
+  let numberOfVarsConsts (i: Infon) = 
+    (varsConsts i).Length
