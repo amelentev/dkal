@@ -86,7 +86,8 @@ module Utils =
   let rec varsConsts (i: Infon) = 
     match i with
     | :? SaidImplied as si -> 
-      varsConsts (si.getKnowledge()) 
+      let ppalKind = if si.getPrincipal().isVar() then VarTerm else AtomTerm
+      [ppalKind(si.getPrincipal().getName().ToLower())] @ varsConsts (si.getKnowledge()) 
     | :? Plus as p -> 
       varsConsts (p.getLeft()) @ varsConsts (p.getRight())
     | :? Implies as i ->

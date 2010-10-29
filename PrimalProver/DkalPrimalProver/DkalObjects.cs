@@ -228,7 +228,7 @@ namespace DkalPrimalProver
     /*A principal, with a flag that indicates whether it is a free variable (for communication assertions)
      * 
      */
-    public class Principal
+    public class Principal : ICloneable
     {
 
         String name;
@@ -259,6 +259,11 @@ namespace DkalPrimalProver
         public override String ToString()
         {
             return getName();
+        }
+
+        public Object Clone()
+        {
+            return new Principal(this.name, this.isVariable);
         }
 
         public override bool Equals(object obj)

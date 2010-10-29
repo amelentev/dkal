@@ -243,6 +243,10 @@ principal ::= TOKEN:t {:
 						throw new Exception("Principal " + t + " not declared");
 					}
 					RESULT = new Principal(t); 
+					:}
+
+			| VARIABLE:v {:
+					RESULT = new Principal(v, true);
 					:};
 
 speech ::= SAID infon:i {: RESULT = new Said(i); :}| IMPLIED infon:i {: RESULT = new Implied(i); :};

@@ -46,5 +46,6 @@ module Main =
                         | _ -> failwith "Expecting either InfonVars or ObjectVars for the <mode> argument"
           printfn "%O" program
       | p :: _ -> printfn "Usage: %O <mode> <file>\n\nWhere <mode> is either InfonVars or ObjectVars.\nThe file argument must NOT include the extension '.primal'"  p
+      | _ -> failwith "impossible"
 
     with e -> printfn "Unhandled exception: %O" e

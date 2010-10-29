@@ -741,7 +741,7 @@ namespace DkalPrimalProver
 
         public override object Clone()
         {
-            return new Said(new Principal(getPrincipal().getName()), (Infon)getKnowledge().Clone(), (Infon)getPrefix().Clone());
+            return new Said((Principal)getPrincipal().Clone(), (Infon)getKnowledge().Clone(), (Infon)getPrefix().Clone());
         }
 
         public override int GetHashCode()
@@ -796,7 +796,7 @@ namespace DkalPrimalProver
 
         public override object Clone()
         {
-            return new Implied(new Principal(getPrincipal().getName()), (Infon)getKnowledge().Clone(), (Infon)getPrefix().Clone());
+            return new Implied((Principal)getPrincipal().Clone(), (Infon)getKnowledge().Clone(), (Infon)getPrefix().Clone());
         }
 
         public override int GetHashCode()

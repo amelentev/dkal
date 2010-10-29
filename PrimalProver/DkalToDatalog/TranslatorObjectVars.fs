@@ -60,8 +60,12 @@ module TranslatorObjectVars =
                       | :? Said as s -> Names.SaidRel v.Length
                       | :? Implied as i -> Names.ImpliedRel v.Length
                       | _ -> failwith "impossible"
+        let ppalArg = if si.getPrincipal().isVar() then
+                        VarTerm (ppal.ToLower())
+                      else
+                        AtomTerm ppal
         program.AddRulePart(RulePart(AtomRule(Relation(relName, 
-                                                atomArgs [ppal; si.getKnowledge().ToString()] @ v @ atomArgs [si.ToString()]))))
+                                                [ppalArg] @ atomArgs [si.getKnowledge().ToString()] @ v @ atomArgs [si.ToString()]))))
       | :? Function as f ->
         if f.getArguments().Count = 0 then
           constants.Add(f.ToString())
@@ -117,11 +121,11 @@ module TranslatorObjectVars =
       for v in varsCounter.SaidCombinations() do
         if v >= 1 then
           let vars = List.map (fun i -> VarTerm("var" + i.ToString())) [0 .. v-1]
-          program.AddRulePart(RulePart(ImpliesRule(Relation(Names.CompatibleRel v, tVarArgs [0] @ vars @ tVarArgs [1]),
+          program.AddRulePart(RulePart(ImpliesRule(Relation(Names.CompatibleRel (v+1), tVarArgs [0] @ pVarArgs [0] @ vars @ tVarArgs [1]),
                                         [Relation(Names.SaidRel v, pVarArgs [0] @ tVarArgs [2] @ vars @ tVarArgs [0]);
                                           Relation(Names.SaidRel v, pVarArgs [0] @ tVarArgs [3] @ vars @ tVarArgs [1]);
                                           Relation(Names.CompatibleRel v, tVarArgs [2] @ vars @ tVarArgs [3])])))
-          program.AddRulePart(RulePart(ImpliesRule(Relation(Names.CompatibleRel v, tVarArgs [0] @ vars @ tVarArgs [1]),
+          program.AddRulePart(RulePart(ImpliesRule(Relation(Names.CompatibleRel (v+1), tVarArgs [0] @ pVarArgs [0] @ vars @ tVarArgs [1]),
                                         [Relation(Names.ImpliedRel v, pVarArgs [0] @ tVarArgs [2] @ vars @ tVarArgs [0]);
                                           Relation(Names.ImpliedRel v, pVarArgs [0] @ tVarArgs [3] @ vars @ tVarArgs [1]);
                                           Relation(Names.CompatibleRel v, tVarArgs [2] @ vars @ tVarArgs [3])])))
