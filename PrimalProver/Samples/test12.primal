@@ -1,0 +1,16 @@
+/* Test input file for the primal algorithm */
+
+Principals p,q,r;
+
+Literals	f: Principal -> Infon,
+			g: Principal -> Principal -> Infon;
+			
+
+(g(X,Y) + g(Y,Z)) -> g(X,Z);
+Z said g(X,Y) -> g(X,Y);			
+p said g(q,r);
+p said g(r,p);
+
+? g(p,p);
+? g(q,p);
+
