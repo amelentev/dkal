@@ -1,0 +1,7 @@
+XACMLRequest 4
+	Resource "destination" = string "Cape Town"
+	Resource "grant-amount" = int "3100"
+	Action "action-id" = string "request-travel-grant"
+	Subject "subject-id" = string "smith"
+	Subject "position" = string "faculty"
+	

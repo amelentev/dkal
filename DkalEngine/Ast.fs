@@ -231,6 +231,56 @@ module Ast =
         | Const (Const.Text s) -> SX.String (fakePos, s)
         | Const (Const.Column (t,c)) -> SX.App (fakePos, t + "." + c, [])
       
+    member this.ToPrettyString () = 
+      let indentLines (s: string) = 
+        let lines = s.Split([|"\n"|], System.StringSplitOptions.None)
+        String.concat "\n" (Seq.map (fun s -> "    " + s) lines) 
+
+      match this with
+      | App (f, args) -> match f.name, args with
+                         | "asInfon", [t] -> "asInfon(" + t.ToPrettyString() + ")"
+                         | "certified", [t; _] -> t.ToPrettyString()
+                         | "and", [t1; t2] -> t1.ToPrettyString() + "\n" + t2.ToPrettyString()
+                         | "follows", [t1; t2] -> "if\n" + indentLines (t1.ToPrettyString()) + "\nthen\n" + indentLines (t2.ToPrettyString())
+                         | "said", [t1; t2] 
+                         | "implied", [t1; t2] 
+                         | "<", [t1; t2] 
+                         | ">", [t1; t2] 
+                         | "<=", [t1; t2] 
+                         | ">=", [t1; t2]
+                         | "==", [t1; t2] -> 
+                            t1.ToPrettyString() + " " + f.name + " " + t2.ToPrettyString()
+                         | "&&", [t1; t2] 
+                         | "||", [t1; t2] 
+                         | "-", [t1; t2] 
+                         | "+", [t1; t2] 
+                         | "*", [t1; t2] 
+                         | "/", [t1; t2] -> 
+                            "(" + t1.ToPrettyString() + ") " + f.name + " (" + t2.ToPrettyString() + ")"
+                         | "not", [t] -> 
+                            "not(" + t.ToPrettyString() + ")"
+                         | fn, ts when f.body = null -> 
+                            let fParts = fn.Split([|"-*-";"*-";"-*"|], System.StringSplitOptions.None)
+                            let fParts = Array.map (fun (s: string) -> s.Replace("-"," ")) fParts
+                            if ts.Length <> fParts.Length - 1 then
+                              failwith ("Incorrect amount of arguments for: " + fn)
+                            elif ts.Length > 0 then
+                              let ret = ref ""
+                              Seq.iteri (fun (i: int) (t: Term) -> ret.Value <- ret.Value + fParts.[i] + " " + (t.ToPrettyString()) + " ") ts
+                              ret.Value <- ret.Value + fParts.[fParts.Length - 1]
+                              ret.Value
+                            else
+                              fParts.[0]
+                         | fn, ts -> 
+                           fn + "(" + (String.concat ", " (List.map (fun (t: Term) -> t.ToPrettyString()) ts)) + ")"
+      | Var (v) -> v.name
+      | Const (Const.Int k) -> k.ToString()
+      | Const (Const.Principal p) -> p.name
+      | Const (Const.Bool b) -> b.ToString().ToLower()
+      | Const (Const.Float f) -> f.ToString()
+      | Const (Const.Text s) -> "\"" + s + "\""
+      | Const (Const.Column (t,c)) -> t + "." + c
+
   type PrincipalTerm = Term  
   type Infon = Term
 
@@ -340,6 +390,13 @@ module Ast =
       ai : AssertionInfo
       infon : Infon
     }
+    member this.ToPrettyString() = 
+      let indentLines (s: string) = 
+        let lines = s.Split([|"\n"|], System.StringSplitOptions.None)
+        String.concat "\n" (Seq.map (fun s -> "    " + s) lines) 
+
+      this.ai.principal.name + " knows\n" +
+        indentLines (this.infon.ToPrettyString()) + "\n"
   
   type CommKind =
     | Processed
@@ -355,6 +412,17 @@ module Ast =
       trigger : Infon
       certified : CommKind
     }
+
+    member this.ToPrettyString() = 
+      let indentLines (s: string) = 
+        let lines = s.Split([|"\n"|], System.StringSplitOptions.None)
+        String.concat "\n" (Seq.map (fun s -> "    " + s) lines)
+
+      "if " + this.ai.principal.name + " knows\n" +
+        indentLines (this.trigger.ToPrettyString()) + "\n" +
+        "then\n" +
+        indentLines ("say to " + this.target.ToPrettyString() + "\n") +
+        indentLines (indentLines (this.message.ToPrettyString())) + "\n"
 
     member this.ToSX() =
       let app (n, a) = SX.App (fakePos, n, a)
@@ -408,6 +476,12 @@ module Ast =
         | Knows k -> k.ai
         | SendTo c -> c.ai
         | ReceiveFrom f -> f.ai
+
+    member this.ToPrettyString() = 
+      match this with
+      | Knows k -> k.ToPrettyString()
+      | SendTo c -> c.ToPrettyString()
+      | _ -> failwith "Filters not supported for pretty strings"
 
     member this.ToSX() =
       let app (n, a) = SX.App (fakePos, n, a)

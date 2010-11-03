@@ -18,7 +18,7 @@ module TranslatorInfonVars =
     static member ImpliedRel (ppal: string) (v: int) = "Implied_" + ppal + "_" + v.ToString()
     static member ConstRel = "IsConst"
     static member VarRel = "IsVar"
-    static member CompatibleRel (v: int) = "Comp_" + v.ToString()
+    static member CompatibleRel (v: int) = "Unify_" + v.ToString()
     static member QueryRel (i: int) = "Query_" + i.ToString()
 
   type TranslatorInfonVars(filename: string) = 
@@ -70,7 +70,7 @@ module TranslatorInfonVars =
 
 
     let addCompatibilityRules () =
-      program.AddRulePart(CommentRulePart("Compatibility rules"))
+      program.AddRulePart(CommentRulePart("Unification rules"))
       for v in [0 .. varsCounter.MaxVars()] do
       
         let wildcards = List.replicate v WildcardTerm

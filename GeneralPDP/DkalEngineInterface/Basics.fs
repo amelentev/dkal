@@ -12,7 +12,7 @@ module Basics =
     member dp.Assertions = assertions
     override dp.ToString() =
       "DKALPolicy \"" + pid + "\"\r\n" + 
-         String.concat "\r\n" (List.map (fun (a: Assertion) -> winEndOfLines (a.ToSX().ToString())) assertions)
+         String.concat "\r\n" (List.map (fun (a: Assertion) -> winEndOfLines (a.ToPrettyString())) assertions)
 
   type DkalPolicyRequest(pid: PolicyId) = 
     member dpr.PolicyId = pid

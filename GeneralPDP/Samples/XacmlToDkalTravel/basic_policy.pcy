@@ -1,0 +1,20 @@
+XACMLPolicy "basic-policy"
+	SubjectTarget
+		"string-equal"
+			Subject string "position" = string "faculty"
+	ActionTarget 
+		"string-equal"
+			Action string "action-id" = string "request-travel-grant"
+	RuleCombinator "permit-overrides"
+	Rule 
+		// Department is allowed to directly grant small amounts to Professors
+		Condition
+			"integer-less-than-or-equal" (
+				"integer-one-and-only" ( Resource int "grant-amount" )
+				int "500"
+			)
+		Permit
+	Rule
+		// Deny in any other case
+		Deny
+	

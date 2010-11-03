@@ -26,6 +26,6 @@
 	<message from="smith" to="cs_pdp" type="xacmlRequest" file="request2.req" />
 	<sleep amount="750" />
 	<message from="smith" to="cs_pdp" type="xacmlRequest" file="request3.req" />
-	<sleep amount="750" />
-	<message from="smith" to="cs_pdp" type="xacmlRequest" file="request4.req" />
+	<!--<sleep amount="750" />
+	<message from="smith" to="cs_pdp" type="xacmlRequest" file="request4.req" />-->
 </scenario>

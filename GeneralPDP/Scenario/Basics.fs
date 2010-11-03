@@ -31,7 +31,7 @@ module Basics =
       match c with
       | InfonContent(msg) -> 
           let translator = DkalTermTranslator()
-          winEndOfLines (translator.StripSignatures(msg).ToSX().ToString()) 
+          winEndOfLines (translator.StripSignatures(msg).ToPrettyString()) 
       | XacmlRequestContent(req) -> req.ToString()
       | XacmlResponseContent(resp) -> resp.ToString()
       | XacmlPolicyContent(pcy) -> pcy.ToString()

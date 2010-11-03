@@ -17,7 +17,7 @@ module TranslatorObjectVars =
     static member ImpliesRel (vl: int) (vr: int) = "Implies_" + vl.ToString() + "_" + vr.ToString()
     static member SaidRel (v: int) = "Said_" + v.ToString()
     static member ImpliedRel (v: int) = "Implied_" + v.ToString()
-    static member CompatibleRel (v: int) = "Comp_" + v.ToString()
+    static member CompatibleRel (v: int) = "Unify_" + v.ToString()
     static member QueryRel (i: int) = "Query_" + i.ToString()
 
   type TranslatorObjectVars(filename: string) = 
@@ -80,7 +80,7 @@ module TranslatorObjectVars =
       | _ -> () 
 
     let addCompatibilityRules () =
-      program.AddRulePart(CommentRulePart("Compatibility rules"))
+      program.AddRulePart(CommentRulePart("Unification rules"))
 
       program.AddRulePart(RulePart(AtomRule(Relation(Names.CompatibleRel 0, tVarArgs [0] @ tVarArgs [0]))))
 

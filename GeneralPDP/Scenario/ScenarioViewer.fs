@@ -475,12 +475,12 @@ module ScenarioViewer =
                     match ep with 
                     | :? DkalEndPoint as dEp -> 
                         let showCommRulesMI = new MenuItem("Show installed communication rules...", new EventHandler(fun _ _ -> 
-                          let assertionsText = String.concat "\n" (List.map (fun (a: Assertion) -> a.ToSX().ToString()) (dEp.CommRules()))
+                          let assertionsText = String.concat "\n" (List.map (fun (a: Assertion) -> a.ToPrettyString()) (dEp.CommRules()))
                           MessageBox.Show(assertionsText, ep.Id + " communication rules") |> ignore
                           ))
                         contextMenu.MenuItems.Add(showCommRulesMI) |> ignore
                         let showKnowsMI = new MenuItem("Show principal infostrate...", new EventHandler(fun _ _ -> 
-                          let assertionsText = String.concat "\n" (List.map (fun (a: Assertion) -> a.ToSX().ToString()) (dEp.Knows()))
+                          let assertionsText = String.concat "\n" (List.map (fun (a: Assertion) -> a.ToPrettyString()) (dEp.Knows()))
                           MessageBox.Show(assertionsText, ep.Id + " infostrate") |> ignore
                           ))
                         contextMenu.MenuItems.Add(showKnowsMI) |> ignore
@@ -662,8 +662,11 @@ module ScenarioViewer =
           edge.UserData <- m
           edge.Label.FontSize <- 6
           edges.Add(edge)
-          currIndex <- currIndex + 1
+          makeInvisible edge
+          //currIndex <- currIndex + 1
           updateControls()
-          highlightEdge (Some edge))) |> ignore
+          //highlightEdge (Some edge)
+          reDraw()
+          )) |> ignore
 
 

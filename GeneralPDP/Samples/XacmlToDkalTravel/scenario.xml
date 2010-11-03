@@ -1,0 +1,16 @@
+<scenario name="XacmlToDkalTravel">
+	<endpoint id="smith" />
+	<endpoint id="cs_pap" color="purple" />
+	<endpoint id="cs_dkal" type="dkal" xacml="singleRule" papId="cs_pdp" pepId="cs_pdp"  policyId="singleRule" color="purple"  
+		sql="connection_string.txt" />
+	<endpoint id="cs_pdp" type="xacml->dkal" dkalId="cs_dkal" color="purple" />
+
+	<!-- XACML policy -->
+	<message from="cs_pap" to="cs_pdp" type="xacmlPolicy" file="basic_policy.pcy" />
+	<sleep amount="750" />
+
+	<!-- XACML requests -->
+	<message from="smith" to="cs_pdp" type="xacmlRequest" file="request1.req" />
+	<sleep amount="750" />
+	<message from="smith" to="cs_pdp" type="xacmlRequest" file="request2.req" />
+</scenario>
