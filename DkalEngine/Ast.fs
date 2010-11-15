@@ -121,7 +121,7 @@ module Ast =
   let private infonImplied = addGlobalFunction Type.Infon "implied" [Type.Principal; Type.Infon]
   let private infonEmpty = addGlobalFunction Type.Infon "empty" []
   let private infonAsInfon = addGlobalFunction Type.Infon "asInfon" [Type.Bool]  
-  let private infonCertified = addGlobalFunction Type.Infon "certified" [Type.Infon; Type.Evidence]
+  let private infonCertified = addGlobalFunction Type.Infon "justified" [Type.Infon; Type.Evidence]
   let private substrateEq = addGlobalFunction Type.Bool "==" [Type.Unbound; Type.Unbound]  
   
   // the int parameter is a placeholder for the actual cryptographic signature
@@ -239,7 +239,7 @@ module Ast =
       match this with
       | App (f, args) -> match f.name, args with
                          | "asInfon", [t] -> "asInfon(" + t.ToPrettyString() + ")"
-                         | "certified", [t; _] -> t.ToPrettyString()
+                         | "justified", [t; _] -> t.ToPrettyString()
                          | "and", [t1; t2] -> t1.ToPrettyString() + "\n" + t2.ToPrettyString()
                          | "follows", [t1; t2] -> "if\n" + indentLines (t1.ToPrettyString()) + "\nthen\n" + indentLines (t2.ToPrettyString())
                          | "said", [t1; t2] 
