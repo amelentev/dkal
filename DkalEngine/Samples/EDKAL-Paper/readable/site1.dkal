@@ -11,6 +11,7 @@ site1 knows
 
 if site1 knows
    site1 is allocated patients N1 to N2 in TRIAL
+   site1 participates in TRIAL
    asInfon(physUnnotified(PHYS,TRIAL))
    asInfon(physPatients(PHYS,TRIAL,P1,P2))
    asInfon(N1 <= P1 && P2 <= N2)
