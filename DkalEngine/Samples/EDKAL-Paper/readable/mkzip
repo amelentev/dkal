@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -xe
+rm -rf DkalDEMO
+mkdir DkalDEMO
+cp ../../../DkalController/bin/Debug/*.dll DkalDEMO/
+cp ../../../DkalController/bin/Debug/*.exe DkalDEMO/
+cp *.dkal DkalDEMO
+cp runall-demo.bat DkalDEMO
+cp /cygdrive/c/Windows/assembly/GAC_MSIL/FSharp.Core/2.0.0.0__b03f5f7f11d50a3a/FSharp.Core.dll DkalDEMO
+cp /cygdrive/c/Windows/assembly/GAC_MSIL/FSharp.PowerPack/1.9.9.9__a19089b1c74d0809/FSharp.PowerPack.dll DkalDEMO
+zip -r dkaldemo.zip DkalDEMO
