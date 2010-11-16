@@ -26,7 +26,7 @@ module DkalRequestTranslator =
       // certified(said(p,t)) -> t
       let rec stripPrefix t = 
         match t with 
-        | App(f, [t; _]) when f.name = "certified" -> 
+        | App(f, [t; _]) when f.name = "justified" -> 
             stripPrefix t
         | App(f, [_; t]) when f.name = "said" -> 
             stripPrefix t

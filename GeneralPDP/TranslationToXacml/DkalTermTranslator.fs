@@ -114,5 +114,5 @@ module DkalTermTranslator =
 
     member t.StripSignatures (term: Term) =
       match term with 
-      | App(f, [term; _]) when f.name = "certified" -> t.StripSignatures(term)
+      | App(f, [term; _]) when f.name = "justified" -> t.StripSignatures(term)
       | term -> term

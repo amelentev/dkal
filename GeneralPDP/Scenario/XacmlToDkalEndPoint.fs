@@ -91,10 +91,10 @@ module XacmlToDkalEndPoint =
         let infons = tr.TranslatePolicyToInfons p
         for infon in infons do
           let signature = App(pctx.LookupFunction("Ev.signedBy"), [Const(Principal(ppalMe)); infon; Const(Int(42))])
-          let certified = App(pctx.LookupFunction("certified"), [infon; signature]) 
+          let justified = App(pctx.LookupFunction("justified"), [infon; signature]) 
           ep.Send({sender= ep.Id;
                    receiver= dkalId;
-                   content= InfonContent(certified)})
+                   content= InfonContent(justified)})
 
     override ep.Description = ep.Id + ": XACML->DKAL"
   

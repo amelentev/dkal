@@ -15,7 +15,7 @@ module DkalResponseTranslator =
 
     member this.TranslateResponse (infon: Infon) =
       match infon with
-      | App(f, [t; _]) when f.name = "certified" -> 
+      | App(f, [t; _]) when f.name = "justified" -> 
           this.TranslateResponse t
       | App(f, [_; t]) when f.name = "said" -> 
           this.TranslateResponse t

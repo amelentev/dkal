@@ -52,7 +52,7 @@ module DkalToXacmlEndPoint =
                   // ask dkal if no definite answer from XACML
 //                  let signature = App(pctx.LookupFunction("Ev.signedBy"), 
 //                                    [Const(Principal(pctx.LookupOrAddPrincipal(id))); reqInfon; Const(Int(42))])
-//                  let certified = App(pctx.LookupFunction("certified"), [reqInfon; signature]) 
+//                  let justified = App(pctx.LookupFunction("justified"), [reqInfon; signature]) 
                   ep.Send({sender= id;
                             receiver= dkalId;
                             content= InfonContent(reqInfon)})

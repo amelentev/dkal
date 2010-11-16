@@ -103,10 +103,10 @@ module Main =
       let infons = pTraslator.TranslatePolicyToInfons policy
       for infon in infons do
         let signature = App(pctx.LookupFunction("Ev.signedBy"), [Const(Principal(pctx.LookupOrAddPrincipal "engine")); infon; Const(Int(42))])
-        let certified = App(pctx.LookupFunction("certified"), [infon; signature]) 
+        let justified = App(pctx.LookupFunction("justified"), [infon; signature]) 
         engine.ReceiveMessage {source= pctx.LookupOrAddPrincipal "engine";
                                target= pctx.LookupOrAddPrincipal "engine";
-                               message= certified;
+                               message= justified;
                                proviso= Term.Empty}
 
       // send the request to the engine
