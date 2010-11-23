@@ -372,7 +372,7 @@ module TranslatorInfonVars =
         program.AddRulePart(RulePart(AtomRule(Relation(Names.PrimalRel vars.Length, qArgs @ vars @ atomArgs [copy.ToString()]))))
 
         // if instantiations are necessary add a rule on which ground terms look like instantiated vars
-        let varsConsts = varsConsts copy 
+        let varsConsts = varsConstsIV copy 
         if varsCounter.MaxVars() > 0 && varsConsts.Length <> vars.Length then
           program.AddRulePart(RulePart(AtomRule(Relation(Names.PrimalRel varsConsts.Length, qArgs @ varsConsts @ atomArgs [copy.ToString()]))))
       program.AddRulePart(NewLineRulePart)

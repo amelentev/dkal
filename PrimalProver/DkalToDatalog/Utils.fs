@@ -82,6 +82,29 @@ module Utils =
       [v.getName().ToLower()]
     | _ -> []
 
+  // collects the INFON variables and constants that appear in an infon in the same order they appear from left to right (with duplicates)
+  let rec varsConstsIV (i: Infon) = 
+    match i with
+    | :? SaidImplied as si -> 
+      varsConstsIV (si.getKnowledge()) 
+    | :? Plus as p -> 
+      varsConstsIV (p.getLeft()) @ varsConstsIV (p.getRight())
+    | :? Implies as i ->
+      varsConstsIV (i.getLeft()) @ varsConstsIV (i.getRight())
+    | :? Variable as v ->
+      [VarTerm (v.getName().ToLower())]
+    | :? Function as f ->
+      if f.getArguments().Count = 0 then 
+        [AtomTerm (f.ToString())]
+      else
+        List.map (fun a -> 
+                   match (a: Infon) with
+                   | :? Function as g -> AtomTerm (g.ToString())
+                   | :? Variable as v -> VarTerm (v.getName().ToLower())
+                   | _ -> failwith "expecting constant or variable arguments in function"
+                  ) (arrayListToList (f.getArguments()))
+    | _ -> []
+
   // collects the variables and constants that appear in an infon in the same order they appear from left to right (with duplicates)
   let rec varsConsts (i: Infon) = 
     match i with
