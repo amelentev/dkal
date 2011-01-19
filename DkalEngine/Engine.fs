@@ -543,7 +543,7 @@ type Engine =
             None
       | App (f, [AsInfon (_) as t]) when f === Function.EvAsInfon ->
         // TODO check it
-        this.Comm.Warning ("asInfon evidence: " + t.ToString())
+        // this.Comm.Warning ("asInfon evidence: " + t.ToString())
         ret t
       | _ ->
         this.Comm.Warning ("unhandled evidence constructor")
