@@ -2,6 +2,8 @@
 ^DkalEngine/Dkal(Controller|Shell)/(bin|obj)/.*$
 ^DkalEngine/Lexer.fs$
 ^DkalEngine/SxLexer.fs$
+^.*/passwords_local.dkal$
+^.*/DkalDEMO/.*$
 .suo$
 .user$
 passwords.dkal(|sx)$

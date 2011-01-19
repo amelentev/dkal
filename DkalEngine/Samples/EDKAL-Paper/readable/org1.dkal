@@ -1,4 +1,5 @@
 #include "common.dkal"
+#set clear_msg_queue "true"
 
 function [2] siteUnnotified ( {S:principal}, {T:trial} ) returns {R:bool}
   is siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.unnotified == true && R == true

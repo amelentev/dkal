@@ -49,6 +49,10 @@ type SqlCommunicator(ctx:ParsingCtx) =
 
   member this.Close () = 
     sql.Close()
+
+  member this.ClearMessageQueue () =
+    let cmd = sql.GetCommand ("UPDATE " + tableName + " SET readAt = '1981-01-30' WHERE readAt IS NULL")
+    cmd.ExecuteNonQuery() |> ignore
   
   member this.SendMessage (msg:Message) =
     let cmd = sql.GetCommand ("INSERT INTO " + tableName + " (sender, reciver, msg) VALUES (@s, @r, @m)")

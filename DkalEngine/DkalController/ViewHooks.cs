@@ -34,6 +34,10 @@ namespace Microsoft.Research.DkalController
       this.pctx = pctx;
       this.eng = eng;
       sqlcomm = new E.SqlCommunicator(pctx);
+
+      if (pctx.Options.ContainsKey("clear_msg_queue")) {
+        sqlcomm.ClearMessageQueue();
+      }
     }
 
 
@@ -66,7 +70,7 @@ namespace Microsoft.Research.DkalController
       if (se != null)
         Say("<b>ERROR</b> <blue>{0}</blue>: {1}\n", se.Data0, se.Data1);
       else
-        Say("<b>Excaption:</b>\n{0}\n", value);
+        Say("<b>Exception:</b>\n{0}\n", value);
     }
 
     public E.Ast.Principal PrincipalById(int value)
