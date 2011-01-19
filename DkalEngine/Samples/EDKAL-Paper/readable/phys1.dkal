@@ -1,8 +1,5 @@
 #include "common.dkal"
 
-function [2] needInfo ( {N:int} ) returns {R:bool}
-  is physPatients.id == N && physPatients.needInfo == true && R == true
-
 phys1 knows
   SITE tdonS PHYS participates in TRIAL at SITE as a physician
   SITE tdonS PHYS is allocated patients P1 to P2 in TRIAL at SITE

@@ -2,6 +2,8 @@ type trial   // trials.id
 type patient // patients.id
 type record  // records.id
 
+#include "passwords_local.dkal"
+
 function [2] org ( {T:trial} ) returns {P:principal}
   is trials.id == T && trials.cro == P
 
@@ -17,4 +19,24 @@ attribute [16] {principal} is allocated patients {int} to {int} in {trial}
 attribute [14] {principal} is allocated patients {int} to {int} in {trial} at {principal}
 
 
-#include "passwords_local.dkal"
+// org1
+function [2] siteUnnotified ( {S:principal}, {T:trial} ) returns {R:bool}
+  is siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.unnotified == true && R == true
+function [2] sitePatients ( {S:principal}, {T:trial}, {N1:int}, {N2:int} ) returns {R:bool}
+  is siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.n1 == N1 && siteAssignments.n2 == N2 && R == true
+
+// site1
+function [2] physUnnotified ( {P:principal}, {T:trial} ) returns {R:bool}
+  is physAssignments.phys == P && physAssignments.trial == T && physAssignments.unnotified == true && R == true
+function [2] physPatients ( {P:principal}, {T:trial}, {N1:int}, {N2:int} ) returns {R:bool}
+  is physAssignments.phys == P && physAssignments.trial == T && physAssignments.n1 == N1 && physAssignments.n2 == N2 && R == true
+
+// phys1
+function [2] needInfo ( {N:int} ) returns {R:bool}
+  is physPatients.id == N && physPatients.needInfo == true && R == true
+
+// keyMgr
+function [2] key ( {R:record} ) returns {K:int}
+  is keys.record == R && keys.thekey == K
+
+

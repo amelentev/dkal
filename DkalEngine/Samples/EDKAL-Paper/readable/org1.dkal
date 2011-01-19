@@ -1,11 +1,6 @@
 #include "common.dkal"
 #set clear_msg_queue "true"
 
-function [2] siteUnnotified ( {S:principal}, {T:trial} ) returns {R:bool}
-  is siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.unnotified == true && R == true
-function [2] sitePatients ( {S:principal}, {T:trial}, {N1:int}, {N2:int} ) returns {R:bool}
-  is siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.n1 == N1 && siteAssignments.n2 == N2 && R == true
-
 if org1 knows
    asInfon(org(TRIAL) == org1)
    asInfon(siteUnnotified(SITE,TRIAL))
