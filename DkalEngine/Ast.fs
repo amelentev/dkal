@@ -365,8 +365,12 @@ module Ast =
       | InfonImplied (p, i) ->
         PP.Block [s (p.ToString()); s "implied"; pr i]
       | InfonEmpty -> s "empty"
+
       | App (f, [p; m; sgn]) when f === Function.EvSignature ->
         par [s (sgn.ShortCheckSum() + " signed by"); pr p]
+      | App (f, [AsInfon (p)]) when f === Function.EvAsInfon ->
+        par [s "check"; pr p]
+
       | App (f, args) ->
         f.WriteAsInfix (List.map pr args)
       | Var v -> s (v.name)
