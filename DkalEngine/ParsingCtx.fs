@@ -105,6 +105,7 @@ type ParsingCtx() =
 
   member this.ParseInfon s =
     let toks = Tokenizer.fromString s
+    ctx.vars.Clear()
     let toks = Parser.applyRules ctx toks
     let rec parse t = match t with
                       | PreAst.Tok.NewLine _ -> []
