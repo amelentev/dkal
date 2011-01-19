@@ -27,6 +27,15 @@ namespace Microsoft.Research.DkalController
     E.Engine eng;
     E.ParsingCtx pctx;
     ViewHooks hooks;
+    string fileName;
+
+    string Id
+    {
+      get
+      {
+        return pctx.Me.name;
+      }
+    }
 
     Dictionary<string, SetStyle> styles = new Dictionary<string, SetStyle>();
 
@@ -58,12 +67,46 @@ namespace Microsoft.Research.DkalController
 
       Text += ": " + pctx.Me.name;
 
+      RestorePosition();
       SetPosition(GetInt("x"), GetInt("y"), GetInt("w"), GetInt("h"));
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+      base.OnClosing(e);
+      SavePosition();
+    }
+
+    const string RegistryPath = @"Software\Microsoft Research\DKALController\Position";
+    void SavePosition()
+    {
+      var rect = string.Format("{0} {1} {2} {3}", this.Left, this.Top, this.Width, this.Height);
+      var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RegistryPath);
+      key.SetValue(Id, rect);
+    }
+
+    void RestorePosition()
+    {
+      var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RegistryPath);
+      if (key != null) {
+        var val = key.GetValue(Id) as string;
+        if (val != null) {
+          var words = val.Split(' ');
+          if (words.Length == 4) {
+            int tmp;
+            if (int.TryParse(words[0], out tmp)) this.Left = tmp;
+            if (int.TryParse(words[1], out tmp)) this.Top = tmp;
+            if (int.TryParse(words[2], out tmp)) this.Width = tmp;
+            if (int.TryParse(words[3], out tmp)) this.Height = tmp;
+          }
+        }
+      }
     }
 
     public CommunicationWindow(string fileName, ViewHooks h, E.Engine eng, E.ParsingCtx pctx)
     {
       h.comm = this;
+      this.fileName = fileName;
       InitializeComponent();
       AddStyles();
       this.pctx = pctx;
@@ -74,6 +117,12 @@ namespace Microsoft.Research.DkalController
       Console.SetError(sink);
       Console.WriteLine("Hello.");
       richTextBox3.Text = System.IO.File.ReadAllText(fileName);
+      
+    }
+
+    protected override void OnLoad(EventArgs e)
+    {
+      base.OnLoad(e);
       InitialMessage(fileName);
     }
 
