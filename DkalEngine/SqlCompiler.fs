@@ -380,6 +380,7 @@ module SqlCompiler =
         pr " FROM "
         pr (String.concat ", " tableList)
       pr " WHERE "
+      let whereClause = if whereClause = "1" then "1 > 0" else whereClause
       pr whereClause
       
       let addToSubst rd (idx, subst:Subst) var =
