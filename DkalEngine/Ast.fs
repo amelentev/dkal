@@ -81,6 +81,8 @@ module Ast =
           PP.Block (List.rev args)
 
                   
+  let (===) = LanguagePrimitives.PhysicalEquality
+
   let private nextId =
     let curr = ref 0
     function () -> incr curr; !curr
@@ -231,6 +233,14 @@ module Ast =
         | Const (Const.Text s) -> SX.String (fakePos, s)
         | Const (Const.Column (t,c)) -> SX.App (fakePos, t + "." + c, [])
       
+    member this.CheckSum () =
+      let sha = new System.Security.Cryptography.SHA1CryptoServiceProvider()
+      let bytes = System.Text.Encoding.UTF8.GetBytes(this.ToString())
+      let hash = sha.ComputeHash bytes
+      hash |> Seq.map (fun b -> b.ToString("X2")) |> String.concat ""
+
+    member this.ShortCheckSum () = "#" + this.CheckSum().Substring(0, 6)
+      
     member this.ToPrettyString () = 
       let indentLines (s: string) = 
         let lines = s.Split([|"\n"|], System.StringSplitOptions.None)
@@ -296,7 +306,6 @@ module Ast =
         app ("macro", pref @ (this.argTypes |> List.map (fun v -> v.ToSXDecl())) @ [(this.body :?> Term).ToSX()])
 
   
-  let (===) = LanguagePrimitives.PhysicalEquality
   
   let (|InfonAnd|_|) = function
     | App (fn, [a; b]) when fn === Function.And -> Some (InfonAnd (a, b))
@@ -356,6 +365,8 @@ module Ast =
       | InfonImplied (p, i) ->
         PP.Block [s (p.ToString()); s "implied"; pr i]
       | InfonEmpty -> s "empty"
+      | App (f, [p; m; sgn]) when f === Function.EvSignature ->
+        par [s (sgn.ShortCheckSum() + " signed by"); pr p]
       | App (f, args) ->
         f.WriteAsInfix (List.map pr args)
       | Var v -> s (v.name)
@@ -370,8 +381,6 @@ module Ast =
     member this.Sanitize () =
       let vars = dict()
       let aux = function
-        | Term.App (f, [p; _; _]) when f === Function.EvSignature ->
-          Some (Term.App (f, [p]))
         | Term.Var v ->
           if not (vars.ContainsKey v.id) then
             vars.[v.id] <- Term.Var { v with name = String((char)((int)'A' + vars.Count), 1) }

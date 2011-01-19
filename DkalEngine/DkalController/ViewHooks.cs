@@ -58,7 +58,8 @@ namespace Microsoft.Research.DkalController
 
     void Recieved(E.Ast.Message msg)
     {
-      Say("<b>FROM</b> {0} <b>GOT</b>\n{1}\n", msg.source, msg.message.Sanitize());
+      var sane = msg.message.Sanitize();
+      Say("<b>FROM</b> {0} <b>GOT</b>\n{1}\n", msg.source, sane);
       if (!msg.proviso.IsEmpty)
         Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
     }

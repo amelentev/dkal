@@ -498,7 +498,7 @@ type Engine =
   
   member private this.MakeSignature (infon:Infon) =
     // TODO
-    Term.Const (Const.Int 42)
+    Term.Const (Const.Text (infon.ShortCheckSum()))
     
   member private this.FinalOutcome = function
     | InfonFollows (_, i) -> this.FinalOutcome i
