@@ -51,8 +51,7 @@ type Engine =
     mutable filters : list<Filter>
     mutable communications : list<Communication>
     mutable nextId : int
-    mutable finish : bool
-    mutable nextRoundInfons : list<Knows>
+    mutable finish : bool   
   }
   
   /// Create a new engine instance.
@@ -66,7 +65,6 @@ type Engine =
         pending = new GQueue<_>()
         options = opts
         finish = false
-        nextRoundInfons = []
         }
     this
 
@@ -407,7 +405,7 @@ type Engine =
     this.Invoke (fun () ->
       this.comm <- Some comm
       let tmpInfons = this.DoListen msg
-      this.nextRoundInfons <- this.nextRoundInfons @ tmpInfons
+      this.DoTalk (tmpInfons)
       this.Comm.RequestFinished ()
       )
 
@@ -415,9 +413,7 @@ type Engine =
   member this.Talk (comm) =
     this.Invoke (fun () ->
       this.comm <- Some comm
-      let nri = this.nextRoundInfons
-      this.nextRoundInfons <- []
-      this.DoTalk (nri)
+      this.DoTalk ([])
       this.Comm.RequestFinished ())
 
   /// Given an infon, possibly with free variables, return all the possible values
