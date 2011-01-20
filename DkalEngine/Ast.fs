@@ -421,7 +421,7 @@ module Ast =
       ai : AssertionInfo
       target : PrincipalTerm
       message : Infon
-      proviso : Infon
+      proviso : Infon // TODO remove this
       trigger : Infon
       certified : CommKind
     }

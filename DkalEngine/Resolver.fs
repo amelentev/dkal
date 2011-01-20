@@ -102,12 +102,8 @@ module Resolver =
   and resolveProviso ctx ts =
     multiAnd (splitList (fun t -> [resolveInfon ctx t]) ts)
   
-  let resolveSentInfon ctx = function
-    | Tok.App (_, "proviso", [t1; t2]) ->
-      let proviso = resolveProviso ctx t1
-      splitList (fun t -> [resolveInfon ctx t, proviso]) t2
-    | t ->
-      splitList (fun t -> [resolveInfon ctx t, Infon.Empty]) t
+  let resolveSentInfon ctx t =
+    splitList (fun t -> [resolveInfon ctx t]) t
   
   let resolve (ctx:Context) t = 
     ctx.vars.Clear()
@@ -128,16 +124,12 @@ module Resolver =
                 | "say_target_cert" -> CommKind.CertifiedSay
                 | _ -> err t "expecting 'to' after 'then they send'"
             let target = resolveTerm ctx Type.Principal target
-            let singleComm t =
-              resolveSentInfon ctx t |> List.map (fun (sendTemplate, proviso) ->
-                Assertion.SendTo { ai = { origin = t.Pos; principal = who }
-                                   target = target
-                                   message = sendTemplate
-                                   proviso = proviso
-                                   trigger = precond
-                                   certified = kind })
-                                   
-            splitList singleComm what
+            [Assertion.SendTo { ai = { origin = t.Pos; principal = who }
+                                target = target
+                                message = multiAnd (splitList (fun t -> [resolveInfon ctx t]) what)
+                                proviso = Infon.Empty
+                                trigger = precond
+                                certified = kind }]
           | t ->
             err t "expecting 'to' after 'then they send'"
         splitList doTarget targets

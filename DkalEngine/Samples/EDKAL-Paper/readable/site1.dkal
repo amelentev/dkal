@@ -20,7 +20,7 @@ then
          asInfon(R == record(N,TRIAL))
       then
          site1 implied PHYS may read R
-
+   send with justification to PHYS
       if
          asInfon(N1 <= N && N <= N2)
          asInfon(R == record(N,TRIAL))

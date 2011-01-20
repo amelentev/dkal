@@ -557,17 +557,29 @@ type Engine =
             let msg = 
               if comm.certified = CertifiedSay then
                 Infon.Said (Infon.Const (Const.Principal this.Me.Value), comm.message)
-              else comm.message            
-            match this.FinalOutcome msg with
-               | InfonSaid (p, _)
-               | InfonImplied (p, _) when this.IsMe p ->
-                 { comm with message = Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg])) }
-               | _ ->
-                 let v = this.FreshVar Type.Evidence
-                 let msg = Infon.Cert (msg, Term.Var v)
-                 { comm 
-                   with message = msg
-                        trigger = Infon.And (msg, comm.trigger) }
+              else comm.message
+            
+            let trigger = ref comm.trigger
+            let rec transform = function
+              | InfonAnd (a, b) ->
+                match transform a, transform b with
+                  | InfonCert (a, aa), InfonCert (b, bb) ->
+                    Infon.Cert (Infon.And (a, b), App (Function.EvAnd, [aa; bb]))
+                  | _ -> failwith "oops"
+              | msg ->
+                match this.FinalOutcome msg with
+                   | InfonSaid (p, _)
+                   | InfonImplied (p, _) when this.IsMe p ->
+                     Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg]))
+                   | _ ->
+                     let v = this.FreshVar Type.Evidence
+                     let msg = Infon.Cert (msg, Term.Var v)
+                     trigger := Infon.And (msg, !trigger)
+                     msg
+            let msg = transform msg
+
+            { comm with trigger = !trigger; message = msg }
+
           | _ ->
             this.Comm.Warning ("certified provisional communication not supported at this time")
             comm
