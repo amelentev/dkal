@@ -23,9 +23,26 @@ namespace Microsoft.Research.DkalController
     E.Engine eng;
     E.SqlCommunicator sqlcomm;
 
+    Queue<string> pendingMessages = new Queue<string>();
+    int allowedMessages;
+
+    private void SayStep(string msg, params object[] args)
+    {
+      var s = args.Length == 0 ? msg : string.Format(msg, args);
+
+      lock (pendingMessages) {
+        if (allowedMessages <= 0) {
+          pendingMessages.Enqueue(s);
+        } else {
+          allowedMessages--;
+          Say(s);
+        }
+      }
+    }
+
     private void Say(string msg, params object[] args)
     {
-      var s = string.Format(msg, args);
+      var s = args.Length == 0 ? msg : string.Format(msg, args);
       comm.BeginInvoke((DoAction)(() => comm.Say(s)));
     }
 
@@ -45,6 +62,14 @@ namespace Microsoft.Research.DkalController
     {
       FSharp.Core.FSharpOption<E.Ast.Message> msg = null;
 
+      lock (pendingMessages) {
+        if (pendingMessages.Count > 0) {
+          Say(pendingMessages.Dequeue());
+          return;
+        }
+        allowedMessages = 1;
+      }
+      
       lock (sqlcomm) {
         msg = sqlcomm.CheckForMessage();
       }
@@ -59,9 +84,10 @@ namespace Microsoft.Research.DkalController
     void Recieved(E.Ast.Message msg)
     {
       var sane = msg.message.Sanitize();
-      Say("<b>FROM</b> {0} <b>GOT</b>\n{1}\n", msg.source, sane);
+      var text = string.Format("<b>FROM</b> {0} <b>GOT</b>\n{1}\n", msg.source, sane);      
       if (!msg.proviso.IsEmpty)
-        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
+        text += string.Format("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
+      SayStep(text);
     }
 
     #region ICommunicator Members
@@ -91,9 +117,10 @@ namespace Microsoft.Research.DkalController
       lock(sqlcomm)
         sqlcomm.SendMessage(msg);
 
-      Say("<b>SENT TO</b> {0}\n{1}\n", msg.target, msg.message.Sanitize());
+      var text = string.Format("<b>SENT TO</b> {0}\n{1}\n", msg.target, msg.message.Sanitize());      
       if (!msg.proviso.IsEmpty)
-        Say("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
+        text += string.Format("    <blue>PROVIDED</blue>\n{0}\n", msg.proviso);
+      SayStep(text);
     }
 
     public void Knows(E.Ast.Knows k)
