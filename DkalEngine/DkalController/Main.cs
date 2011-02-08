@@ -39,8 +39,16 @@ namespace Microsoft.Research.DkalController
       }
 
       if (filename == null) {
-        MessageBox.Show("expecting filename on command line");
-        return;
+        OpenFileDialog fdlg = new OpenFileDialog();
+        if (fdlg.ShowDialog() == DialogResult.OK)
+        {
+          filename = fdlg.FileName;
+        }
+        else
+        {
+          MessageBox.Show("you need to provide a filename (either on the command line or via the dialog)");
+          return;
+        }
       }
 
       var decls = new List<E.Ast.Assertion>();
