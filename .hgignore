@@ -7,3 +7,5 @@
 .suo$
 .user$
 passwords.dkal(|sx)$
+glob:DkalLanguageVSX/obj/Debug/*
+glob:DkalLanguageVSX/bin/Debug/**
