@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{409186ec-ef09-40e4-adbd-5673d174b540}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>DkalParser</RootNamespace>
+    <AssemblyName>DkalParser</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <Name>DkalParser</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\DkalParser.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\DkalParser.XML</DocumentationFile>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\FSharpPowerPack-2.0.0.0\bin\FSharp.PowerPack.targets" />
+  <PropertyGroup>
+    <FsLexOutputFolder>$(IntermediateOutputPath)</FsLexOutputFolder>
+    <FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Ast.fs" />
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module Microsoft.Research.DkalBackends.Parser</OtherFlags>
+    </FsYacc>
+    <Compile Include="$(IntermediateOutputPath)\Parser.fs">
+      <Visible>false</Visible>
+      <Link>Parser.fs</Link>
+    </Compile>
+    <Compile Include="$(IntermediateOutputPath)\Lexer.fs">
+      <Visible>false</Visible>
+      <Link>Lexer.fs</Link>
+    </Compile>
+    <Compile Include="Parsing.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

@@ -1,0 +1,6 @@
+(guido said p(X,Y)) -> p(X,Y)
+p(X,Y) + p(Y,Z) -> p(X,Z)
+guido said p(x,y)
+p(y,z)
+|-
+p(x,z)

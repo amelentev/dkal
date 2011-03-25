@@ -1,0 +1,16 @@
+r said ((p said m(x)) + (r said m(x)))
+r said (p said (m(x) -> m(y)))
+r said (p said (m(y) -> m(z)))
+|-
+r implied p implied m(z)
+r implied r implied m(x)
+r implied r implied m(z)
+
+//r said p said m(x)
+//|-
+//r implied p implied m(x)
+//r implied p said m(x)
+
+//r said m(x)
+//|-
+//r implied m(x)
