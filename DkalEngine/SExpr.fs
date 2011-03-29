@@ -134,10 +134,8 @@ type SX =
       | App (p, name, [a]) when SX.IsAssoc name -> a.UnAssoc()
       | App (p, name, (_ :: _ :: _ :: _ as args)) when SX.IsAssoc name ->
         args |> List.rev |> List.reduce (fun a b -> App (p, name, [b; a]))
-      | App (p, "tdonS", [w; i]) ->
+      | App (p, "tdon", [w; i]) ->
         App (p, "follows", [App (p, "said", [w; i]); i])
-      | App (p, "tdonI", [w; i]) ->
-        App (p, "follows", [App (p, "implied", [w; i]); i])
       | t -> t
 
   member this.Optimize() =
