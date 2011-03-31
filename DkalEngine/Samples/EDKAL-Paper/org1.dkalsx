@@ -25,5 +25,5 @@
       (and
         (asInfon (&& (<= N1 N) (<= N N2)))
         (asInfon (== R (record N TRIAL)))
-        (implied SITE (*-may-read-* PERSON R)))
-      (implied (org1) (*-may-read-* PERSON R)))))
+        (said SITE (*-may-read-* PERSON R)))
+      (said (org1) (*-may-read-* PERSON R)))))

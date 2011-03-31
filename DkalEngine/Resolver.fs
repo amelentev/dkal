@@ -88,14 +88,12 @@ module Resolver =
     | Tok.App (_, ("==>"|"-->"), [premise; consequence]) ->
       let premise = resolveProviso ctx premise
       multiAnd (splitList (fun t -> [Infon.Follows (premise, resolveInfon ctx t)]) consequence)
-    | Tok.App (pos, ("tdonS"|"tdonI"|"said"|"implied" as name), [p; i]) ->
+    | Tok.App (pos, ("tdon"|"said" as name), [p; i]) ->
       let p = resolveTerm ctx Type.Principal p
       let i = resolveInfon ctx i
       match name with
         | "said" -> Infon.Said (p, i)
-        | "implied" -> Infon.Implied (p, i)
-        | "tdonS" -> Infon.Follows (Infon.Said (p, i), i)
-        | "tdonI" -> Infon.Follows (Infon.Implied (p, i), i)
+        | "tdon" -> Infon.Follows (Infon.Said (p, i), i)
         | _ -> failwith "cannot happen"
     | tok ->
       resolveTerm ctx Type.Infon tok

@@ -1,0 +1,55 @@
+﻿%{
+open Microsoft.Research.DkalBackends.Ast
+
+open System
+%}
+
+// The start tokens become parser functions in the compiled code:
+%start InfonFormula
+%start InferenceProblem
+
+// These are the terminal tokens of the grammar along with the types of
+// the data carried by each token:
+%token <System.Int32> INT_LITERAL
+%token <System.Double> FLOAT_LITERAL
+%token <System.String> STRING_LITERAL
+%token <System.String> LOWER_IDENTIFIER
+%token <System.String> UPPER_IDENTIFIER
+%token AND IMPLIES SAID IMPLIED 
+%token LPAR RPAR COMMA VDASH
+%token EOF
+
+// This is the type of the data produced by successful reductions of each 'start' symbol:
+%type < InfonFormula > InfonFormula
+%type < InferenceProblem > InferenceProblem
+
+%right SAID IMPLIED
+%left IMPLIES
+%left AND
+
+%%
+
+// These are the rules of the grammar 
+InferenceProblem:
+	| InfonFormulas VDASH InfonFormula InfonFormulas EOF	{ ($1, $3::$4) }
+
+InfonFormulas:
+	|											{ [] }
+	| InfonFormula InfonFormulas				{ $1 :: $2 }
+
+InfonFormula:
+	| LOWER_IDENTIFIER LPAR Terms RPAR			{ AtomFormula($1, $3) }
+	| InfonFormula AND InfonFormula				{ AndFormula($1, $3) }
+	| InfonFormula IMPLIES InfonFormula			{ ImpliesFormula($1, $3) }
+	| Term SAID InfonFormula					{ SpeechFormula($1, SaidSpeech, $3) }
+	| Term IMPLIED InfonFormula					{ SpeechFormula($1, ImpliedSpeech, $3) }
+	| LPAR InfonFormula RPAR					{ $2 }
+
+Term:
+	| LOWER_IDENTIFIER							{ ConstTerm($1) }
+	| UPPER_IDENTIFIER							{ VarTerm($1) }
+
+Terms:
+	|											{ [] }
+	| Term										{ [$1] }
+	| Term COMMA Terms							{ $1 :: $3 }

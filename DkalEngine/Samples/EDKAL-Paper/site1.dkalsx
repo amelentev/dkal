@@ -15,8 +15,8 @@
     (== R (true))))
 
 (knows
-  (tdonS (org TRIAL) (*-participates-in-* SITE TRIAL))
-  (tdonS (org TRIAL) (*-is-allocated-patients-*-to-*-in-* SITE N1 N2 TRIAL)))
+  (tdon (org TRIAL) (*-participates-in-* SITE TRIAL))
+  (tdon (org TRIAL) (*-is-allocated-patients-*-to-*-in-* SITE N1 N2 TRIAL)))
 
 (send
   (and
@@ -29,11 +29,11 @@
   (to PHYS
     (follows
       (and (asInfon (&& (<= P1 N) (<= N P2))) (asInfon (== R (record N TRIAL))))
-      (implied (site1) (*-may-read-* PHYS R))))
+      (said (site1) (*-may-read-* PHYS R))))
   (to PHYS
     (follows
       (and
         (asInfon (&& (<= N1 N) (<= N N2)))
         (asInfon (== R (record N TRIAL)))
-        (implied (site1) (*-may-read-* PHYS R)))
-      (implied (org TRIAL) (*-may-read-* PHYS R)))))
+        (said (site1) (*-may-read-* PHYS R)))
+      (said (org TRIAL) (*-may-read-* PHYS R)))))

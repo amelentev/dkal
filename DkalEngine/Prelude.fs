@@ -70,10 +70,8 @@ function [2] bool_null returns {bool}
 function [2] __tuple ({int}) returns {int}
 
 
-attribute [21] {principal} tdonS {infon}
-attribute [21] {principal} tdonI {infon}
+attribute [21] {principal} tdon {infon}
 attribute [21] {principal} said {infon}
-attribute [21] {principal} implied {infon}
 
 function [knows 32] {principal} knows {block assertion} returns {assertion}
 function [send 30] if {principal} knows {block assertion} then they send {block assertion} returns {assertion}

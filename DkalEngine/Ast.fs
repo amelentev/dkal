@@ -120,7 +120,6 @@ module Ast =
   let private infonAnd = addGlobalFunction Type.Infon "and" [Type.Infon; Type.Infon]
   let private infonFollows = addGlobalFunction Type.Infon "follows" [Type.Infon; Type.Infon]
   let private infonSaid = addGlobalFunction Type.Infon "said" [Type.Principal; Type.Infon]
-  let private infonImplied = addGlobalFunction Type.Infon "implied" [Type.Principal; Type.Infon]
   let private infonEmpty = addGlobalFunction Type.Infon "empty" []
   let private infonAsInfon = addGlobalFunction Type.Infon "asInfon" [Type.Bool]  
   let private infonCertified = addGlobalFunction Type.Infon "justified" [Type.Infon; Type.Evidence]
@@ -136,7 +135,6 @@ module Ast =
     static member And = infonAnd
     static member Follows = infonFollows
     static member Said = infonSaid
-    static member Implied = infonImplied
     static member Empty = infonEmpty
     static member AsInfon = infonAsInfon
     static member Eq = substrateEq
@@ -253,7 +251,6 @@ module Ast =
                          | "and", [t1; t2] -> t1.ToPrettyString() + "\n" + t2.ToPrettyString()
                          | "follows", [t1; t2] -> "if\n" + indentLines (t1.ToPrettyString()) + "\nthen\n" + indentLines (t2.ToPrettyString())
                          | "said", [t1; t2] 
-                         | "implied", [t1; t2] 
                          | "<", [t1; t2] 
                          | ">", [t1; t2] 
                          | "<=", [t1; t2] 
@@ -319,10 +316,6 @@ module Ast =
     | App (fn, [a; b]) when fn === Function.Said -> Some (InfonSaid (a, b))
     | _ -> None
   
-  let (|InfonImplied|_|) = function
-    | App (fn, [a; b]) when fn === Function.Implied -> Some (InfonImplied (a, b))
-    | _ -> None
-  
   let (|InfonEmpty|_|) = function
     | App (fn, []) when fn === Function.Empty -> Some (InfonEmpty)
     | _ -> None
@@ -339,7 +332,6 @@ module Ast =
     static member And (a, b) = App (Function.And, [a; b])
     static member Follows (a, b) = App (Function.Follows, [a; b])
     static member Said (a, b) = App (Function.Said, [a; b])
-    static member Implied (a, b) = App (Function.Implied, [a; b])
     static member Empty = App (Function.Empty, [])
     static member Cert (i, e) = App (Function.Cert, [i; e])
     
@@ -353,17 +345,13 @@ module Ast =
     let s s = PP.PString s
     let rec pr = function
       | InfonFollows (InfonSaid (p, a), a') when a = a' ->
-        par [s (p.ToString()); s "tdonS"; pr a]
-      | InfonFollows (InfonImplied (p, a), a') when a = a' ->
-        par [s (p.ToString()); s "tdonI"; pr a]
+        par [s (p.ToString()); s "tdon"; pr a]
       | InfonFollows (a, b) ->
         par [pr a; s "==>"; pr b]
       | InfonAnd (a, b) ->
         par [pr a; s "&&"; pr b]
       | InfonSaid (p, i) ->
         PP.Block [s (p.ToString()); s "said"; pr i]
-      | InfonImplied (p, i) ->
-        PP.Block [s (p.ToString()); s "implied"; pr i]
       | InfonEmpty -> s "empty"
 
       | App (f, [p; m; sgn]) when f === Function.EvSignature ->

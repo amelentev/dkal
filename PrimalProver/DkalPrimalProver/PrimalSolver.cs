@@ -384,15 +384,15 @@ namespace DkalPrimalProver
             foreach (Infon i in inputFormulas)
             {
                 foreach (Infon i2 in i.getSubformulas())
-                subformulasWithPrefixes.UnionWith(i.getSubformulas());
+                    subformulasWithPrefixes.UnionWith(i.getSubformulas());
             }
 
             //Adds to the subformulas the extra prefixes
             HashSet<Infon> grafts = new HashSet<Infon>();
             foreach (Infon i in subformulasWithPrefixes)
             {
-                foreach (Infon i2 in i.getGraftedInfons())
-                 grafts.UnionWith(i.getGraftedInfons());
+                 foreach (Infon i2 in i.getGraftedInfons())
+                    grafts.UnionWith(i.getGraftedInfons());
             }
             subformulasWithPrefixes.UnionWith(grafts);
 

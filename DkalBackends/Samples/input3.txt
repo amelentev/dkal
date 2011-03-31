@@ -1,0 +1,7 @@
+(p(x,y) -> p(y,x)) 
+(p(y,x) -> p(x,y)) 
+((guido said p(X,Y)) -> p(X,Y)) 
+(guido said p(y,x)) 
+((guido implied p(X,Y)) -> p(X,Y))
+|-
+p(x,y)

@@ -2,11 +2,11 @@
 (macro (int K) key (record R) (&& (== (. keys record) R) (== (. keys thekey) K)))
 (knows
   (follows
-    (implied (org TRIAL) (*-may-read-* PERSON (record N TRIAL)))
+    (said (org TRIAL) (*-may-read-* PERSON (record N TRIAL)))
     (*-may-read-* PERSON (record N TRIAL))))
 (send
   (and
     (said PERSON (*-requests-to-read-* PERSON (record N TRIAL)))
-    (implied (org TRIAL) (*-may-read-* PERSON (record N TRIAL)))
+    (said (org TRIAL) (*-may-read-* PERSON (record N TRIAL)))
     (asInfon (== (key (record N TRIAL)) K)))
   (say PERSON (*-is-key-for-* K (record N TRIAL))))

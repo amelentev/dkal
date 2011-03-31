@@ -4,9 +4,9 @@
   (&& (== (. physPatients id) N) (== (. physPatients needInfo) (true)) (== R (true))))
 
 (knows
-  (tdonS SITE (*-participates-in-*-at-*-as-a-physician PHYS TRIAL SITE))
-  (tdonS SITE (*-is-allocated-patients-*-to-*-in-*-at-* PHYS P1 P2 TRIAL SITE))
-  (tdonS (keyManager) (*-is-key-for-* K (record N TRIAL))))
+  (tdon SITE (*-participates-in-*-at-*-as-a-physician PHYS TRIAL SITE))
+  (tdon SITE (*-is-allocated-patients-*-to-*-in-*-at-* PHYS P1 P2 TRIAL SITE))
+  (tdon (keyManager) (*-is-key-for-* K (record N TRIAL))))
 
 (send
   (and
@@ -15,4 +15,4 @@
     (asInfon (&& (<= P1 N) (<= N P2))) 
     (asInfon (needInfo N)))
   (to (keyManager) (said (phys1) (*-requests-to-read-* (phys1) (record N TRIAL))))
-  (to (keyManager) (implied (org TRIAL) (*-may-read-* (phys1) (record N TRIAL)))))
+  (to (keyManager) (said (org TRIAL) (*-may-read-* (phys1) (record N TRIAL)))))

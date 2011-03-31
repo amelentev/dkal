@@ -24,7 +24,6 @@ type GQueue<'a> = Collections.Generic.Queue<'a>
 
 type Pref =
   | Said of PrincipalTerm
-  | Implied of PrincipalTerm
 
 type SubstSet =
   { substs : list<Subst> }
@@ -122,13 +121,6 @@ type Engine =
         | _ -> ()
              
       function
-      | (Pref.Implied t1 :: pref, InfonSaid (t2, i))
-      | (Pref.Implied t1 :: pref, InfonImplied (t2, i)) ->
-        match unifyTerms subst (simpl subst t1, simpl subst t2) with
-          | Some subst ->
-            stripPrefix subst prefixUnif preconds (fun i -> suff (Infon.Implied (t2, i))) (pref, i)
-          | None -> 
-            stripPrefix subst ((t1, t2) :: prefixUnif) preconds (fun i -> suff (Infon.Implied (t2, i))) (pref, i)
       | (Pref.Said t1 :: pref, InfonSaid (t2, i)) ->
         match unifyTerms subst (simpl subst t1, simpl subst t2) with
           | Some subst -> 
@@ -176,14 +168,6 @@ type Engine =
             System.Console.WriteLine ("NOPE")
           []
     function
-    (*
-    | (InfonSaid (p1, i1), InfonSaid (p2, i2), pr)
-    | (InfonImplied (p1, i1), InfonSaid (p2, i2), pr)
-    | (InfonImplied (p1, i1), InfonImplied (p2, i2), pr) ->
-      match unifyTerms subst t1 t2 with
-        | Some subst -> None          
-        | None -> None
-    *)
     | (goal, InfonFollows (i1, i2)) as p ->
       let v = this.FreshVar Type.Evidence
       let derivePremise (subst, (goalPr:Term)) =
@@ -215,14 +199,12 @@ type Engine =
         | InfonEmpty _ -> [subst]
         | InfonSaid (p, i) ->
           this.DoDerive (Pref.Said p :: pref) subst i tmpInfons
-        | InfonImplied (p, i) ->
-          this.DoDerive (Pref.Implied p :: pref) subst i tmpInfons
         | Infon.Var v when subst.subst.ContainsKey v.id ->
           this.DoDerive pref subst subst.subst.[v.id] tmpInfons
         | AsInfon e ->
           if pref <> [] then
             printfn "%O" (e.ToSX())
-            failwith "asInfon(...) under said/implied prefix"
+            failwith "asInfon(...) under said prefix"
           [{ subst with assumptions = e :: subst.assumptions }]
         | InfonCert (inf, ev) when pref = [] ->
           let unifyEv (subst:AugmentedSubst, pr) =
@@ -294,7 +276,7 @@ type Engine =
                 | InfonEmpty ->
                   [Infon.Said (src, t)]
                 | proviso ->
-                  [Infon.Follows (proviso, Infon.Implied (src, t))]
+                  [Infon.Follows (proviso, Infon.Said (src, t))]
         List.map (fun infon -> { ai = this.FakeAI(); infon = infon }) infons
           
       match subst with
@@ -510,8 +492,7 @@ type Engine =
   
   member private this.CanSign principal infon =
     match this.FinalOutcome infon with
-      | InfonSaid (p, _)
-      | InfonImplied (p, _) -> principal = p
+      | InfonSaid (p, _) -> principal = p
       | _ -> false
   
   member private this.EvidenceCheck (acc:Vec<_>) (ev:Term) =
@@ -568,8 +549,7 @@ type Engine =
                   | _ -> failwith "oops"
               | msg ->
                 match this.FinalOutcome msg with
-                   | InfonSaid (p, _)
-                   | InfonImplied (p, _) when this.IsMe p ->
+                   | InfonSaid (p, _) when this.IsMe p ->
                      Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg]))
                    | _ ->
                      let v = this.FreshVar Type.Evidence
@@ -620,8 +600,7 @@ type Engine =
       | a -> a
 
   member this.Certify = function
-    | InfonSaid (p, _)
-    | InfonImplied (p, _) as msg ->
+    | InfonSaid (p, _) as msg ->
       Infon.Cert (msg, App (Function.EvSignature, [p; msg; this.MakeSignature msg]))
     | _ -> failwith "invalid input"
         
