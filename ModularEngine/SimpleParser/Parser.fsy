@@ -1,0 +1,116 @@
+﻿%{
+open Microsoft.Research.Dkal.SimpleParser.SimpleAst
+
+open System
+%}
+
+// ------------------------------------------------------------------------------------------------------
+// The start tokens become parser functions in the compiled code:
+
+%start Policy
+%start RelationDeclaration
+%start FunctionDeclaration
+%start Infon
+
+// ------------------------------------------------------------------------------------------------------
+// These are the terminal tokens of the grammar along with the types of the data carried by each token:
+
+// Binary operators
+%token AND IMPLIES EQ 
+
+// Unary operators
+%token SAID
+
+// Delimiters
+%token LPAR RPAR COLON COMMA 
+
+// Relation declarations
+%token RELATION
+
+// Function declarations
+%token FUNCTION
+
+// Identifiers
+%token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
+
+// Literals
+%token TRUE FALSE
+%token <System.Int32> INT_LITERAL
+%token <System.Double> FLOAT_LITERAL
+%token <System.String> STRING_LITERAL
+
+// EOF
+%token EOF
+
+// ------------------------------------------------------------------------------------------------------
+// This is the type of the data produced by successful reductions of each 'start' symbol:
+
+%type < SimplePolicy > Policy
+%type < SimpleRelationDeclaration > RelationDeclaration
+%type < SimpleFunctionDeclaration > FunctionDeclaration
+%type < SimpleMetaTerm > Infon
+
+// ------------------------------------------------------------------------------------------------------
+// Precedence of operators
+
+%left IMPLIES
+%right SAID
+%left AND
+
+// ------------------------------------------------------------------------------------------------------
+// These are the rules of the grammar 
+
+%%
+
+Policy:
+	|											{ SimplePolicy() }
+	| RelationDeclaration Policy				{ $2.RelationDeclarations.Add($1); $2 }
+	| FunctionDeclaration Policy				{ $2.FunctionDeclarations.Add($1); $2 }
+	| Infon Policy								{ $2.Infons.Add($1); $2 }
+
+RelationDeclaration:
+	| RELATION LOWER_IDENTIFIER LPAR Types RPAR					{ { Name = $2; ArgsTyp = $4 } }   
+
+Types:
+	|											{ [] }
+	| Type										{ [$1] }
+	| Type COMMA Types							{ $1 :: $3 }
+
+Type:
+	| LOWER_IDENTIFIER							{ $1 }
+
+FunctionDeclaration:
+	| FUNCTION LOWER_IDENTIFIER LPAR Args RPAR COLON Type		{ { Name = $2; Args = $4; RetTyp = $7 } }
+
+Args:
+	|											{ [] }
+	| Arg										{ [$1] }
+	| Arg COMMA Args							{ $1 :: $3 }
+
+Arg:
+	| LOWER_IDENTIFIER COLON Type				{ ($1, $3) }
+
+Infon:
+	| LOWER_IDENTIFIER LPAR Terms RPAR			{ SimpleApp($1, $3) }
+	| Infon AND Infon							{ SimpleApp("and", [$1; $3]) }
+	| Infon IMPLIES Infon						{ SimpleApp("implies", [$1; $3]) }
+	| Term SAID Infon							{ SimpleApp("said", [$1; $3]) }
+	| LPAR Infon RPAR							{ $2 }
+
+Terms:
+	|											{ [] }
+	| Term										{ [$1] }
+	| Term COMMA Terms							{ $1 :: $3 }
+
+Term:
+	| Literal									{ SimpleConst($1) }
+	| LOWER_IDENTIFIER LPAR Terms RPAR			{ SimpleApp($1, $3) }
+	| LOWER_IDENTIFIER							{ SimpleApp($1, []) }
+	| UPPER_IDENTIFIER							{ SimpleVar($1) }
+
+Literal:
+	| TRUE										{ BoolSimpleConstant(true) }
+	| FALSE										{ BoolSimpleConstant(false) }
+	| INT_LITERAL								{ IntSimpleConstant($1) }
+	| FLOAT_LITERAL								{ FloatSimpleConstant($1) }
+	| STRING_LITERAL							{ StringSimpleConstant($1) }
