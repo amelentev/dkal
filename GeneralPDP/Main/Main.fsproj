@@ -25,7 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Main.XML</DocumentationFile>
     <StartArguments>scenario.xml</StartArguments>
-    <StartWorkingDirectory>C:\Documents and Settings\Guido de Caso\My Documents\Visual Studio 2010\Projects\dkal\GeneralPDP\Samples\XacmlToDkalPrinter\</StartWorkingDirectory>
+    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\GeneralPDP\Samples\DkalAndXacmlPrinter\</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>

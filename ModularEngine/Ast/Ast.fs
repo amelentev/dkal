@@ -23,17 +23,13 @@
       | FloatConstant(_) -> Float
       | StringConstant(_) -> String
 
-  type Variable = { Name: string; Typ: Type }
+  type Variable = { Name: string; 
+                    Typ: Type }
 
-  type Function = { Name: string; RetTyp: Type; ArgsTyp: Type list }
-  with 
-    static member Const name typ = App({ Name = name; RetTyp = typ; ArgsTyp = [] }, [])
-
-    static member asInfon = {Name = "asInfon"; RetTyp = Infon; ArgsTyp = [Bool]}
-    static member intSum = {Name = "+"; RetTyp = Int; ArgsTyp = [Int; Int]}
-    static member infonAnd = {Name = "and"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}
-    static member infonImplies = {Name = "implies"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}
-    static member infonSaid = {Name = "said"; RetTyp = Infon; ArgsTyp = [Principal; Infon]}
+  type Function = { Name: string; 
+                    RetTyp: Type; 
+                    ArgsTyp: Type list;
+                    Body: MetaTerm option }
   
   and Substitution = Dictionary<Variable, MetaTerm>
 
@@ -99,24 +95,26 @@
           Var(v)
       | c -> c
 
-  module Main = 
-
-    let mt1 = App(Function.intSum, [Function.Const "10" Int; Function.Const "10" Int])
-    printfn "%A %A" mt1 mt1.Typ
-    let mt2 = App(Function.infonSaid, [Function.Const "guido" Principal; 
-                                        App({Name = "hasPassword"; RetTyp = Infon; ArgsTyp = [Principal; String]}, 
-                                          [Function.Const "guido" Principal; Function.Const "abcdef" String])])
-    printfn "%A %A" mt2 mt2.Typ
-    let mt3 = App(Function.infonSaid, [Var { Name = "guido"; Typ = Principal}; 
-                                        App({Name = "hasPassword"; RetTyp = Infon; ArgsTyp = [Principal; String]}, 
-                                          [Function.Const "guido" Principal; Function.Const "abcdef" String])])
-    printfn "%A %A" mt3 mt3.Typ
-
-    printfn ""
-
-    printfn "%A" (mt2.Unify mt3)
-    printfn "%A" (mt2.Unify mt1)
-
-    printfn "%A" (mt3.ApplySubstitution (mt2.Unify mt3).Value)
-
-    System.Console.ReadKey() |> ignore
+//  module Main = 
+//
+//    open Primitives
+//
+//    let mt1 = App(primitives.["intSum"], [Const(IntConstant 10); Const(IntConstant 10)])
+//    printfn "%A %A" mt1 mt1.Typ
+////    let mt2 = App(Function.infonSaid, [Function.Const "guido" Principal; 
+////                                        App({Name = "hasPassword"; RetTyp = Infon; ArgsTyp = [Principal; String]; Body = None}, 
+////                                          [Function.Const "guido" Principal; Function.Const "abcdef" String])])
+////    printfn "%A %A" mt2 mt2.Typ
+////    let mt3 = App(Function.infonSaid, [Var { Name = "guido"; Typ = Principal}; 
+////                                        App({Name = "hasPassword"; RetTyp = Infon; ArgsTyp = [Principal; String]; Body = None}, 
+////                                          [Function.Const "guido" Principal; Function.Const "abcdef" String])])
+////    printfn "%A %A" mt3 mt3.Typ
+////
+////    printfn ""
+////
+////    printfn "%A" (mt2.Unify mt3)
+////    printfn "%A" (mt2.Unify mt1)
+////
+////    printfn "%A" (mt3.ApplySubstitution (mt2.Unify mt3).Value)
+//
+//    System.Console.ReadKey() |> ignore

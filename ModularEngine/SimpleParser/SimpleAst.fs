@@ -17,24 +17,33 @@
 
   type SimpleType = string
 
+  type SimpleTypeDeclaration = 
+    { newTyp: SimpleType;
+      targetTyp: SimpleType }
+
+  type SimpleTableDeclaration = 
+    { Name: string;
+      Cols: (string * SimpleType) list }
+
   type SimpleRelationDeclaration = 
     { Name: string;
       ArgsTyp: SimpleType list }
-  with 
-    static member infonAnd = {Name = "and"; ArgsTyp = ["infon"; "infon"]}
-    static member infonImplies = {Name = "implies"; ArgsTyp = ["infon"; "infon"]}
-    static member infonSaid = {Name = "said"; ArgsTyp = ["principal"; "infon"]}
-    static member asInfon = {Name = "asInfon"; ArgsTyp = ["bool"]}
 
   type SimpleFunctionDeclaration = 
     { Name: string;
       RetTyp: SimpleType;
-      Args: (string * SimpleType) list; }
+      Args: (string * SimpleType) list; 
+      Body: SimpleMetaTerm option }
 
   type SimplePolicy() =
+    let typeDeclarations = new List<SimpleTypeDeclaration>()
+    let tableDeclarations = new List<SimpleTableDeclaration>()
     let relationDeclarations = new List<SimpleRelationDeclaration>()
     let functionDeclarations = new List<SimpleFunctionDeclaration>()
     let infons = new List<SimpleMetaTerm>()
+    
+    member sp.TypeDeclarations = typeDeclarations
+    member sp.TableDeclarations = tableDeclarations
     member sp.RelationDeclarations = relationDeclarations
     member sp.FunctionDeclarations = functionDeclarations
     member sp.Infons = infons

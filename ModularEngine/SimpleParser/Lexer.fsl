@@ -27,17 +27,26 @@ rule tokenize = parse
 
 // Binary operators
 | "&&"				{ AND }
+| "||"				{ OR }
 | "->"				{ IMPLIES }
 | "="				{ EQ }
 
 // Unary operators
 | "said"			{ SAID }
+| "!"				{ NOT }
 
 // Delimiters
 | "("				{ LPAR }
 | ")"				{ RPAR }
 | ":"				{ COLON }
 | ","				{ COMMA }
+| "."				{ DOT }
+
+// Type renames
+| "type"			{ TYPE }
+
+// Table declarations
+| "table"			{ TABLE }
 
 // Relation declarations
 | "relation"		{ RELATION }
