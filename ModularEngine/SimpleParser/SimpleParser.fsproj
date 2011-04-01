@@ -23,6 +23,8 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\SimpleParser.XML</DocumentationFile>
+    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\</StartWorkingDirectory>
+    <StartArguments>input.dkal</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -44,7 +46,6 @@
   <ItemGroup>
     <Compile Include="SimpleAst.fs" />
     <Compile Include="Context.fs" />
-    <Compile Include="SimpleMetaTermLifter.fs" />
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
