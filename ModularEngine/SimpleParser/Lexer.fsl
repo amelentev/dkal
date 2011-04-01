@@ -30,12 +30,22 @@ rule tokenize = parse
 | "||"				{ OR }
 | "->"				{ IMPLIES }
 | "="				{ EQ }
+| "<>"				{ NEQ }
+| "<"				{ LT }
+| ">"				{ GT }
+| "+"				{ PLUS }
+| "-"				{ MINUS }
+| "*"				{ TIMES }
+| "/"				{ DIV }
 
 // Unary operators
+| "asInfon"			{ AS_INFON }
 | "said"			{ SAID }
 | "!"				{ NOT }
 
 // Delimiters
+| "{"				{ LBRACE }
+| "}"				{ RBRACE }
 | "("				{ LPAR }
 | ")"				{ RPAR }
 | ":"				{ COLON }

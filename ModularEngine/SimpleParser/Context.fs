@@ -20,7 +20,6 @@
       types.Add("infon", Type.Infon)
 
       // primitive identifiers
-      printfn "%A" primitives
       for nameFunc in primitives do
         identifiers.Add(nameFunc.Key, nameFunc.Value)
 
@@ -62,26 +61,38 @@
     member ctx.AddFunction (sfd: SimpleFunctionDeclaration) =
       let argsTyp = List.map (fun (_, st) -> ctx.Types.[st]) sfd.Args
       let localVars = new Dictionary<SimpleVariable, Type>()
+      localVars.["Ret"] <- ctx.Types.[sfd.RetTyp]
       for argName, argTyp in sfd.Args do
         localVars.[argName] <- ctx.Types.[argTyp]
       let retTyp = ctx.Types.[sfd.RetTyp]
       let body =  match sfd.Body with
                   | None -> None
-                  | Some body -> Some <| ctx.LiftSimpleMetaTerm body localVars
+                  | Some body -> 
+                    let body = ctx.LiftSimpleMetaTerm(body, localVars)
+                    let typ = body.Typ
+                    Some body
       ctx.AddIdentifier { Name = sfd.Name; 
                           RetTyp = retTyp; 
                           ArgsTyp = argsTyp; 
                           Body = body }
 
-    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) (localVars: Dictionary<SimpleVariable, Type>) =
+    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm, localVars: Dictionary<SimpleVariable, Type>) : MetaTerm =
       match smt with
       | SimpleApp(f, smts) -> 
-        let mts = List.map (fun smt -> ctx.LiftSimpleMetaTerm smt localVars) smts
-        let found, func = ctx.Identifiers.TryGetValue f
-        if found then
-          App(func, mts)
-        else
-          failwith <| "Undeclared identifier: " + f
+        let mts = List.map (fun smt -> ctx.LiftSimpleMetaTerm(smt, localVars)) smts
+        let func = 
+          let found, func = ctx.Identifiers.TryGetValue f
+          if found then
+            func
+          elif f = "eq" || f = "neq" || f = "lt" || f = "lte" || f = "gt" || f = "gte" || 
+                f = "plus" || f = "times" || f = "minus" || f = "uminus" || f = "div" then
+            let simpleTyp = sprintf "%A" mts.[0].Typ
+            match ctx.SolveOverloadOperator f simpleTyp with
+            | Some func -> func
+            | None -> failwith <| "There is no " + f + " operator for " + simpleTyp
+          else
+            failwith <| "Undefined identifier: " + f
+        App(func, mts)
       | SimpleConst(c) ->
         match c with
         | BoolSimpleConstant b -> Const(BoolConstant b)
@@ -95,3 +106,12 @@
         else
           failwith <| "Undeclared variable: " + v
 
+    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) : MetaTerm =
+      ctx.LiftSimpleMetaTerm(smt, new Dictionary<SimpleVariable, Type>())
+
+    member private ctx.SolveOverloadOperator (f: string) (simpleTyp: string) =
+      let found, func = ctx.Identifiers.TryGetValue (f + simpleTyp)
+      if found then
+        Some func
+      else
+        None
