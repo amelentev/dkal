@@ -60,16 +60,14 @@
 
     member ctx.AddFunction (sfd: SimpleFunctionDeclaration) =
       let argsTyp = List.map (fun (_, st) -> ctx.Types.[st]) sfd.Args
-      let localVars = new Dictionary<SimpleVariable, Type>()
+      let localVars = ctx.CreateLocalVars sfd.Args
       localVars.["Ret"] <- ctx.Types.[sfd.RetTyp]
-      for argName, argTyp in sfd.Args do
-        localVars.[argName] <- ctx.Types.[argTyp]
       let retTyp = ctx.Types.[sfd.RetTyp]
       let body =  match sfd.Body with
                   | None -> None
                   | Some body -> 
                     let body = ctx.LiftSimpleMetaTerm(body, localVars)
-                    let typ = body.Typ
+                    let typ = body.CheckTyp()
                     Some body
       ctx.AddIdentifier { Name = sfd.Name; 
                           RetTyp = retTyp; 
@@ -86,7 +84,7 @@
             func
           elif f = "eq" || f = "neq" || f = "lt" || f = "lte" || f = "gt" || f = "gte" || 
                 f = "plus" || f = "times" || f = "minus" || f = "uminus" || f = "div" then
-            let simpleTyp = sprintf "%A" mts.[0].Typ
+            let simpleTyp = sprintf "%A" (mts.[0].Typ())
             match ctx.SolveOverloadOperator f simpleTyp with
             | Some func -> func
             | None -> failwith <| "There is no " + f + " operator for " + simpleTyp
@@ -115,3 +113,15 @@
         Some func
       else
         None
+
+    member private ctx.CreateLocalVars (args: SimpleArg list) : Dictionary<SimpleVariable, Type> = 
+      let localVars = new Dictionary<SimpleVariable, Type>()
+      for argName, argTyp in args do
+        localVars.[argName] <- ctx.Types.[argTyp]
+      localVars
+
+    member ctx.LiftSimpleAssertion (sa: SimpleAssertion) =
+      match sa with
+      | SimpleKnowledge(args, smt) -> 
+        Knowledge(ctx.LiftSimpleMetaTerm(smt, (ctx.CreateLocalVars args)))
+

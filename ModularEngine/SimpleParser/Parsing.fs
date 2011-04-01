@@ -35,6 +35,7 @@ module Main =
           printfn "%A" sp.TableDeclarations
           printfn "%A" sp.RelationDeclarations 
           printfn "%A" sp.FunctionDeclarations
+          printfn "%A" sp.Assertions
           printfn "%A" sp.Infons
           printfn ""
 
@@ -47,7 +48,11 @@ module Main =
           for i in sp.Infons do
             let mt = ctx.LiftSimpleMetaTerm i
             printfn "%A" <| mt
-            printfn "%A" <| mt.Typ
+            printfn "%A" <| mt.Typ()
+
+          for sa in sp.Assertions do
+            let a = ctx.LiftSimpleAssertion sa
+            printfn "%A" <| a
 
       | _ -> failwith "Expecting a single parameter"
     with e -> 
