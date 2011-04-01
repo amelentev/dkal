@@ -13,7 +13,7 @@ then
       if
          asInfon(N1 <= N && N <= N2)
          asInfon(R == record(N, TRIAL))
-         SITE implied PERSON may read R
+         SITE said PERSON may read R
       then
-         org1 implied PERSON may read R
+         org1 said PERSON may read R
 
