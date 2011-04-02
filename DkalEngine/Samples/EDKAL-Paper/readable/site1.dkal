@@ -1,8 +1,8 @@
 #include "common.dkal"
 
 site1 knows
-  org(TRIAL) tdonS SITE participates in TRIAL
-  org(TRIAL) tdonS SITE is allocated patients N1 to N2 in TRIAL
+  org(TRIAL) tdon SITE participates in TRIAL
+  org(TRIAL) tdon SITE is allocated patients N1 to N2 in TRIAL
 
 if site1 knows
    site1 is allocated patients N1 to N2 in TRIAL
@@ -19,11 +19,11 @@ then
          asInfon(P1 <= N && N <= P2)
          asInfon(R == record(N,TRIAL))
       then
-         site1 implied PHYS may read R
+         site1 said PHYS may read R
    send with justification to PHYS
       if
          asInfon(N1 <= N && N <= N2)
          asInfon(R == record(N,TRIAL))
-         site1 implied PHYS may read R
+         site1 said PHYS may read R
       then
-         org(TRIAL) implied PHYS may read R
+         org(TRIAL) said PHYS may read R

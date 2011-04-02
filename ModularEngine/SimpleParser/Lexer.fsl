@@ -30,12 +30,22 @@ rule tokenize = parse
 | "||"				{ OR }
 | "->"				{ IMPLIES }
 | "="				{ EQ }
+| "<>"				{ NEQ }
+| "<"				{ LT }
+| ">"				{ GT }
+| "+"				{ PLUS }
+| "-"				{ MINUS }
+| "*"				{ TIMES }
+| "/"				{ DIV }
 
 // Unary operators
+| "asInfon"			{ AS_INFON }
 | "said"			{ SAID }
 | "!"				{ NOT }
 
 // Delimiters
+| "{"				{ LBRACE }
+| "}"				{ RBRACE }
 | "("				{ LPAR }
 | ")"				{ RPAR }
 | ":"				{ COLON }
@@ -54,6 +64,13 @@ rule tokenize = parse
 // Function declarations
 | "function"		{ FUNCTION }
 
+// Variable declarations
+| "with"			{ WITH }
+
+// Assertions
+| "me"				{ ME }
+| "knows"			{ KNOWS }
+
 // Literals
 | "true"			{ TRUE } 
 | "false"			{ FALSE } 
@@ -64,8 +81,8 @@ rule tokenize = parse
                        STRING_LITERAL (stringBuf.ToString()) }
 
 // Identifiers
-| ['a'-'z']+ ['a'-'z''A'-'Z']*		{ LOWER_IDENTIFIER (lexeme lexbuf) }
-| ['A'-'Z']+ ['a'-'z''A'-'Z']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
+| ['a'-'z']+ ['a'-'z''A'-'Z''0'-'9']* 		{ LOWER_IDENTIFIER (lexeme lexbuf) }
+| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
 
 // EOF
 | eof   { EOF }

@@ -23,31 +23,37 @@ module Parsing =
 module Main = 
   do
     let args = System.Environment.GetCommandLineArgs() |> Seq.toList
-      
-    match args with
-    | [_; file] ->
+    try  
+      match args with
+      | [_; file] ->
 
-      if not (File.Exists (file)) then
-        printfn "File not found: %O" file
-      else
-        let sp = Parsing.parsePolicy (File.ReadAllText(file))
-        printfn "%A" sp.TypeDeclarations
-        printfn "%A" sp.TableDeclarations
-        printfn "%A" sp.RelationDeclarations 
-        printfn "%A" sp.FunctionDeclarations
-        printfn "%A" sp.Infons
-        printfn ""
+        if not (File.Exists (file)) then
+          printfn "File not found: %O" file
+        else
+          let sp = Parsing.parsePolicy (File.ReadAllText(file))
+          printfn "%A" sp.TypeDeclarations
+          printfn "%A" sp.TableDeclarations
+          printfn "%A" sp.RelationDeclarations 
+          printfn "%A" sp.FunctionDeclarations
+          printfn "%A" sp.Assertions
+          printfn "%A" sp.Infons
+          printfn ""
 
-        let ctx = Context()
-        ctx.LoadSimplePolicy(sp)
+          let ctx = Context()
+          ctx.LoadSimplePolicy(sp)
         
-        printfn "%A" ctx.Types
-        printfn "%A" ctx.Identifiers
+          printfn "%A" ctx.Types
+          printfn "%A" ctx.Identifiers
 
-//          let lifter = SimpleMetaTermLifter(ctx)
-//          for i in sp.Infons do
-//            let mt = lifter.LiftSimpleMetaTerm i
-//            printfn "%A" <| mt
-//            printfn "%A" <| mt.Typ
+          for i in sp.Infons do
+            let mt = ctx.LiftSimpleMetaTerm i
+            printfn "%A" <| mt
+            printfn "%A" <| mt.Typ()
 
-    | _ -> failwith "Expecting a single parameter"
+          for sa in sp.Assertions do
+            let a = ctx.LiftSimpleAssertion sa
+            printfn "%A" <| a
+
+      | _ -> failwith "Expecting a single parameter"
+    with e -> 
+      printfn "%O" e

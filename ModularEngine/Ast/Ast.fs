@@ -40,10 +40,17 @@
   with 
 
     /// Returns the type of the MetaTerm
-    member mt.Typ = 
+    member mt.Typ() = 
+      match mt with
+      | App(f, mts) -> f.RetTyp
+      | Const(c) -> c.Typ
+      | Var({Name = _; Typ = t}) -> t
+
+    /// Checks that the MetaTerm is correctly typed
+    member mt.CheckTyp() = 
       match mt with
       | App(f, mts) -> 
-        let foundTyp = List.map (fun (mt: MetaTerm) -> mt.Typ) mts
+        let foundTyp = List.map (fun (mt: MetaTerm) -> mt.CheckTyp()) mts
         if f.ArgsTyp = foundTyp then
           f.RetTyp
         else 
@@ -95,26 +102,5 @@
           Var(v)
       | c -> c
 
-//  module Main = 
-//
-//    open Primitives
-//
-//    let mt1 = App(primitives.["intSum"], [Const(IntConstant 10); Const(IntConstant 10)])
-//    printfn "%A %A" mt1 mt1.Typ
-////    let mt2 = App(Function.infonSaid, [Function.Const "guido" Principal; 
-////                                        App({Name = "hasPassword"; RetTyp = Infon; ArgsTyp = [Principal; String]; Body = None}, 
-////                                          [Function.Const "guido" Principal; Function.Const "abcdef" String])])
-////    printfn "%A %A" mt2 mt2.Typ
-////    let mt3 = App(Function.infonSaid, [Var { Name = "guido"; Typ = Principal}; 
-////                                        App({Name = "hasPassword"; RetTyp = Infon; ArgsTyp = [Principal; String]; Body = None}, 
-////                                          [Function.Const "guido" Principal; Function.Const "abcdef" String])])
-////    printfn "%A %A" mt3 mt3.Typ
-////
-////    printfn ""
-////
-////    printfn "%A" (mt2.Unify mt3)
-////    printfn "%A" (mt2.Unify mt1)
-////
-////    printfn "%A" (mt3.ApplySubstitution (mt2.Unify mt3).Value)
-//
-//    System.Console.ReadKey() |> ignore
+  type Assertion =
+  | Knowledge of MetaTerm

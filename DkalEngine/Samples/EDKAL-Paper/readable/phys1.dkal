@@ -1,9 +1,9 @@
 #include "common.dkal"
 
 phys1 knows
-  SITE tdonS PHYS participates in TRIAL at SITE as a physician
-  SITE tdonS PHYS is allocated patients P1 to P2 in TRIAL at SITE
-  keyManager tdonS K is key for record(N,TRIAL)
+  SITE tdon PHYS participates in TRIAL at SITE as a physician
+  SITE tdon PHYS is allocated patients P1 to P2 in TRIAL at SITE
+  keyManager tdon K is key for record(N,TRIAL)
 
 if phys1 knows
    PHYS participates in TRIAL at SITE as a physician
@@ -13,5 +13,5 @@ if phys1 knows
 then
    send with justification to keyManager
       phys1 said phys1 requests to read record(N,TRIAL)
-      org(TRIAL) implied phys1 may read record(N,TRIAL)
+      org(TRIAL) said phys1 may read record(N,TRIAL)
 
