@@ -9,3 +9,7 @@
 passwords.dkal(|sx)$
 glob:DkalLanguageVSX/obj/Debug/*
 glob:DkalLanguageVSX/bin/Debug/**
+syntax: glob
+**/passwords_local - Cloud.dkal
+**~
+**/{bin,obj}/**Debug/*
