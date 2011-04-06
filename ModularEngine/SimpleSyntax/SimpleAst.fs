@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Research.Dkal.SimpleParser.SimpleAst
+﻿namespace Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
 
   open System.Collections.Generic
 
@@ -13,6 +13,7 @@
   | IntSimpleConstant of int
   | FloatSimpleConstant of float
   | StringSimpleConstant of string
+  | PrincipalSimpleConstant of string
 
   type SimpleMetaTerm = 
   | SimpleApp of SimpleFunction * SimpleMetaTerm list
@@ -29,28 +30,36 @@
 
   type SimpleRelationDeclaration = 
     { Name: string;
-      ArgsTyp: SimpleType list }
+      Args: SimpleArg list }
 
   type SimpleFunctionDeclaration = 
     { Name: string;
       RetTyp: SimpleType;
       Args: SimpleArg list; 
-      Body: SimpleMetaTerm option }
+      Body: SimpleMetaTerm }
 
+  type SimpleKnowledge =  { Args: SimpleArg list; 
+                            Fact: SimpleMetaTerm }
+  type SimpleCommunicationRule =  { Args: SimpleArg list; 
+                                    Trigger: SimpleMetaTerm;
+                                    Target: SimpleMetaTerm;
+                                    Content: SimpleMetaTerm }
   type SimpleAssertion = 
-  | SimpleKnowledge of SimpleArg list * SimpleMetaTerm
+  | SimpleKnow of SimpleKnowledge
+  | SimpleCommRule of SimpleCommunicationRule
 
-  type SimplePolicy() =
+  type SimpleSignature() = 
     let typeDeclarations = new List<SimpleTypeDeclaration>()
     let tableDeclarations = new List<SimpleTableDeclaration>()
     let relationDeclarations = new List<SimpleRelationDeclaration>()
     let functionDeclarations = new List<SimpleFunctionDeclaration>()
-    let assertions = new List<SimpleAssertion>()
-    let infons = new List<SimpleMetaTerm>()
+    member ss.TypeDeclarations = typeDeclarations
+    member ss.TableDeclarations = tableDeclarations
+    member ss.RelationDeclarations = relationDeclarations
+    member ss.FunctionDeclarations = functionDeclarations
     
-    member sp.TypeDeclarations = typeDeclarations
-    member sp.TableDeclarations = tableDeclarations
-    member sp.RelationDeclarations = relationDeclarations
-    member sp.FunctionDeclarations = functionDeclarations
+  type SimplePolicy() =
+    let assertions = new List<SimpleAssertion>()
     member sp.Assertions = assertions
-    member sp.Infons = infons
+
+  type SimpleAssembly = { Signature: SimpleSignature; Policy: SimplePolicy }
