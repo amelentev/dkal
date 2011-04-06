@@ -69,7 +69,10 @@ type ParsingCtx() =
         ctx.principals.[name]
 
   member this.LookupFunction name =
-    ctx.functions.[name]
+    if ctx.functions.ContainsKey name then
+      ctx.functions.[name]
+    else 
+      failwith <| "function not defined: " + name
 
   member this.LookupType name =
     match ctx.types.TryGetValue name with
