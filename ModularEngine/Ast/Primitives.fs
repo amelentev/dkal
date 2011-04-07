@@ -7,32 +7,43 @@
   let associatives = new HashSet<string>()
 
   // n-ary functions 
-  let infonAnd (mts: MetaTerm list) = 
-    App({ Name = "infonAnd"; 
+  let andInfon (mts: MetaTerm list) = 
+    App({ Name = "andInfon"; 
           RetTyp = Infon; 
           ArgsTyp = List.replicate mts.Length Infon }, mts)
-  let boolAnd (mts: MetaTerm list) = 
-    App({ Name = "boolAnd"; 
+  let andBool (mts: MetaTerm list) = 
+    App({ Name = "andBool"; 
           RetTyp = Bool; 
           ArgsTyp = List.replicate mts.Length Bool }, mts)
-  let boolOr (mts: MetaTerm list) = 
-    App({ Name = "boolOr"; 
+  let orBool (mts: MetaTerm list) = 
+    App({ Name = "orBool"; 
           RetTyp = Bool; 
           ArgsTyp = List.replicate mts.Length Bool }, mts)
+
+  let trueBool = Const(BoolConstant(true))
+  let trueInfon = App({Name = "asInfon"; RetTyp = Infon; ArgsTyp = [Bool]}, [Const(BoolConstant(true))])
 
   do
     let addPrimitive (func: Function) = primitives.Add(func.Name, func)
     
+    // rule constructs
+    addPrimitive {Name = "rule"; RetTyp = Rule; ArgsTyp = [Infon; Infon; Action]}
+
+    // action constructs
+    addPrimitive {Name = "seq"; RetTyp = Action; ArgsTyp = [Action; Action]}
+    addPrimitive {Name = "send"; RetTyp = Action; ArgsTyp = [Principal; Infon]}
+    addPrimitive {Name = "learn"; RetTyp = Action; ArgsTyp = [Infon]}
+
     // infon constructs
     addPrimitive {Name = "asInfon"; RetTyp = Infon; ArgsTyp = [Bool]}
-    addPrimitive {Name = "infonAnd"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}; 
-    addPrimitive {Name = "infonImplies"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}
-    addPrimitive {Name = "infonSaid"; RetTyp = Infon; ArgsTyp = [Principal; Infon]}
+    addPrimitive {Name = "andInfon"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}; 
+    addPrimitive {Name = "impliesInfon"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}
+    addPrimitive {Name = "saidInfon"; RetTyp = Infon; ArgsTyp = [Principal; Infon]}
     
     // boolean constructs
-    addPrimitive {Name = "boolAnd"; RetTyp = Bool; ArgsTyp = [Bool; Bool]}
-    addPrimitive {Name = "boolOr"; RetTyp = Bool; ArgsTyp = [Bool; Bool]}
-    addPrimitive {Name = "boolNot"; RetTyp = Bool; ArgsTyp = [Bool]}
+    addPrimitive {Name = "andBool"; RetTyp = Bool; ArgsTyp = [Bool; Bool]}
+    addPrimitive {Name = "orBool"; RetTyp = Bool; ArgsTyp = [Bool; Bool]}
+    addPrimitive {Name = "notBool"; RetTyp = Bool; ArgsTyp = [Bool]}
     
     // equality constructs
     addPrimitive {Name = "eqBool"; RetTyp = Bool; ArgsTyp = [Bool; Bool]}
@@ -74,6 +85,6 @@
     addPrimitive {Name = "plusString"; RetTyp = Type.String; ArgsTyp = [Type.String; Type.String]}
 
     // associative functions
-    associatives.Add("infonAnd") |> ignore
-    associatives.Add("boolAnd") |> ignore
-    associatives.Add("boolOr") |> ignore
+    associatives.Add("andInfon") |> ignore
+    associatives.Add("andBool") |> ignore
+    associatives.Add("orBool") |> ignore

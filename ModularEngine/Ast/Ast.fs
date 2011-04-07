@@ -6,6 +6,8 @@
   | Bool
   | Principal
   | Infon
+  | Action
+  | Rule
   | Substrate of System.Type
   with 
     static member Int = Substrate(typeof<int>)
@@ -75,7 +77,11 @@
       let ret = new HashSet<Variable>()
       let rec traverse mt =
         match mt with
-        | App(f, mts) -> List.iter traverse mts
+        | App(f, mts) -> 
+            List.iter (fun mt -> 
+                         match mt with 
+                         | App(f, _) when f.Name = "rule" -> ()
+                         | _ -> traverse mt) mts
         | Var(v) -> ret.Add(v) |> ignore
         | _ -> ()
       traverse mt
@@ -114,23 +120,17 @@
           Var(v)
       | c -> c
 
+  type Message =  { Target: MetaTerm;
+                    Content: MetaTerm }
+  type Action = 
+  | SendMessage of Message
+  | Learn of MetaTerm
+  
   type Knowledge = { Fact: MetaTerm }
   type CommunicationRule =  { Trigger: MetaTerm;
                               Target: MetaTerm;
                               Content: MetaTerm }
-  type Assertion =
-  | Know of Knowledge
-  | CommRule of CommunicationRule
-  with 
-    member a.Vars = 
-      let ret = new HashSet<Variable>()
-      match a with
-      | Know(k) -> ret.UnionWith(k.Fact.Vars)
-      | CommRule(c) ->  ret.UnionWith(c.Trigger.Vars)
-                        ret.UnionWith(c.Target.Vars)
-                        ret.UnionWith(c.Content.Vars)
-      ret
 
-  type Policy = { Assertions: Assertion list }
+  type Policy = { Rules: MetaTerm list }
 
   type Assembly = { Signature: Signature; Policy: Policy }

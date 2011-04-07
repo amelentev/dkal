@@ -59,7 +59,7 @@
     member ss.FunctionDeclarations = functionDeclarations
     
   type SimplePolicy() =
-    let assertions = new List<SimpleAssertion>()
-    member sp.Assertions = assertions
+    let rules = new List<SimpleMetaTerm>()
+    member sp.Rules = rules
 
   type SimpleAssembly = { Signature: SimpleSignature; Policy: SimplePolicy }
