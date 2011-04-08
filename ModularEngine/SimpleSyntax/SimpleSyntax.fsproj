@@ -6,12 +6,12 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{7cb6ddad-0bbb-4826-a260-6f968b9dccf7}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>SimpleParser</RootNamespace>
-    <AssemblyName>SimpleParser</AssemblyName>
+    <OutputType>Library</OutputType>
+    <RootNamespace>SimpleSyntax</RootNamespace>
+    <AssemblyName>SimpleSyntax</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <Name>SimpleParser</Name>
+    <Name>SimpleSyntax</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,9 +22,11 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Debug\SimpleParser.XML</DocumentationFile>
-    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\</StartWorkingDirectory>
-    <StartArguments>input.dkal</StartArguments>
+    <DocumentationFile>bin\Debug\SimpleSyntax.XML</DocumentationFile>
+    <StartWorkingDirectory>
+    </StartWorkingDirectory>
+    <StartArguments>
+    </StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -34,7 +36,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Release\SimpleParser.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SimpleSyntax.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
@@ -45,12 +47,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="SimpleAst.fs" />
+    <Compile Include="SimplePrettyPrinter.fs" />
+    <Compile Include="TypeErrors.fs" />
+    <Compile Include="TypeInfo.fs" />
     <Compile Include="Context.fs" />
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
     <FsYacc Include="Parser.fsy">
-      <OtherFlags>--module Microsoft.Research.Dkal.SimpleParser.Parser</OtherFlags>
+      <OtherFlags>--module Microsoft.Research.Dkal.SimpleSyntax.Parser</OtherFlags>
     </FsYacc>
     <Compile Include="$(IntermediateOutputPath)\Parser.fs">
       <Visible>false</Visible>
@@ -60,9 +65,19 @@
       <Visible>false</Visible>
       <Link>Lexer.fs</Link>
     </Compile>
-    <Compile Include="Parsing.fs" />
+    <Compile Include="SimpleParser.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
+      <Name>Interfaces</Name>
+      <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.fsproj">
+      <Name>Utils</Name>
+      <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />

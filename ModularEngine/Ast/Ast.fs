@@ -4,32 +4,44 @@
 
   type Type = 
   | Bool
-  | Int
-  | Float
-  | String
   | Principal
   | Infon
-
-  type Constant = 
-    | BoolConstant of bool
-    | IntConstant of int
-    | FloatConstant of float
-    | StringConstant of string
+  | Action
+  | Rule
+  | Substrate of System.Type
   with 
-    member c.Typ = 
-      match c with
-      | BoolConstant(_) -> Bool
-      | IntConstant(_) -> Int
-      | FloatConstant(_) -> Float
-      | StringConstant(_) -> String
+    static member Int = Substrate(typeof<int>)
+    static member Float = Substrate(typeof<float>)
+    static member String = Substrate(typeof<string>)
+    override t.ToString() = 
+      match t with
+      | Substrate(typ) -> typ.Name
+      | t -> sprintf "%A" t
 
   type Variable = { Name: string; 
                     Typ: Type }
 
+  type TableDeclaration = { Name: string; 
+                            Cols: Variable list }
+  type RelationDeclaration = { Name: string; 
+                               Args: Variable list }
+  type Signature =  { Tables: TableDeclaration list;
+                      Relations: RelationDeclaration list }
+
+  type Constant = 
+    | BoolConstant of bool
+    | PrincipalConstant of string
+    | SubstrateConstant of obj
+  with 
+    member c.Typ = 
+      match c with
+      | BoolConstant(_) -> Bool
+      | PrincipalConstant(_) -> Principal
+      | SubstrateConstant(c) -> Substrate(c.GetType())
+
   type Function = { Name: string; 
                     RetTyp: Type; 
-                    ArgsTyp: Type list;
-                    Body: MetaTerm option }
+                    ArgsTyp: Type list }
   
   and Substitution = Dictionary<Variable, MetaTerm>
 
@@ -55,7 +67,8 @@
           f.RetTyp
         else 
           let ets, fts = sprintf "%A" f.ArgsTyp, sprintf "%A" foundTyp
-          failwith <| "Type error, found " + fts + " when expecting " + ets
+          failwith <| "Type error, found " + fts + " when expecting " + ets 
+                      + " on " + (sprintf "%A" mt)
       | Const(c) -> c.Typ
       | Var({Name = _; Typ = t}) -> t
 
@@ -64,9 +77,14 @@
       let ret = new HashSet<Variable>()
       let rec traverse mt =
         match mt with
-        | App(f, mts) -> List.iter traverse mts
+        | App(f, mts) -> 
+            List.iter (fun mt -> 
+                         match mt with 
+                         | App(f, _) when f.Name = "rule" -> ()
+                         | _ -> traverse mt) mts
         | Var(v) -> ret.Add(v) |> ignore
         | _ -> ()
+      traverse mt
       ret
 
     /// Returns a Substitution that makes mt1 and mt2 syntactically equal, if possible; None otherwise
@@ -102,5 +120,17 @@
           Var(v)
       | c -> c
 
-  type Assertion =
-  | Knowledge of MetaTerm
+  type Message =  { Target: MetaTerm;
+                    Content: MetaTerm }
+  type Action = 
+  | SendMessage of Message
+  | Learn of MetaTerm
+  
+  type Knowledge = { Fact: MetaTerm }
+  type CommunicationRule =  { Trigger: MetaTerm;
+                              Target: MetaTerm;
+                              Content: MetaTerm }
+
+  type Policy = { Rules: MetaTerm list }
+
+  type Assembly = { Signature: Signature; Policy: Policy }

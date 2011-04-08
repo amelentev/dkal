@@ -30,7 +30,9 @@ type SqlConnector(connStr) =
       System.Console.WriteLine ("reopening database: " + e.Message)
       conn.Open()
   do
-    conn.Open()
+    try
+      conn.Open()
+    with e -> printfn "%O" e
       
   member this.Close () =
     conn.Close()

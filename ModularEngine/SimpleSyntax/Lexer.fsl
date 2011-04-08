@@ -1,5 +1,5 @@
 ﻿{
-module Microsoft.Research.Dkal.SimpleParser.Lexer
+module Microsoft.Research.Dkal.SimpleSyntax.Lexer
 
 open System
 open Microsoft.FSharp.Text.Lexing
@@ -49,6 +49,7 @@ rule tokenize = parse
 | "("				{ LPAR }
 | ")"				{ RPAR }
 | ":"				{ COLON }
+| ";"				{ SEMICOLON }
 | ","				{ COMMA }
 | "."				{ DOT }
 
@@ -70,6 +71,15 @@ rule tokenize = parse
 // Assertions
 | "me"				{ ME }
 | "knows"			{ KNOWS }
+| "if"				{ IF }
+| "then"			{ THEN }
+| "wire"			{ WIRE }
+| "has"				{ HAS }
+
+// Actions
+| "send"			{ SEND }
+| "to"				{ TO }
+| "learn"			{ LEARN }
 
 // Literals
 | "true"			{ TRUE } 
