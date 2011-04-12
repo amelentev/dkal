@@ -187,6 +187,9 @@ MetaTerm:
 	| WITH Args IF WIRE HAS MetaTerm THEN Action						{ SimpleApp("rule", [asInfonTrue; $6; $8] @ toSimpleMetaTerms $2)}
 	| IF WIRE HAS MetaTerm THEN Action									{ SimpleApp("rule", [asInfonTrue; $4; $6])}
 
+// Actions
+	| Action									{ $1 }
+
 Action:
 	| SEND TO MetaTerm MetaTerm			{ SimpleApp("send", [$3; $4]) }
 	| LEARN MetaTerm					{ SimpleApp("learn", [$2]) }

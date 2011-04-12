@@ -31,10 +31,11 @@
     member ti.AddLevel (vars: SimpleArg list) =
       let newLevel = new Dictionary<SimpleVariable, Type>()
       for argName, argTyp in vars do
-        if ti.VariableType argName = None then
+        match ti.VariableType argName with
+        | Some t when t <> ti.LiftType argTyp ->
+          failwith <| "Redefined variable with different types " + argName
+        | _ ->
           newLevel.[argName] <- ti.LiftType argTyp
-        else
-          failwith <| "Redefined variable " + argName
       levels.Insert(0, newLevel)
 
     member ti.AddToCurrentLevel ((var, typ): SimpleArg) =

@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="ParserFactory.fs" />
     <Compile Include="PrettyPrinterFactory.fs" />
+    <Compile Include="RouterFactory.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
@@ -51,9 +52,19 @@
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\SimpleRouter\SimpleRouter.fsproj">
+      <Name>SimpleRouter</Name>
+      <Project>{62c15ad9-06f2-4c97-a319-1ac3a5059b0e}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\SimpleSyntax\SimpleSyntax.fsproj">
       <Name>SimpleSyntax</Name>
       <Project>{7cb6ddad-0bbb-4826-a260-6f968b9dccf7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\TypedSyntax\TypedSyntax.fsproj">
+      <Name>TypedSyntax</Name>
+      <Project>{dbce463b-d533-4324-990b-24292a298ea9}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

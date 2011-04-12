@@ -118,23 +118,18 @@
               solvedMacros.Add(body.ApplySubstitution subst) |> ignore
               newRet
             else
-              // check if it is asInfon
-              if f = "asInfon" then
-                let conds = ctx.MacroConditions solvedMacros
-                App(ctx.Identifiers.["asInfon"], [App(ctx.Identifiers.["andBool"], [conds] @ mts)])
+              // check if it is a primitive operator
+              let found, func = ctx.Identifiers.TryGetValue f
+              if found then
+                App(func, mts)
+              elif f = "eq" || f = "neq" || f = "lt" || f = "lte" || f = "gt" || f = "gte" || 
+                    f = "plus" || f = "times" || f = "minus" || f = "uminus" || f = "div" || f = "and" then
+                let simpleTyp = mts.[0].Typ().ToString()
+                match ctx.SolveOverloadOperator f simpleTyp with
+                | Some func -> App(func, mts)
+                | None -> failwith <| "There is no " + f + " operator for " + simpleTyp
               else
-                // check if it is a primitive operator
-                let found, func = ctx.Identifiers.TryGetValue f
-                if found then
-                  App(func, mts)
-                elif f = "eq" || f = "neq" || f = "lt" || f = "lte" || f = "gt" || f = "gte" || 
-                      f = "plus" || f = "times" || f = "minus" || f = "uminus" || f = "div" || f = "and" then
-                  let simpleTyp = mts.[0].Typ().ToString()
-                  match ctx.SolveOverloadOperator f simpleTyp with
-                  | Some func -> App(func, mts)
-                  | None -> failwith <| "There is no " + f + " operator for " + simpleTyp
-                else
-                  failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
+                failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
         | SimpleConst(c) ->
           match c with
           | BoolSimpleConstant b -> Const(BoolConstant b)

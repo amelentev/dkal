@@ -42,6 +42,8 @@
     <Compile Include="IParser.fs" />
     <Compile Include="IPrettyPrinter.fs" />
     <Compile Include="IEngine.fs" />
+    <Compile Include="IRouter.fs" />
+    <Compile Include="IExecutor.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
