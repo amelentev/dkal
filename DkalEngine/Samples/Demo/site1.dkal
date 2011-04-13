@@ -1,0 +1,34 @@
+#include "common.dkal"
+
+function [2] physUnnotified ( {P:principal}, {T:trial} ) returns {R:bool}
+  is physAssignments.phys == P && physAssignments.trial == T && physAssignments.unnotified == true && R == true
+function [2] physPatients ( {P:principal}, {T:trial}, {N1:int}, {N2:int} ) returns {R:bool}
+  is physAssignments.phys == P && physAssignments.trial == T && physAssignments.n1 == N1 && physAssignments.n2 == N2 && R == true
+
+site1 knows
+  org(TRIAL) tdon SITE participates in TRIAL
+  org(TRIAL) tdon SITE is allocated patients N1 to N2 in TRIAL
+
+if site1 knows
+   site1 is allocated patients N1 to N2 in TRIAL
+   site1 participates in TRIAL
+   asInfon(physUnnotified(PHYS,TRIAL))
+   asInfon(physPatients(PHYS,TRIAL,P1,P2))
+   asInfon(N1 <= P1 && P2 <= N2)
+then
+   say with justification to PHYS
+      PHYS participates in TRIAL at site1 as a physician
+      PHYS is allocated patients P1 to P2 in TRIAL at site1
+   send with justification to PHYS
+      if
+         asInfon(P1 <= N && N <= P2)
+         asInfon(R == record(N,TRIAL))
+      then
+         site1 said PHYS may read R
+   send with justification to PHYS
+      if
+         asInfon(N1 <= N && N <= N2)
+         asInfon(R == record(N,TRIAL))
+         site1 said PHYS may read R
+      then
+         org(TRIAL) said PHYS may read R

@@ -1,0 +1,23 @@
+#include "common.dkal"
+
+function [2] siteUnnotified ( {S:principal}, {T:trial} ) returns {R:bool}
+  is siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.unnotified == true && R == true
+function [2] sitePatients ( {S:principal}, {T:trial}, {N1:int}, {N2:int} ) returns {R:bool}
+  is siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.n1 == N1 && siteAssignments.n2 == N2 && R == true
+
+if org1 knows
+   asInfon(org(TRIAL) == org1)
+   asInfon(siteUnnotified(SITE,TRIAL))
+   asInfon(sitePatients(SITE,TRIAL,N1,N2))
+then
+   say with justification to SITE
+      SITE participates in TRIAL
+      SITE is allocated patients N1 to N2 in TRIAL
+   send with justification to SITE
+      if
+         asInfon(N1 <= N && N <= N2)
+         asInfon(R == record(N, TRIAL))
+         SITE said PERSON may read R
+      then
+         org1 said PERSON may read R
+
