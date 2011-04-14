@@ -1,7 +1,6 @@
 ﻿module Microsoft.Research.Dkal.Ast.Normalizer
 
   open Microsoft.Research.Dkal.Ast
-  open Microsoft.Research.Dkal.Ast.Primitives
 
   let rec normalize (mt: MetaTerm) =
     let children f mt =

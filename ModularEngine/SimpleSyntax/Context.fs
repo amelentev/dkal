@@ -5,7 +5,6 @@
   open Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
   open Microsoft.Research.Dkal.SimpleSyntax.TypeErrors
   open Microsoft.Research.Dkal.Ast
-  open Microsoft.Research.Dkal.Ast.Primitives
   open Microsoft.Research.Dkal.Ast.Normalizer
 
   type Context() =

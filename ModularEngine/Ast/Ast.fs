@@ -120,17 +120,7 @@
           Var(v)
       | c -> c
 
-  type Message =  { Target: MetaTerm;
-                    Content: MetaTerm }
-  type Action = 
-  | SendMessage of Message
-  | Learn of MetaTerm
-  
-  type Knowledge = { Fact: MetaTerm }
-  type CommunicationRule =  { Trigger: MetaTerm;
-                              Target: MetaTerm;
-                              Content: MetaTerm }
-
   type Policy = { Rules: MetaTerm list }
 
   type Assembly = { Signature: Signature; Policy: Policy }
+

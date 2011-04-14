@@ -3,5 +3,9 @@
 open Microsoft.Research.Dkal.Ast
 
   type IExecutor =
-    abstract member X: unit -> unit // TODO
+    abstract member InstallPolicy: Policy -> unit
+    
+    abstract member Start: unit -> unit 
+    abstract member Stop: unit -> unit 
+    // TODO
     

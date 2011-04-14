@@ -2,18 +2,17 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{ffe9dac2-4f7a-44ba-a630-944e17cd4202}</ProjectGuid>
+    <ProjectGuid>{71375598-2d92-4a9e-98ad-b65a3ebaba59}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Factories</RootNamespace>
-    <AssemblyName>Factories</AssemblyName>
+    <RootNamespace>SimpleEngine</RootNamespace>
+    <AssemblyName>SimpleEngine</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <Name>Factories</Name>
+    <Name>SimpleEngine</Name>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -21,18 +20,16 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Debug\Factories.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\SimpleEngine.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Release\Factories.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SimpleEngine.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -42,41 +39,17 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ParserFactory.fs" />
-    <Compile Include="PrettyPrinterFactory.fs" />
-    <Compile Include="RouterFactory.fs" />
-    <Compile Include="EngineFactory.fs" />
-    <Compile Include="ExecutorFactory.fs" />
+    <Compile Include="SimpleEngine.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast</Name>
+      <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\SimpleEngine\SimpleEngine.fsproj">
-      <Name>SimpleEngine</Name>
-      <Project>{71375598-2d92-4a9e-98ad-b65a3ebaba59}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\SimpleExecutor\SimpleExecutor.fsproj">
-      <Name>SimpleExecutor</Name>
-      <Project>{d417438a-74aa-4a41-8023-189916e3d2bd}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\SimpleRouter\SimpleRouter.fsproj">
-      <Name>SimpleRouter</Name>
-      <Project>{62c15ad9-06f2-4c97-a319-1ac3a5059b0e}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\SimpleSyntax\SimpleSyntax.fsproj">
-      <Name>SimpleSyntax</Name>
-      <Project>{7cb6ddad-0bbb-4826-a260-6f968b9dccf7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\TypedSyntax\TypedSyntax.fsproj">
-      <Name>TypedSyntax</Name>
-      <Project>{dbce463b-d533-4324-990b-24292a298ea9}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

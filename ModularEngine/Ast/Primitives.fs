@@ -1,4 +1,5 @@
-﻿module Microsoft.Research.Dkal.Ast.Primitives
+﻿[<AutoOpen>]
+module Microsoft.Research.Dkal.Ast.Primitives
 
   open System.Collections.Generic
   open Microsoft.Research.Dkal.Ast

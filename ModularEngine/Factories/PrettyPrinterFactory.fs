@@ -9,4 +9,4 @@ type PrettyPrinterFactory() =
     match kind with
     | "simple" -> SimplePrettyPrinter() :> IPrettyPrinter
     | "typed" -> TypedPrettyPrinter() :> IPrettyPrinter
-    | k -> failwith <| "Unrecognized parser kind: " + k
+    | k -> failwith <| "Unrecognized pretty printer kind: " + k

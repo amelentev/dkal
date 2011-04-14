@@ -4,9 +4,11 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.SimpleRouter
 
 type RouterFactory() =
-  static member Router (kind: string) (routingFile: string) (parser: IParser) (printer: IPrettyPrinter) = 
+  static member Router (kind: string) (routingFile: string) = 
     match kind with
-    | "simple" -> new SimpleRouter(routingFile, parser, printer) :> IRouter
-    | k -> failwith <| "Unrecognized parser kind: " + k
+    | "simple" -> 
+      let parser, printer = ParserFactory.Parser "typed", PrettyPrinterFactory.Printer "typed"
+      new SimpleRouter(routingFile, parser, printer) :> IRouter
+    | k -> failwith <| "Unrecognized router kind: " + k
 
 

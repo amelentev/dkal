@@ -4,29 +4,34 @@ open System.IO
 
 open Microsoft.Research.Dkal.Factories
 open Microsoft.Research.Dkal.Ast
-open Microsoft.Research.Dkal.Ast.Primitives
 
 module Main =
 
   let args = System.Environment.GetCommandLineArgs() |> Seq.toList
   try  
     match args with
-    | [_; file] ->
+    | [_; routingFile; policyFile; kind] ->
 
-      if not (File.Exists (file)) then
-        printfn "File not found: %O" file
+      if not (File.Exists (routingFile)) then
+        printfn "File not found: %O" routingFile
+      elif not (File.Exists (policyFile)) then
+        printfn "File not found: %O" policyFile
       else
-        let parser, printer = ParserFactory.Parser "typed", PrettyPrinterFactory.Printer "typed"
-        let router = RouterFactory.Router "simple" file parser printer
-        router.Receive (fun mt from -> printfn "%A said: %A" from mt)
-        router.Start()
+        let parser, printer = ParserFactory.Parser kind, PrettyPrinterFactory.Printer kind
+        let router = RouterFactory.Router kind routingFile
+        let engine = EngineFactory.Engine kind
+        let executor = ExecutorFactory.Executor kind router engine
 
-        router.Send (App(primitives.["asInfon"], [Const(BoolConstant(true))])) (Const(PrincipalConstant("Lars")))
+        let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
+        executor.InstallPolicy assembly.Policy
+        executor.Start()
+
+        router.Send (App(primitives.["asInfon"], [Const(BoolConstant(true))])) (Const(PrincipalConstant("guido")))
 
         System.Console.ReadLine() |> ignore
-        router.Stop()
+        executor.Stop()
 
-    | _ -> failwith "Expecting a single parameter"
+    | _ -> failwith "Wrong number of parameters"
   with e -> 
     printfn "%O" e
 
