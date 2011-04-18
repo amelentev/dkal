@@ -13,3 +13,7 @@ syntax: glob
 **/passwords_local - Cloud.dkal
 **~
 **/{bin,obj}/**Debug/*
+glob:ModularEngine/*/bin/Release/*
+glob:ModularEngine/*/bin/Debug/*
+glob:ModularEngine/*/obj/Release/*
+glob:ModularEngine/*/obj/x86/Release/*
