@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>TypedSyntax</RootNamespace>
     <AssemblyName>TypedSyntax</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <Name>TypedSyntax</Name>
   </PropertyGroup>

@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SimpleEngine</RootNamespace>
     <AssemblyName>SimpleEngine</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>SimpleEngine</Name>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>

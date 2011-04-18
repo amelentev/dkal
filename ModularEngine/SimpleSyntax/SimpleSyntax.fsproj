@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SimpleSyntax</RootNamespace>
     <AssemblyName>SimpleSyntax</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <Name>SimpleSyntax</Name>
   </PropertyGroup>

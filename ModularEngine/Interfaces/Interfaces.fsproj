@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Interfaces</RootNamespace>
     <AssemblyName>Interfaces</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>Interfaces</Name>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>

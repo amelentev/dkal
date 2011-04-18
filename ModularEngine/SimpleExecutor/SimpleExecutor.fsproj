@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SimpleExecutor</RootNamespace>
     <AssemblyName>SimpleExecutor</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>SimpleExecutor</Name>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
