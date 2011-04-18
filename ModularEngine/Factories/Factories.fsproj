@@ -45,7 +45,6 @@
     <Compile Include="RouterFactory.fs" />
     <Compile Include="EngineFactory.fs" />
     <Compile Include="ExecutorFactory.fs" />
-    <Compile Include="SubstrateFactory.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">

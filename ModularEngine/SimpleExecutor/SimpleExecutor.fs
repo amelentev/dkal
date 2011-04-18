@@ -3,6 +3,7 @@
 open System.Collections.Generic
 open System.Threading
 
+open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 
@@ -82,12 +83,13 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
       | Rule(cs, cw, a) -> 
         for subs in quarantine.Matches cw do
           for subs', conds in engine.Derive <| subs.Apply cs do
-            for cond in conds do
-              // TODO: check condition
-              match subs'.Apply cond with
-              | AsInfon(exp, substrate) -> printfn "Should check that: %A on %A" exp substrate
-              | _ -> failwith "Unrecognized condition to check"
-            actions.Add(subs'.Apply <| subs.Apply a) |> ignore
+            if List.forall 
+              (fun cond -> 
+                match subs'.Apply cond with
+                | AsInfon(exp, substrateDecl) -> 
+                  (SubstrateFactory.Substrate substrateDecl).Solve exp
+                | _ -> failwith <| "Unrecognized condition to check") conds then
+                  actions.Add(subs'.Apply <| subs.Apply a) |> ignore
       | _ -> failwith <| "Expecting rule when executing round"
 
     // Check consistency and apply changes

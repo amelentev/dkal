@@ -18,7 +18,6 @@ type SimpleEngine() =
     member se.Knowledge () = knowledge |> Seq.toList
 
     member se.Derive (target: MetaTerm) = 
-      // TODO: check inside asInfons
       se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target)
 
     member se.Learn (infon: MetaTerm) = 
