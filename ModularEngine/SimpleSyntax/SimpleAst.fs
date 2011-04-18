@@ -20,9 +20,14 @@
   | SimpleConst of SimpleConstant
   | SimpleVar of SimpleVariable
 
+  type SimpleSubstrateDeclaration = 
+    { Name: string;
+      Kind: string;
+      Args: SimpleConstant list }
+
   type SimpleTypeDeclaration = 
-    { newTyp: SimpleType;
-      targetTyp: SimpleType }
+    { NewTyp: SimpleType;
+      TargetTyp: SimpleType }
 
   type SimpleTableDeclaration = 
     { Name: string;
@@ -49,10 +54,12 @@
   | SimpleCommRule of SimpleCommunicationRule
 
   type SimpleSignature() = 
+    let substrateDeclarations = new List<SimpleSubstrateDeclaration>()
     let typeDeclarations = new List<SimpleTypeDeclaration>()
     let tableDeclarations = new List<SimpleTableDeclaration>()
     let relationDeclarations = new List<SimpleRelationDeclaration>()
     let functionDeclarations = new List<SimpleFunctionDeclaration>()
+    member ss.SubstrateDeclarations = substrateDeclarations
     member ss.TypeDeclarations = typeDeclarations
     member ss.TableDeclarations = tableDeclarations
     member ss.RelationDeclarations = relationDeclarations

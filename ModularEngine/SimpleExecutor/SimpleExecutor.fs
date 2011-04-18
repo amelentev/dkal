@@ -9,7 +9,7 @@ open Microsoft.Research.Dkal.Interfaces
 type SimpleExecutor(router: IRouter, engine: IEngine) = 
   
   let inbox = new Queue<MetaTerm * MetaTerm>()
-  let quarantine = new HashSet<MetaTerm>()
+  let quarantine = new Quarantine()
   let rules = new List<MetaTerm>()
   
   let notEmpty = new AutoResetEvent(false)
@@ -23,6 +23,13 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
         rules.Add(rule) |> ignore
 
     member se.Start () = 
+      // Start communications
+      router.Receive(fun msg from -> 
+                      lock inbox (fun () ->
+                        inbox.Enqueue((msg, from))
+                        notEmpty.Set() |> ignore))
+      router.Start()
+
       // Start engine
       engine.Start()
 
@@ -32,17 +39,7 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
       worker <- Some t
       t.Start()
 
-      // Start communications
-      router.Receive(fun msg from -> 
-                      lock inbox (fun () ->
-                        inbox.Enqueue((msg, from))
-                        notEmpty.Set() |> ignore))
-      router.Start()
-
     member se.Stop () =
-      // Stop Communications
-      router.Stop()
-      
       // Stop worker thread
       finish <- true
       match worker with 
@@ -54,6 +51,8 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
       // Stop engine
       engine.Stop()
 
+      // Stop Communications
+      router.Stop()
 
   member private se.Work() =
     while not finish do
@@ -68,22 +67,27 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
       lock inbox (fun () -> 
                   while inbox.Count > 0 do
                     let msg, from = inbox.Dequeue()
-                    // Move incoming messages to quarantine
-                    quarantine.Add (App(primitives.["saidInfon"], [from; msg])) |> ignore)
+                    printfn "GOT FROM %A:\r\n %A" from msg
+                    quarantine.Add msg from)
 
   member private se.ExecuteRound() =
+    System.Console.ReadLine() |> ignore
+    
     // To store the changes to be applied at the end of the round
     let actions = new HashSet<MetaTerm>()
-
-    // Calculate a list from the quarantine infons
-    let quarantineList = Seq.toList quarantine
 
     // Traverse rules
     for rule in rules do
       match rule with
       | Rule(cs, cw, a) -> 
-        if engine.Derive cs [] && engine.Derive cw quarantineList then
-          actions.Add(a) |> ignore
+        for subs in quarantine.Matches cw do
+          for subs', conds in engine.Derive <| subs.Apply cs do
+            for cond in conds do
+              // TODO: check condition
+              match subs'.Apply cond with
+              | AsInfon(exp, substrate) -> printfn "Should check that: %A on %A" exp substrate
+              | _ -> failwith "Unrecognized condition to check"
+            actions.Add(subs'.Apply <| subs.Apply a) |> ignore
       | _ -> failwith <| "Expecting rule when executing round"
 
     // Check consistency and apply changes
@@ -94,7 +98,9 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
                     failwith <| "Found inconsistent set of actions"
 
     // Prune messages from quarantine
-    // TODO
+    quarantine.Prune()
+
+    printfn "knowledge: %A" <| engine.Knowledge()
 
     // Return true if some change was computed
     changed
@@ -104,9 +110,11 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
     for action in actions do
       match action with
       | Seq(a1, a2) -> 
-        changed <- se.ApplyActions [a1; a2]
+        let changes = se.ApplyActions [a1; a2]
+        changed <- changed || changes
       | Learn(infon) -> 
-        changed <- engine.Learn infon
+        let changes = engine.Learn infon
+        changed <- changed || changes
       | Send(ppal, infon) -> 
         router.Send infon ppal
       | _ -> failwith <| "Unrecognized action"

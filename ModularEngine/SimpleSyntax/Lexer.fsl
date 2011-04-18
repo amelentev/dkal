@@ -53,6 +53,9 @@ rule tokenize = parse
 | ","				{ COMMA }
 | "."				{ DOT }
 
+// Substrate declarations
+| "substrate"		{ SUBSTRATE } 
+
 // Type renames
 | "type"			{ TYPE }
 

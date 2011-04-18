@@ -8,9 +8,9 @@
     interface IPrettyPrinter with
       member tpp.PrintType t =
         match t with
-        | Substrate(t) when t = typeof<int> -> "int"
-        | Substrate(t) when t = typeof<float> -> "float"
-        | Substrate(t) when t = typeof<string> -> "string"
+        | SubstrateElem(t) when t = typeof<int> -> "int"
+        | SubstrateElem(t) when t = typeof<float> -> "float"
+        | SubstrateElem(t) when t = typeof<string> -> "string"
         | t -> t.ToString().ToLower()
 
       member tpp.PrintMetaTerm mt =
@@ -43,8 +43,8 @@
         match c with
         | BoolConstant(b) -> [TextToken(b.ToString().ToLower())]
         | PrincipalConstant(p) -> [TextToken(p.ToString())]
-        | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
-        | SubstrateConstant(o) -> [TextToken(o.ToString())]
+        | SubstrateElemConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
+        | SubstrateElemConstant(o) -> [TextToken(o.ToString())]
    
     member private tpp.TokenizePolicy (p: Policy) =
       List.collect (fun a -> tpp.TokenizeMetaTerm a @ [ NewLineToken; NewLineToken ]) p.Rules

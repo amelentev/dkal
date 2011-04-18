@@ -4,13 +4,17 @@
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Utils.PrettyPrinting
 
+  open System.Collections.Generic
+
   type SimplePrettyPrinter() =
+    let substrates = new Dictionary<MetaTerm, string>()
+    
     interface IPrettyPrinter with
       member spp.PrintType t =
         match t with
-        | Substrate(t) when t = typeof<int> -> "int"
-        | Substrate(t) when t = typeof<float> -> "float"
-        | Substrate(t) when t = typeof<string> -> "string"
+        | SubstrateElem(t) when t = typeof<int> -> "int"
+        | SubstrateElem(t) when t = typeof<float> -> "float"
+        | SubstrateElem(t) when t = typeof<string> -> "string"
         | t -> t.ToString().ToLower()
 
       member spp.PrintMetaTerm mt =
@@ -58,8 +62,27 @@
           [ TextToken "(" ]
           @ List.reduce (fun t1 t2 -> t1 @ [TextToken <| " " + fSymbol + " "] @ t2) args
           @ [ TextToken ")" ]
+        elif fSymbol = "asInfon" then
+          match mts with
+          | [exp; substrate] -> 
+            let found, name = substrates.TryGetValue substrate
+            let substrateName = 
+              if found && name <> "Default" then 
+                [ TextToken <| ", " + name ]
+              elif found then
+                []
+              else
+                [ TextToken <| ", " ]
+                  @ spp.TokenizeMetaTerm substrate
+            [ TextToken <| f.Name + "("; 
+              ManyTokens args.[0] ]
+              @ substrateName
+              @ [ TextToken <| ")" ]
+          | _ -> failwith "Incorrect arguments in AsInfon(...)"
         elif fSymbol.Contains "." then
-          [TextToken <| fSymbol ]
+          [ TextToken <| fSymbol ]
+        elif fSymbol = "emptyInfon" then
+          [ TextToken <| "asInfon(true)" ]
         elif fSymbol = "rule" then
           let vars = mt.Vars |> Seq.toList
           let varsDecl = List.map (fun (v: Variable) -> v.Name + ": " + spp.PrintType v.Typ) vars
@@ -71,16 +94,13 @@
                                       [], []
           let mainTokens = 
             match mts.[0], mts.[1], mts.[2] with
-            | _, _, App(f, [mt']) when 
-              mts.[0] = Primitives.trueInfon 
-              && mts.[1] = Primitives.trueInfon 
-              && f.Name = "learn" ->
+            | EmptyInfon, EmptyInfon, App(f, [mt']) when 
+              f.Name = "learn" ->
               [ TextToken <| "me knows"; 
                 TabToken; NewLineToken;
                 ManyTokens <| spp.TokenizeMetaTerm mt'
                 UntabToken ]
-            | _, _, _ when 
-              mts.[1] = Primitives.trueInfon ->
+            | _, EmptyInfon, _ ->
               [ TextToken <| "if me knows"; 
                 TabToken; NewLineToken;
                 ManyTokens <| spp.TokenizeMetaTerm mts.[0]
@@ -89,8 +109,7 @@
                 TabToken; NewLineToken;
                 ManyTokens <| spp.TokenizeMetaTerm mts.[2]
                 UntabToken]
-            | _, _, _ when 
-              mts.[0] = Primitives.trueInfon ->
+            | EmptyInfon, _, _ ->
               [ TextToken <| "if wire has"; 
                 TabToken; NewLineToken;
                 ManyTokens <| spp.TokenizeMetaTerm mts.[1]
@@ -136,8 +155,8 @@
         match c with
         | BoolConstant(b) -> [TextToken(b.ToString().ToLower())]
         | PrincipalConstant(p) -> [TextToken(p.ToString())]
-        | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
-        | SubstrateConstant(o) -> [TextToken(o.ToString())]
+        | SubstrateElemConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
+        | SubstrateElemConstant(o) -> [TextToken(o.ToString())]
    
 //    member private spp.TokenizeAssertion (a: Assertion) =
 //      let vars = a.Vars |> Seq.toList
@@ -160,8 +179,17 @@
       List.collect (fun a -> spp.TokenizeMetaTerm a @ [ NewLineToken; NewLineToken ]) p.Rules
 
     member private spp.TokenizeSignature (s: Signature) =
-      List.collect (fun td -> spp.TokenizeTableDeclaration td @ [ NewLineToken; NewLineToken ]) s.Tables
+      List.collect (fun sd -> spp.TokenizeSubstrateDeclaration sd @ [ NewLineToken; NewLineToken ]) s.Substrates
+        @ List.collect (fun td -> spp.TokenizeTableDeclaration td @ [ NewLineToken; NewLineToken ]) s.Tables
         @ List.collect (fun rd -> spp.TokenizeRelationDeclaration rd @ [ NewLineToken; NewLineToken ]) s.Relations
+
+    member private spp.TokenizeSubstrateDeclaration (sd: SubstrateDeclaration) =
+      substrates.[sd.Decl] <- sd.Name
+      let kind, args =  match sd.Decl with
+                        | Sql(Const(SubstrateElemConstant(arg))) -> "sql", "\"" + arg.ToString() + "\""
+                        | Xml(Const(SubstrateElemConstant(arg))) -> "xml", "\"" + arg.ToString() + "\""
+                        | _ -> failwith <| "Unrecognized substrate type"
+      [TextToken <| "substrate " + sd.Name + " = " + kind + "(" + args + ")"]
 
     member private spp.TokenizeTableDeclaration (td: TableDeclaration) =
       [TextToken <| "table " + td.Name + "(";
@@ -174,5 +202,7 @@
         TextToken ")" ]
 
     member private spp.TokenizeAssembly (a: Assembly) =
-      spp.TokenizeSignature a.Signature
-        @ spp.TokenizePolicy a.Policy
+      let ret = spp.TokenizeSignature a.Signature
+                  @ spp.TokenizePolicy a.Policy
+      substrates.Clear()
+      ret

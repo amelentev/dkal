@@ -9,8 +9,9 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Ast</RootNamespace>
     <AssemblyName>Ast</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <Name>Ast</Name>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,11 +37,12 @@
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ast.fs" />
+    <Compile Include="Subst.fs" />
     <Compile Include="Primitives.fs" />
+    <Compile Include="Builders.fs" />
     <Compile Include="ActivePatterns.fs" />
     <Compile Include="Normalizer.fs" />
   </ItemGroup>

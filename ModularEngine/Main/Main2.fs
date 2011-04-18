@@ -23,13 +23,14 @@ module Main =
         let executor = ExecutorFactory.Executor kind router engine
 
         let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
+        printfn "%O" <| printer.PrintAssembly assembly
         executor.InstallPolicy assembly.Policy
         executor.Start()
 
-        router.Send (App(primitives.["asInfon"], [Const(BoolConstant(true))])) (Const(PrincipalConstant("guido")))
+        //router.Send (App(primitives.["asInfon"], [Const(BoolConstant(true))])) (Const(PrincipalConstant("guido")))
 
-        System.Console.ReadLine() |> ignore
-        executor.Stop()
+        //System.Console.ReadLine() |> ignore
+        //executor.Stop()
 
     | _ -> failwith "Wrong number of parameters"
   with e -> 

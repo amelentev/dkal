@@ -6,6 +6,7 @@ type IEngine =
   abstract member Start: unit -> unit
   abstract member Stop: unit -> unit
 
-  abstract member Derive: target: MetaTerm -> tmpInfons: MetaTerm list -> bool
+  abstract member Knowledge: unit -> MetaTerm list
+  abstract member Derive: target: MetaTerm -> (Substitution * MetaTerm list) list
   abstract member Learn: MetaTerm -> bool
   abstract member AreConsistentActions: MetaTerm list -> bool

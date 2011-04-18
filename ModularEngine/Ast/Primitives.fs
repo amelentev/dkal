@@ -7,23 +7,6 @@ module Microsoft.Research.Dkal.Ast.Primitives
   let primitives = new Dictionary<string, Function>()
   let associatives = new HashSet<string>()
 
-  // n-ary functions 
-  let andInfon (mts: MetaTerm list) = 
-    App({ Name = "andInfon"; 
-          RetTyp = Infon; 
-          ArgsTyp = List.replicate mts.Length Infon }, mts)
-  let andBool (mts: MetaTerm list) = 
-    App({ Name = "andBool"; 
-          RetTyp = Bool; 
-          ArgsTyp = List.replicate mts.Length Bool }, mts)
-  let orBool (mts: MetaTerm list) = 
-    App({ Name = "orBool"; 
-          RetTyp = Bool; 
-          ArgsTyp = List.replicate mts.Length Bool }, mts)
-
-  let trueBool = Const(BoolConstant(true))
-  let trueInfon = App({Name = "asInfon"; RetTyp = Infon; ArgsTyp = [Bool]}, [Const(BoolConstant(true))])
-
   do
     let addPrimitive (func: Function) = primitives.Add(func.Name, func)
     
@@ -35,8 +18,13 @@ module Microsoft.Research.Dkal.Ast.Primitives
     addPrimitive {Name = "send"; RetTyp = Action; ArgsTyp = [Principal; Infon]}
     addPrimitive {Name = "learn"; RetTyp = Action; ArgsTyp = [Infon]}
 
+    // substrate constructs
+    addPrimitive {Name = "sql"; RetTyp = Substrate; ArgsTyp = [Type.String]}
+    addPrimitive {Name = "xml"; RetTyp = Substrate; ArgsTyp = [Type.String]}
+
     // infon constructs
-    addPrimitive {Name = "asInfon"; RetTyp = Infon; ArgsTyp = [Bool]}
+    addPrimitive {Name = "emptyInfon"; RetTyp = Infon; ArgsTyp = []}
+    addPrimitive {Name = "asInfon"; RetTyp = Infon; ArgsTyp = [Bool; Substrate]}
     addPrimitive {Name = "andInfon"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}; 
     addPrimitive {Name = "impliesInfon"; RetTyp = Infon; ArgsTyp = [Infon; Infon]}
     addPrimitive {Name = "saidInfon"; RetTyp = Infon; ArgsTyp = [Principal; Infon]}
@@ -89,3 +77,4 @@ module Microsoft.Research.Dkal.Ast.Primitives
     associatives.Add("andInfon") |> ignore
     associatives.Add("andBool") |> ignore
     associatives.Add("orBool") |> ignore
+

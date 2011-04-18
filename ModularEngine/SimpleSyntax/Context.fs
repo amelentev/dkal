@@ -8,6 +8,7 @@
   open Microsoft.Research.Dkal.Ast.Normalizer
 
   type Context() =
+    let substrates = new Dictionary<string, MetaTerm>()
     let types = new TypeInfo()
     let identifiers = new Dictionary<string, Function>()
     let macros = new Dictionary<string, Function * MetaTerm * string list>()
@@ -42,8 +43,15 @@
         failwith <| "Identifier " + func.Name + " defined twice"
       ctx.Macros.[func.Name] <- (func, body, argsNames)
 
+    member private ctx.AddSubstrate (ssd: SimpleSubstrateDeclaration) = 
+      substrates.[ssd.Name] <- 
+        match ssd.Kind, ssd.Args with
+        | "sql", [StringSimpleConstant(cs)] -> Sql(Const(SubstrateElemConstant(cs)))
+        | "xml", [StringSimpleConstant(file)] -> Xml(Const(SubstrateElemConstant(file)))
+        | _ -> failwith "Unrecognized substrate declaration"
+
     member private ctx.AddType (std: SimpleTypeDeclaration) =
-      types.AddTypeRename std.newTyp std.targetTyp
+      types.AddTypeRename std.NewTyp std.TargetTyp
 
     member private ctx.AddTable (std: SimpleTableDeclaration) =
       for colName, colTyp in std.Cols do
@@ -75,7 +83,7 @@
 
     member private ctx.MacroConditions (solvedMacros: List<MetaTerm>) =
       if solvedMacros.Count > 0 then
-        let ret = Primitives.andBool <| Seq.toList solvedMacros
+        let ret = AndBool <| Seq.toList solvedMacros
         solvedMacros.Clear()
         ret
       else
@@ -100,21 +108,28 @@
               let cs', cw', a' = traverse cs, traverse cw, traverse a
               types.PopLevel()
               let conds = ctx.MacroConditions solvedMacros
-              let cs'' = App(ctx.Identifiers.["andInfon"], [cs'; App(ctx.Identifiers.["asInfon"], [conds])])
+              let cs'' = Normalizer.normalize <| 
+                          App(ctx.Identifiers.["andInfon"], [cs'; App(ctx.Identifiers.["asInfon"], [conds; substrates.["Default"]])])
               App(ctx.Identifiers.["rule"], [cs''; cw'; a'])
-            | _ -> failwith "Too few arguments in rule"
+            | _ -> failwith "Wrong arguments in rule"
+          elif f = "asInfon" then
+            match smts with
+            | [query; SimpleVar(substrate)] -> 
+              let query' = traverse query
+              AsInfon(query', substrates.[substrate])
+            | _ -> failwith "Wrong arguments in asInfon"
           else
             let mts = List.map traverse smts
             // check if it is a macro
             let found, value = ctx.Macros.TryGetValue f
             if found then
               let func, body, argsNames = value
-              let subst = new Substitution()
+              let mutable subst = Substitution.Id
               for mt, argName in List.zip mts argsNames do
-                subst.[{ Name = argName; Typ = mt.Typ() }] <- mt
+                subst <- subst.Extend ({Name = argName; Typ = mt.Typ()}, mt)
               let newRet = Var(freshVar func.RetTyp)
-              subst.[{ Name = "Ret"; Typ = func.RetTyp }] <- newRet
-              solvedMacros.Add(body.ApplySubstitution subst) |> ignore
+              subst <- subst.Extend ({Name = "Ret"; Typ = func.RetTyp}, newRet)
+              solvedMacros.Add(subst.Apply body) |> ignore
               newRet
             else
               // check if it is a primitive operator
@@ -132,9 +147,9 @@
         | SimpleConst(c) ->
           match c with
           | BoolSimpleConstant b -> Const(BoolConstant b)
-          | IntSimpleConstant i -> Const(SubstrateConstant i)
-          | FloatSimpleConstant f -> Const(SubstrateConstant f)
-          | StringSimpleConstant s -> Const(SubstrateConstant s)
+          | IntSimpleConstant i -> Const(SubstrateElemConstant i)
+          | FloatSimpleConstant f -> Const(SubstrateElemConstant f)
+          | StringSimpleConstant s -> Const(SubstrateElemConstant s)
           | PrincipalSimpleConstant p -> Const(PrincipalConstant p)
         | SimpleVar(v) ->
           match types.VariableType v with
@@ -145,7 +160,7 @@
       let finalTerm = if mainTerm.Typ() = Bool then
                         App(primitives.["andBool"], [conditions; mainTerm])
                       elif mainTerm.Typ() = Infon then
-                        App(primitives.["andInfon"], [App(primitives.["asInfon"], [conditions]); mainTerm])
+                        App(primitives.["andInfon"], [App(primitives.["asInfon"], [conditions; substrates.["Default"]]); mainTerm]) 
                       else
                         if solvedMacros.Count > 0 then
                           failwith <| sprintf "Pending macro conditions when lifting term: %A" smt
@@ -167,21 +182,26 @@
       { Rules =  rules }
 
     member ctx.LoadSimpleSignature (ss: SimpleSignature) =
+      Seq.iter ctx.AddSubstrate ss.SubstrateDeclarations
       Seq.iter ctx.AddType ss.TypeDeclarations 
       Seq.iter ctx.AddTable ss.TableDeclarations
       Seq.iter ctx.AddRelation ss.RelationDeclarations
       Seq.iter ctx.AddFunction ss.FunctionDeclarations
 
     member ctx.LiftSimpleSignature (ss: SimpleSignature) =
+      let sds = List.map
+                  (fun (ssd: SimpleSubstrateDeclaration) ->
+                    { Name = ssd.Name; Decl = substrates.[ssd.Name]})
+                  <| Seq.toList ss.SubstrateDeclarations
       let tds = List.map 
                   (fun (std: SimpleTableDeclaration) -> 
                     { TableDeclaration.Name = std.Name; Cols = ctx.LiftArgs std.Cols}) 
-                  (Seq.toList ss.TableDeclarations)
+                  <| Seq.toList ss.TableDeclarations
       let rds = List.map 
                   (fun (srd: SimpleRelationDeclaration) -> 
                     { RelationDeclaration.Name = srd.Name; Args = ctx.LiftArgs srd.Args}) 
-                  (Seq.toList ss.RelationDeclarations)
-      { Tables = tds; Relations = rds }
+                  <| Seq.toList ss.RelationDeclarations
+      { Substrates = sds; Tables = tds; Relations = rds }
       
     member ctx.LiftSimpleAssembly (sa: SimpleAssembly) =
       ctx.LoadSimpleSignature sa.Signature

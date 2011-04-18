@@ -72,10 +72,10 @@ MetaTerms:
 Literal:
 	| TRUE										{ BoolConstant(true) }
 	| FALSE										{ BoolConstant(false) }
-	| INT_LITERAL								{ SubstrateConstant($1) }
-	| FLOAT_LITERAL								{ SubstrateConstant($1) }
-	| STRING_LITERAL							{ SubstrateConstant($1) }
-	| LOWER_IDENTIFIER							{ PrincipalConstant($1) }
+	| INT_LITERAL								{ SubstrateElemConstant($1) }
+	| FLOAT_LITERAL								{ SubstrateElemConstant($1) }
+	| STRING_LITERAL							{ SubstrateElemConstant($1) }
+	| LOWER_IDENTIFIER							{ SubstrateElemConstant($1) }
 
 Type:
 	| LOWER_IDENTIFIER							{ parseType($1) }

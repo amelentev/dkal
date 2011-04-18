@@ -9,8 +9,9 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SimpleExecutor</RootNamespace>
     <AssemblyName>SimpleExecutor</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <Name>SimpleExecutor</Name>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,9 +37,9 @@
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Quarantine.fs" />
     <Compile Include="SimpleExecutor.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -19,12 +19,23 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                         | App(f, [mt']) when f = primitives.["learn"] -> Some mt'
                         | _ -> None
 
+  // Substrate patterns
+  let (|Sql|_|) mt =  match mt with 
+                      | App(f, [mt']) when f = primitives.["sql"] -> Some mt'
+                      | _ -> None
+  let (|Xml|_|) mt =  match mt with 
+                      | App(f, [mt']) when f = primitives.["xml"] -> Some mt'
+                      | _ -> None
+
   // Infon patterns
+  let (|EmptyInfon|_|) mt = match mt with 
+                            | App(f, []) when f = primitives.["emptyInfon"] -> Some ()
+                            | _ -> None
   let (|AsInfon|_|) mt =  match mt with 
-                          | App(f, [mt']) when f = primitives.["asInfon"] -> Some mt'
+                          | App(f, [exp; substrate]) when f = primitives.["asInfon"] -> Some (exp, substrate)
                           | _ -> None
   let (|AndInfon|_|) mt = match mt with
-                          | App(f, mts) when f = primitives.["andInfon"] -> Some mts
+                          | App(f, mts) when f.Name = "andInfon" -> Some mts
                           | _ -> None
   let (|ImpliesInfon|_|) mt = match mt with
                               | App(f, [mt1; mt2]) when f = primitives.["impliesInfon"] -> Some (mt1, mt2)
@@ -32,6 +43,14 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
   let (|SaidInfon|_|) mt = match mt with
                             | App(f, [ppal; mt']) when f = primitives.["saidInfon"] -> Some (ppal, mt')
                             | _ -> None
+
+  // Bool patterns
+  let (|AndBool|_|) mt =  match mt with
+                          | App(f, mts) when f.Name = "andBool" -> Some mts
+                          | _ -> None
+  let (|OrBool|_|) mt = match mt with
+                        | App(f, mts) when f.Name = "orBool" -> Some mts
+                        | _ -> None
 
   // Literal patterns
   let (|Principal|_|) mt =  match mt with
