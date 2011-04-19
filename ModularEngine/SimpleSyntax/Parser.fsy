@@ -16,7 +16,7 @@ let toSimpleMetaTerms args = List.map (fun (name, typ) -> SimpleVar(name + ":" +
 %start TypeDeclaration
 %start TableDeclaration
 %start RelationDeclaration
-%start FunctionDeclaration
+%start MacroDeclaration
 %start MetaTerm
 
 // ------------------------------------------------------------------------------------------------------
@@ -45,8 +45,8 @@ let toSimpleMetaTerms args = List.map (fun (name, typ) -> SimpleVar(name + ":" +
 // Relation declarations
 %token RELATION
 
-// Function declarations
-%token FUNCTION
+// Macro declarations
+%token MACRO
 
 // Variable declarations
 %token WITH
@@ -55,7 +55,7 @@ let toSimpleMetaTerms args = List.map (fun (name, typ) -> SimpleVar(name + ":" +
 %token ME KNOWS IF THEN WIRE HAS
 
 // Actions
-%token SEND TO LEARN
+%token SEND TO LEARN FORGET INSTALL UNINSTALL
 
 // Literals
 %token TRUE FALSE
@@ -78,7 +78,7 @@ let toSimpleMetaTerms args = List.map (fun (name, typ) -> SimpleVar(name + ":" +
 %type < SimpleTypeDeclaration > TypeDeclaration
 %type < SimpleTableDeclaration > TableDeclaration
 %type < SimpleRelationDeclaration > RelationDeclaration
-%type < SimpleFunctionDeclaration > FunctionDeclaration
+%type < SimpleMacroDeclaration > MacroDeclaration
 %type < SimpleMetaTerm > MetaTerm
 
 // ------------------------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ Signature:
 	| Signature TypeDeclaration 				{ $1.TypeDeclarations.Add($2); $1 }
 	| Signature TableDeclaration 				{ $1.TableDeclarations.Add($2); $1 }
 	| Signature RelationDeclaration 			{ $1.RelationDeclarations.Add($2); $1 }
-	| Signature FunctionDeclaration 			{ $1.FunctionDeclarations.Add($2); $1 }
+	| Signature MacroDeclaration 				{ $1.MacroDeclarations.Add($2); $1 }
 
 Policy:
 	|											{ SimplePolicy() }
@@ -146,8 +146,8 @@ Arg:
 Type:
 	| LOWER_IDENTIFIER							{ $1 }
 
-FunctionDeclaration:
-	| FUNCTION LOWER_IDENTIFIER LPAR Args RPAR 
+MacroDeclaration:
+	| MACRO LOWER_IDENTIFIER LPAR Args RPAR 
 		COLON Type LBRACE MetaTerm RBRACE		{ { Name = $2; Args = $4; RetTyp = $7; Body = $9 } }
 
 MetaTerm:
@@ -202,6 +202,9 @@ MetaTerm:
 Action:
 	| SEND TO MetaTerm MetaTerm			{ SimpleApp("send", [$3; $4]) }
 	| LEARN MetaTerm					{ SimpleApp("learn", [$2]) }
+	| FORGET MetaTerm					{ SimpleApp("forget", [$2]) }
+	| INSTALL MetaTerm					{ SimpleApp("install", [$2]) }
+	| UNINSTALL MetaTerm				{ SimpleApp("uninstall", [$2]) }
 	| Action SEMICOLON Action			{ SimpleApp("seq", [$1; $3]) }
 
 MetaTerms:

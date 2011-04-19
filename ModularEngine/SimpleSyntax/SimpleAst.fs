@@ -1,72 +1,80 @@
 ﻿namespace Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
 
-  open System.Collections.Generic
+open System.Collections.Generic
 
-  type SimpleFunction = string
-  type SimpleVariable = string
-  type SimpleType = string
+/// To easily store parsed functions
+type SimpleFunction = string
 
-  type SimpleArg = string * SimpleType
+/// To easily store parsed variables
+type SimpleVariable = string
 
-  type SimpleConstant = 
-  | BoolSimpleConstant of bool
-  | IntSimpleConstant of int
-  | FloatSimpleConstant of float
-  | StringSimpleConstant of string
-  | PrincipalSimpleConstant of string
+/// To easily store parsed types
+type SimpleType = string
 
-  type SimpleMetaTerm = 
-  | SimpleApp of SimpleFunction * SimpleMetaTerm list
-  | SimpleConst of SimpleConstant
-  | SimpleVar of SimpleVariable
+/// To easily store parsed arguments
+type SimpleArg = string * SimpleType
 
-  type SimpleSubstrateDeclaration = 
-    { Name: string;
-      Kind: string;
-      Args: SimpleConstant list }
+/// To easily store parsed constants
+type SimpleConstant = 
+| BoolSimpleConstant of bool
+| IntSimpleConstant of int
+| FloatSimpleConstant of float
+| StringSimpleConstant of string
+| PrincipalSimpleConstant of string
 
-  type SimpleTypeDeclaration = 
-    { NewTyp: SimpleType;
-      TargetTyp: SimpleType }
+/// The SimpleMetaTerms are used as an untyped intermediate representation for 
+/// parsed elements before they are transformed (lifted) to typed MetaTerms by
+/// the Context class
+type SimpleMetaTerm = 
+| SimpleApp of SimpleFunction * SimpleMetaTerm list
+| SimpleConst of SimpleConstant
+| SimpleVar of SimpleVariable
 
-  type SimpleTableDeclaration = 
-    { Name: string;
-      Cols: SimpleArg list }
+/// To easily store parsed substrate declarations
+type SimpleSubstrateDeclaration = 
+  { Name: string;
+    Kind: string;
+    Args: SimpleConstant list }
 
-  type SimpleRelationDeclaration = 
-    { Name: string;
-      Args: SimpleArg list }
+/// To easily store parsed type renames
+type SimpleTypeDeclaration = 
+  { NewTyp: SimpleType;
+    TargetTyp: SimpleType }
 
-  type SimpleFunctionDeclaration = 
-    { Name: string;
-      RetTyp: SimpleType;
-      Args: SimpleArg list; 
-      Body: SimpleMetaTerm }
+/// To easily store parsed table declarations
+type SimpleTableDeclaration = 
+  { Name: string;
+    Cols: SimpleArg list }
 
-  type SimpleKnowledge =  { Args: SimpleArg list; 
-                            Fact: SimpleMetaTerm }
-  type SimpleCommunicationRule =  { Args: SimpleArg list; 
-                                    Trigger: SimpleMetaTerm;
-                                    Target: SimpleMetaTerm;
-                                    Content: SimpleMetaTerm }
-  type SimpleAssertion = 
-  | SimpleKnow of SimpleKnowledge
-  | SimpleCommRule of SimpleCommunicationRule
+/// To easily store parsed relation declarations
+type SimpleRelationDeclaration = 
+  { Name: string;
+    Args: SimpleArg list }
 
-  type SimpleSignature() = 
-    let substrateDeclarations = new List<SimpleSubstrateDeclaration>()
-    let typeDeclarations = new List<SimpleTypeDeclaration>()
-    let tableDeclarations = new List<SimpleTableDeclaration>()
-    let relationDeclarations = new List<SimpleRelationDeclaration>()
-    let functionDeclarations = new List<SimpleFunctionDeclaration>()
-    member ss.SubstrateDeclarations = substrateDeclarations
-    member ss.TypeDeclarations = typeDeclarations
-    member ss.TableDeclarations = tableDeclarations
-    member ss.RelationDeclarations = relationDeclarations
-    member ss.FunctionDeclarations = functionDeclarations
+/// To easily store parsed macro declarations
+type SimpleMacroDeclaration = 
+  { Name: string;
+    RetTyp: SimpleType;
+    Args: SimpleArg list; 
+    Body: SimpleMetaTerm }
+
+/// To easily store parsed signatures
+type SimpleSignature() = 
+  let substrateDeclarations = new List<SimpleSubstrateDeclaration>()
+  let typeDeclarations = new List<SimpleTypeDeclaration>()
+  let tableDeclarations = new List<SimpleTableDeclaration>()
+  let relationDeclarations = new List<SimpleRelationDeclaration>()
+  let macroDeclarations = new List<SimpleMacroDeclaration>()
+  member ss.SubstrateDeclarations = substrateDeclarations
+  member ss.TypeDeclarations = typeDeclarations
+  member ss.TableDeclarations = tableDeclarations
+  member ss.RelationDeclarations = relationDeclarations
+  member ss.MacroDeclarations = macroDeclarations
     
-  type SimplePolicy() =
-    let rules = new List<SimpleMetaTerm>()
-    member sp.Rules = rules
+/// To easily store parsed policies
+type SimplePolicy() =
+  let rules = new List<SimpleMetaTerm>()
+  member sp.Rules = rules
 
-  type SimpleAssembly = { Signature: SimpleSignature; Policy: SimplePolicy }
+/// To easily store parsed assemblies
+type SimpleAssembly = { Signature: SimpleSignature; Policy: SimplePolicy }

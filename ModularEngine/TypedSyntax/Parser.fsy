@@ -75,7 +75,7 @@ Literal:
 	| INT_LITERAL								{ SubstrateElemConstant($1) }
 	| FLOAT_LITERAL								{ SubstrateElemConstant($1) }
 	| STRING_LITERAL							{ SubstrateElemConstant($1) }
-	| LOWER_IDENTIFIER							{ SubstrateElemConstant($1) }
+	| LOWER_IDENTIFIER							{ PrincipalConstant($1) }
 
 Type:
 	| LOWER_IDENTIFIER							{ parseType($1) }

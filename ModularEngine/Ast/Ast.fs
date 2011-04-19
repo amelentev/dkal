@@ -2,6 +2,7 @@
 
   open System.Collections.Generic
 
+  /// Type is used to represent MetaTerm types
   type Type = 
   | Bool
   | Principal
@@ -19,9 +20,12 @@
       | SubstrateElem(typ) -> typ.Name
       | t -> sprintf "%A" t
 
+  /// Variables are typed
   type Variable = { Name: string; 
                     Typ: Type }
 
+  /// Constants are implicitly typed (they have the type of the wrapped
+  /// element)
   type Constant = 
     | BoolConstant of bool
     | PrincipalConstant of string
@@ -33,10 +37,15 @@
       | PrincipalConstant(_) -> Principal
       | SubstrateElemConstant(c) -> SubstrateElem(c.GetType())
 
+  /// Functions are used in App MetaTerms to indicate what function is applied.
+  /// They have an arbitrary-sized typed list of arguments. They return a typed
+  /// single value
   type Function = { Name: string; 
                     RetTyp: Type; 
                     ArgsTyp: Type list }
   
+  /// MetaTerms are the AST representation. They can encode application of
+  /// functions, constants or variables.
   and MetaTerm = 
     | App of Function * MetaTerm list
     | Const of Constant
@@ -79,17 +88,29 @@
       traverse mt
       ret
 
+  /// A table declaration with typed columns. This is used in a Signature in
+  /// order to keep this information
   type TableDeclaration = { Name: string; 
                             Cols: Variable list }
+  /// A relation declaration with typed arguments. This is used in a Signature
+  /// in order to keep this information
   type RelationDeclaration = { Name: string; 
                                Args: Variable list }
+  /// A substrate declaration. This is used in a Signature in order to keep 
+  /// this information
   type SubstrateDeclaration = { Name: string;
                                 Decl: MetaTerm }
+  
+  /// A Signature holds all the substrate, tables and relation declarations 
+  /// found in an assembly
   type Signature =  { Substrates: SubstrateDeclaration list;
                       Tables: TableDeclaration list;
                       Relations: RelationDeclaration list }
  
+  /// A Policy contains a list of rules (in the order they were found in the 
+  /// Assembly)
   type Policy = { Rules: MetaTerm list }
 
+  /// An Assembly is composed of a Signature and a Policy
   type Assembly = { Signature: Signature; Policy: Policy }
 

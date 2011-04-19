@@ -1,29 +1,39 @@
 ﻿namespace Microsoft.Research.Dkal.Ast
 
   type Substitution(subst : Variable -> MetaTerm) = 
-
+    
+    /// Returns a new Substitution that behaves like the identity
     static member Id = 
       new Substitution(fun v -> Var v)
 
+    /// Returns a new Substitution that results from extending the current 
+    /// Substitution so that it maps x to mt and leaves the rest unchanged
     member s.Extend (x: Variable, mt: MetaTerm) = 
       new Substitution(fun z -> if z = x then mt else subst z)
        
+    /// Applies this Substitution to the given MetaTerm
     member s.Apply (mt: MetaTerm) = 
       match mt with
       | Var(v) -> subst v
       | App(f, mts) -> App(f, List.map s.Apply mts)
       | _ -> mt             
       
+    /// Returns a new Substitution that results from first applying s' and 
+    /// then applying the current Substitution
     member s.ComposeWith (s': Substitution) =
       new Substitution(fun z -> s.Apply(s'.Apply(Var z)))
 
+    /// Returns true iff v is affected by this Substitution
     member s.Contains (v: Variable) =
       subst v <> Var v
 
-    /// Returns a Substitution that makes mt1 and mt2 syntactically equal, if possible; None otherwise
+    /// Returns a Substitution that makes mt1 and mt2 syntactically equal, 
+    /// if possible; None otherwise
     static member Unify (mt1: MetaTerm) (mt2: MetaTerm) =
       Substitution.UnifyFrom (Substitution.Id) mt1 mt2
 
+    /// Returns a Substitution that makes subst(mt1) and subst(mt2) syntactically 
+    /// equal, if possible; None otherwise
     static member UnifyFrom (subst: Substitution) (mt1: MetaTerm) (mt2: MetaTerm) =
       let rec traverse (subst: Substitution option) mt1 mt2 = 
         match subst with

@@ -4,51 +4,90 @@ open System.Collections.Generic
 
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Substrate
 
-type Prefix = 
-| Said of MetaTerm
-
+/// The SimpleEngine uses backwards propagation to derive all possible 
+/// Substitutions that will satisfy the given query. Each Substitution will 
+/// have an accompanying list of side conditions to be checked against the 
+/// substrate(s). Only those Substitutions that pass the side conditions are
+/// returned
 type SimpleEngine() = 
+
+  /// Stores the known facts
   let knowledge = new HashSet<MetaTerm>()
 
   interface IEngine with
     member se.Start () = ()
     member se.Stop () = ()
 
-    member se.Knowledge () = knowledge |> Seq.toList
-
-    member se.Derive (target: MetaTerm) = 
-      se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target)
-
+    /// Split the infon into conjunctions and learn these recursively
     member se.Learn (infon: MetaTerm) = 
       match Normalizer.normalize infon with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
-      | AndInfon(infons) -> 
-        List.exists (se :> IEngine).Learn infons
+      | AndInfon(infons) ->
+        List.fold (fun ch i -> 
+                    let ch' = (se :> IEngine).Learn i
+                    ch' || ch) false infons 
       | infon -> 
         knowledge.Add infon
 
-    member se.AreConsistentActions (actions: MetaTerm list) = 
-      // TODO: implement
-      // TODO: maybe move to another module
-      true
-      
-  member private se.DoDerive (pref: Prefix list) ((subst, conds): Substitution * MetaTerm list) (infon: MetaTerm) = 
+    /// Split the infon into conjunctions and forget these recursively
+    member se.Forget (infon: MetaTerm) =
+      match Normalizer.normalize infon with
+      | EmptyInfon -> false
+      | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"
+      | AndInfon(infons) ->
+        List.fold (fun ch i -> 
+                    let ch' = (se :> IEngine).Forget i
+                    ch' || ch) false infons 
+      | infon -> 
+        knowledge.Remove infon
+
+    /// Obtain a list of Substitution with accompanying side conditions (AsInfon
+    /// MetaTerms). Then return only those Substitutions that satisfy all their 
+    /// side conditions.
+    member se.Derive (target: MetaTerm) = 
+      se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target)
+        |> List.collect (fun (subst, conds) -> 
+            if List.forall 
+              (fun cond -> 
+                match subst.Apply cond with
+                | AsInfon(exp, substrateDecl) -> 
+                  (SubstrateFactory.Substrate substrateDecl).Solve exp
+                | _ -> failwith <| "Unrecognized condition to check") conds then [subst] else [])
+
+  /// Given a prefix (list of principal MetaTerms) a current Substitution with 
+  /// side conditions (AsInfo MetaTerms) and a target infon MetaTerm to derive
+  /// this method will recursively derive the target infon depending on its
+  /// structure.
+  member private se.DoDerive (pref: MetaTerm list) ((subst, conds): Substitution * MetaTerm list) (infon: MetaTerm) = 
     match infon with
     | AndInfon(infons) -> 
+      // In the case of conjunction we start with the current substitution and side conditions and 
+      // continue accumulating these by calling recursively on each of the infons in the conjunction
       List.fold (fun substs infon -> List.collect (fun s -> se.DoDerive pref s infon) substs) [(subst, conds)] infons
-    | EmptyInfon -> [(subst, conds)]
+    | EmptyInfon -> 
+      // Empty infon is always satisfiable by the current substitution and side conditions
+      [(subst, conds)]
     | SaidInfon(ppal, infon) ->
-      se.DoDerive (Said ppal :: pref) (subst, conds) infon
+      // Said infons are handled recursively by pushing the principal term into the prefix
+      se.DoDerive (ppal :: pref) (subst, conds) infon
     | Var(v) when subst.Contains v ->
+      // If a variable is part of the current substitution it is applied and we call recursively
       se.DoDerive pref (subst, conds) (subst.Apply <| Var(v))
     | AsInfon(exp, substrate) ->
+      // AsInfon(...) is stored as a new side condition, unless it is inside a non-empty prefix
       if pref.IsEmpty then
         [(subst, conds @ [infon])]
       else
         failwith "asInfon(...) under prefix"
     | templ ->
+      // For every other case we call se.InfonsWithPrefix(..) which will give us a list of
+      // substitutions, each of which will have a list of infon MetaTerms (preconditions) that 
+      // need to be  satisfied in order for that substitution to be returned. This is were the 
+      // backwards chaining happens, since we recursively check all the preconditions one by one 
+      // (with checkOne)
       let rec checkOne = function
           | (substConds, pre :: pres) -> 
             se.DoDerive [] substConds pre |> List.collect (fun s -> checkOne (s, pres))
@@ -58,7 +97,12 @@ type SimpleEngine() =
         |> List.map (fun (s, ps) -> ((s, conds), ps))
         |> List.collect checkOne
 
-  member se.InfonsWithPrefix (subst: Substitution) (pref: Prefix list) (template: MetaTerm) =
+  /// Given a current Substitution, a prefix (list of principal MetaTerms) and 
+  /// a template infon MetaTerm to derive this method will return a list of 
+  /// Substitutions that satisfy the given template, each of which will have a
+  /// list of preconditions (infon MetaTerms) that need to be verified in order
+  /// for that Substitution to be a real solution
+  member se.InfonsWithPrefix (subst: Substitution) (pref: MetaTerm list) (template: MetaTerm) =
     let res = ref []
     let rec stripPrefix subst prefixUnif preconds suff = 
       let immediate = function
@@ -76,7 +120,7 @@ type SimpleEngine() =
         | _ -> ()
              
       function
-      | (Said t1 :: pref, SaidInfon (t2, i)) ->
+      | (t1 :: pref, SaidInfon (t2, i)) ->
         match Substitution.UnifyFrom subst (subst.Apply t1) (subst.Apply t2) with
           | Some subst -> 
             stripPrefix subst prefixUnif preconds (fun i -> suff (SaidInfon (t2, i))) (pref, i)

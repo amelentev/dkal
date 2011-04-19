@@ -6,6 +6,8 @@ open Microsoft.FSharp.Text.Lexing
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 
+/// The TypedParser parses the typed concrete syntax, which carries type 
+/// annotations in every function application and every variable
 type TypedParser() = 
 
   let lexbuff s = LexBuffer<char>.FromString(s)

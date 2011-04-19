@@ -3,6 +3,8 @@
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.SimpleRouter
 
+/// The RouterFactory provides a factory to construct different routers. Router
+/// kind and routingFile must be provided.
 type RouterFactory() =
   static member Router (kind: string) (routingFile: string) = 
     match kind with

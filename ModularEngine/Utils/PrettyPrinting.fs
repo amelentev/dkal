@@ -1,5 +1,7 @@
 ﻿namespace Microsoft.Research.Dkal.Utils.PrettyPrinting
 
+  /// Pretty printing tokens are fed to the PrettyPrinter in order to produce
+  /// a string representation
   type PrettyPrintToken = 
   | TabToken 
   | UntabToken 
@@ -7,6 +9,7 @@
   | TextToken of string 
   | ManyTokens of List<PrettyPrintToken>
 
+  /// The PrettyPrinter provides functionality to print a list of PrettyPrintTokens
   type PrettyPrinter() =
     static member PrettyPrint ps = 
       let rec doPrettyPrint ps i = 

@@ -7,42 +7,94 @@
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Ast.Normalizer
 
+  /// A Context is responsible for lifting untyped SimpleMetaTerms into typed
+  /// MetaTerms. It solves the macros that appear in the SimpleMetaTerms and 
+  /// uses the type information from relation declarations, type renames, etc.
   type Context() =
+    /// For each substrate name it keeps the Substrate declaration MetaTerm
     let substrates = new Dictionary<string, MetaTerm>()
-    let types = new TypeInfo()
-    let identifiers = new Dictionary<string, Function>()
-    let macros = new Dictionary<string, Function * MetaTerm * string list>()
 
+    /// Holds type information (SimpleType to Type mapping, and SimpleVariable 
+    /// type info)
+    let types = new TypeInfo()
+
+    /// For each declared identifier (relations, tables, etc.) it holds the 
+    /// appropiate Function element to be used in MetaTerm App nodes
+    let identifiers = new Dictionary<string, Function>()
+
+    /// For each declared macro it holds its return Type, its body and its args
+    /// (arguments Type and names)
+    let macros = new Dictionary<string, Type * MetaTerm * SimpleArg list>()
+
+    /// Holds fresh variable ids that are used when solving macros
     let mutable freshVarId = 0
+
+    /// Returns a fresh Variable of the given type
     let freshVar typ = 
       freshVarId <- freshVarId + 1
       { Name = "Tmp" + freshVarId.ToString(); 
         Typ = typ }
 
     do
-      // primitive identifiers
+      // Load primitive identifiers
       for nameFunc in primitives do
-        identifiers.Add(nameFunc.Key, nameFunc.Value)
+        identifiers.[nameFunc.Key] <- nameFunc.Value
 
-    member ctx.Identifiers = identifiers
-    member ctx.Macros = macros
+    /// Given a SimpleAssembly it returns its corresponding Assembly
+    member ctx.LiftSimpleAssembly (sa: SimpleAssembly) =
+      ctx.LoadSimpleSignature sa.Signature
+      { Signature = ctx.LiftSimpleSignature sa.Signature; 
+        Policy = ctx.LiftSimplePolicy sa.Policy }
 
+    /// Given a SimplePolicy it returns its corresponding Policy
+    member ctx.LiftSimplePolicy (sp: SimplePolicy) =
+      let rules = List.map (fun rule -> typeCheck (ctx.LiftSimpleMetaTerm rule) Rule) (Seq.toList sp.Rules)
+      { Rules =  rules }
+
+    /// Given a SimpleSignature it returns its corresponding Signature
+    member ctx.LiftSimpleSignature (ss: SimpleSignature) =
+      let sds = List.map
+                  (fun (ssd: SimpleSubstrateDeclaration) ->
+                    { Name = ssd.Name; Decl = substrates.[ssd.Name]})
+                  <| Seq.toList ss.SubstrateDeclarations
+      let tds = List.map 
+                  (fun (std: SimpleTableDeclaration) -> 
+                    { TableDeclaration.Name = std.Name; Cols = ctx.LiftArgs std.Cols}) 
+                  <| Seq.toList ss.TableDeclarations
+      let rds = List.map 
+                  (fun (srd: SimpleRelationDeclaration) -> 
+                    { RelationDeclaration.Name = srd.Name; Args = ctx.LiftArgs srd.Args}) 
+                  <| Seq.toList ss.RelationDeclarations
+      { Substrates = sds; Tables = tds; Relations = rds }
+
+    /// It loads a SimpleSignature into the Context, saving the relation 
+    /// declarations, macro definitions, etc.
+    member ctx.LoadSimpleSignature (ss: SimpleSignature) =
+      Seq.iter ctx.AddSubstrate ss.SubstrateDeclarations
+      Seq.iter ctx.AddType ss.TypeDeclarations 
+      Seq.iter ctx.AddTable ss.TableDeclarations
+      Seq.iter ctx.AddRelation ss.RelationDeclarations
+      Seq.iter ctx.AddMacro ss.MacroDeclarations
+
+    /// Given a list of SimpleArgs (SimpleVariable * SimpleType) returns a 
+    /// list of Variables
     member private ctx.LiftArgs (args: SimpleArg list) : Variable list = 
       List.map (fun (name, typ) -> { Name = name; Typ = types.LiftType typ }) args
 
+    /// Returns true if the given name is already associated with an identifier
+    /// (either primitive function, table, relation, macro, etc.)
     member private ctx.HasIdentifier name =
-      ctx.Identifiers.ContainsKey name || ctx.Macros.ContainsKey name 
+      identifiers.ContainsKey name || macros.ContainsKey name 
 
+    /// Adds a the given function as a new identifier in the Context and saves
+    /// it so that it can be used to lift SimpleMetaTerms
     member private ctx.AddIdentifier func =
       if ctx.HasIdentifier func.Name then
         failwith <| "Identifier " + func.Name + " defined twice"
-      ctx.Identifiers.[func.Name] <- func
+      identifiers.[func.Name] <- func
 
-    member private ctx.AddMacro func body argsNames =
-      if ctx.HasIdentifier func.Name then
-        failwith <| "Identifier " + func.Name + " defined twice"
-      ctx.Macros.[func.Name] <- (func, body, argsNames)
-
+    /// Adds a substrate declaration so that it can be used in AsInfon 
+    /// SimpleMetaTerms. This information is used when lifting these
     member private ctx.AddSubstrate (ssd: SimpleSubstrateDeclaration) = 
       substrates.[ssd.Name] <- 
         match ssd.Kind, ssd.Args with
@@ -50,15 +102,20 @@
         | "xml", [StringSimpleConstant(file)] -> Xml(Const(SubstrateElemConstant(file)))
         | _ -> failwith "Unrecognized substrate declaration"
 
+    /// Adds a new type rename
     member private ctx.AddType (std: SimpleTypeDeclaration) =
       types.AddTypeRename std.NewTyp std.TargetTyp
 
+    /// Adds a table declaration and saves it so that now SimpleMetaTerms
+    /// can use it.
     member private ctx.AddTable (std: SimpleTableDeclaration) =
       for colName, colTyp in std.Cols do
         ctx.AddIdentifier { Name = std.Name + "." + colName
                             RetTyp = types.LiftType colTyp; 
                             ArgsTyp = [] }
 
+    /// Adds a relation declaration and saves it so that now SimpleMetaTerms
+    /// can use it.
     member private ctx.AddRelation (srd: SimpleRelationDeclaration) =
       let _, argsTyp = List.unzip srd.Args
       let realArgsTyp = List.map (fun st -> types.LiftType st) argsTyp
@@ -66,21 +123,24 @@
                           RetTyp = Infon; 
                           ArgsTyp = realArgsTyp }
 
-    member private ctx.AddFunction (sfd: SimpleFunctionDeclaration) =
-      let argsTyp = List.map (fun (_, st) -> types.LiftType st) sfd.Args
-      let argsNames = List.map (fun (arg, _) -> arg) sfd.Args
-      types.AddLevel sfd.Args
-      types.AddToCurrentLevel ("Ret", sfd.RetTyp)
-      let retTyp = types.LiftType sfd.RetTyp
-      let body = ctx.LiftSimpleMetaTerm(sfd.Body)
+    /// Adds a macro declaration, lifting its body into a MetaTerm and saving
+    /// it so that now SimpleMetaTerms can use it. All referenced macros in the
+    /// body must have been added before this one (e.g., no recursion allowed).
+    member private ctx.AddMacro (smd: SimpleMacroDeclaration) =
+      if ctx.HasIdentifier smd.Name then
+        failwith <| "Identifier " + smd.Name + " defined twice"
+      types.AddLevel smd.Args
+      types.AddToCurrentLevel ("Ret", smd.RetTyp)
+      let retTyp = types.LiftType smd.RetTyp
+      let body = ctx.LiftSimpleMetaTerm(smd.Body)
       types.PopLevel()
       if body.CheckTyp() <> Type.Bool then
-        failwith <| "Function " + sfd.Name + " body has type " + body.Typ().ToString() 
+        failwith <| "Function " + smd.Name + " body has type " + body.Typ().ToString() 
                     + " but Bool was expected" 
-      ctx.AddMacro  { Name = sfd.Name; 
-                      RetTyp = retTyp; 
-                      ArgsTyp = argsTyp } body argsNames
+      macros.[smd.Name] <- (retTyp, body, smd.Args)
 
+    /// Given a list of MetaTerm boolean conditions given by solvedMacros, it 
+    /// returns a single boolean MetaTerm that encodes them all (conjunction).
     member private ctx.MacroConditions (solvedMacros: List<MetaTerm>) =
       if solvedMacros.Count > 0 then
         let ret = AndBool <| Seq.toList solvedMacros
@@ -89,6 +149,9 @@
       else
         Const(BoolConstant(true))
 
+    /// Given a SimpleMetaTerm, it returns its corresponding MetaTerm. All 
+    /// macros are solved and its conditions are added as an extra AsInfon
+    /// expression in the end.
     member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) : MetaTerm =
       let solvedMacros = new List<MetaTerm>()
       let rec traverse : SimpleMetaTerm -> MetaTerm = 
@@ -109,8 +172,8 @@
               types.PopLevel()
               let conds = ctx.MacroConditions solvedMacros
               let cs'' = Normalizer.normalize <| 
-                          App(ctx.Identifiers.["andInfon"], [cs'; App(ctx.Identifiers.["asInfon"], [conds; substrates.["Default"]])])
-              App(ctx.Identifiers.["rule"], [cs''; cw'; a'])
+                          App(identifiers.["andInfon"], [cs'; App(identifiers.["asInfon"], [conds; substrates.["Default"]])])
+              App(identifiers.["rule"], [cs''; cw'; a'])
             | _ -> failwith "Wrong arguments in rule"
           elif f = "asInfon" then
             match smts with
@@ -121,19 +184,21 @@
           else
             let mts = List.map traverse smts
             // check if it is a macro
-            let found, value = ctx.Macros.TryGetValue f
+            let found, value = macros.TryGetValue f
             if found then
-              let func, body, argsNames = value
+              let retTyp, body, args = value
               let mutable subst = Substitution.Id
-              for mt, argName in List.zip mts argsNames do
+              for mt, (argName, argTyp) in List.zip mts args do
+                if types.LiftType argTyp <> mt.Typ() then
+                  failwith <| "Expecting " + argTyp + " macro argument, but found " + mt.Typ().ToString()
                 subst <- subst.Extend ({Name = argName; Typ = mt.Typ()}, mt)
-              let newRet = Var(freshVar func.RetTyp)
-              subst <- subst.Extend ({Name = "Ret"; Typ = func.RetTyp}, newRet)
+              let newRet = Var(freshVar retTyp)
+              subst <- subst.Extend ({Name = "Ret"; Typ = retTyp}, newRet)
               solvedMacros.Add(subst.Apply body) |> ignore
               newRet
             else
               // check if it is a primitive operator
-              let found, func = ctx.Identifiers.TryGetValue f
+              let found, func = identifiers.TryGetValue f
               if found then
                 App(func, mts)
               elif f = "eq" || f = "neq" || f = "lt" || f = "lte" || f = "gt" || f = "gte" || 
@@ -170,41 +235,17 @@
       let normalTerm = normalize mainTerm
       normalTerm
 
+    /// Given an overloaded function name and the type of one of its parameters
+    /// it looks the list of identifiers to see if there is a match.
+    /// Overloaded functions convention is that the name gets the type of its 
+    /// parameter appended in the end. (Only one type can be overloaded, but
+    /// this is enough to accomodate sum, conjunction, multiplication, etc.)
     member private ctx.SolveOverloadOperator (f: string) (simpleTyp: string) =
-      let found, func = ctx.Identifiers.TryGetValue (f + simpleTyp)
+      let found, func = identifiers.TryGetValue (f + simpleTyp)
       if found then
         Some func
       else
         None
 
-    member ctx.LiftSimplePolicy (sp: SimplePolicy) =
-      let rules = List.map (fun rule -> typeCheck (ctx.LiftSimpleMetaTerm rule) Rule) (Seq.toList sp.Rules)
-      { Rules =  rules }
 
-    member ctx.LoadSimpleSignature (ss: SimpleSignature) =
-      Seq.iter ctx.AddSubstrate ss.SubstrateDeclarations
-      Seq.iter ctx.AddType ss.TypeDeclarations 
-      Seq.iter ctx.AddTable ss.TableDeclarations
-      Seq.iter ctx.AddRelation ss.RelationDeclarations
-      Seq.iter ctx.AddFunction ss.FunctionDeclarations
-
-    member ctx.LiftSimpleSignature (ss: SimpleSignature) =
-      let sds = List.map
-                  (fun (ssd: SimpleSubstrateDeclaration) ->
-                    { Name = ssd.Name; Decl = substrates.[ssd.Name]})
-                  <| Seq.toList ss.SubstrateDeclarations
-      let tds = List.map 
-                  (fun (std: SimpleTableDeclaration) -> 
-                    { TableDeclaration.Name = std.Name; Cols = ctx.LiftArgs std.Cols}) 
-                  <| Seq.toList ss.TableDeclarations
-      let rds = List.map 
-                  (fun (srd: SimpleRelationDeclaration) -> 
-                    { RelationDeclaration.Name = srd.Name; Args = ctx.LiftArgs srd.Args}) 
-                  <| Seq.toList ss.RelationDeclarations
-      { Substrates = sds; Tables = tds; Relations = rds }
-      
-    member ctx.LiftSimpleAssembly (sa: SimpleAssembly) =
-      ctx.LoadSimpleSignature sa.Signature
-      { Signature = ctx.LiftSimpleSignature sa.Signature; 
-        Policy = ctx.LiftSimplePolicy sa.Policy }
 

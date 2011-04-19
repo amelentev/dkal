@@ -13,11 +13,20 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                       | App(f, [a1; a2]) when f = primitives.["seq"] -> Some (a1, a2)
                       | _ -> None
   let (|Send|_|) mt = match mt with
-                      | App(f, [ppal; mt']) when f = primitives.["send"] -> Some (ppal, mt')
+                      | App(f, [ppal; i]) when f = primitives.["send"] -> Some (ppal, i)
                       | _ -> None
   let (|Learn|_|) mt =  match mt with
-                        | App(f, [mt']) when f = primitives.["learn"] -> Some mt'
+                        | App(f, [i]) when f = primitives.["learn"] -> Some i
                         | _ -> None
+  let (|Forget|_|) mt = match mt with
+                        | App(f, [i]) when f = primitives.["forget"] -> Some i
+                        | _ -> None
+  let (|Install|_|) mt =  match mt with
+                          | App(f, [r]) when f = primitives.["install"] -> Some r
+                          | _ -> None
+  let (|Uninstall|_|) mt =  match mt with
+                            | App(f, [r]) when f = primitives.["uninstall"] -> Some r
+                            | _ -> None
 
   // Substrate patterns
   let (|Sql|_|) mt =  match mt with 

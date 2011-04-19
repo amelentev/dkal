@@ -4,6 +4,8 @@ open System.Collections.Generic
 
 open Microsoft.Research.Dkal.Ast
 
+/// Keeps a set of incoming infon MetaTerms until they are no longer needed
+/// and/or become too old, and/or irrelevant
 type Quarantine() =
   let msgs = new HashSet<MetaTerm>()
 
@@ -12,11 +14,10 @@ type Quarantine() =
     match msg with
     | AndInfon(msgs) -> List.iter (fun msg -> q.Add msg from) msgs
     | _ -> msgs.Add (App(primitives.["saidInfon"], [from; msg])) |> ignore
-    printfn "%A" msgs
 
   /// Called at the end of each round to eliminate "old" messages
   member q.Prune () = 
-    // TODO: implement
+    // TODO: implement some algorithm to remove unnecessary/old messages
     () 
 
   /// Match a wire condition (infon) to messages in quarantine

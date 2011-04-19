@@ -65,8 +65,8 @@ rule tokenize = parse
 // Relation declarations
 | "relation"		{ RELATION }
 
-// Function declarations
-| "function"		{ FUNCTION }
+// Macro declarations
+| "macro"			{ MACRO }
 
 // Variable declarations
 | "with"			{ WITH }
@@ -83,6 +83,9 @@ rule tokenize = parse
 | "send"			{ SEND }
 | "to"				{ TO }
 | "learn"			{ LEARN }
+| "forget"			{ FORGET }
+| "install"			{ INSTALL }
+| "uninstall"		{ UNINSTALL }
 
 // Literals
 | "true"			{ TRUE } 

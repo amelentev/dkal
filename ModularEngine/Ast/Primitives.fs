@@ -4,7 +4,13 @@ module Microsoft.Research.Dkal.Ast.Primitives
   open System.Collections.Generic
   open Microsoft.Research.Dkal.Ast
 
+  /// The primitives dictionary contains all the functions that are interpreted
+  /// by the DKAL engine, such as AsInfon, AndInfon, SaidInfon, AndBool, etc.
   let primitives = new Dictionary<string, Function>()
+
+  /// The associatives set contains the functions that behave associatively.
+  /// This information is used when normalizing MetaTerms in order to flatten
+  /// these functions whenever they appear.
   let associatives = new HashSet<string>()
 
   do
@@ -17,6 +23,9 @@ module Microsoft.Research.Dkal.Ast.Primitives
     addPrimitive {Name = "seq"; RetTyp = Action; ArgsTyp = [Action; Action]}
     addPrimitive {Name = "send"; RetTyp = Action; ArgsTyp = [Principal; Infon]}
     addPrimitive {Name = "learn"; RetTyp = Action; ArgsTyp = [Infon]}
+    addPrimitive {Name = "forget"; RetTyp = Action; ArgsTyp = [Infon]}
+    addPrimitive {Name = "install"; RetTyp = Action; ArgsTyp = [Rule]}
+    addPrimitive {Name = "uninstall"; RetTyp = Action; ArgsTyp = [Rule]}
 
     // substrate constructs
     addPrimitive {Name = "sql"; RetTyp = Substrate; ArgsTyp = [Type.String]}

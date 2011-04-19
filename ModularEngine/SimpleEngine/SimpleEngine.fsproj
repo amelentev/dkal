@@ -41,7 +41,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="SimpleEngine.fs" />
-    <Compile Include="Calculus.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
@@ -52,6 +51,11 @@
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate\Substrate.fsproj">
+      <Name>Substrate</Name>
+      <Project>{49e0e6c4-6c69-4c95-a1d5-aa3f5c8a8554}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

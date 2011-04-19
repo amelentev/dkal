@@ -29,6 +29,24 @@ module Microsoft.Research.Dkal.Ast.Builders
     else
       failwith "Incorrect parameter type when building learn"
     
+  let ForgetAction (i: MetaTerm) = 
+    if i.Typ() = Infon then
+      App(primitives.["forget"], [i])
+    else
+      failwith "Incorrect parameter type when building forget"
+    
+  let InstallAction (r: MetaTerm) = 
+    if r.Typ() = Rule then
+      App(primitives.["install"], [r])
+    else
+      failwith "Incorrect parameter type when building install"
+
+  let UninstallAction (r: MetaTerm) = 
+    if r.Typ() = Rule then
+      App(primitives.["uninstall"], [r])
+    else
+      failwith "Incorrect parameter type when building uninstall"
+
   // Substrate builders
   let Sql (cs: MetaTerm) = 
     if cs.Typ() = Type.String then

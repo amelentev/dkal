@@ -3,9 +3,22 @@
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 
+/// The SimpleRouter provides a IRouter interface by means of web services.
+/// A RoutingTable is constructed by reading the XML from the given routingFile.
+/// A ConnectionsHandler instance is used to do the actual sending and receiving
+/// of messages. Infon MetaTerms are serialized and deserialized using the given
+/// IParser and IPrinter implementations.
 type SimpleRouter (routingFile: string, parser: IParser, printer: IPrettyPrinter) =
+  
+  /// Stores the principals names and addresses, including the local name 
+  /// and address
   let routingTable = RoutingTable.FromXml routingFile
+
+  /// This function is called every time a new message arrives. Initially it
+  /// does nothing, it must be set by calling sr.Receive(...)
   let mutable elevateMessageFunction = fun _ _ -> ()
+
+  /// A ConnectionHandler instance to manage the incoming and outcoming channels
   let connectionsHandler = new ConnectionsHandler(routingTable, 
                                                   fun msg from -> 
                                                     let infon = parser.ParseInfon msg

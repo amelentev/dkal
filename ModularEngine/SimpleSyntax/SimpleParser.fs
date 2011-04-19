@@ -8,6 +8,9 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
 open Microsoft.Research.Dkal.SimpleSyntax.TypeErrors
 
+/// The SimpleParser parses from the simple concrete syntax, which uses declared 
+/// typed variables. It must be initialized with a Context that holds variable 
+/// type information, relation declarations, etc.
 type SimpleParser(ctx: Context) = 
 
   let lexbuff s = LexBuffer<char>.FromString(s)
