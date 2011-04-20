@@ -40,7 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DummySubstrate.fs" />
-    <Compile Include="SubstrateFactory.fs" />
+    <Compile Include="SubstrateDispatcher.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
