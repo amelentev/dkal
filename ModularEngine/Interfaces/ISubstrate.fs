@@ -3,4 +3,4 @@
 open Microsoft.Research.Dkal.Ast
 
   type ISubstrate =
-    abstract Solve: query: MetaTerm -> bool 
+    abstract Solve: query: MetaTerm -> Substitution seq
