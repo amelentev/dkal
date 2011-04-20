@@ -48,14 +48,9 @@ type SimpleEngine() =
     /// MetaTerms). Then return only those Substitutions that satisfy all their 
     /// side conditions.
     member se.Derive (target: MetaTerm) = 
-      se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target)
-        |> List.collect (fun (subst, conds) -> 
-            if List.forall 
-              (fun cond -> 
-                match subst.Apply cond with
-                | AsInfon(exp, substrateDecl) -> 
-                  (SubstrateFactory.Substrate substrateDecl).Solve exp
-                | _ -> failwith <| "Unrecognized condition to check") conds then [subst] else [])
+      [ for (subst, conds) in se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target) do
+          for subst' in SubstrateDispatcher.Solve conds [subst] do
+            yield subst' ]
 
   /// Given a prefix (list of principal MetaTerms) a current Substitution with 
   /// side conditions (AsInfo MetaTerms) and a target infon MetaTerm to derive
