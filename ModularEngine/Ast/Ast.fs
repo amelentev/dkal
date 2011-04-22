@@ -2,24 +2,6 @@
 
   open System.Collections.Generic
 
-  /// Type is used to represent MetaTerm types
-  type Type = 
-  | Bool
-  | Principal
-  | Infon
-  | Action
-  | Rule
-  | Substrate
-  | SubstrateElem of System.Type
-  with 
-    static member Int = SubstrateElem(typeof<int>)
-    static member Float = SubstrateElem(typeof<float>)
-    static member String = SubstrateElem(typeof<string>)
-    override t.ToString() = 
-      match t with
-      | SubstrateElem(typ) -> typ.Name
-      | t -> sprintf "%A" t
-
   /// Variables are typed
   type Variable = { Name: string; 
                     Typ: Type }

@@ -3,7 +3,6 @@
   open System.Collections.Generic
 
   open Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
-  open Microsoft.Research.Dkal.SimpleSyntax.TypeErrors
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Ast.Normalizer
 
@@ -35,11 +34,6 @@
       { Name = "Tmp" + freshVarId.ToString(); 
         Typ = typ }
 
-    do
-      // Load primitive identifiers
-      for nameFunc in primitives do
-        identifiers.[nameFunc.Key] <- nameFunc.Value
-
     /// Given a SimpleAssembly it returns its corresponding Assembly
     member ctx.LiftSimpleAssembly (sa: SimpleAssembly) =
       ctx.LoadSimpleSignature sa.Signature
@@ -48,7 +42,7 @@
 
     /// Given a SimplePolicy it returns its corresponding Policy
     member ctx.LiftSimplePolicy (sp: SimplePolicy) =
-      let rules = List.map (fun rule -> typeCheck (ctx.LiftSimpleMetaTerm rule) Rule) (Seq.toList sp.Rules)
+      let rules = List.map (fun rule -> ctx.LiftSimpleMetaTerm rule Rule) (Seq.toList sp.Rules)
       { Rules =  rules }
 
     /// Given a SimpleSignature it returns its corresponding Signature
@@ -132,11 +126,8 @@
       types.AddLevel smd.Args
       types.AddToCurrentLevel ("Ret", smd.RetTyp)
       let retTyp = types.LiftType smd.RetTyp
-      let body = ctx.LiftSimpleMetaTerm(smd.Body)
+      let body = ctx.LiftSimpleMetaTerm smd.Body Type.Bool
       types.PopLevel()
-      if body.CheckTyp() <> Type.Bool then
-        failwith <| "Function " + smd.Name + " body has type " + body.Typ().ToString() 
-                    + " but Bool was expected" 
       macros.[smd.Name] <- (retTyp, body, smd.Args)
 
     /// Given a list of MetaTerm boolean conditions given by solvedMacros, it 
@@ -149,103 +140,117 @@
       else
         Const(BoolConstant(true))
 
-    /// Given a SimpleMetaTerm, it returns its corresponding MetaTerm. All 
+    /// Given a SimpleMetaTerm smt and a Type t, it returns its the 
+    /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
     /// macros are solved and its conditions are added as an extra AsInfon
     /// expression in the end.
-    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) : MetaTerm =
+    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) (typ: Type) : MetaTerm =
+      let complies (typ: Type) (typ': Type option) =
+        match typ' with
+        | Some typ' when typ' = typ -> true
+        | None -> true
+        | _ -> false
+      let failDueToType (smt: SimpleMetaTerm) (typ: Type option) = 
+        failwith <| "Expecting a " + typ.Value.ToString() + "MetaTerm, found: " + (sprintf "%A" smt)
       let solvedMacros = new List<MetaTerm>()
-      let rec traverse : SimpleMetaTerm -> MetaTerm = 
-        fun smt ->
+      let rec traverse (smt: SimpleMetaTerm) (typ: Type option) = 
         match smt with
-        | SimpleApp(f, smts) -> 
-          // check if it is a rule
-          if f = "rule" then
-            match smts with
-            | cs :: cw :: a :: vars -> 
-              let args = List.map (fun var -> match var with 
-                                              | SimpleVar(v) -> 
-                                                let parts = v.Split ':'
-                                                (parts.[0], parts.[1])
-                                              | _ -> failwith "expecting var in rule") vars
-              types.AddLevel args
-              let cs', cw', a' = traverse cs, traverse cw, traverse a
-              types.PopLevel()
-              let conds = ctx.MacroConditions solvedMacros
-              let cs'' = Normalizer.normalize <| 
-                          App(identifiers.["andInfon"], [cs'; App(identifiers.["asInfon"], [conds; substrates.["Default"]])])
-              App(identifiers.["rule"], [cs''; cw'; a'])
-            | _ -> failwith "Wrong arguments in rule"
-          elif f = "asInfon" then
-            match smts with
-            | [query; SimpleVar(substrate)] -> 
-              let query' = traverse query
-              AsInfon(query', substrates.[substrate])
-            | _ -> failwith "Wrong arguments in asInfon"
-          else
-            let mts = List.map traverse smts
+        | SimpleApp(args, f, [cs; cw; a]) when f = "rule" ->
+            if not(complies Rule typ) then failDueToType smt typ
+            types.AddLevel args
+            let cs', cw', a' = traverse cs (Some Infon), traverse cw (Some Infon), traverse a (Some Action)
+            types.PopLevel()
+            let conds = ctx.MacroConditions solvedMacros
+            let cs'' = Normalizer.normalize <| AndInfon([cs'; AsInfon(conds, substrates.["Default"])])
+            RuleRule(cs'', cw', a')
+        | SimpleApp([], f, [query; SimpleVar(substrate)]) when f = "asInfon" ->
+            if not(complies Infon typ) then failDueToType smt typ
+            let query' = traverse query (Some Bool)
+            AsInfon(query', substrates.[substrate])
+        | SimpleApp([], f, []) when f = "nil" ->
+          match typ with
+          | None -> failwith "Failed to infer sequence type from context"
+          | Some (Sequence typ') -> Nil typ'
+          | Some typ' -> failwith <| "Expecting a sequence type, found " + typ'.ToString() + " on " + (sprintf "%A" smt)
+        | SimpleApp([], f, [e; list]) when f = "cons" ->
+          let e', list' = 
+            match typ with
+            | Some (Sequence typ') -> traverse e (Some typ'), traverse list (Some <| Sequence typ')
+            | None -> 
+              let e' = traverse e None
+              e', traverse list (Some <| Sequence(e'.Typ()))
+            | Some typ' -> failwith <| "Expecting a sequence type, found " + typ'.ToString() + " on " + (sprintf "%A" smt)
+          Cons e' list'
+        | SimpleApp([], f, smts) ->
             // check if it is a macro
             let found, value = macros.TryGetValue f
             if found then
               let retTyp, body, args = value
+              if not(complies retTyp typ) then failDueToType smt typ
               let mutable subst = Substitution.Id
-              for mt, (argName, argTyp) in List.zip mts args do
-                if types.LiftType argTyp <> mt.Typ() then
-                  failwith <| "Expecting " + argTyp + " macro argument, but found " + mt.Typ().ToString()
+              for smt, (argName, argTyp) in List.zip smts args do
+                let mt = traverse smt (Some <| types.LiftType argTyp)
                 subst <- subst.Extend ({Name = argName; Typ = mt.Typ()}, mt)
               let newRet = Var(freshVar retTyp)
               subst <- subst.Extend ({Name = "Ret"; Typ = retTyp}, newRet)
               solvedMacros.Add(subst.Apply body) |> ignore
               newRet
             else
-              // check if it is a primitive operator
+              // check if it is a user defined relation/table/etc.
               let found, func = identifiers.TryGetValue f
               if found then
+                let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsTyp
                 App(func, mts)
-              elif f = "eq" || f = "neq" || f = "lt" || f = "lte" || f = "gt" || f = "gte" || 
-                    f = "plus" || f = "times" || f = "minus" || f = "uminus" || f = "div" || f = "and" then
-                let simpleTyp = mts.[0].Typ().ToString()
-                match ctx.SolveOverloadOperator f simpleTyp with
-                | Some func -> App(func, mts)
-                | None -> failwith <| "There is no " + f + " operator for " + simpleTyp
               else
-                failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
+                // check if it is a primitive operator
+                match Primitives.SolveFunction f with
+                | Some func -> 
+                  if not(complies func.RetTyp typ) then failDueToType smt typ
+                  let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsTyp
+                  App(func, mts)
+                | None ->
+                  // check if it is an overloaded operator
+                  if not(smts.IsEmpty) then
+                    let mt0 = traverse smts.[0] None
+                    match Primitives.SolveOverloadOperator f (mt0.Typ()) with
+                    | Some func -> 
+                      if not(complies func.RetTyp typ) then failDueToType smt typ
+                      let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsTyp
+                      App(func, mts)
+                    | None -> 
+                      failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
+                  else
+                    failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
         | SimpleConst(c) ->
           match c with
-          | BoolSimpleConstant b -> Const(BoolConstant b)
-          | IntSimpleConstant i -> Const(SubstrateElemConstant i)
-          | FloatSimpleConstant f -> Const(SubstrateElemConstant f)
-          | StringSimpleConstant s -> Const(SubstrateElemConstant s)
-          | PrincipalSimpleConstant p -> Const(PrincipalConstant p)
+          | BoolSimpleConstant b when complies Type.Bool typ -> Const(BoolConstant b)
+          | IntSimpleConstant i when complies Type.Int typ -> Const(SubstrateElemConstant i)
+          | FloatSimpleConstant f when complies Type.Float typ -> Const(SubstrateElemConstant f)
+          | StringSimpleConstant s when complies Type.String typ -> Const(SubstrateElemConstant s)
+          | PrincipalSimpleConstant p when complies Type.Principal typ -> Const(PrincipalConstant p)
+          | _ -> failDueToType smt typ
         | SimpleVar(v) ->
           match types.VariableType v with
           | None -> failwith <| "Undeclared variable: " + v
-          | Some typ -> Var({ Name = v; Typ = typ })
-      let mainTerm = traverse smt
+          | Some typ' when complies typ' typ -> Var({ Name = v; Typ = typ' })
+          | _ -> failDueToType smt typ
+        | _ -> failwith <| "Malformed SimpleMetaTerm"
+      let mainTerm = traverse smt (Some typ)
       let conditions = ctx.MacroConditions solvedMacros
       let finalTerm = if mainTerm.Typ() = Bool then
-                        App(primitives.["andBool"], [conditions; mainTerm])
+                        AndBool([conditions; mainTerm])
                       elif mainTerm.Typ() = Infon then
-                        App(primitives.["andInfon"], [App(primitives.["asInfon"], [conditions; substrates.["Default"]]); mainTerm]) 
+                        AndInfon([AsInfon(conditions, substrates.["Default"]); mainTerm]) 
                       else
                         if solvedMacros.Count > 0 then
                           failwith <| sprintf "Pending macro conditions when lifting term: %A" smt
                         else
                           mainTerm
-      mainTerm.CheckTyp() |> ignore
+      mainTerm.CheckTyp() |> ignore // TODO: is it necessary?
       let normalTerm = normalize mainTerm
       normalTerm
 
-    /// Given an overloaded function name and the type of one of its parameters
-    /// it looks the list of identifiers to see if there is a match.
-    /// Overloaded functions convention is that the name gets the type of its 
-    /// parameter appended in the end. (Only one type can be overloaded, but
-    /// this is enough to accomodate sum, conjunction, multiplication, etc.)
-    member private ctx.SolveOverloadOperator (f: string) (simpleTyp: string) =
-      let found, func = identifiers.TryGetValue (f + simpleTyp)
-      if found then
-        Some func
-      else
-        None
+    
 
 
 

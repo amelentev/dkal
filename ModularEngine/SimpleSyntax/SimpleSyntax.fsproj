@@ -48,7 +48,6 @@
   <ItemGroup>
     <Compile Include="SimpleAst.fs" />
     <Compile Include="SimplePrettyPrinter.fs" />
-    <Compile Include="TypeErrors.fs" />
     <Compile Include="TypeInfo.fs" />
     <Compile Include="Context.fs" />
     <FsLex Include="Lexer.fsl">

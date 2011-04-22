@@ -17,6 +17,8 @@ type SimplePrettyPrinter() =
       | SubstrateElem(t) when t = typeof<int> -> "int"
       | SubstrateElem(t) when t = typeof<float> -> "float"
       | SubstrateElem(t) when t = typeof<string> -> "string"
+      | Sequence(t') -> "seq<" + spp.PrintType t' + ">"
+      | Tuple(t1, t2) -> spp.PrintType t1 + " * " + spp.PrintType t2
       | t -> t.ToString().ToLower()
 
     member spp.PrintMetaTerm mt =
@@ -36,23 +38,24 @@ type SimplePrettyPrinter() =
 
   static member FindFunctionSymbol f = 
     match f with
-    | "andInfon" 
-    | "andBool" -> "&&", true
-    | "impliesInfon" -> "->", true
-    | "saidInfon" -> "said", true
-    | "orBool" -> "||", true
-    | "notBool" -> "!", false
-    | "eqBool" | "eqInt32" | "eqDouble" | "eqString" | "eqPrincipal" -> "==", true
-    | "neqBool" | "neqInt32" | "neqDouble" | "neqString" | "neqPrincipal" -> "!=", true
-    | "ltInt32" | "ltDouble" -> "<", true
-    | "lteInt32" | "lteDouble" -> "<=", true
-    | "gltInt32" | "gtDouble" -> ">", true
-    | "gteInt32" | "gteDouble" -> ">=", true
-    | "plusInt32" | "plusDouble" | "plusString" -> "+", true
-    | "minusInt32" | "minusDouble" -> "-", true
-    | "timesInt32" | "timesDouble" -> "*", true
-    | "divInt32" | "divDouble" -> "/", true
-    | "uminusInt32" | "uminusDouble" -> "-", false
+    | "and" -> "&&", true
+    | "implies" -> "->", true
+    | "said" -> "said", true
+    | "or" -> "||", true
+    | "not" -> "!", false
+    | "eq" -> "==", true
+    | "neq" -> "!=", true
+    | "lt" -> "<", true
+    | "lte" -> "<=", true
+    | "gt" -> ">", true
+    | "gte" -> ">=", true
+    | "plus" -> "+", true
+    | "minus" -> "-", true
+    | "times" -> "*", true
+    | "div" -> "/", true
+    | "uminus" -> "-", false
+    | "nil" -> "[]", false
+    | "cons" -> "::", true
     | f -> f, false
 
   member private spp.TokenizeMetaTerm mt =
@@ -81,7 +84,7 @@ type SimplePrettyPrinter() =
             @ substrateName
             @ [ TextToken <| ")" ]
         | _ -> failwith "Incorrect arguments in AsInfon(...)"
-      elif fSymbol.Contains "." then
+      elif not infix && mts = [] then
         [ TextToken <| fSymbol ]
       elif fSymbol = "emptyInfon" then
         [ TextToken <| "asInfon(true)" ]
