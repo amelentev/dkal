@@ -5,60 +5,60 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
 
   // Rule patterns
   let (|Rule|_|) mt = match mt with
-                      | App(f, [cs; cw; a]) when f = primitives.["rule"] -> Some (cs, cw, a)
+                      | App({Name="rule"}, [cs; cw; a]) -> Some (cs, cw, a)
                       | _ -> None
 
   // Action patterns
   let (|Seq|_|) mt =  match mt with
-                      | App(f, [a1; a2]) when f = primitives.["seq"] -> Some (a1, a2)
+                      | App({Name="seq"}, [a1; a2]) -> Some (a1, a2)
                       | _ -> None
   let (|Send|_|) mt = match mt with
-                      | App(f, [ppal; i]) when f = primitives.["send"] -> Some (ppal, i)
+                      | App({Name="send"}, [ppal; i]) -> Some (ppal, i)
                       | _ -> None
   let (|Learn|_|) mt =  match mt with
-                        | App(f, [i]) when f = primitives.["learn"] -> Some i
+                        | App({Name="learn"}, [i]) -> Some i
                         | _ -> None
   let (|Forget|_|) mt = match mt with
-                        | App(f, [i]) when f = primitives.["forget"] -> Some i
+                        | App({Name="forget"}, [i]) -> Some i
                         | _ -> None
   let (|Install|_|) mt =  match mt with
-                          | App(f, [r]) when f = primitives.["install"] -> Some r
+                          | App({Name="install"}, [r]) -> Some r
                           | _ -> None
   let (|Uninstall|_|) mt =  match mt with
-                            | App(f, [r]) when f = primitives.["uninstall"] -> Some r
+                            | App({Name="uninstall"}, [r]) -> Some r
                             | _ -> None
 
   // Substrate patterns
   let (|Sql|_|) mt =  match mt with 
-                      | App(f, [mt']) when f = primitives.["sql"] -> Some mt'
+                      | App({Name="sql"}, [mt']) -> Some mt'
                       | _ -> None
   let (|Xml|_|) mt =  match mt with 
-                      | App(f, [mt']) when f = primitives.["xml"] -> Some mt'
+                      | App({Name="xml"}, [mt']) -> Some mt'
                       | _ -> None
 
   // Infon patterns
   let (|EmptyInfon|_|) mt = match mt with 
-                            | App(f, []) when f = primitives.["emptyInfon"] -> Some ()
+                            | App({Name="emptyInfon"}, []) -> Some ()
                             | _ -> None
   let (|AsInfon|_|) mt =  match mt with 
-                          | App(f, [exp; substrate]) when f = primitives.["asInfon"] -> Some (exp, substrate)
+                          | App({Name="asInfon"}, [exp; substrate]) -> Some (exp, substrate)
                           | _ -> None
   let (|AndInfon|_|) mt = match mt with
-                          | App(f, mts) when f.Name = "andInfon" -> Some mts
+                          | App({Name="and"; RetTyp=Infon}, mts) -> Some mts
                           | _ -> None
   let (|ImpliesInfon|_|) mt = match mt with
-                              | App(f, [mt1; mt2]) when f = primitives.["impliesInfon"] -> Some (mt1, mt2)
+                              | App({Name="implies"; RetTyp=Infon}, [mt1; mt2]) -> Some (mt1, mt2)
                               | _ -> None
   let (|SaidInfon|_|) mt = match mt with
-                            | App(f, [ppal; mt']) when f = primitives.["saidInfon"] -> Some (ppal, mt')
+                            | App({Name="said"}, [ppal; mt']) -> Some (ppal, mt')
                             | _ -> None
 
   // Bool patterns
   let (|AndBool|_|) mt =  match mt with
-                          | App(f, mts) when f.Name = "andBool" -> Some mts
+                          | App({Name="and"; RetTyp=Bool}, mts) -> Some mts
                           | _ -> None
   let (|OrBool|_|) mt = match mt with
-                        | App(f, mts) when f.Name = "orBool" -> Some mts
+                        | App({Name="or"; RetTyp=Bool}, mts) -> Some mts
                         | _ -> None
 
   // Literal patterns

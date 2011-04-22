@@ -12,8 +12,8 @@
     let children (f: Function) (mt: MetaTerm) =
       match mt with
       | App(f', mts) when f.Name = f'.Name -> mts
-      | EmptyInfon when f.Name = "andInfon" -> []
-      | True when f.Name = "andBool" -> []
+      | EmptyInfon when f.Name = "and" && f.RetTyp = Infon -> []
+      | True when f.Name = "and" && f.RetTyp = Bool -> []
       | _ -> [mt]
           
     match mt with
@@ -21,7 +21,7 @@
       // Normalize recursively
       let mts = List.map normalize mts
       // If f is associative, get the children of each child
-      let mts = if associatives.Contains(f.Name) then
+      let mts = if Primitives.IsAssociative(f.Name) then
                   List.collect (children f) mts
                 else
                   mts
@@ -29,10 +29,10 @@
       // Remove malformed cases such as conjunction of zero elements, etc.
       match mts with
       | True::_ when f.Name = "asInfon" -> EmptyInfon
-      | [] when f.Name = "andInfon" -> EmptyInfon
-      | [mt] when f.Name = "andInfon" -> mt
-      | [] when f.Name = "andBool" -> True
-      | [mt] when f.Name = "andBool" -> mt
+      | [] when f.Name = "and" && f.RetTyp = Infon -> EmptyInfon
+      | [mt] when f.Name = "and" && f.RetTyp = Infon -> mt
+      | [] when f.Name = "and" && f.RetTyp = Bool -> True
+      | [mt] when f.Name = "and" && f.RetTyp = Bool -> mt
       | _ -> 
         // Return application of normalized function
         let f' =  { Name = f.Name; 

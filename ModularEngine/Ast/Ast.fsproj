@@ -39,6 +39,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Type.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Subst.fs" />
     <Compile Include="Primitives.fs" />

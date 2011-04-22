@@ -9,7 +9,16 @@ type SimpleFunction = string
 type SimpleVariable = string
 
 /// To easily store parsed types
-type SimpleType = string
+type SimpleType = 
+| BasicSimpleType of string
+| SeqSimpleType of SimpleType
+| TupleSimpleType of SimpleType * SimpleType
+with 
+  override st.ToString() = 
+    match st with
+    | BasicSimpleType(name) -> name
+    | SeqSimpleType(st') -> "seq<" + st'.ToString() + ">"
+    | TupleSimpleType(st1, st2) -> st1.ToString() + " * " + st2.ToString()
 
 /// To easily store parsed arguments
 type SimpleArg = string * SimpleType
@@ -26,7 +35,7 @@ type SimpleConstant =
 /// parsed elements before they are transformed (lifted) to typed MetaTerms by
 /// the Context class
 type SimpleMetaTerm = 
-| SimpleApp of SimpleFunction * SimpleMetaTerm list
+| SimpleApp of SimpleArg list * SimpleFunction * SimpleMetaTerm list
 | SimpleConst of SimpleConstant
 | SimpleVar of SimpleVariable
 
@@ -38,7 +47,7 @@ type SimpleSubstrateDeclaration =
 
 /// To easily store parsed type renames
 type SimpleTypeDeclaration = 
-  { NewTyp: SimpleType;
+  { NewTyp: string;
     TargetTyp: SimpleType }
 
 /// To easily store parsed table declarations
@@ -70,7 +79,7 @@ type SimpleSignature() =
   member ss.TableDeclarations = tableDeclarations
   member ss.RelationDeclarations = relationDeclarations
   member ss.MacroDeclarations = macroDeclarations
-    
+   
 /// To easily store parsed policies
 type SimplePolicy() =
   let rules = new List<SimpleMetaTerm>()

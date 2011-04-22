@@ -12,8 +12,8 @@ type TypeInfo() =
   /// variables to its corresponding types
   let levels = new List<Dictionary<SimpleVariable, Type>>()
 
-  /// Type information that maps SimpleTypes to Types
-  let types = new Dictionary<SimpleType, Type>()
+  /// Type information that maps BasicSimpleTypes to Types
+  let types = new Dictionary<string, Type>()
   do
     // Load primitive types
     types.Add("bool", Type.Bool)
@@ -25,16 +25,22 @@ type TypeInfo() =
     types.Add("rule", Type.Rule)
 
   /// Adds a new type rename, extending the types information accordingly
-  member ti.AddTypeRename (newType: string) (targetType: string) =
+  member ti.AddTypeRename (newType: string) (targetType: SimpleType) =
     types.[newType] <- ti.LiftType targetType
 
   /// Returns the corresponding Type given a SimpleType
   member ti.LiftType (st: SimpleType) =
-    let found, typ = types.TryGetValue st
-    if found then
-      typ
-    else
-      failwith <| "Undefined type: " + st
+    match st with
+    | BasicSimpleType(name) -> 
+      let found, typ = types.TryGetValue name
+      if found then
+        typ
+      else
+        failwith <| "Undefined type: " + name
+    | SeqSimpleType(st') ->
+      Type.Sequence(ti.LiftType st')
+    | TupleSimpleType(st1, st2) ->
+      Type.Tuple(ti.LiftType st1, ti.LiftType st2)
 
   /// Adds a new typing level, using the type information found in the 
   /// SimpleArgs given in vars. If a variable already existed in a 

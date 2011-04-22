@@ -48,6 +48,8 @@ rule tokenize = parse
 | "}"				{ RBRACE }
 | "("				{ LPAR }
 | ")"				{ RPAR }
+| "["				{ LSQ }
+| "]"				{ RSQ }
 | ":"				{ COLON }
 | ";"				{ SEMICOLON }
 | ","				{ COMMA }
@@ -56,8 +58,9 @@ rule tokenize = parse
 // Substrate declarations
 | "substrate"		{ SUBSTRATE } 
 
-// Type renames
+// Types
 | "type"			{ TYPE }
+| "seq"				{ SEQ }
 
 // Table declarations
 | "table"			{ TABLE }

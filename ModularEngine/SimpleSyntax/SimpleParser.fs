@@ -6,7 +6,6 @@ open Microsoft.FSharp.Text.Lexing
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
-open Microsoft.Research.Dkal.SimpleSyntax.TypeErrors
 
 /// The SimpleParser parses from the simple concrete syntax, which uses declared 
 /// typed variables. It must be initialized with a Context that holds variable 
@@ -18,11 +17,11 @@ type SimpleParser(ctx: Context) =
   interface IParser with
     member sp.ParseInfon s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      typeCheck (ctx.LiftSimpleMetaTerm smt) Infon
+      ctx.LiftSimpleMetaTerm smt Infon
 
     member sp.ParseRule s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      typeCheck (ctx.LiftSimpleMetaTerm smt) Rule
+      ctx.LiftSimpleMetaTerm smt Rule
     
     member sp.ParsePolicy s = 
       let sp = Parser.Policy Lexer.tokenize (lexbuff s)
