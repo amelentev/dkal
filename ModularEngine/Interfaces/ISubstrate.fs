@@ -12,6 +12,5 @@ open Microsoft.Research.Dkal.Ast
     abstract member Solve :  queries : MetaTerm seq -> substs : Substitution seq -> Substitution seq
     abstract variables: query: MetaTerm -> Variable seq
     abstract required: query: MetaTerm -> Variable seq
-    abstract unify: mt1: MetaTerm -> mt2: MetaTerm -> Substitution option
     abstract unifyFrom: subst: Substitution -> mt1: MetaTerm -> mt2: MetaTerm -> Substitution option
     abstract applySustitution: subst: Substitution -> mt: MetaTerm -> MetaTerm

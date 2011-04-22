@@ -12,6 +12,5 @@ type DummySubstrate() =
     member this.namespaces = new HashSet<string>()
     member this.variables (query: MetaTerm) = query.Vars.AsEnumerable()
     member this.required (query: MetaTerm) = seq []
-    member this.unify (mt1: MetaTerm) (mt2: MetaTerm) = Substitution.Unify mt1 mt2
     member this.unifyFrom (subst: Substitution) (mt1: MetaTerm) (mt2: MetaTerm) = Substitution.UnifyFrom subst mt1 mt2
     member this.applySustitution (subst: Substitution) (mt: MetaTerm) = subst.Apply mt
