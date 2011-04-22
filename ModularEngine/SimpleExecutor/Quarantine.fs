@@ -13,7 +13,7 @@ type Quarantine() =
   member q.Add (msg: MetaTerm) (from: MetaTerm) =
     match msg with
     | AndInfon(msgs) -> List.iter (fun msg -> q.Add msg from) msgs
-    | _ -> msgs.Add (App(primitives.["saidInfon"], [from; msg])) |> ignore
+    | _ -> msgs.Add (SaidInfon(from, msg)) |> ignore
 
   /// Called at the end of each round to eliminate "old" messages
   member q.Prune () = 
