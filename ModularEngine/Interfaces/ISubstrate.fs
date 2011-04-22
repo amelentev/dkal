@@ -6,7 +6,10 @@ open Microsoft.Research.Dkal.Ast
 
   type ISubstrate =
     abstract namespaces: HashSet<string>
-    abstract Solve: query: MetaTerm -> substitution: Substitution -> Substitution seq
+    /// queries : boolean expression MetaTerms
+    /// substs  : seq of substitutions for queryes variables
+    /// returns seq of resolved substituions (more specialized than substs)
+    abstract member Solve :  queries : MetaTerm seq -> substs : Substitution seq -> Substitution seq
     abstract variables: query: MetaTerm -> Variable seq
     abstract required: query: MetaTerm -> Variable seq
     abstract unify: mt1: MetaTerm -> mt2: MetaTerm -> Substitution option
