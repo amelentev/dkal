@@ -40,12 +40,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Type.fs" />
-    <Compile Include="Ast.fs" />
     <Compile Include="Subst.fs" />
+    <Compile Include="Ast.fs" />
     <Compile Include="Primitives.fs" />
     <Compile Include="Builders.fs" />
     <Compile Include="ActivePatterns.fs" />
     <Compile Include="Normalizer.fs" />
+    <Compile Include="IAstParser.fs" />
+    <Compile Include="IAstPrettyPrinter.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
+      <Name>Interfaces</Name>
+      <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

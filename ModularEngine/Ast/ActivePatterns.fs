@@ -1,7 +1,19 @@
 ﻿[<AutoOpen>]
 module Microsoft.Research.Dkal.Ast.ActivePatterns
 
+  open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast
+
+  // General patterns
+  let (|App|_|) (t: ITerm) =  match t with
+                              | :? Application as a -> Some (a.Function, a.Args)
+                              | _ -> None
+  let (|Var|_|) (t: ITerm) =  match t with
+                              | :? Variable as v -> Some v
+                              | _ -> None
+  let (|Const|_|) (t: ITerm) =  match t with
+                                | :? Constant as c -> Some c
+                                | _ -> None
 
   // Rule patterns
   let (|Rule|_|) mt = match mt with
@@ -41,13 +53,16 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                             | App({Name="emptyInfon"}, []) -> Some ()
                             | _ -> None
   let (|AsInfon|_|) mt =  match mt with 
-                          | App({Name="asInfon"}, [exp; substrate]) -> Some (exp, substrate)
+                          | App({Name="asInfon"}, [exp]) -> 
+                            match exp with
+                            | :? ISubstrateTerm as exp -> Some exp
+                            | _ -> None
                           | _ -> None
   let (|AndInfon|_|) mt = match mt with
-                          | App({Name="and"; RetTyp=Infon}, mts) -> Some mts
+                          | App({Name="and"; RetType=Infon}, mts) -> Some mts
                           | _ -> None
   let (|ImpliesInfon|_|) mt = match mt with
-                              | App({Name="implies"; RetTyp=Infon}, [mt1; mt2]) -> Some (mt1, mt2)
+                              | App({Name="implies"; RetType=Infon}, [mt1; mt2]) -> Some (mt1, mt2)
                               | _ -> None
   let (|SaidInfon|_|) mt = match mt with
                             | App({Name="said"}, [ppal; mt']) -> Some (ppal, mt')
@@ -55,10 +70,10 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
 
   // Bool patterns
   let (|AndBool|_|) mt =  match mt with
-                          | App({Name="and"; RetTyp=Bool}, mts) -> Some mts
+                          | App({Name="and"; RetType=Bool}, mts) -> Some mts
                           | _ -> None
   let (|OrBool|_|) mt = match mt with
-                        | App({Name="or"; RetTyp=Bool}, mts) -> Some mts
+                        | App({Name="or"; RetType=Bool}, mts) -> Some mts
                         | _ -> None
 
   // Literal patterns

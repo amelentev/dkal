@@ -1,8 +1,8 @@
-﻿namespace Microsoft.Research.Dkal.SimpleSyntax
+﻿namespace Microsoft.Research.Dkal.Ast.SimpleSyntax
   
 open System.Collections.Generic
 
-open Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
+open Microsoft.Research.Dkal.Ast.SimpleSyntax.SimpleAst
 open Microsoft.Research.Dkal.Ast
 
 /// Stores type information for the SimpleVariables in a given Context

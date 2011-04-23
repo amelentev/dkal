@@ -1,126 +1,90 @@
 ﻿[<AutoOpen>]
 module Microsoft.Research.Dkal.Ast.Builders
 
+  open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast
 
-  // Rule builders
-  let RuleRule (cs: MetaTerm, cw: MetaTerm, a: MetaTerm) = 
-    if cs.Typ() = Infon && cw.Typ() = Infon && a.Typ() = Action then
-      App(Primitives.SolveFunction "rule" |> Option.get, [cs; cw; a])
+  // General builders
+  let App (f: Function, args: ITerm list) =
+    if List.forall2 (fun (t: Type) (a: ITerm) -> (t :> IType) = a.Type) f.ArgsType args then
+      { Function = f; Args = args } :> ITerm
     else
-      failwith "Incorrect parameter type when building rule"
+      failwith <| "Incorrect parameter types when building " + f.Name
+  let Const (c: Constant) =
+    c :> ITerm
+  let Var (v: Variable) =
+    v :> ITerm
+
+  // Rule builders
+  let RuleRule (cs: ITerm, cw: ITerm, a: ITerm) = 
+    App(Primitives.SolveFunction "rule" |> Option.get, [cs; cw; a])
 
   // Action builders
-  let SeqAction (a1: MetaTerm, a2: MetaTerm) = 
-    if a1.Typ() = Action && a2.Typ() = Action then
-      App(Primitives.SolveFunction "seq" |> Option.get, [a1; a2])
-    else
-      failwith "Incorrect parameter type when building seq"
+  let SeqAction (a1: ITerm, a2: ITerm) = 
+    App(Primitives.SolveFunction "seq" |> Option.get, [a1; a2])
 
-  let SendAction (ppal: MetaTerm, i: MetaTerm) = 
-    if ppal.Typ() = Principal && i.Typ() = Infon then
-      App(Primitives.SolveFunction "send" |> Option.get, [ppal; i])
-    else
-      failwith "Incorrect parameter type when building send"
+  let SendAction (ppal: ITerm, i: ITerm) = 
+    App(Primitives.SolveFunction "send" |> Option.get, [ppal; i])
     
-  let LearnAction (i: MetaTerm) = 
-    if i.Typ() = Infon then
-      App(Primitives.SolveFunction "learn" |> Option.get, [i])
-    else
-      failwith "Incorrect parameter type when building learn"
+  let LearnAction (i: ITerm) = 
+    App(Primitives.SolveFunction "learn" |> Option.get, [i])
     
-  let ForgetAction (i: MetaTerm) = 
-    if i.Typ() = Infon then
-      App(Primitives.SolveFunction "forget" |> Option.get, [i])
-    else
-      failwith "Incorrect parameter type when building forget"
+  let ForgetAction (i: ITerm) = 
+    App(Primitives.SolveFunction "forget" |> Option.get, [i])
     
-  let InstallAction (r: MetaTerm) = 
-    if r.Typ() = Rule then
-      App(Primitives.SolveFunction "install" |> Option.get, [r])
-    else
-      failwith "Incorrect parameter type when building install"
+  let InstallAction (r: ITerm) = 
+    App(Primitives.SolveFunction "install" |> Option.get, [r])
 
-  let UninstallAction (r: MetaTerm) = 
-    if r.Typ() = Rule then
-      App(Primitives.SolveFunction "uninstall" |> Option.get, [r])
-    else
-      failwith "Incorrect parameter type when building uninstall"
+  let UninstallAction (r: ITerm) = 
+    App(Primitives.SolveFunction "uninstall" |> Option.get, [r])
 
   // Substrate builders
-  let Sql (cs: MetaTerm) = 
-    if cs.Typ() = Type.String then
-      App(Primitives.SolveFunction "sql" |> Option.get, [cs])
-    else
-      failwith "Incorrect parameter type when building sql"
+  let Sql (cs: ITerm) = 
+    App(Primitives.SolveFunction "sql" |> Option.get, [cs])
 
-  let Xml (file: MetaTerm) = 
-    if file.Typ() = Type.String then
-      App(Primitives.SolveFunction "xml" |> Option.get, [file])
-    else
-      failwith "Incorrect parameter type when building xml"
+  let Xml (file: ITerm) = 
+    App(Primitives.SolveFunction "xml" |> Option.get, [file])
 
   // Infon builders
   let EmptyInfon = 
     App(Primitives.SolveFunction "emptyInfon" |> Option.get, [])
     
-  let AsInfon (query: MetaTerm, substrate: MetaTerm) = 
-    if query.Typ() = Bool && substrate.Typ() = Substrate then
-      App(Primitives.SolveFunction "asInfon" |> Option.get, [query; substrate])
-    else
-      failwith "Incorrect parameter type when building asInfon"
+  let AsInfon (query: ISubstrateTerm) = 
+    App(Primitives.SolveFunction "asInfon" |> Option.get, [query])
     
-  let AndInfon (infons: MetaTerm list) = 
-    if List.forall (fun (i: MetaTerm) -> i.Typ() = Infon) infons then
-      App({ Name = "and"; 
-            RetTyp = Infon; 
-            ArgsTyp = List.replicate infons.Length Infon }, infons)
-    else
-      failwith "Incorrect parameter type when building andInfon"
+  let AndInfon (infons: ITerm list) = 
+    App({ Name = "and"; 
+          RetType = Infon; 
+          ArgsType = List.replicate infons.Length Infon }, infons)
     
-  let ImpliesInfon (i1: MetaTerm, i2: MetaTerm) = 
-    if i1.Typ() = Infon && i2.Typ() = Infon then
-      App(Primitives.SolveOverloadOperator "implies" Infon |> Option.get, [i1; i2])
-    else
-      failwith "Incorrect parameter type when building impliesInfon"
+  let ImpliesInfon (i1: ITerm, i2: ITerm) = 
+    App(Primitives.SolveOverloadOperator "implies" Infon |> Option.get, [i1; i2])
 
-  let SaidInfon (ppal: MetaTerm, i: MetaTerm) = 
-    if ppal.Typ() = Principal && i.Typ() = Infon then
-      App(Primitives.SolveFunction "said" |> Option.get, [ppal; i])
-    else
-      failwith "Incorrect parameter type when building saidInfon"
-
+  let SaidInfon (ppal: ITerm, i: ITerm) = 
+    App(Primitives.SolveFunction "said" |> Option.get, [ppal; i])
+    
   // Bool builders
-  let AndBool (bools: MetaTerm list) = 
-    if List.forall (fun (b: MetaTerm) -> b.Typ() = Bool) bools then
-      App({ Name = "and"; 
-            RetTyp = Bool; 
-            ArgsTyp = List.replicate bools.Length Bool }, bools)
-    else
-      failwith "Incorrect parameter type when building andBool"
+  let AndBool (bools: ITerm list) = 
+    App({ Name = "and"; 
+          RetType = Bool; 
+          ArgsType = List.replicate bools.Length Bool }, bools)
+    
 
-  let OrBool (bools: MetaTerm list) = 
-    if List.forall (fun (b: MetaTerm) -> b.Typ() = Bool) bools then
-      App({ Name = "or"; 
-            RetTyp = Bool; 
-            ArgsTyp = List.replicate bools.Length Bool }, bools)
-    else
-      failwith "Incorrect parameter type when building orBool"
+  let OrBool (bools: ITerm list) = 
+    App({ Name = "or"; 
+          RetType = Bool; 
+          ArgsType = List.replicate bools.Length Bool }, bools)
 
   // Sequence builders
   let Nil (t: Type) =
     App({ Name = "nil";
-          RetTyp = Sequence(t);
-          ArgsTyp = [] }, [])
+          RetType = Sequence(t);
+          ArgsType = [] }, [])
 
-  let Cons (e: MetaTerm) (es: MetaTerm) =
-    match e.Typ(), es.Typ() with
-    | t, Sequence(t') when t = t' ->
-      App({ Name = "cons";
-            RetTyp = Sequence(t) ;
-            ArgsTyp = [t; Sequence(t)] }, [e; es])
-    | _ -> 
-      failwith "Incorrect parameter type when building cons"
+  let Cons (e: ITerm) (es: ITerm) =
+    App({ Name = "cons";
+          RetType = Sequence(e.Type :?>  Type) ;
+          ArgsType = [e.Type :?> Type; Sequence(e.Type :?> Type)] }, [e; es])
 
   // Literal builders
   let Principal (ppal: string) = 

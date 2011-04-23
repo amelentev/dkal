@@ -1,6 +1,8 @@
 ﻿namespace Microsoft.Research.Dkal.Ast
 
-/// Type is used to represent MetaTerm types
+open Microsoft.Research.Dkal.Interfaces
+
+/// Type is used to represent AST types
 type Type = 
 | Bool
 | Principal
@@ -11,7 +13,10 @@ type Type =
 | Sequence of Type
 | Tuple of Type * Type
 | SubstrateElem of System.Type
-with 
+
+  interface IType with
+    member t.Name = t.ToString()
+
   static member Int = SubstrateElem(typeof<int>)
   static member Float = SubstrateElem(typeof<float>)
   static member String = SubstrateElem(typeof<string>)

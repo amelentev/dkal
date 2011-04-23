@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
+﻿namespace Microsoft.Research.Dkal.Ast.SimpleSyntax.SimpleAst
 
 open System.Collections.Generic
 
@@ -43,7 +43,8 @@ type SimpleMetaTerm =
 type SimpleSubstrateDeclaration = 
   { Name: string;
     Kind: string;
-    Args: SimpleConstant list }
+    Args: string list;
+    Namespaces: string list }
 
 /// To easily store parsed type renames
 type SimpleTypeDeclaration = 

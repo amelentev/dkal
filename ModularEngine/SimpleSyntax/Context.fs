@@ -1,8 +1,9 @@
-﻿namespace Microsoft.Research.Dkal.SimpleSyntax
+﻿namespace Microsoft.Research.Dkal.Ast.SimpleSyntax
   
   open System.Collections.Generic
 
-  open Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
+  open Microsoft.Research.Dkal.Ast.SimpleSyntax.SimpleAst
+  open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Ast.Normalizer
 
@@ -11,7 +12,7 @@
   /// uses the type information from relation declarations, type renames, etc.
   type Context() =
     /// For each substrate name it keeps the Substrate declaration MetaTerm
-    let substrates = new Dictionary<string, MetaTerm>()
+    let substrates = new Dictionary<string, ITerm>()
 
     /// Holds type information (SimpleType to Type mapping, and SimpleVariable 
     /// type info)
@@ -23,16 +24,20 @@
 
     /// For each declared macro it holds its return Type, its body and its args
     /// (arguments Type and names)
-    let macros = new Dictionary<string, Type * MetaTerm * SimpleArg list>()
+    let macros = new Dictionary<string, Type * ITerm * SimpleArg list>()
 
     /// Holds fresh variable ids that are used when solving macros
     let mutable freshVarId = 0
 
     /// Returns a fresh Variable of the given type
-    let freshVar typ = 
+    let freshVar t = 
       freshVarId <- freshVarId + 1
       { Name = "Tmp" + freshVarId.ToString(); 
-        Typ = typ }
+        Type = t }
+
+    /// Given a SimpleType it returns its corresponding Type
+    member ctx.LiftSimpleType (st: SimpleType) =
+      types.LiftType st
 
     /// Given a SimpleAssembly it returns its corresponding Assembly
     member ctx.LiftSimpleAssembly (sa: SimpleAssembly) =
@@ -42,7 +47,7 @@
 
     /// Given a SimplePolicy it returns its corresponding Policy
     member ctx.LiftSimplePolicy (sp: SimplePolicy) =
-      let rules = List.map (fun rule -> ctx.LiftSimpleMetaTerm rule Rule) (Seq.toList sp.Rules)
+      let rules = List.map (fun rule -> ctx.LiftSimpleMetaTerm rule <| Some Rule) (Seq.toList sp.Rules)
       { Rules =  rules }
 
     /// Given a SimpleSignature it returns its corresponding Signature
@@ -73,7 +78,7 @@
     /// Given a list of SimpleArgs (SimpleVariable * SimpleType) returns a 
     /// list of Variables
     member private ctx.LiftArgs (args: SimpleArg list) : Variable list = 
-      List.map (fun (name, typ) -> { Name = name; Typ = types.LiftType typ }) args
+      List.map (fun (name, t) -> { Name = name; Type = types.LiftType t }) args
 
     /// Returns true if the given name is already associated with an identifier
     /// (either primitive function, table, relation, macro, etc.)
@@ -92,8 +97,8 @@
     member private ctx.AddSubstrate (ssd: SimpleSubstrateDeclaration) = 
       substrates.[ssd.Name] <- 
         match ssd.Kind, ssd.Args with
-        | "sql", [StringSimpleConstant(cs)] -> Sql(Const(SubstrateElemConstant(cs)))
-        | "xml", [StringSimpleConstant(file)] -> Xml(Const(SubstrateElemConstant(file)))
+        | "sql", [cs] -> Sql(Const(SubstrateElemConstant(cs)))
+        | "xml", [file] -> Xml(Const(SubstrateElemConstant(file)))
         | _ -> failwith "Unrecognized substrate declaration"
 
     /// Adds a new type rename
@@ -105,8 +110,8 @@
     member private ctx.AddTable (std: SimpleTableDeclaration) =
       for colName, colTyp in std.Cols do
         ctx.AddIdentifier { Name = std.Name + "." + colName
-                            RetTyp = types.LiftType colTyp; 
-                            ArgsTyp = [] }
+                            RetType = types.LiftType colTyp; 
+                            ArgsType = [] }
 
     /// Adds a relation declaration and saves it so that now SimpleMetaTerms
     /// can use it.
@@ -114,8 +119,8 @@
       let _, argsTyp = List.unzip srd.Args
       let realArgsTyp = List.map (fun st -> types.LiftType st) argsTyp
       ctx.AddIdentifier { Name = srd.Name; 
-                          RetTyp = Infon; 
-                          ArgsTyp = realArgsTyp }
+                          RetType = Infon; 
+                          ArgsType = realArgsTyp }
 
     /// Adds a macro declaration, lifting its body into a MetaTerm and saving
     /// it so that now SimpleMetaTerms can use it. All referenced macros in the
@@ -126,13 +131,13 @@
       types.AddLevel smd.Args
       types.AddToCurrentLevel ("Ret", smd.RetTyp)
       let retTyp = types.LiftType smd.RetTyp
-      let body = ctx.LiftSimpleMetaTerm smd.Body Type.Bool
+      let body = ctx.LiftSimpleMetaTerm smd.Body <| Some Type.Bool
       types.PopLevel()
       macros.[smd.Name] <- (retTyp, body, smd.Args)
 
     /// Given a list of MetaTerm boolean conditions given by solvedMacros, it 
     /// returns a single boolean MetaTerm that encodes them all (conjunction).
-    member private ctx.MacroConditions (solvedMacros: List<MetaTerm>) =
+    member private ctx.MacroConditions (solvedMacros: List<ITerm>) =
       if solvedMacros.Count > 0 then
         let ret = AndBool <| Seq.toList solvedMacros
         solvedMacros.Clear()
@@ -144,7 +149,7 @@
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
     /// macros are solved and its conditions are added as an extra AsInfon
     /// expression in the end.
-    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) (typ: Type) : MetaTerm =
+    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) (typ: Type option) : ITerm =
       let complies (typ: Type) (typ': Type option) =
         match typ' with
         | Some typ' when typ' = typ -> true
@@ -152,7 +157,7 @@
         | _ -> false
       let failDueToType (smt: SimpleMetaTerm) (typ: Type option) = 
         failwith <| "Expecting a " + typ.Value.ToString() + "MetaTerm, found: " + (sprintf "%A" smt)
-      let solvedMacros = new List<MetaTerm>()
+      let solvedMacros = new List<ITerm>()
       let rec traverse (smt: SimpleMetaTerm) (typ: Type option) = 
         match smt with
         | SimpleApp(args, f, [cs; cw; a]) when f = "rule" ->
@@ -161,12 +166,12 @@
             let cs', cw', a' = traverse cs (Some Infon), traverse cw (Some Infon), traverse a (Some Action)
             types.PopLevel()
             let conds = ctx.MacroConditions solvedMacros
-            let cs'' = Normalizer.normalize <| AndInfon([cs'; AsInfon(conds, substrates.["Default"])])
+            let cs'' = Normalizer.normalize <| AndInfon([cs'; AsInfon(conds)]) // TODO wrap conds in a proper ISubstrateTerm according to the information on conds
             RuleRule(cs'', cw', a')
-        | SimpleApp([], f, [query; SimpleVar(substrate)]) when f = "asInfon" ->
+        | SimpleApp([], f, [query]) when f = "asInfon" ->
             if not(complies Infon typ) then failDueToType smt typ
             let query' = traverse query (Some Bool)
-            AsInfon(query', substrates.[substrate])
+            AsInfon(query') // TODO wrap query' in a proper ISubstrateTerm according to the information on query'
         | SimpleApp([], f, []) when f = "nil" ->
           match typ with
           | None -> failwith "Failed to infer sequence type from context"
@@ -178,7 +183,7 @@
             | Some (Sequence typ') -> traverse e (Some typ'), traverse list (Some <| Sequence typ')
             | None -> 
               let e' = traverse e None
-              e', traverse list (Some <| Sequence(e'.Typ()))
+              e', traverse list (Some <| Sequence(e'.Type :?> Type))
             | Some typ' -> failwith <| "Expecting a sequence type, found " + typ'.ToString() + " on " + (sprintf "%A" smt)
           Cons e' list'
         | SimpleApp([], f, smts) ->
@@ -190,32 +195,32 @@
               let mutable subst = Substitution.Id
               for smt, (argName, argTyp) in List.zip smts args do
                 let mt = traverse smt (Some <| types.LiftType argTyp)
-                subst <- subst.Extend ({Name = argName; Typ = mt.Typ()}, mt)
+                subst <- subst.Extend ({Name = argName; Type = mt.Type :?> Type}, mt)
               let newRet = Var(freshVar retTyp)
-              subst <- subst.Extend ({Name = "Ret"; Typ = retTyp}, newRet)
-              solvedMacros.Add(subst.Apply body) |> ignore
+              subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
+              solvedMacros.Add(body.Apply subst) |> ignore
               newRet
             else
               // check if it is a user defined relation/table/etc.
               let found, func = identifiers.TryGetValue f
               if found then
-                let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsTyp
+                let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
                 App(func, mts)
               else
                 // check if it is a primitive operator
                 match Primitives.SolveFunction f with
                 | Some func -> 
-                  if not(complies func.RetTyp typ) then failDueToType smt typ
-                  let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsTyp
+                  if not(complies func.RetType typ) then failDueToType smt typ
+                  let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
                   App(func, mts)
                 | None ->
                   // check if it is an overloaded operator
                   if not(smts.IsEmpty) then
                     let mt0 = traverse smts.[0] None
-                    match Primitives.SolveOverloadOperator f (mt0.Typ()) with
+                    match Primitives.SolveOverloadOperator f mt0.Type with
                     | Some func -> 
-                      if not(complies func.RetTyp typ) then failDueToType smt typ
-                      let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsTyp
+                      if not(complies func.RetType typ) then failDueToType smt typ
+                      let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
                       App(func, mts)
                     | None -> 
                       failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
@@ -232,21 +237,20 @@
         | SimpleVar(v) ->
           match types.VariableType v with
           | None -> failwith <| "Undeclared variable: " + v
-          | Some typ' when complies typ' typ -> Var({ Name = v; Typ = typ' })
+          | Some typ' when complies typ' typ -> Var({ Name = v; Type = typ' })
           | _ -> failDueToType smt typ
         | _ -> failwith <| "Malformed SimpleMetaTerm"
-      let mainTerm = traverse smt (Some typ)
+      let mainTerm = traverse smt typ
       let conditions = ctx.MacroConditions solvedMacros
-      let finalTerm = if mainTerm.Typ() = Bool then
+      let finalTerm = if mainTerm.Type = (Bool :> IType) then
                         AndBool([conditions; mainTerm])
-                      elif mainTerm.Typ() = Infon then
-                        AndInfon([AsInfon(conditions, substrates.["Default"]); mainTerm]) 
+                      elif mainTerm.Type = (Infon :> IType) then
+                        AndInfon([AsInfon(conditions); mainTerm])  // TODO wrap query' in a proper ISubstrateTerm according to the information on query'
                       else
                         if solvedMacros.Count > 0 then
                           failwith <| sprintf "Pending macro conditions when lifting term: %A" smt
                         else
                           mainTerm
-      mainTerm.CheckTyp() |> ignore // TODO: is it necessary?
       let normalTerm = normalize mainTerm
       normalTerm
 

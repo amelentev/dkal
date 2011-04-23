@@ -1,44 +1,47 @@
 ﻿module Microsoft.Research.Dkal.Ast.Normalizer
 
+  open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast
+
+  // TODO: move this normalization to the AST implementation of ITerm 
 
   /// Recursively traverses the MetaTerm in order to simplify it and make
   /// it into a normal form. Consecutive associative functions, such as 
   /// conjunction, are flattened into one level
-  let rec normalize (mt: MetaTerm) =
+  let rec normalize (t: ITerm) =
 
     /// Returns the children of mt, if mt encodes the application of function
     /// f; returns a singleton [mt] otherwise
-    let children (f: Function) (mt: MetaTerm) =
-      match mt with
-      | App(f', mts) when f.Name = f'.Name -> mts
-      | EmptyInfon when f.Name = "and" && f.RetTyp = Infon -> []
-      | True when f.Name = "and" && f.RetTyp = Bool -> []
-      | _ -> [mt]
+    let children (f: Function) (t: ITerm) =
+      match t with
+      | App(f', ts) when f.Name = f'.Name -> ts
+      | EmptyInfon when f.Name = "and" && f.RetType = Infon -> []
+      | True when f.Name = "and" && f.RetType = Bool -> []
+      | _ -> [t]
           
-    match mt with
-    | App(f, mts) -> 
+    match t with
+    | App(f, ts) -> 
       // Normalize recursively
-      let mts = List.map normalize mts
+      let ts = List.map normalize ts
       // If f is associative, get the children of each child
-      let mts = if Primitives.IsAssociative(f.Name) then
-                  List.collect (children f) mts
-                else
-                  mts
+      let ts = if Primitives.IsAssociative(f.Name) then
+                 List.collect (children f) ts
+               else
+                 ts
       
       // Remove malformed cases such as conjunction of zero elements, etc.
-      match mts with
+      match ts with
       | True::_ when f.Name = "asInfon" -> EmptyInfon
-      | [] when f.Name = "and" && f.RetTyp = Infon -> EmptyInfon
-      | [mt] when f.Name = "and" && f.RetTyp = Infon -> mt
-      | [] when f.Name = "and" && f.RetTyp = Bool -> True
-      | [mt] when f.Name = "and" && f.RetTyp = Bool -> mt
+      | [] when f.Name = "and" && f.RetType = Infon -> EmptyInfon
+      | [t] when f.Name = "and" && f.RetType = Infon -> t
+      | [] when f.Name = "and" && f.RetType = Bool -> True
+      | [t] when f.Name = "and" && f.RetType = Bool -> t
       | _ -> 
         // Return application of normalized function
         let f' =  { Name = f.Name; 
-                    RetTyp = f.RetTyp; 
-                    ArgsTyp = List.map (fun (mt: MetaTerm) -> mt.Typ()) mts }
-        App(f', mts)
+                    RetType = f.RetType; 
+                    ArgsType = List.map (fun (t: ITerm) -> t.Type :?> Type) ts }
+        App(f', ts)
 
     // Constants and variables are not normalized
     | mt -> mt

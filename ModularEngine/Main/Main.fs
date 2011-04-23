@@ -14,8 +14,8 @@ do
         printfn "File not found: %O" file
       else
         let s = File.ReadAllText(file)
-        let parser = ParserFactory.Parser "simple"
-        let printer = PrettyPrinterFactory.Printer "simple"
+        let parser = ParserFactory.AstParser "simple"
+        let printer = PrettyPrinterFactory.AstPrinter "simple"
         let assembly = parser.ParseAssembly s
         printfn "%O" <| printer.PrintAssembly assembly
 

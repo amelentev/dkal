@@ -2,6 +2,7 @@
 
 open System.Collections.Generic
 
+open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 
 /// Provides functionality to check if a set of action Metaterms is consistent
@@ -10,12 +11,12 @@ open Microsoft.Research.Dkal.Ast
 type ConsistencyChecker() =
 
   /// Checks that the given list of actions is consistent
-  static member AreConsistentActions (actions: MetaTerm list) = 
+  static member AreConsistentActions (actions: ITerm list) = 
     not(ConsistencyChecker.HasInstallingConflicts(actions) || 
         ConsistencyChecker.HasLearningConflicts(actions))
       
   /// Checks install/uninstall conflicts
-  static member private HasInstallingConflicts (actions: MetaTerm list) =
+  static member private HasInstallingConflicts (actions: ITerm list) =
     let installing =  actions |> List.collect
                         (fun action ->  match action with
                                         | Install(r) -> [r]
@@ -28,7 +29,7 @@ type ConsistencyChecker() =
 
 
   /// Checks learn/forget conflicts
-  static member private HasLearningConflicts (actions: MetaTerm list) =
+  static member private HasLearningConflicts (actions: ITerm list) =
     let learning = actions |> List.collect
                     (fun action ->  match action with
                                     | Learn(i) -> 
@@ -44,5 +45,5 @@ type ConsistencyChecker() =
                                         | i -> [i]
                                       | _ -> [])
 
-    List.exists (fun i1 -> List.exists (fun i2 -> Substitution.Unify i1 i2 <> None) learning) forgetting
+    List.exists (fun (i1 : ITerm) -> List.exists (fun i2 -> i1.Unify i2 <> None) learning) forgetting
 

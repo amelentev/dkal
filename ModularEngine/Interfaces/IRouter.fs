@@ -1,7 +1,5 @@
 ﻿namespace Microsoft.Research.Dkal.Interfaces
 
-open Microsoft.Research.Dkal.Ast
-
 /// IRouter provides an interface for communication with the environment. 
 /// Implementations of IRouter handle both incoming and outcoming messages
 type IRouter =
@@ -14,11 +12,11 @@ type IRouter =
 
   /// Sets a receive message handler. The function passed as argument is 
   /// going to be invoked by the router whenever a new message arrives. The
-  /// first argument will be the received infon MetaTerm and the second 
+  /// first argument will be the received infon ITerm and the second 
   /// argument will be the sender principal MetaTerm
-  abstract member Receive: (MetaTerm -> MetaTerm -> unit) -> unit
+  abstract member Receive: (ITerm -> ITerm -> unit) -> unit
 
-  /// Sends an infon MetaTerm to the target principal MetaTerm
-  abstract member Send: infon: MetaTerm -> ppal: MetaTerm -> unit
+  /// Sends an infon ITerm to the target principal ITerm
+  abstract member Send: infon: ITerm -> ppal: ITerm -> unit
 
 

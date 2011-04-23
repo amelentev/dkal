@@ -1,5 +1,5 @@
 ﻿%{
-open Microsoft.Research.Dkal.SimpleSyntax.SimpleAst
+open Microsoft.Research.Dkal.Ast.SimpleSyntax.SimpleAst
 
 open System
 
@@ -17,6 +17,7 @@ let emptyInfon = SimpleApp([], "emptyInfon", [])
 %start RelationDeclaration
 %start MacroDeclaration
 %start MetaTerm
+%start Type
 
 // ------------------------------------------------------------------------------------------------------
 // These are the terminal tokens of the grammar along with the types of the data carried by each token:
@@ -33,7 +34,7 @@ let emptyInfon = SimpleApp([], "emptyInfon", [])
 %token LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT
 
 // Substrate declarations
-%token SUBSTRATE
+%token SUBSTRATE NAMESPACES
 
 // Types
 %token TYPE SEQ
@@ -79,6 +80,7 @@ let emptyInfon = SimpleApp([], "emptyInfon", [])
 %type < SimpleRelationDeclaration > RelationDeclaration
 %type < SimpleMacroDeclaration > MacroDeclaration
 %type < SimpleMetaTerm > MetaTerm
+%type < SimpleType > Type
 
 // ------------------------------------------------------------------------------------------------------
 // Precedence of operators
@@ -115,7 +117,8 @@ Policy:
 
 SubstrateDeclaration:
 	| SUBSTRATE UPPER_IDENTIFIER EQ 
-		LOWER_IDENTIFIER LPAR Literals RPAR		{ { Name = $2; Kind = $4; Args = $6 } }
+		LOWER_IDENTIFIER LPAR StringLiterals RPAR	
+		NAMESPACES StringLiterals						{ { Name = $2; Kind = $4; Args = $6; Namespaces = $9 } }
 
 TypeDeclaration:
 	| TYPE LOWER_IDENTIFIER EQ Type				{ { NewTyp = $2; TargetTyp = $4 } }
@@ -228,3 +231,9 @@ Literal:
 	| FLOAT_LITERAL								{ FloatSimpleConstant($1) }
 	| STRING_LITERAL							{ StringSimpleConstant($1) }
 	| LOWER_IDENTIFIER							{ PrincipalSimpleConstant($1) }
+
+StringLiterals:
+	|											{ [] }
+	| STRING_LITERAL							{ [$1] }
+	| STRING_LITERAL COMMA StringLiterals		{ $1 :: $3 }
+		

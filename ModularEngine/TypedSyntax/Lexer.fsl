@@ -1,5 +1,5 @@
 ﻿{
-module Microsoft.Research.Dkal.TypedSyntax.Lexer
+module Microsoft.Research.Dkal.Ast.TypedSyntax.Lexer
 
 open System
 open Microsoft.FSharp.Text.Lexing

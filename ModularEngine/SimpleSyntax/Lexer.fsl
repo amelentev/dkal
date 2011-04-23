@@ -1,5 +1,5 @@
 ﻿{
-module Microsoft.Research.Dkal.SimpleSyntax.Lexer
+module Microsoft.Research.Dkal.Ast.SimpleSyntax.Lexer
 
 open System
 open Microsoft.FSharp.Text.Lexing
@@ -57,6 +57,7 @@ rule tokenize = parse
 
 // Substrate declarations
 | "substrate"		{ SUBSTRATE } 
+| "namespaces"		{ NAMESPACES } 
 
 // Types
 | "type"			{ TYPE }

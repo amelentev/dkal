@@ -8,7 +8,7 @@ open Microsoft.Research.Dkal.Interfaces
 /// A ConnectionsHandler instance is used to do the actual sending and receiving
 /// of messages. Infon MetaTerms are serialized and deserialized using the given
 /// IParser and IPrinter implementations.
-type SimpleRouter (routingFile: string, parser: IParser, printer: IPrettyPrinter) =
+type SimpleRouter (routingFile: string, parser: IAstParser, printer: IAstPrettyPrinter) =
   
   /// Stores the principals names and addresses, including the local name 
   /// and address
@@ -32,7 +32,7 @@ type SimpleRouter (routingFile: string, parser: IParser, printer: IPrettyPrinter
     member sr.Send infon ppal = 
       match ppal with
       | Const(PrincipalConstant(target)) -> 
-        let msg = printer.PrintMetaTerm infon
+        let msg = printer.PrintTerm infon
         connectionsHandler.Send msg target
       | _ -> failwith "Expecting principal constant as destination when sending message"
 

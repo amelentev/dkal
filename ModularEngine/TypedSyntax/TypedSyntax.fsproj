@@ -51,7 +51,7 @@
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
     <FsYacc Include="Parser.fsy">
-      <OtherFlags>--module Microsoft.Research.Dkal.TypedSyntax.Parser</OtherFlags>
+      <OtherFlags>--module Microsoft.Research.Dkal.Ast.TypedSyntax.Parser</OtherFlags>
     </FsYacc>
     <Compile Include="$(IntermediateOutputPath)\Parser.fs">
       <Visible>false</Visible>

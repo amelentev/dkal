@@ -14,14 +14,14 @@ open Microsoft.Research.Dkal.Substrate
 type SimpleEngine() = 
 
   /// Stores the known facts
-  let knowledge = new HashSet<MetaTerm>()
+  let knowledge = new HashSet<ITerm>()
 
   interface IEngine with
     member se.Start () = ()
     member se.Stop () = ()
 
     /// Split the infon into conjunctions and learn these recursively
-    member se.Learn (infon: MetaTerm) = 
+    member se.Learn (infon: ITerm) = 
       match Normalizer.normalize infon with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
@@ -33,7 +33,7 @@ type SimpleEngine() =
         knowledge.Add infon
 
     /// Split the infon into conjunctions and forget these recursively
-    member se.Forget (infon: MetaTerm) =
+    member se.Forget (infon: ITerm) =
       match Normalizer.normalize infon with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"
@@ -47,7 +47,7 @@ type SimpleEngine() =
     /// Obtain a list of Substitution with accompanying side conditions (AsInfon
     /// MetaTerms). Then return only those Substitutions that satisfy all their 
     /// side conditions.
-    member se.Derive (target: MetaTerm) = 
+    member se.Derive (target: ITerm) = 
       [ for (subst, conds) in se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target) do
           for subst' in SubstrateDispatcher.Solve conds [subst] do
             yield subst' ]
@@ -56,7 +56,7 @@ type SimpleEngine() =
   /// side conditions (AsInfo MetaTerms) and a target infon MetaTerm to derive
   /// this method will recursively derive the target infon depending on its
   /// structure.
-  member private se.DoDerive (pref: MetaTerm list) ((subst, conds): Substitution * MetaTerm list) (infon: MetaTerm) = 
+  member private se.DoDerive (pref: ITerm list) ((subst, conds): ISubstitution * ISubstrateTerm list) (infon: ITerm) = 
     match infon with
     | AndInfon(infons) -> 
       // In the case of conjunction we start with the current substitution and side conditions and 
@@ -70,11 +70,11 @@ type SimpleEngine() =
       se.DoDerive (ppal :: pref) (subst, conds) infon
     | Var(v) when subst.Contains v ->
       // If a variable is part of the current substitution it is applied and we call recursively
-      se.DoDerive pref (subst, conds) (subst.Apply <| Var(v))
-    | AsInfon(exp, substrate) ->
+      se.DoDerive pref (subst, conds) (subst.Apply v)
+    | AsInfon(exp) ->
       // AsInfon(...) is stored as a new side condition, unless it is inside a non-empty prefix
       if pref.IsEmpty then
-        [(subst, conds @ [infon])]
+        [(subst, conds @ [exp])]
       else
         failwith "asInfon(...) under prefix"
     | templ ->
@@ -97,17 +97,18 @@ type SimpleEngine() =
   /// Substitutions that satisfy the given template, each of which will have a
   /// list of preconditions (infon MetaTerms) that need to be verified in order
   /// for that Substitution to be a real solution
-  member se.InfonsWithPrefix (subst: Substitution) (pref: MetaTerm list) (template: MetaTerm) =
+  member se.InfonsWithPrefix (subst: ISubstitution) (pref: ITerm list) (template: ITerm) =
     let res = ref []
     let rec stripPrefix subst prefixUnif preconds suff = 
       let immediate = function
         | ([], i) ->
-          let rec unifyAndSimpl s = function
+          let rec unifyAndSimpl (s: ISubstitution option) (ts: (ITerm * ITerm) list) = 
+            match ts with
             | [] -> s
-            | (a, b) :: xs ->
+            | (a, b) :: ts ->
               match s with
                 | None -> None
-                | Some s -> unifyAndSimpl (Substitution.UnifyFrom s (s.Apply a) (s.Apply b)) xs
+                | Some s -> unifyAndSimpl ((a.Apply s).UnifyFrom s (b.Apply s)) ts
           match unifyAndSimpl (Some subst) ((template, i) :: prefixUnif) with
             | Some subst ->
               res := (subst, preconds) :: !res
@@ -115,8 +116,8 @@ type SimpleEngine() =
         | _ -> ()
              
       function
-      | (t1 :: pref, SaidInfon (t2, i)) ->
-        match Substitution.UnifyFrom subst (subst.Apply t1) (subst.Apply t2) with
+      | ((t1: ITerm) :: pref, SaidInfon (t2, i)) ->
+        match (t1.Apply subst).UnifyFrom subst  (t2.Apply subst) with
           | Some subst -> 
             stripPrefix subst prefixUnif preconds (fun i -> suff (SaidInfon (t2, i))) (pref, i)
           | None ->
@@ -128,7 +129,7 @@ type SimpleEngine() =
         immediate t
         stripPrefix subst prefixUnif (suff a :: preconds) suff (pref, b)
       | (pref, Var v) when subst.Contains v ->
-        stripPrefix subst prefixUnif preconds suff (pref, subst.Apply (Var v))
+        stripPrefix subst prefixUnif preconds suff (pref, subst.Apply v)
       | t -> immediate t
     
     List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, k)) (knowledge |> Seq.toList)

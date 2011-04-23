@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Research.Dkal.TypedSyntax
+﻿namespace Microsoft.Research.Dkal.Ast.TypedSyntax
 
 open System.IO
 open Microsoft.FSharp.Text.Lexing
@@ -12,20 +12,26 @@ type TypedParser() =
 
   let lexbuff s = LexBuffer<char>.FromString(s)
 
-  interface IParser with
+  interface IAstParser with
+    member sp.ParseType s =
+      Parser.Type Lexer.tokenize (lexbuff s) :> IType
+    
+    member sp.ParseTerm s =
+      Parser.ITerm Lexer.tokenize (lexbuff s)
+
     member sp.ParseInfon s = 
-      let mt : MetaTerm = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      if mt.Typ() <> Infon then
-        failwith <| "Expecting infon and found " + mt.Typ().ToString()
+      let t = Parser.ITerm Lexer.tokenize (lexbuff s)
+      if t.Type <> (Infon :> IType) then
+        failwith <| "Expecting infon and found " + t.Type.ToString()
       else
-        mt
+        t
 
     member sp.ParseRule s = 
-      let mt : MetaTerm = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      if mt.Typ() <> Rule then
-        failwith <| "Expecting rule and found " + mt.Typ().ToString()
+      let t = Parser.ITerm Lexer.tokenize (lexbuff s)
+      if t.Type <> (Infon :> IType) then
+        failwith <| "Expecting rule and found " + t.Type.ToString()
       else
-        mt
+        t
     
     member sp.ParsePolicy s = 
       Parser.Policy Lexer.tokenize (lexbuff s)
@@ -34,5 +40,5 @@ type TypedParser() =
       { Substrates = []; Tables = []; Relations = [] }
 
     member sp.ParseAssembly s =
-      let sp = (sp :> IParser)
+      let sp = (sp :> IAstParser)
       { Policy = sp.ParsePolicy s; Signature = sp.ParseSignature s }

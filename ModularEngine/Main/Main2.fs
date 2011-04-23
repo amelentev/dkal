@@ -17,14 +17,15 @@ module Main =
       elif not (File.Exists (policyFile)) then
         printfn "File not found: %O" policyFile
       else
-        let parser, printer = ParserFactory.Parser kind, PrettyPrinterFactory.Printer kind
+        let parser, printer = ParserFactory.AstParser kind, PrettyPrinterFactory.AstPrinter kind
         let router = RouterFactory.Router kind routingFile
         let engine = EngineFactory.Engine kind
         let executor = ExecutorFactory.Executor kind router engine
 
         let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
         printfn "%O" <| printer.PrintAssembly assembly
-        executor.InstallPolicy assembly.Policy
+        for rule in assembly.Policy.Rules do
+          executor.InstallRule rule
         executor.Start()
 
         //router.Send (App(primitives.["asInfon"], [Const(BoolConstant(true))])) (Const(PrincipalConstant("guido")))

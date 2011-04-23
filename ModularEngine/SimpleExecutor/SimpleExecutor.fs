@@ -14,7 +14,7 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
   
   /// The inbox holds the messages that arrive from the router but still
   /// haven't been moved to Quarantine
-  let inbox = new Queue<MetaTerm * MetaTerm>()
+  let inbox = new Queue<ITerm * ITerm>()
 
   /// The quarantine holds all incoming messages of relevance. We need to
   /// call quarantine.Prune() in order to remove old/unnecessary messages
@@ -22,7 +22,7 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
 
   /// The rules set contains all the current rules that came from installed
   /// policies or were added as a consequence of install actions in other rules
-  let rules = new HashSet<MetaTerm>()
+  let rules = new HashSet<ITerm>()
   
   /// Used by the worker thread to wait for messages when there is no processing
   /// to be performed.
@@ -36,10 +36,8 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
   let mutable finish: bool = false
 
   interface IExecutor with
-    member se.InstallPolicy (p: Policy) =
-      // Add every rule in the policy to the set of rules
-      for rule in p.Rules do
-        rules.Add(rule) |> ignore
+    member se.InstallRule (r: ITerm) =
+      rules.Add(r) |> ignore
 
     member se.Start () = 
       // Start communications
@@ -94,15 +92,15 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
     System.Console.ReadLine() |> ignore
     
     // To store the changes to be applied at the end of the round
-    let actions = new HashSet<MetaTerm>()
+    let actions = new HashSet<ITerm>()
 
     // Traverse rules
     for rule in rules do
       match rule with
       | Rule(cs, cw, a) -> 
         for subs in quarantine.Matches cw do
-          for subs' in engine.Derive <| subs.Apply cs do
-            actions.Add(subs'.Apply <| subs.Apply a) |> ignore
+          for subs' in engine.Derive <| cs.Apply subs do
+            actions.Add((a.Apply subs).Apply subs') |> ignore
       | _ -> failwith <| "Expecting rule when executing round"
 
     // Check consistency and apply changes
@@ -120,7 +118,7 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
     
   /// Given a set list of action MetaTerms, each of the actions is applied.
   /// Returns true iff at least one of the actions produced a change.
-  member private se.ApplyActions (actions: MetaTerm list) = 
+  member private se.ApplyActions (actions: ITerm list) = 
     let mutable changed = false
     for action in actions do
       let changes = 
