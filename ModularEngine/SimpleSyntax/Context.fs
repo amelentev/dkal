@@ -6,6 +6,7 @@
   open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Ast.Normalizer
+  open Microsoft.Research.Dkal.Substrate
 
   /// A Context is responsible for lifting untyped SimpleMetaTerms into typed
   /// MetaTerms. It solves the macros that appear in the SimpleMetaTerms and 
@@ -145,6 +146,9 @@
       else
         Const(BoolConstant(true))
 
+    member private ctx.createSubstrateTerm(q : ITerm, ns : string) =
+      DummySubstrateTerm(q, ns) :> ISubstrateTerm  // TODO wrap q in a proper ISubstrateTerm according to the information on q
+
     /// Given a SimpleMetaTerm smt and a Type t, it returns its the 
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
     /// macros are solved and its conditions are added as an extra AsInfon
@@ -166,12 +170,12 @@
             let cs', cw', a' = traverse cs (Some Infon), traverse cw (Some Infon), traverse a (Some Action)
             types.PopLevel()
             let conds = ctx.MacroConditions solvedMacros
-            let cs'' = Normalizer.normalize <| AndInfon([cs'; AsInfon(conds)]) // TODO wrap conds in a proper ISubstrateTerm according to the information on conds
+            let cs'' = Normalizer.normalize <| AndInfon([cs'; AsInfon(ctx.createSubstrateTerm(conds, ""))])
             RuleRule(cs'', cw', a')
-        | SimpleApp([], f, [query]) when f = "asInfon" ->
+        | SimpleApp([], f, [query; SimpleVar(ns)]) when f = "asInfon" ->
             if not(complies Infon typ) then failDueToType smt typ
             let query' = traverse query (Some Bool)
-            AsInfon(query') // TODO wrap query' in a proper ISubstrateTerm according to the information on query'
+            AsInfon(ctx.createSubstrateTerm(query', ns))
         | SimpleApp([], f, []) when f = "nil" ->
           match typ with
           | None -> failwith "Failed to infer sequence type from context"
@@ -245,7 +249,7 @@
       let finalTerm = if mainTerm.Type = (Bool :> IType) then
                         AndBool([conditions; mainTerm])
                       elif mainTerm.Type = (Infon :> IType) then
-                        AndInfon([AsInfon(conditions); mainTerm])  // TODO wrap query' in a proper ISubstrateTerm according to the information on query'
+                        AndInfon([AsInfon(ctx.createSubstrateTerm(conditions, "")); mainTerm])
                       else
                         if solvedMacros.Count > 0 then
                           failwith <| sprintf "Pending macro conditions when lifting term: %A" smt

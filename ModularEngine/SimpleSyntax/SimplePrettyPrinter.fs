@@ -3,6 +3,7 @@
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
+open Microsoft.Research.Dkal.Substrate
 
 open System.Collections.Generic
 
@@ -72,19 +73,9 @@ type SimplePrettyPrinter() =
         @ [ TextToken ")" ]
       elif fSymbol = "asInfon" then
         match mts with
-        | [exp; substrate] -> 
-          let found, name = substrates.TryGetValue substrate
-          let substrateName = 
-            if found && name <> "Default" then 
-              [ TextToken <| ", " + name ]
-            elif found then
-              []
-            else
-              [ TextToken <| ", " ]
-                @ spp.TokenizeTerm substrate
-          [ TextToken <| f.Name + "("; 
+        | [exp] -> 
+          [ TextToken <| f.Name + "(";
             ManyTokens args.[0] ]
-            @ substrateName
             @ [ TextToken <| ")" ]
         | _ -> failwith "Incorrect arguments in AsInfon(...)"
       elif not infix && mts = [] then
@@ -165,6 +156,8 @@ type SimplePrettyPrinter() =
       | PrincipalConstant(p) -> [TextToken(p.ToString())]
       | SubstrateElemConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
       | SubstrateElemConstant(o) -> [TextToken(o.ToString())]
+    | :? DummySubstrateTerm as t -> // TODO: use some SubstratePrettyPrinter
+      spp.TokenizeTerm t.query
     | _ -> failwith <| "PrettyPrinter does not know how to print ITerm"
    
   member private spp.TokenizePolicy (p: Policy) =

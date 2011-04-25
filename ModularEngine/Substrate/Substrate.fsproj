@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="DummySubstrate.fs" />
     <Compile Include="SubstrateDispatcher.fs" />
+    <Compile Include="DummySubstrateTerm.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
