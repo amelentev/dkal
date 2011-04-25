@@ -1,9 +1,9 @@
-﻿namespace Microsoft.Research.Dkal.Ast
+﻿namespace Microsoft.Research.Dkal.Ast.Infon
 
 open Microsoft.Research.Dkal.Interfaces
 
-/// IAstParser provides an interface for top-level parsers that interpret policies
-type IAstParser =
+/// IInfonParser provides an interface for top-level parsers that interpret policies
+type IInfonParser =
   inherit IParser
 
   /// Parse an infon (ITerm) from the input string

@@ -3,7 +3,7 @@
 open System.Collections.Generic
 open System.Threading
 
-open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Interfaces
 
 /// The SimpleExecutor runs an endless loop. On each iteration, every rule is 

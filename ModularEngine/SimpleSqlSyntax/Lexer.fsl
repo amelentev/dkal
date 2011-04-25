@@ -1,5 +1,5 @@
 ﻿{
-module Microsoft.Research.Dkal.Ast.SimpleSyntax.Lexer
+module Microsoft.Research.Dkal.Substrate.SimpleSqlSyntax.Lexer
 
 open System
 open Microsoft.FSharp.Text.Lexing
@@ -27,14 +27,21 @@ rule tokenize = parse
 
 // Binary operators
 | "&&"				{ AND }
+| "||"				{ OR }
 | "->"				{ IMPLIES }
+| "="				{ EQ }
+| "<>"				{ NEQ }
+| "<"				{ LT }
+| ">"				{ GT }
+| "+"				{ PLUS }
+| "-"				{ MINUS }
+| "*"				{ TIMES }
+| "/"				{ DIV }
 
 // Unary operators
-| "asInfon"			{ AS_INFON }
-| "said"			{ SAID }
+| "!"				{ NOT }
 
 // Delimiters
-| "="				{ EQ }
 | "{"				{ LBRACE }
 | "}"				{ RBRACE }
 | "("				{ LPAR }
@@ -46,41 +53,6 @@ rule tokenize = parse
 | ","				{ COMMA }
 | "."				{ DOT }
 
-// Substrate declarations
-| "substrate"		{ SUBSTRATE } 
-| "namespaces"		{ NAMESPACES } 
-
-// Types
-| "type"			{ TYPE }
-
-// Table declarations
-| "table"			{ TABLE }
-
-// Relation declarations
-| "relation"		{ RELATION }
-
-// Macro declarations
-| "macro"			{ MACRO }
-
-// Variable declarations
-| "with"			{ WITH }
-
-// Assertions
-| "me"				{ ME }
-| "knows"			{ KNOWS }
-| "if"				{ IF }
-| "then"			{ THEN }
-| "wire"			{ WIRE }
-| "has"				{ HAS }
-
-// Actions
-| "send"			{ SEND }
-| "to"				{ TO }
-| "learn"			{ LEARN }
-| "forget"			{ FORGET }
-| "install"			{ INSTALL }
-| "uninstall"		{ UNINSTALL }
-
 // Literals
 | "true"			{ TRUE } 
 | "false"			{ FALSE } 
@@ -89,15 +61,6 @@ rule tokenize = parse
 | '"'                { stringBuf.Length <- 0;
                        string lexbuf;
                        STRING_LITERAL (stringBuf.ToString()) }
-
-// Substrate expressions
-| '{' '|' (whitespace|newline)* '"' ['a'-'z']+ '"' (whitespace|newline)* '|'       
-    { let ns = lexeme lexbuf;
-      let ns = ns.Substring(2, ns.Length-3).Trim();
-      let ns = ns.Substring(1, ns.Length-2);
-      stringBuf.Length <- 0;
-      substrate lexbuf;
-      SUBSTRATE_EXPRESSION (ns, stringBuf.ToString()) }
 
 // Identifiers
 | ['a'-'z']+ ['a'-'z''A'-'Z''0'-'9']* 		{ LOWER_IDENTIFIER (lexeme lexbuf) }
@@ -121,7 +84,3 @@ and string = parse
 | _ { add (lexbuf.Lexeme.[0]); string lexbuf }
 | eof { () }
 
-and substrate = parse
-| '|' '}' { () }
-| _ { add (lexbuf.Lexeme.[0]); substrate lexbuf }
-| eof { () }

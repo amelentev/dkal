@@ -3,6 +3,7 @@
 open System.Collections.Generic
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
 
 /// Keeps a set of incoming infon MetaTerms until they are no longer needed

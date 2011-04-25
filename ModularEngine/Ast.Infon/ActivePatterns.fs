@@ -1,19 +1,9 @@
 ﻿[<AutoOpen>]
-module Microsoft.Research.Dkal.Ast.ActivePatterns
+module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
 
   open Microsoft.Research.Dkal.Interfaces
+  open Microsoft.Research.Dkal.Ast.Tree
   open Microsoft.Research.Dkal.Ast
-
-  // General patterns
-  let (|App|_|) (t: ITerm) =  match t with
-                              | :? Application as a -> Some (a.Function, a.Args)
-                              | _ -> None
-  let (|Var|_|) (t: ITerm) =  match t with
-                              | :? Variable as v -> Some v
-                              | _ -> None
-  let (|Const|_|) (t: ITerm) =  match t with
-                                | :? Constant as c -> Some c
-                                | _ -> None
 
   // Rule patterns
   let (|Rule|_|) mt = match mt with
@@ -40,13 +30,13 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                             | App({Name="uninstall"}, [r]) -> Some r
                             | _ -> None
 
-  // Substrate patterns
-  let (|Sql|_|) mt =  match mt with 
-                      | App({Name="sql"}, [mt']) -> Some mt'
-                      | _ -> None
-  let (|Xml|_|) mt =  match mt with 
-                      | App({Name="xml"}, [mt']) -> Some mt'
-                      | _ -> None
+//  // Substrate patterns
+//  let (|Sql|_|) mt =  match mt with 
+//                      | App({Name="sql"}, [mt']) -> Some mt'
+//                      | _ -> None
+//  let (|Xml|_|) mt =  match mt with 
+//                      | App({Name="xml"}, [mt']) -> Some mt'
+//                      | _ -> None
 
   // Infon patterns
   let (|EmptyInfon|_|) mt = match mt with 
@@ -69,20 +59,35 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                             | _ -> None
 
   // Bool patterns
-  let (|AndBool|_|) mt =  match mt with
-                          | App({Name="and"; RetType=Bool}, mts) -> Some mts
-                          | _ -> None
-  let (|OrBool|_|) mt = match mt with
-                        | App({Name="or"; RetType=Bool}, mts) -> Some mts
-                        | _ -> None
-
+//  let (|AndBool|_|) mt =  match mt with
+//                          | App({Name="and"; RetType=Bool}, mts) -> Some mts
+//                          | _ -> None
+//  let (|OrBool|_|) mt = match mt with
+//                        | App({Name="or"; RetType=Bool}, mts) -> Some mts
+//                        | _ -> None
+//
   // Literal patterns
+  let (|SubstrateConstant|_|) mt =  match mt with
+                                    | Const(c) ->
+                                      match c with
+                                      | :? SubstrateConstant as sc -> Some sc.Elem
+                                      | _ -> None
+                                    | _ -> None
   let (|Principal|_|) mt =  match mt with
-                            | Const(PrincipalConstant(p)) -> Some p
+                            | Const(c) -> 
+                              match c with
+                              | :? PrincipalConstant as p -> Some p.Name
+                              | _ -> None
                             | _ -> None
   let (|True|_|) mt = match mt with
-                      | Const(BoolConstant(true)) -> Some ()
+                      | Const(c) -> 
+                        match c with
+                        | :? SubstrateConstant as sc when sc.Elem = (true :> obj) -> Some ()
+                        | _ -> None
                       | _ -> None
   let (|False|_|) mt =  match mt with
-                        | Const(BoolConstant(false)) -> Some ()
+                        | Const(c) -> 
+                          match c with
+                          | :? SubstrateConstant as sc when sc.Elem = (false :> obj) -> Some ()
+                          | _ -> None
                         | _ -> None

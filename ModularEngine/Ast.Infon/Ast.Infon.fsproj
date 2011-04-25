@@ -5,12 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{49e0e6c4-6c69-4c95-a1d5-aa3f5c8a8554}</ProjectGuid>
+    <ProjectGuid>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Substrate</RootNamespace>
-    <AssemblyName>Substrate</AssemblyName>
+    <RootNamespace>Ast.Infon</RootNamespace>
+    <AssemblyName>Ast.Infon</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>Substrate</Name>
+    <Name>Ast.Infon</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -20,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Substrate.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Ast.Infon.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,7 +29,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Substrate.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Ast.Infon.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -39,13 +39,20 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DummySubstrate.fs" />
-    <Compile Include="SubstrateDispatcher.fs" />
-    <Compile Include="DummySubstrateTerm.fs" />
-    <Compile Include="SubstrateParserFactory.fs" />
-    <Compile Include="SubstrateFactory.fs" />
+    <Compile Include="InfonTerm.fs" />
+    <Compile Include="Primitives.fs" />
+    <Compile Include="Builders.fs" />
+    <Compile Include="ActivePatterns.fs" />
+    <Compile Include="Normalizer.fs" />
+    <Compile Include="IInfonPrettyPrinter.fs" />
+    <Compile Include="IInfonParser.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Name>Ast.Tree</Name>
+      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>

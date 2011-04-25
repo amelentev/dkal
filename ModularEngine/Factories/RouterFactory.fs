@@ -9,7 +9,7 @@ type RouterFactory() =
   static member Router (kind: string) (routingFile: string) = 
     match kind with
     | "simple" -> 
-      let parser, printer = ParserFactory.AstParser "typed", PrettyPrinterFactory.AstPrinter "typed"
+      let parser, printer = ParserFactory.InfonParser "typed", PrettyPrinterFactory.InfonPrinter "typed"
       new SimpleRouter(routingFile, parser, printer) :> IRouter
     | k -> failwith <| "Unrecognized router kind: " + k
 

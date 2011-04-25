@@ -11,14 +11,14 @@ type SimpleVariable = string
 /// To easily store parsed types
 type SimpleType = 
 | BasicSimpleType of string
-| SeqSimpleType of SimpleType
-| TupleSimpleType of SimpleType * SimpleType
+//| SeqSimpleType of SimpleType
+//| TupleSimpleType of SimpleType * SimpleType
 with 
   override st.ToString() = 
     match st with
     | BasicSimpleType(name) -> name
-    | SeqSimpleType(st') -> "seq<" + st'.ToString() + ">"
-    | TupleSimpleType(st1, st2) -> st1.ToString() + " * " + st2.ToString()
+//    | SeqSimpleType(st') -> "seq<" + st'.ToString() + ">"
+//    | TupleSimpleType(st1, st2) -> st1.ToString() + " * " + st2.ToString()
 
 /// To easily store parsed arguments
 type SimpleArg = string * SimpleType
@@ -26,8 +26,8 @@ type SimpleArg = string * SimpleType
 /// To easily store parsed constants
 type SimpleConstant = 
 | BoolSimpleConstant of bool
-| IntSimpleConstant of int
-| FloatSimpleConstant of float
+| Int32SimpleConstant of int32
+| DoubleSimpleConstant of double
 | StringSimpleConstant of string
 | PrincipalSimpleConstant of string
 
@@ -38,11 +38,11 @@ type SimpleMetaTerm =
 | SimpleApp of SimpleArg list * SimpleFunction * SimpleMetaTerm list
 | SimpleConst of SimpleConstant
 | SimpleVar of SimpleVariable
+| SimpleSubstrate of string * string
 
 /// To easily store parsed substrate declarations
 type SimpleSubstrateDeclaration = 
-  { Name: string;
-    Kind: string;
+  { Kind: string;
     Args: string list;
     Namespaces: string list }
 

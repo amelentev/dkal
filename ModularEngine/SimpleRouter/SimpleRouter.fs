@@ -1,14 +1,16 @@
 ﻿namespace Microsoft.Research.Dkal.SimpleRouter
 
-open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Interfaces
+
 
 /// The SimpleRouter provides a IRouter interface by means of web services.
 /// A RoutingTable is constructed by reading the XML from the given routingFile.
 /// A ConnectionsHandler instance is used to do the actual sending and receiving
 /// of messages. Infon MetaTerms are serialized and deserialized using the given
 /// IParser and IPrinter implementations.
-type SimpleRouter (routingFile: string, parser: IAstParser, printer: IAstPrettyPrinter) =
+type SimpleRouter (routingFile: string, parser: IInfonParser, printer: IInfonPrettyPrinter) =
   
   /// Stores the principals names and addresses, including the local name 
   /// and address
@@ -31,7 +33,7 @@ type SimpleRouter (routingFile: string, parser: IAstParser, printer: IAstPrettyP
     
     member sr.Send infon ppal = 
       match ppal with
-      | Const(PrincipalConstant(target)) -> 
+      | Principal(target) -> 
         let msg = printer.PrintTerm infon
         connectionsHandler.Send msg target
       | _ -> failwith "Expecting principal constant as destination when sending message"

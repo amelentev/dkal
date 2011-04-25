@@ -46,6 +46,11 @@
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
+    <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
+      <Name>Ast.Infon</Name>
+      <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>

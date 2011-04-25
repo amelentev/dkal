@@ -17,7 +17,7 @@ module Main =
       elif not (File.Exists (policyFile)) then
         printfn "File not found: %O" policyFile
       else
-        let parser, printer = ParserFactory.AstParser kind, PrettyPrinterFactory.AstPrinter kind
+        let parser, printer = ParserFactory.InfonParser kind, PrettyPrinterFactory.InfonPrinter kind
         let router = RouterFactory.Router kind routingFile
         let engine = EngineFactory.Engine kind
         let executor = ExecutorFactory.Executor kind router engine

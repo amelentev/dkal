@@ -3,7 +3,7 @@
 open System.Collections.Generic
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon
 
 /// Provides functionality to check if a set of action Metaterms is consistent
 /// or not. A set of action MetaTerms is consistent when all the actions in the

@@ -4,7 +4,7 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 
 type DummySubstrateTerm(query : ITerm, ns : string) =
-  member this.query = query
+  member this.Query = query
   interface ISubstrateTerm with
     member this.Namespace = ns
   interface ITerm with

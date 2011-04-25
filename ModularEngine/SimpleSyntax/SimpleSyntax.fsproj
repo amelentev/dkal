@@ -67,6 +67,16 @@
     <Compile Include="SimpleParser.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
+      <Name>Ast.Infon</Name>
+      <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Name>Ast.Tree</Name>
+      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>

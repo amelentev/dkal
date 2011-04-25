@@ -1,9 +1,9 @@
-﻿namespace Microsoft.Research.Dkal.Ast
+﻿namespace Microsoft.Research.Dkal.Ast.Infon
 
 open Microsoft.Research.Dkal.Interfaces
 
-/// IAstPrettyPrinter provides an interface to print top-level AST elements
-type IAstPrettyPrinter =
+/// IInfonPrettyPrinter provides an interface to print top-level AST elements
+type IInfonPrettyPrinter =
   inherit IPrettyPrinter
 
   /// Returns a string representation for the given Policy

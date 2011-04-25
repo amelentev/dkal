@@ -1,7 +1,8 @@
 ﻿namespace Microsoft.Research.Dkal.Ast.SimpleSyntax
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
 open Microsoft.Research.Dkal.Substrate
 
@@ -10,20 +11,10 @@ open System.Collections.Generic
 /// The SimplePrettyPrinter prints AST elements into the simple concrete syntax,
 /// which uses declared typed variables
 type SimplePrettyPrinter() =
-  let substrates = new Dictionary<ITerm, string>()
+  let substrates = new HashSet<ISubstrate>()
     
-  interface IAstPrettyPrinter with
-    member spp.PrintType (t: IType) =
-      match t with
-      | :? Type as t ->
-        match t with
-        | SubstrateElem(t) when t = typeof<int> -> "int"
-        | SubstrateElem(t) when t = typeof<float> -> "float"
-        | SubstrateElem(t) when t = typeof<string> -> "string"
-        | Sequence(t') -> "seq<" + spp.PrintType t' + ">"
-        | Tuple(t1, t2) -> spp.PrintType t1 + " * " + spp.PrintType t2
-        | t -> t.ToString().ToLower()
-      | _ -> failwith <| "Unknown type implementation when printing"
+  interface IInfonPrettyPrinter with
+    member spp.PrintType (t: IType) = t.Name.ToLower()
 
     member spp.PrintTerm t =
       PrettyPrinter.PrettyPrint <| spp.TokenizeTerm t
@@ -150,15 +141,14 @@ type SimplePrettyPrinter() =
         @ List.reduce (fun t1 t2 -> t1 @ [TextToken ", "] @ t2) args
         @ [ TextToken ")"]
     | Var(v) -> [TextToken v.Name]
-    | Const(c) -> 
-      match c with
-      | BoolConstant(b) -> [TextToken(b.ToString().ToLower())]
-      | PrincipalConstant(p) -> [TextToken(p.ToString())]
-      | SubstrateElemConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
-      | SubstrateElemConstant(o) -> [TextToken(o.ToString())]
+    | True -> [TextToken "true"]
+    | False -> [TextToken "false"]
+    | Principal(p) -> [TextToken(p)]
+    | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
+    | SubstrateConstant(o) -> [TextToken(o.ToString())]
     | :? DummySubstrateTerm as t -> // TODO: use some SubstratePrettyPrinter
-      spp.TokenizeTerm t.query
-    | _ -> failwith <| "PrettyPrinter does not know how to print ITerm"
+      spp.TokenizeTerm t.Query
+    | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %A" mt
    
   member private spp.TokenizePolicy (p: Policy) =
     List.collect (fun a -> spp.TokenizeTerm a @ [ NewLineToken; NewLineToken ]) p.Rules
@@ -168,23 +158,21 @@ type SimplePrettyPrinter() =
       @ List.collect (fun td -> spp.TokenizeTableDeclaration td @ [ NewLineToken; NewLineToken ]) s.Tables
       @ List.collect (fun rd -> spp.TokenizeRelationDeclaration rd @ [ NewLineToken; NewLineToken ]) s.Relations
 
-  member private spp.TokenizeSubstrateDeclaration (sd: SubstrateDeclaration) =
-    substrates.[sd.Decl] <- sd.Name
-    let kind, args =  match sd.Decl with
-                      | Sql(Const(SubstrateElemConstant(arg))) -> "sql", "\"" + arg.ToString() + "\""
-                      | Xml(Const(SubstrateElemConstant(arg))) -> "xml", "\"" + arg.ToString() + "\""
-                      | _ -> failwith <| "Unrecognized substrate type"
-    let namespaces = String.concat ", " [] // TODO
-    [TextToken <| "substrate " + sd.Name + " = " + kind + "(" + args + ") namespaces " + namespaces]
+  member private spp.TokenizeSubstrateDeclaration (s: ISubstrate) =
+    substrates.Add(s) |> ignore
+    // TODO get kind and args from ISubstrate interface
+    let kind, args = "REPLACE", ""
+    let namespaces = String.concat ", " s.Namespaces
+    [TextToken <| "substrate " + kind + "(" + args + ") namespaces " + namespaces]
 
   member private spp.TokenizeTableDeclaration (td: TableDeclaration) =
     [TextToken <| "table " + td.Name + "(";
-      TextToken <| String.concat ", " (List.map (fun (v: Variable) -> v.Name + ": " + spp.PrintType v.Type) td.Cols);
+      TextToken <| String.concat ", " (List.map (fun (v: IVar) -> v.Name + ": " + spp.PrintType v.Type) td.Cols);
       TextToken ")" ]
 
   member private spp.TokenizeRelationDeclaration (rd: RelationDeclaration) =
     [TextToken <| "relation " + rd.Name + "(";
-      TextToken <| String.concat ", " (List.map (fun (v: Variable) -> v.Name + ": " + spp.PrintType v.Type) rd.Args);
+      TextToken <| String.concat ", " (List.map (fun (v: IVar) -> v.Name + ": " + spp.PrintType v.Type) rd.Args);
       TextToken ")" ]
 
   member private spp.TokenizeAssembly (a: Assembly) =

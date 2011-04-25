@@ -5,6 +5,7 @@ open Microsoft.FSharp.Text.Lexing
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.SimpleSyntax.SimpleAst
 
 /// The SimpleParser parses from the simple concrete syntax, which uses declared 
@@ -14,10 +15,10 @@ type SimpleParser(ctx: Context) =
 
   let lexbuff s = LexBuffer<char>.FromString(s)
 
-  interface IAstParser with
+  interface IInfonParser with
     member sp.ParseType s = 
       let st = Parser.Type Lexer.tokenize (lexbuff s)
-      ctx.LiftSimpleType st :> IType
+      ctx.LiftSimpleType st
 
     member sp.ParseTerm s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
@@ -25,11 +26,11 @@ type SimpleParser(ctx: Context) =
 
     member sp.ParseInfon s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      ctx.LiftSimpleMetaTerm smt (Some Infon)
+      ctx.LiftSimpleMetaTerm smt (Some Type.Infon)
 
     member sp.ParseRule s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      ctx.LiftSimpleMetaTerm smt (Some Rule)
+      ctx.LiftSimpleMetaTerm smt (Some Type.Rule)
     
     member sp.ParsePolicy s = 
       let sp = Parser.Policy Lexer.tokenize (lexbuff s)

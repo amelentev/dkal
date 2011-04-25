@@ -2,18 +2,17 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{62c15ad9-06f2-4c97-a319-1ac3a5059b0e}</ProjectGuid>
+    <ProjectGuid>{9c31b572-9dbc-49fd-86ec-33a448825420}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>SimpleRouter</RootNamespace>
-    <AssemblyName>SimpleRouter</AssemblyName>
+    <RootNamespace>SimpleSqlParser</RootNamespace>
+    <AssemblyName>SimpleSqlParser</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <Name>SimpleRouter</Name>
+    <Name>SimpleSqlSyntax</Name>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -21,40 +20,50 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Debug\SimpleRouter.XML</DocumentationFile>
-    <StartWorkingDirectory>
-    </StartWorkingDirectory>
-    <StartArguments>
-    </StartArguments>
+    <DocumentationFile>bin\Debug\SimpleSqlParser.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Release\SimpleRouter.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SimpleSqlParser.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\FSharpPowerPack-2.0.0.0\bin\FSharp.PowerPack.targets" />
+  <PropertyGroup>
+    <FsLexOutputFolder>$(IntermediateOutputPath)</FsLexOutputFolder>
+    <FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
+  </PropertyGroup>
   <ItemGroup>
-    <Compile Include="RoutingTable.fs" />
-    <Compile Include="IPrincipalService.fs" />
-    <Compile Include="PrincipalService.fs" />
-    <Compile Include="ConnectionsHandler.fs" />
-    <Compile Include="SimpleRouter.fs" />
+    <Compile Include="SimpleAst.fs" />
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module Microsoft.Research.Dkal.Substrate.SimpleSqlSyntax.Parser</OtherFlags>
+    </FsYacc>
+    <Compile Include="$(IntermediateOutputPath)\Parser.fs">
+      <Visible>false</Visible>
+      <Link>Parser.fs</Link>
+    </Compile>
+    <Compile Include="$(IntermediateOutputPath)\Lexer.fs">
+      <Visible>false</Visible>
+      <Link>Lexer.fs</Link>
+    </Compile>
+    <Compile Include="Context.fs" />
+    <Compile Include="SimpleSqlParser.fs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Numerics" />
     <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
       <Name>Ast.Infon</Name>
       <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
@@ -75,7 +84,6 @@
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

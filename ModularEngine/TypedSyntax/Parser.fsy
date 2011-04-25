@@ -1,5 +1,7 @@
 ﻿%{
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast
 
 open System
@@ -11,8 +13,8 @@ let parseType (t: string) =
   | "infon" -> Type.Infon
   | "action" -> Type.Action
   | "rule" -> Type.Rule
-  | "int" -> Type.Int
-  | "float" -> Type.Float
+  | "int32" -> Type.Int32
+  | "double" -> Type.Double
   | "string" -> Type.String
   | t -> failwith <| "Unrecognized type: " + t
 %}
@@ -50,7 +52,7 @@ let parseType (t: string) =
 
 %type < Policy > Policy
 %type < ITerm > ITerm
-%type < Microsoft.Research.Dkal.Ast.Type > Type
+%type < IType > Type
 
 // ------------------------------------------------------------------------------------------------------
 // These are the rules of the grammar 
@@ -73,12 +75,12 @@ ITerms:
 	| ITerm COMMA ITerms						{ $1 :: $3 }
 
 Literal:
-	| TRUE										{ BoolConstant(true) }
-	| FALSE										{ BoolConstant(false) }
-	| INT_LITERAL								{ SubstrateElemConstant($1) }
-	| FLOAT_LITERAL								{ SubstrateElemConstant($1) }
-	| STRING_LITERAL							{ SubstrateElemConstant($1) }
-	| LOWER_IDENTIFIER							{ PrincipalConstant($1) }
+	| TRUE										{ SubstrateConstant(true) :> Constant }
+	| FALSE										{ SubstrateConstant(false) :> Constant }
+	| INT_LITERAL								{ SubstrateConstant($1) :> Constant }
+	| FLOAT_LITERAL								{ SubstrateConstant($1) :> Constant }
+	| STRING_LITERAL							{ SubstrateConstant($1) :> Constant }
+	| LOWER_IDENTIFIER							{ PrincipalConstant($1) :> Constant }
 
 Type:
 	| LOWER_IDENTIFIER							{ parseType($1) }

@@ -39,17 +39,16 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Type.fs" />
-    <Compile Include="Subst.fs" />
-    <Compile Include="Ast.fs" />
-    <Compile Include="Primitives.fs" />
-    <Compile Include="Builders.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="ActivePatterns.fs" />
-    <Compile Include="Normalizer.fs" />
-    <Compile Include="IAstParser.fs" />
-    <Compile Include="IAstPrettyPrinter.fs" />
+    <Compile Include="Substitution.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Name>Ast.Tree</Name>
+      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
