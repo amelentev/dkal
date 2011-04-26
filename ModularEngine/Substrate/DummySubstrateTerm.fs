@@ -14,3 +14,5 @@ type DummySubstrateTerm(query : ITerm, ns : string) =
     member this.Normalize() = query.Normalize()
     member this.UnifyFrom s t = query.UnifyFrom s t
     member this.Unify t = query.Unify t
+  override this.ToString() = 
+    "{| \"" + ns + "\" | " + query.ToString() + " |}"

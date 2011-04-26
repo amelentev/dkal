@@ -13,7 +13,7 @@ open System.Text
 open System.Linq
 open System.Collections.Generic
 
-type SqlSubstrate(connStr : string) = 
+type SqlSubstrate(connStr : string, schema: string, namespaces: string list) = 
   let mutable nextId = 0
   let conn = SqlConnector(connStr)
 
@@ -52,5 +52,5 @@ type SqlSubstrate(connStr : string) =
         SqlCompiler.execQuery (conn, options, sqlExpr, subst, Seq.toList(vars.AsEnumerable()))
       substs |> Seq.collect (fun subst -> checkAssumptions subst queries)
 
-    member this.Namespaces = new HashSet<string>()
+    member this.Namespaces = new HashSet<_>(namespaces)
     member this.RequiredVars (query: ISubstrateTerm) = []

@@ -19,7 +19,7 @@ type ConnectionsHandler(rt: RoutingTable, messageProcessingFunc) =
   /// Stores a ServiceHost that runs the PrincipalService to wait for incoming
   /// messages
   let host = new ServiceHost(new PrincipalService(messageProcessingFunc), new System.Uri(rt.Address))
-    
+
   /// Initializes the server-side host
   member ch.StartServer() =
     // Establish server to listen for incoming connections

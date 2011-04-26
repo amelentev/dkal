@@ -34,6 +34,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
+    <Compile Include="SqlPrimitives.fs" />
     <Compile Include="SqlConnector.fs" />
     <Compile Include="SqlCompiler.fs" />
     <Compile Include="SqlSubstrate.fs" />
@@ -63,11 +64,6 @@
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\SimpleSyntax\SimpleSyntax.fsproj">
-      <Name>SimpleSyntax</Name>
-      <Project>{7cb6ddad-0bbb-4826-a260-6f968b9dccf7}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Substrate\Substrate.fsproj">

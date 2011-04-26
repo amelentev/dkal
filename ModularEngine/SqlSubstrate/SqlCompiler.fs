@@ -23,7 +23,7 @@ open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.SqlSubstrate
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Ast.SimpleSyntax
+//open Microsoft.Research.Dkal.Ast.SimpleSyntax
 
 module SqlCompiler =
   // glue to old SqlCompiler
@@ -280,9 +280,9 @@ module SqlCompiler =
                     bindings = Map.empty }
 
     let trace = opts.Trace
-    let pp = new SimplePrettyPrinter() :> IPrettyPrinter
-    if trace >= 1 then
-      log ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> pp.PrintTerm s)))
+//    let pp = new SimplePrettyPrinter() :> IPrettyPrinter
+//    if trace >= 1 then
+//      log ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> pp.PrintTerm s)))
     let body = Seq.map (comp true initCtx) theTerms |> sqlMultiAnd
     if trace >= 1 then
       log ("  Compiled " + body.ToString())

@@ -36,8 +36,12 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
   let mutable finish: bool = false
 
   interface IExecutor with
+    
     member se.InstallRule (r: ITerm) =
       rules.Add(r) |> ignore
+
+    member se.AddSubstrate (s: ISubstrate) = 
+      engine.AddSubstrate s
 
     member se.Start () = 
       // Start communications
@@ -84,7 +88,7 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
       lock inbox (fun () -> 
                   while inbox.Count > 0 do
                     let msg, from = inbox.Dequeue()
-                    printfn "GOT FROM %A:\r\n %A" from msg
+                    printfn "GOT FROM %O:\r\n %O" from msg
                     quarantine.Add msg from)
 
   member private se.ExecuteRound() =

@@ -5,13 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</ProjectGuid>
+    <ProjectGuid>{82b5dc81-f8ea-4d29-b717-77b4a623d6f4}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Interfaces</RootNamespace>
-    <AssemblyName>Interfaces</AssemblyName>
+    <RootNamespace>SubstrateFactories</RootNamespace>
+    <AssemblyName>SubstrateFactories</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>Interfaces</Name>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <Name>SubstrateFactories</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Interfaces.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\SubstrateFactories.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,24 +29,36 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Interfaces.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SubstrateFactories.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ITerm.fs" />
-    <Compile Include="IParser.fs" />
-    <Compile Include="IPrettyPrinter.fs" />
-    <Compile Include="IRouter.fs" />
-    <Compile Include="ISubstrateTerm.fs" />
-    <Compile Include="ISubstrate.fs" />
-    <Compile Include="IEngine.fs" />
-    <Compile Include="IExecutor.fs" />
-    <Compile Include="ISubstrateParser.fs" />
-    <Compile Include="ISubstratePrettyPrinter.fs" />
+    <Compile Include="SubstrateParserFactory.fs" />
+    <Compile Include="SubstrateFactory.fs" />
+    <Compile Include="SubstratePrettyPrinterFactory.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
+      <Name>Interfaces</Name>
+      <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SimpleSqlSyntax\SimpleSqlSyntax.fsproj">
+      <Name>SimpleSqlSyntax</Name>
+      <Project>{9c31b572-9dbc-49fd-86ec-33a448825420}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SqlSubstrate\SqlSubstrate.fsproj">
+      <Name>SqlSubstrate</Name>
+      <Project>{65b27d4b-16fb-441a-8fd7-2b01abe789ef}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

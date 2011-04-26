@@ -3,6 +3,7 @@
   open System.Collections.Generic
 
   open Microsoft.Research.Dkal.Substrate.SimpleSqlSyntax.SimpleAst
+  open Microsoft.Research.Dkal.SqlSubstrate
   open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast.Tree
   open Microsoft.Research.Dkal.Ast.Infon
@@ -25,20 +26,18 @@
       let failDueToType (smt: SimpleMetaTerm) (typ: IType option) = 
         failwith <| "Expecting a " + typ.Value.Name + "MetaTerm, found: " + (sprintf "%A" smt)
       let solvedMacros = new List<ITerm>()
-      let rec traverse (smt: SimpleMetaTerm) (typ: IType option) = 
+      let rec traverse (smt: SimpleMetaTerm) (typ: IType option) : ITerm = 
         match smt with
         | SimpleApp(f, smts) ->
-          // check if it is a primitive operator
-          match Sql.SolveFunction f with
-          | Some func -> 
-            if not(complies func.RetType typ) then failDueToType smt typ
-            let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
-            App(func, mts)
-          | None ->
+          // check if it is a table.column operator
+          if f.Contains "." then
+            // TODO
+            failwith "implement"
+          else
             // check if it is an overloaded operator
             if not(smts.IsEmpty) then
               let mt0 = traverse smts.[0] None
-              match Sql.SolveOverloadOperator f mt0.Type with
+              match SqlPrimitives.SolveOverloadOperator f mt0.Type with
               | Some func -> 
                 if not(complies func.RetType typ) then failDueToType smt typ
                 let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
@@ -65,8 +64,10 @@
           else
             failwith <| "Undeclared variable: " + v
       let mainTerm = traverse smt typ
-      let normalTerm = normalize mainTerm
-      normalTerm
+//      let normalTerm = normalize mainTerm
+//      normalTerm
+      // TODO: normalize
+      mainTerm
 
     
 

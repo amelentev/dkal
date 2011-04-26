@@ -23,7 +23,11 @@ type SimpleRouter (routingFile: string, parser: IInfonParser, printer: IInfonPre
   /// A ConnectionHandler instance to manage the incoming and outcoming channels
   let connectionsHandler = new ConnectionsHandler(routingTable, 
                                                   fun msg from -> 
-                                                    let infon = parser.ParseInfon msg
+                                                    let infon = 
+                                                      try
+                                                        parser.ParseInfon msg
+                                                      with
+                                                        e -> failwithf "%O" e
                                                     let ppal = Const(PrincipalConstant(from))
                                                     elevateMessageFunction infon ppal)
 

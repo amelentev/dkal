@@ -38,7 +38,7 @@ type SimpleMetaTerm =
 | SimpleApp of SimpleArg list * SimpleFunction * SimpleMetaTerm list
 | SimpleConst of SimpleConstant
 | SimpleVar of SimpleVariable
-| SimpleSubstrate of string * string
+| SimpleSubstrate of string * string 
 
 /// To easily store parsed substrate declarations
 type SimpleSubstrateDeclaration = 

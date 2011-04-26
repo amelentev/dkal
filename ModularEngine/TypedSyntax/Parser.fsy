@@ -8,7 +8,7 @@ open System
 
 let parseType (t: string) = 
   match t with
-  | "bool" -> Type.Bool
+  | "boolean" -> Type.Bool
   | "principal" -> Type.Principal
   | "infon" -> Type.Infon
   | "action" -> Type.Action

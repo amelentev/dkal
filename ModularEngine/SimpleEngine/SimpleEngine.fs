@@ -18,9 +18,15 @@ type SimpleEngine() =
   /// Stores the known facts
   let knowledge = new HashSet<ITerm>()
 
+  /// Substrate dispatcher
+  let substrateDispatcher = new SubstrateDispatcher()
+
   interface IEngine with
     member se.Start () = ()
     member se.Stop () = ()
+
+    member se.AddSubstrate (s: ISubstrate) =
+      substrateDispatcher.AddSubstrate s
 
     /// Split the infon into conjunctions and learn these recursively
     member se.Learn (infon: ITerm) = 
@@ -51,7 +57,7 @@ type SimpleEngine() =
     /// side conditions.
     member se.Derive (target: ITerm) = 
       [ for (subst, conds) in se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target) do
-          for subst' in SubstrateDispatcher.Solve conds [subst] do
+          for subst' in substrateDispatcher.Solve conds [subst] do
             yield subst' ]
 
   /// Given a prefix (list of principal MetaTerms) a current Substitution with 

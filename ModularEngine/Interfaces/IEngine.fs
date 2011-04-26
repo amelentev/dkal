@@ -19,3 +19,7 @@ type IEngine =
 
   /// Removes the given infon ITerm from the knowledge base of the engine
   abstract member Forget: ITerm -> bool
+
+  /// Adds the given ISubstrate implementation as a new substrate information
+  /// source
+  abstract member AddSubstrate: ISubstrate -> unit

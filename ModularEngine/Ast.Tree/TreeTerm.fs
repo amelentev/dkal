@@ -21,6 +21,7 @@ type Variable =
       | _ -> None
     member v.Unify t = 
       (v :> ITerm).UnifyFrom (Substitution.Id) t
+  override v.ToString() = v.Name    
 
 /// Constants are implicitly typed (they have the type of the wrapped
 /// element)
@@ -66,7 +67,7 @@ type Application =
         let mutable ret = s
         let mutable i = 0
         while okSoFar && i < f.Args.Length do
-          match f.Args.[i].UnifyFrom ret f'.Args.[i] with
+          match f.Args.[i].Apply(ret).UnifyFrom ret (f'.Args.[i].Apply(ret)) with
           | Some s ->
             ret <- s
           | None -> 
@@ -79,3 +80,6 @@ type Application =
       | _ -> None
     member f.Unify t = 
       (f :> ITerm).UnifyFrom (Substitution.Id) t
+  override f.ToString() =
+    f.Function.Name + "(" + 
+      (String.concat ", " (List.map (fun a -> a.ToString()) f.Args)) + ")"

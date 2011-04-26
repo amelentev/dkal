@@ -8,7 +8,7 @@
   open Microsoft.Research.Dkal.Ast.Tree
   open Microsoft.Research.Dkal.Ast.Infon
   open Microsoft.Research.Dkal.Ast.Infon.Normalizer
-  open Microsoft.Research.Dkal.Substrate
+  open Microsoft.Research.Dkal.Substrate.Factories
 
   /// A Context is responsible for lifting untyped SimpleMetaTerms into typed
   /// MetaTerms. It solves the macros that appear in the SimpleMetaTerms and 
@@ -55,9 +55,7 @@
 
     /// Given a SimpleSignature it returns its corresponding Signature
     member ctx.LiftSimpleSignature (ss: SimpleSignature) =
-      let sds = List.map
-                  (fun (ssd: SimpleSubstrateDeclaration) -> substrates.[ssd.Name])
-                  <| Seq.toList ss.SubstrateDeclarations
+      let sds = new HashSet<_>(substrates.Values) |> Seq.toList
       let tds = List.map 
                   (fun (std: SimpleTableDeclaration) -> 
                     { TableDeclaration.Name = std.Name; Cols = ctx.LiftArgs std.Cols}) 
@@ -241,8 +239,12 @@
           | Some typ' when complies typ' typ -> Var({ Name = v; Type = typ' })
           | _ -> failDueToType smt typ
         | SimpleSubstrate(ns, exp) ->
-          let parser = SubstrateParserFactory.SubstrateParser substrates.[ns] ns (types.AllLevels())
-          parser.Parse exp
+          let found, substrate = substrates.TryGetValue ns
+          if found then
+            let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (types.AllLevels())
+            parser.ParseTerm exp :> ITerm
+          else
+            failwithf "Namespace not supported by any substrate: %O" ns
         | _ -> failwith <| "Malformed SimpleMetaTerm"
       let mainTerm = traverse smt typ
 //      let conditions = ctx.MacroConditions solvedMacros

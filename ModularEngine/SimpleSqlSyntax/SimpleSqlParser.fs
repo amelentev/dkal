@@ -4,13 +4,14 @@ open System.IO
 open Microsoft.FSharp.Text.Lexing
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Substrate
 
 open System.Collections.Generic
 
 /// The SimpleParser parses from the simple concrete syntax, which uses declared 
 /// typed variables. It must be initialized with a Context that holds variable 
 /// type information, relation declarations, etc.
-type SimpleSqlParser(ns: string, ctx: Dictionary<string, IType>) = 
+type SimpleSqlParser(ns: string, types: Dictionary<string, IType>) = 
 
   let lexbuff s = LexBuffer<char>.FromString(s)
 
@@ -18,5 +19,6 @@ type SimpleSqlParser(ns: string, ctx: Dictionary<string, IType>) =
 
     member sp.ParseTerm s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      ctx.LiftSimpleMetaTerm smt None
+      let t = (new Context(types)).LiftSimpleMetaTerm smt None
+      new DummySubstrateTerm(t, ns) :> ISubstrateTerm
 

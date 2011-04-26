@@ -5,13 +5,14 @@ open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
 open Microsoft.Research.Dkal.Substrate
+open Microsoft.Research.Dkal.Substrate.Factories
 
 open System.Collections.Generic
 
 /// The SimplePrettyPrinter prints AST elements into the simple concrete syntax,
 /// which uses declared typed variables
 type SimplePrettyPrinter() =
-  let substrates = new HashSet<ISubstrate>()
+  let substrates = new Dictionary<string, ISubstrate>()
     
   interface IInfonPrettyPrinter with
     member spp.PrintType (t: IType) = t.Name.ToLower()
@@ -36,21 +37,6 @@ type SimplePrettyPrinter() =
     | "and" -> "&&", true
     | "implies" -> "->", true
     | "said" -> "said", true
-    | "or" -> "||", true
-    | "not" -> "!", false
-    | "eq" -> "==", true
-    | "neq" -> "!=", true
-    | "lt" -> "<", true
-    | "lte" -> "<=", true
-    | "gt" -> ">", true
-    | "gte" -> ">=", true
-    | "plus" -> "+", true
-    | "minus" -> "-", true
-    | "times" -> "*", true
-    | "div" -> "/", true
-    | "uminus" -> "-", false
-    | "nil" -> "[]", false
-    | "cons" -> "::", true
     | f -> f, false
 
   member private spp.TokenizeTerm mt =
@@ -69,10 +55,10 @@ type SimplePrettyPrinter() =
             ManyTokens args.[0] ]
             @ [ TextToken <| ")" ]
         | _ -> failwith "Incorrect arguments in AsInfon(...)"
-      elif not infix && mts = [] then
-        [ TextToken <| fSymbol ]
       elif fSymbol = "emptyInfon" then
         [ TextToken <| "asInfon(true)" ]
+      elif not infix && mts = [] then
+        [ TextToken <| fSymbol ]
       elif fSymbol = "rule" then
         let vars = mt.Vars |> Seq.toList
         let varsDecl = List.map (fun (v: IVar) -> v.Name + ": " + spp.PrintType v.Type) vars
@@ -146,8 +132,14 @@ type SimplePrettyPrinter() =
     | Principal(p) -> [TextToken(p)]
     | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
     | SubstrateConstant(o) -> [TextToken(o.ToString())]
-    | :? DummySubstrateTerm as t -> // TODO: use some SubstratePrettyPrinter
-      spp.TokenizeTerm t.Query
+    | :? ISubstrateTerm as t -> 
+      let found, substrate = substrates.TryGetValue t.Namespace
+      if found then
+        let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "simple"
+        let printedSubstrateTerm = pp.PrintTerm t
+        [ TextToken <| "{| \"" + t.Namespace + "\" | " + printedSubstrateTerm + " |}" ]
+      else
+        failwithf "There is no substrate to handle namespace %O" t.Namespace
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %A" mt
    
   member private spp.TokenizePolicy (p: Policy) =
@@ -159,7 +151,8 @@ type SimplePrettyPrinter() =
       @ List.collect (fun rd -> spp.TokenizeRelationDeclaration rd @ [ NewLineToken; NewLineToken ]) s.Relations
 
   member private spp.TokenizeSubstrateDeclaration (s: ISubstrate) =
-    substrates.Add(s) |> ignore
+    for ns in s.Namespaces do
+      substrates.[ns] <- s
     // TODO get kind and args from ISubstrate interface
     let kind, args = "REPLACE", ""
     let namespaces = String.concat ", " s.Namespaces
