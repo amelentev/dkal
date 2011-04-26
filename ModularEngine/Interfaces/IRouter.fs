@@ -19,4 +19,3 @@ type IRouter =
   /// Sends an infon ITerm to the target principal ITerm
   abstract member Send: infon: ITerm -> ppal: ITerm -> unit
 
-

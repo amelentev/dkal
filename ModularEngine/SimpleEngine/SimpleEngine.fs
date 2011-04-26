@@ -25,9 +25,6 @@ type SimpleEngine() =
     member se.Start () = ()
     member se.Stop () = ()
 
-    member se.AddSubstrate (s: ISubstrate) =
-      substrateDispatcher.AddSubstrate s
-
     /// Split the infon into conjunctions and learn these recursively
     member se.Learn (infon: ITerm) = 
       match Normalizer.normalize infon with

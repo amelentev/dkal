@@ -15,6 +15,3 @@ type IExecutor =
   /// this point onwards
   abstract member InstallRule: ITerm -> unit
     
-  /// Adds the given ISubstrate implementation to the executor.
-  abstract member AddSubstrate: ISubstrate -> unit
-    

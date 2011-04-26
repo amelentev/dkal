@@ -51,11 +51,6 @@ type SimpleTypeDeclaration =
   { NewTyp: string;
     TargetTyp: SimpleType }
 
-/// To easily store parsed table declarations
-type SimpleTableDeclaration = 
-  { Name: string;
-    Cols: SimpleArg list }
-
 /// To easily store parsed relation declarations
 type SimpleRelationDeclaration = 
   { Name: string;
@@ -72,12 +67,10 @@ type SimpleMacroDeclaration =
 type SimpleSignature() = 
   let substrateDeclarations = new List<SimpleSubstrateDeclaration>()
   let typeDeclarations = new List<SimpleTypeDeclaration>()
-  let tableDeclarations = new List<SimpleTableDeclaration>()
   let relationDeclarations = new List<SimpleRelationDeclaration>()
   let macroDeclarations = new List<SimpleMacroDeclaration>()
   member ss.SubstrateDeclarations = substrateDeclarations
   member ss.TypeDeclarations = typeDeclarations
-  member ss.TableDeclarations = tableDeclarations
   member ss.RelationDeclarations = relationDeclarations
   member ss.MacroDeclarations = macroDeclarations
    

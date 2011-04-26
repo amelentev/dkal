@@ -19,7 +19,7 @@ let newline = ('\n' | '\r' '\n')
 rule tokenize = parse
 // Whitespace
 | whitespace		{ tokenize lexbuf }
-| newline			{ tokenize lexbuf }
+| newline			  { tokenize lexbuf }
 
 // Comments
 | '/' '*'            { comment lexbuf }
@@ -31,7 +31,7 @@ rule tokenize = parse
 
 // Unary operators
 | "asInfon"			{ AS_INFON }
-| "said"			{ SAID }
+| "said"		  	{ SAID }
 
 // Delimiters
 | "="				{ EQ }
@@ -47,14 +47,11 @@ rule tokenize = parse
 | "."				{ DOT }
 
 // Substrate declarations
-| "substrate"		{ SUBSTRATE } 
+| "substrate"		  { SUBSTRATE } 
 | "namespaces"		{ NAMESPACES } 
 
 // Types
 | "type"			{ TYPE }
-
-// Table declarations
-| "table"			{ TABLE }
 
 // Relation declarations
 | "relation"		{ RELATION }

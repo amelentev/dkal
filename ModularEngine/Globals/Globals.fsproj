@@ -5,12 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{82b5dc81-f8ea-4d29-b717-77b4a623d6f4}</ProjectGuid>
+    <ProjectGuid>{74223397-052c-4f45-b703-ddf5bced536b}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>SubstrateFactories</RootNamespace>
-    <AssemblyName>SubstrateFactories</AssemblyName>
+    <RootNamespace>Globals</RootNamespace>
+    <AssemblyName>Globals</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>SubstrateFactories</Name>
+    <Name>Globals</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -20,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\SubstrateFactories.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Globals.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,7 +29,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\SubstrateFactories.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Globals.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -39,31 +39,14 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SubstrateParserFactory.fs" />
-    <Compile Include="SubstrateFactory.fs" />
-    <Compile Include="SubstratePrettyPrinterFactory.fs" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\SimpleSqlSyntax\SimpleSqlSyntax.fsproj">
-      <Name>SimpleSqlSyntax</Name>
-      <Project>{9c31b572-9dbc-49fd-86ec-33a448825420}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\SqlSubstrate\SqlSubstrate.fsproj">
-      <Name>SqlSubstrate</Name>
-      <Project>{65b27d4b-16fb-441a-8fd7-2b01abe789ef}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\TypedSqlSyntax\TypedSqlSyntax.fsproj">
-      <Name>TypedSqlSyntax</Name>
-      <Project>{d10a6e81-4df6-4f74-8140-7d5d0293f005}</Project>
-      <Private>True</Private>
-    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="SubstrateMap.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

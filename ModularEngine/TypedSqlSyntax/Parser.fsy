@@ -1,21 +1,14 @@
 ﻿%{
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast
-open Microsoft.Research.Dkal.Substrate.Factories
 
 open System
-open System.Collections.Generic
 
 let parseType (t: string) = 
   match t with
   | "boolean" -> Type.Bool
-  | "principal" -> Type.Principal
-  | "infon" -> Type.Infon
-  | "action" -> Type.Action
-  | "rule" -> Type.Rule
   | "int32" -> Type.Int32
   | "double" -> Type.Double
   | "string" -> Type.String
@@ -25,7 +18,6 @@ let parseType (t: string) =
 // ------------------------------------------------------------------------------------------------------
 // The start tokens become parser functions in the compiled code:
 
-%start Policy
 %start ITerm
 %start Type
 
@@ -44,9 +36,6 @@ let parseType (t: string) =
 %token <System.Double> FLOAT_LITERAL
 %token <System.String> STRING_LITERAL
 
-// Substrate expressions
-%token <System.String * System.String> SUBSTRATE_EXPRESSION
-
 // Identifiers
 %token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
 
@@ -56,7 +45,6 @@ let parseType (t: string) =
 // ------------------------------------------------------------------------------------------------------
 // This is the type of the data produced by successful reductions of each 'start' symbol:
 
-%type < Policy > Policy
 %type < ITerm > ITerm
 %type < IType > Type
 
@@ -65,25 +53,16 @@ let parseType (t: string) =
 
 %%
 
-Policy:
-	|										        	{ { Rules = [] } }
-	| Policy ITerm								{ { Rules = $1.Rules @ [$2] } }
-
 ITerm:
 	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR			{ App({ Name = $1; ArgsType = $3; RetType = $5 }, $7) }
 	| Literal														                        { Const($1) }
-	| UPPER_IDENTIFIER COLON Type						              			{ Var({ Name = $1; Type = $3 }) }
-	| LPAR ITerm RPAR											              	      { $2 }
-	| SUBSTRATE_EXPRESSION								         
-    { let ns, exp = $1;
-      let substrate = SubstrateMap.GetSubstrate ns;
-      let parser = SubstrateParserFactory.SubstrateParser substrate "typed" ns (new Dictionary<_,_>());
-      parser.ParseTerm exp :> ITerm }
+	| UPPER_IDENTIFIER COLON Type							              		{ Var({ Name = $1; Type = $3 }) }
+	| LPAR ITerm RPAR										                    		{ $2 }
 
 ITerms:
-	|											    { [] }
-	| ITerm										{ [$1] }
-	| ITerm COMMA ITerms			{ $1 :: $3 }
+	|										          	{ [] }
+	| ITerm									      	{ [$1] }
+	| ITerm COMMA ITerms						{ $1 :: $3 }
 
 Literal:
 	| TRUE										{ SubstrateConstant(true) :> Constant }
@@ -94,9 +73,9 @@ Literal:
 	| LOWER_IDENTIFIER				{ PrincipalConstant($1) :> Constant }
 
 Type:
-	| LOWER_IDENTIFIER				{ parseType($1) }
+	| LOWER_IDENTIFIER							{ parseType($1) }
 
 Types:
-	|											    { [] }
-	| Type										{ [$1] }
-	| Type TIMES Types				{ $1 :: $3 }
+	|									      		{ [] }
+	| Type									  	{ [$1] }
+	| Type TIMES Types					{ $1 :: $3 }

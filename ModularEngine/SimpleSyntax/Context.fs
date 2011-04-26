@@ -4,6 +4,7 @@
 
   open Microsoft.Research.Dkal.Ast.SimpleSyntax.SimpleAst
   open Microsoft.Research.Dkal.Interfaces
+  open Microsoft.Research.Dkal.Globals
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Ast.Tree
   open Microsoft.Research.Dkal.Ast.Infon
@@ -14,9 +15,8 @@
   /// MetaTerms. It solves the macros that appear in the SimpleMetaTerms and 
   /// uses the type information from relation declarations, type renames, etc.
   type Context() =
-    /// For each namespace it keeps a Substrate that handles it
-    let substrates = new Dictionary<string, ISubstrate>()
-
+    let substrates = new HashSet<ISubstrate>()
+    
     /// Holds type information (SimpleType to Type mapping, and SimpleVariable 
     /// type info)
     let types = new TypeInfo()
@@ -55,23 +55,18 @@
 
     /// Given a SimpleSignature it returns its corresponding Signature
     member ctx.LiftSimpleSignature (ss: SimpleSignature) =
-      let sds = new HashSet<_>(substrates.Values) |> Seq.toList
-      let tds = List.map 
-                  (fun (std: SimpleTableDeclaration) -> 
-                    { TableDeclaration.Name = std.Name; Cols = ctx.LiftArgs std.Cols}) 
-                  <| Seq.toList ss.TableDeclarations
+      let sds = substrates |> Seq.toList
       let rds = List.map 
                   (fun (srd: SimpleRelationDeclaration) -> 
                     { RelationDeclaration.Name = srd.Name; Args = ctx.LiftArgs srd.Args}) 
                   <| Seq.toList ss.RelationDeclarations
-      { Substrates = sds; Tables = tds; Relations = rds }
+      { Substrates = sds; Relations = rds }
 
     /// It loads a SimpleSignature into the Context, saving the relation 
     /// declarations, macro definitions, etc.
     member ctx.LoadSimpleSignature (ss: SimpleSignature) =
       Seq.iter ctx.AddSubstrate ss.SubstrateDeclarations
       Seq.iter ctx.AddType ss.TypeDeclarations 
-      Seq.iter ctx.AddTable ss.TableDeclarations
       Seq.iter ctx.AddRelation ss.RelationDeclarations
       Seq.iter ctx.AddMacro ss.MacroDeclarations
 
@@ -96,20 +91,11 @@
     /// SimpleMetaTerms. This information is used when lifting these
     member private ctx.AddSubstrate (ssd: SimpleSubstrateDeclaration) = 
       let s = SubstrateFactory.Substrate ssd.Kind ssd.Args ssd.Namespaces
-      for ns in ssd.Namespaces do
-        substrates.[ns] <- s
+      SubstrateMap.AddSubstrate s
 
     /// Adds a new type rename
     member private ctx.AddType (std: SimpleTypeDeclaration) =
       types.AddTypeRename std.NewTyp std.TargetTyp
-
-    /// Adds a table declaration and saves it so that now SimpleMetaTerms
-    /// can use it.
-    member private ctx.AddTable (std: SimpleTableDeclaration) =
-      for colName, colTyp in std.Cols do
-        ctx.AddIdentifier { Name = std.Name + "." + colName
-                            RetType = types.LiftType colTyp; 
-                            ArgsType = [] }
 
     /// Adds a relation declaration and saves it so that now SimpleMetaTerms
     /// can use it.
@@ -239,12 +225,9 @@
           | Some typ' when complies typ' typ -> Var({ Name = v; Type = typ' })
           | _ -> failDueToType smt typ
         | SimpleSubstrate(ns, exp) ->
-          let found, substrate = substrates.TryGetValue ns
-          if found then
-            let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (types.AllLevels())
-            parser.ParseTerm exp :> ITerm
-          else
-            failwithf "Namespace not supported by any substrate: %O" ns
+          let substrate = SubstrateMap.GetSubstrate ns
+          let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (types.AllLevels())
+          parser.ParseTerm exp :> ITerm
         | _ -> failwith <| "Malformed SimpleMetaTerm"
       let mainTerm = traverse smt typ
 //      let conditions = ctx.MacroConditions solvedMacros

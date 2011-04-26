@@ -38,7 +38,7 @@ type TypedParser() =
       Parser.Policy Lexer.tokenize (lexbuff s)
 
     member sp.ParseSignature s =
-      { Substrates = []; Tables = []; Relations = [] }
+      { Substrates = []; Relations = [] }
 
     member sp.ParseAssembly s =
       let sp = (sp :> IInfonParser)

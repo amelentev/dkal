@@ -5,10 +5,11 @@ open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
 open Microsoft.Research.Dkal.Substrate
+open Microsoft.Research.Dkal.SqlSubstrate
 
 open System.Collections.Generic
 
-/// The SimpleSqlPrettyPrinter prints AST elements into the simple concrete syntax
+/// The SimpleSqlPrettyPrinter prints substrate elements into the simple concrete syntax
 type SimpleSqlPrettyPrinter() =
     
   interface ISubstratePrettyPrinter with
@@ -17,6 +18,14 @@ type SimpleSqlPrettyPrinter() =
       | :? DummySubstrateTerm as t ->
         PrettyPrinter.PrettyPrint <| spp.TokenizeTerm t.Query
       | _ -> failwith "Expecting DummySubstrateTerm when printing SimpleSqlSyntax"
+
+    member spp.PrintSubstrate s =
+      match s with
+      | :? SqlSubstrate as s ->
+        "substrate sql(\"" + s.ConnectionString + "\", \"" + s.SchemaFile + "\") namespaces " +
+          (String.concat ", " (Seq.map (fun ns -> "\"" + ns + "\"") (s :> ISubstrate).Namespaces))
+      | _ -> failwith "Expecting SqlSubstrate when printing substrate"
+
 
   member private spp.PrintTerm mt = (spp :> ISubstratePrettyPrinter).PrintTerm mt
 
@@ -40,6 +49,7 @@ type SimpleSqlPrettyPrinter() =
 
   member private spp.TokenizeTerm mt =
     match mt with
+    | App(f, []) -> [ TextToken f.Name ]
     | App(f, mts) -> 
       let fSymbol, infix = SimpleSqlPrettyPrinter.FindFunctionSymbol f.Name
       let args = List.map spp.TokenizeTerm mts

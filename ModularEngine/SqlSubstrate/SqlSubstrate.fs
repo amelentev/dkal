@@ -7,19 +7,37 @@ open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
+
 open System.Data
 open System.Data.SqlClient
 open System.Text
 open System.Linq
 open System.Collections.Generic
+open System.Xml
 
-type SqlSubstrate(connStr : string, schema: string, namespaces: string list) = 
+type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list) = 
   let mutable nextId = 0
   let conn = SqlConnector(connStr)
 
   member private this.NextId () =
     nextId <- nextId - 1
     nextId
+
+  member this.ConnectionString = connStr
+
+  member this.SchemaFile = schemaFile
+
+  member this.GetColumnType (table: string) (column: string) =
+    let xd = new XmlDocument()
+    xd.Load(schemaFile)
+    let xnm = new XmlNamespaceManager(xd.NameTable)
+    xnm.AddNamespace("dbml", "http://schemas.microsoft.com/linqtosql/dbml/2007")
+    let node = xd.DocumentElement.SelectSingleNode("//dbml:Database/dbml:Table[@Name='" + table + "']/dbml:Type/dbml:Column[@Name='" + column + "']", xnm)
+    if node = null then
+      failwithf "Could not find column %O in table %O" column table
+    else 
+      let typ = node.Attributes.["Type"].Value
+      System.Type.GetType(typ)
 
   interface ISubstrate with
     member this.Solve queries substs =

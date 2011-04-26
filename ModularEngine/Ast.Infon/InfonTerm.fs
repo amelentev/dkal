@@ -33,10 +33,6 @@ type SubstrateConstant(elem: obj) =
     | _ -> elem.ToString()
   member sc.Elem = elem
 
-/// A table declaration with typed columns. This is used in a Signature in
-/// order to keep this information
-type TableDeclaration = { Name: string; 
-                          Cols: IVar list }
 /// A relation declaration with typed arguments. This is used in a Signature
 /// in order to keep this information
 type RelationDeclaration = { Name: string; 
@@ -45,7 +41,6 @@ type RelationDeclaration = { Name: string;
 /// A Signature holds all the substrate, tables and relation declarations 
 /// found in an assembly
 type Signature =  { Substrates: ISubstrate list;
-                    Tables: TableDeclaration list;
                     Relations: RelationDeclaration list }
  
 /// A Policy contains a list of rules (in the order they were found in the 

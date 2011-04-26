@@ -11,7 +11,7 @@
   
   /// A Context is responsible for lifting untyped SimpleMetaTerms into typed
   /// MetaTerms. 
-  type Context(types: Dictionary<SimpleVariable, IType>) =
+  type Context(substrate: SqlSubstrate, types: Dictionary<SimpleVariable, IType>) =
 
     /// Given a SimpleMetaTerm smt and a Type t, it returns its the 
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
@@ -31,8 +31,11 @@
         | SimpleApp(f, smts) ->
           // check if it is a table.column operator
           if f.Contains "." then
-            // TODO
-            failwith "implement"
+            match f.Split [|'.'|] with
+            | [| table; column |] -> 
+              let typ = Type.Substrate(substrate.GetColumnType ("dbo."+table) column)
+              App({Name=f; RetType=typ; ArgsType=[]}, [])
+            | _ -> failwithf "Incorrect table.column operator usage in %O" f
           else
             // check if it is an overloaded operator
             if not(smts.IsEmpty) then

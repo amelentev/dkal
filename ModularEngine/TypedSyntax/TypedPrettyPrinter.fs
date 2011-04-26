@@ -1,15 +1,18 @@
 ﻿namespace Microsoft.Research.Dkal.Ast.TypedSyntax
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Substrate
+open Microsoft.Research.Dkal.Substrate.Factories
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
 
 /// The TypedPrettyPrinter prints AST elements into the typed concrete syntax,
 /// which carries type annotations in every function application and every 
 /// variable
 type TypedPrettyPrinter() =
+
   interface IInfonPrettyPrinter with
     member tpp.PrintType (t: IType) = t.Name.ToLower()
 
@@ -44,6 +47,11 @@ type TypedPrettyPrinter() =
     | Principal(p) -> [TextToken(p)]
     | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
     | SubstrateConstant(o) -> [TextToken(o.ToString())]
+    | :? ISubstrateTerm as t -> 
+      let substrate = SubstrateMap.GetSubstrate t.Namespace
+      let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "typed"
+      let printedSubstrateTerm = pp.PrintTerm t
+      [ TextToken <| "{|\"" + t.Namespace + "\"|" + printedSubstrateTerm + "|}" ]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %A" mt
    
   member private tpp.TokenizePolicy (p: Policy) =

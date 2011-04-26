@@ -41,9 +41,9 @@
     <Compile Include="ITerm.fs" />
     <Compile Include="IParser.fs" />
     <Compile Include="IPrettyPrinter.fs" />
-    <Compile Include="IRouter.fs" />
     <Compile Include="ISubstrateTerm.fs" />
     <Compile Include="ISubstrate.fs" />
+    <Compile Include="IRouter.fs" />
     <Compile Include="IEngine.fs" />
     <Compile Include="IExecutor.fs" />
     <Compile Include="ISubstrateParser.fs" />

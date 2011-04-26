@@ -40,9 +40,6 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
     member se.InstallRule (r: ITerm) =
       rules.Add(r) |> ignore
 
-    member se.AddSubstrate (s: ISubstrate) = 
-      engine.AddSubstrate s
-
     member se.Start () = 
       // Start communications
       router.Receive(fun msg from -> 

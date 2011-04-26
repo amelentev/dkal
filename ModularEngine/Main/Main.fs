@@ -26,8 +26,6 @@ module Main =
         printfn "%O" <| printer.PrintAssembly assembly
         for rule in assembly.Policy.Rules do
           executor.InstallRule rule
-        for substrate in assembly.Signature.Substrates do
-          executor.AddSubstrate substrate
         executor.Start()
 
     | _ -> failwith "Wrong number of parameters"

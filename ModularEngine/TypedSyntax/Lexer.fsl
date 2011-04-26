@@ -19,7 +19,7 @@ let newline = ('\n' | '\r' '\n')
 rule tokenize = parse
 // Whitespace
 | whitespace		{ tokenize lexbuf }
-| newline			{ tokenize lexbuf }
+| newline		  	{ tokenize lexbuf }
 
 // Comments
 | '/' '*'            { comment lexbuf }
@@ -31,8 +31,8 @@ rule tokenize = parse
 | ","				{ COMMA }
 
 // Types
-| ":"				{ COLON }
-| "*"				{ TIMES }
+| ":"			  	{ COLON }
+| "*"			  	{ TIMES }
 | "->"				{ TO }
 
 // Literals
@@ -44,9 +44,17 @@ rule tokenize = parse
                        string lexbuf;
                        STRING_LITERAL (stringBuf.ToString()) }
 
+// Substrate expressions
+| '{' '|' '"' ['a'-'z']+ '"' '|'       
+    { let ns = lexeme lexbuf;
+      let ns = ns.Substring(3, ns.Length-5);
+      stringBuf.Length <- 0;
+      substrate lexbuf;
+      SUBSTRATE_EXPRESSION (ns, stringBuf.ToString()) }
+
 // Identifiers
 | ['a'-'z']+ ['a'-'z''A'-'Z''0'-'9''.']* 		{ LOWER_IDENTIFIER (lexeme lexbuf) }
-| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9']*			{ UPPER_IDENTIFIER (lexeme lexbuf) }
+| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9']*		  	{ UPPER_IDENTIFIER (lexeme lexbuf) }
 
 // EOF
 | eof   { EOF }
@@ -64,4 +72,9 @@ and string = parse
 | '\\' _ { add (lexbuf.Lexeme.[1]); string lexbuf }
 | [^ '\\' '"']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
 | _ { add (lexbuf.Lexeme.[0]); string lexbuf }
+| eof { () }
+
+and substrate = parse
+| '|' '}' { () }
+| _ { add (lexbuf.Lexeme.[0]); substrate lexbuf }
 | eof { () }

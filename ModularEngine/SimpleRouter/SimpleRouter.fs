@@ -49,3 +49,6 @@ type SimpleRouter (routingFile: string, parser: IInfonParser, printer: IInfonPre
     member sr.Stop () =
       connectionsHandler.StopServer()
       connectionsHandler.StopClients()
+
+    
+    
