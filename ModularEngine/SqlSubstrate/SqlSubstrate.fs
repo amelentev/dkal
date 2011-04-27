@@ -60,6 +60,18 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
           let eq = {Name="eq"; RetType=Type.Boolean; ArgsType=[Type.Int32; Type.Int32]; Identity=None} : Function
           App(eq, [App(f, []); Const(SubstrateConstant(1))])
         | t -> t
+      // collect SubstrateTerms and remove them from the query
+      let rec separateInnerSubstrates = function
+        | App(f, args) ->
+          let r = List.unzip (args |> List.map separateInnerSubstrates)
+          (App(f, fst r), List.concat (snd r))
+        | :? DummySubstrateTerm as st when namespaces.Contains((st:>ISubstrateTerm).Namespace) -> // our SubstrateTerm
+          st.Query, []
+        | :? ISubstrateTerm as st -> // external SubstrateTerm
+          Const (SubstrateConstant true), [st] // TODO: boolean only?
+        | t -> t, []
+      let (queries, substrateTerms) = queries |> Seq.map separateInnerSubstrates |> Seq.toList |> List.unzip
+      let substrateTerms = List.concat substrateTerms
       let queries = queries |> Seq.map normalize2 |> Seq.map boolenize
       let options = {Trace=9} : SqlCompiler.Options
       let vars = new HashSet<IVar>()
@@ -68,7 +80,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
         let apply (t:ITerm) = t.Apply subst
         let sqlExpr = SqlCompiler.compile options this.NextId (assumptions |> Seq.map apply)
         SqlCompiler.execQuery (conn, options, sqlExpr, subst, Seq.toList(vars.AsEnumerable()))
-      substs |> Seq.collect (fun subst -> checkAssumptions subst queries)
+      substs |> SubstrateDispatcher.Solve(substrateTerms) |> Seq.collect (fun subst -> checkAssumptions subst queries)
 
     member this.Namespaces = new HashSet<_>(namespaces)
     member this.RequiredVars (query: ISubstrateTerm) = []
