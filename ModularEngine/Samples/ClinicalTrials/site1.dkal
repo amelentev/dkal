@@ -4,9 +4,11 @@ substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dk
 relation participates(SITE: Dkal.Principal, TRIAL: System.Int32)
 relation allocatedPatients(SITE: Dkal.Principal, N1: System.Int32, N2: System.Int32, TRIAL: System.Int32)
 
-with TRIAL: System.Int32, N1: System.Int32, N2: System.Int32
+with TRIAL: System.Int32
 	// TODO: participates(me, ...)
-	me knows org1 said participates(site1, TRIAL) && allocatedPatients(site1, N1, N2, TRIAL) -> participates(site1, TRIAL) && allocatedPatients(site1, N1, N2, TRIAL)
+	if wire has org1 said participates(site1, TRIAL) then learn participates(site1, TRIAL)
+with TRIAL: System.Int32, N1: System.Int32, N2: System.Int32
+	if wire has org1 said allocatedPatients(site1, N1, N2, TRIAL) then learn allocatedPatients(site1, N1, N2, TRIAL)
 
 with TRIAL: System.Int32, N1: System.Int32, N2: System.Int32
 	if me knows
