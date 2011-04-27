@@ -68,7 +68,7 @@ type SqlConnector(connStr) =
       
   member this.ReadVar (rd:Common.DbDataReader, var: IVar, idx:int) =
     try
-      if var.Type = Type.Bool then
+      if var.Type = Type.Boolean then
         match rd.GetValue idx with
           | :? bool as b -> SubstrateConstant b
           | :? int as i -> SubstrateConstant (i <> 0)

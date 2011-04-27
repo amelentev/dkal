@@ -15,15 +15,15 @@ type TypeInfo() =
 
   /// Type information that maps BasicSimpleTypes to Types
   let types = new Dictionary<string, IType>()
-  do
-    // Load primitive types
-    types.Add("bool", Type.Bool)
-    types.Add("int32", Type.Int32)
-    types.Add("double", Type.Double)
-    types.Add("string", Type.String)
-    types.Add("principal", Type.Principal)
-    types.Add("infon", Type.Infon)
-    types.Add("rule", Type.Rule)
+//  do
+//    // Load primitive type renames
+//    types.Add("bool", Type.Boolean)
+//    types.Add("int32", Type.Int32)
+//    types.Add("double", Type.Double)
+//    types.Add("string", Type.String)
+//    types.Add("principal", Type.Principal)
+//    types.Add("infon", Type.Infon)
+//    types.Add("rule", Type.Rule)
 
   /// Adds a new type rename, extending the types information accordingly
   member ti.AddTypeRename (newType: string) (targetType: SimpleType) =
@@ -37,7 +37,7 @@ type TypeInfo() =
       if found then
         typ
       else
-        failwith <| "Undefined type: " + name
+        Type.FromFullName name
 //    | SeqSimpleType(st') ->
 //      Type.Sequence(ti.LiftType st')
 //    | TupleSimpleType(st1, st2) ->

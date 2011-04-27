@@ -14,7 +14,7 @@ open Microsoft.Research.Dkal.Utils.PrettyPrinting
 type TypedPrettyPrinter() =
 
   interface IInfonPrettyPrinter with
-    member tpp.PrintType (t: IType) = t.Name.ToLower()
+    member tpp.PrintType (t: IType) = t.FullName
 
     member tpp.PrintTerm mt =
       PrettyPrinter.PrettyPrint <| tpp.TokenizeTerm mt

@@ -58,7 +58,7 @@ open System
 MetaTerm:
 // Tables, relations and function/macro calls
 	| LOWER_IDENTIFIER LPAR MetaTerms RPAR		    { SimpleApp($1, $3) }
-	| LOWER_IDENTIFIER DOT LOWER_IDENTIFIER	    	{ SimpleApp($1 + "." + $3, []) }
+	| LOWER_IDENTIFIER                            { SimpleApp($1, []) }
 
 // Bool constructs
 	| MetaTerm AND MetaTerm					          	{ SimpleApp("and", [$1; $3]) }

@@ -8,18 +8,6 @@ open Microsoft.Research.Dkal.Substrate.Factories
 
 open System
 open System.Collections.Generic
-
-let parseType (t: string) = 
-  match t with
-  | "boolean" -> Type.Bool
-  | "principal" -> Type.Principal
-  | "infon" -> Type.Infon
-  | "action" -> Type.Action
-  | "rule" -> Type.Rule
-  | "int32" -> Type.Int32
-  | "double" -> Type.Double
-  | "string" -> Type.String
-  | t -> failwith <| "Unrecognized type: " + t
 %}
 
 // ------------------------------------------------------------------------------------------------------
@@ -94,7 +82,7 @@ Literal:
 	| LOWER_IDENTIFIER				{ PrincipalConstant($1) :> Constant }
 
 Type:
-	| LOWER_IDENTIFIER				{ parseType($1) }
+	| UPPER_IDENTIFIER				{ Type.FromFullName $1 }
 
 Types:
 	|											    { [] }

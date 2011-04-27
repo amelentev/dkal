@@ -51,7 +51,7 @@
               failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
         | SimpleConst(c) ->
           match c with
-          | BoolSimpleConstant b when complies Type.Bool typ -> Const(SubstrateConstant b)
+          | BoolSimpleConstant b when complies Type.Boolean typ -> Const(SubstrateConstant b)
           | Int32SimpleConstant i when complies Type.Int32 typ -> Const(SubstrateConstant i)
           | DoubleSimpleConstant f when complies Type.Double typ -> Const(SubstrateConstant f)
           | StringSimpleConstant s when complies Type.String typ -> Const(SubstrateConstant s)

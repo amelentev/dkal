@@ -60,8 +60,9 @@ type SimpleRelationDeclaration =
 type SimpleMacroDeclaration = 
   { Name: string;
     RetTyp: SimpleType;
+    Namespace: string;
     Args: SimpleArg list; 
-    Body: SimpleMetaTerm }
+    Body: string }
 
 /// To easily store parsed signatures
 type SimpleSignature() = 

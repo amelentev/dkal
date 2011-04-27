@@ -56,8 +56,8 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
         | t -> t
       // translate boolean (table.column) to (table.column=1)
       let rec boolenize = function
-        | App(f, []) when f.RetType = Type.Bool && f.Name.Contains('.') ->
-          let eq = {Name="eq"; RetType=Type.Bool; ArgsType=[Type.Int32; Type.Int32]} : Function
+        | App(f, []) when f.RetType = Type.Boolean && f.Name.Contains('.') ->
+          let eq = {Name="eq"; RetType=Type.Boolean; ArgsType=[Type.Int32; Type.Int32]} : Function
           App(eq, [App(f, []); Const(SubstrateConstant(1))])
         | t -> t
       let queries = queries |> Seq.map normalize2 |> Seq.map boolenize

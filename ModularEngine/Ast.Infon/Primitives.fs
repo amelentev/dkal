@@ -27,7 +27,7 @@ type Primitives =
     | "emptyInfon" ->
       Some {Name = "emptyInfon"; RetType = Type.Infon; ArgsType = []}
     | "asInfon" ->
-      Some {Name = "asInfon"; RetType = Type.Infon; ArgsType = [Type.Bool]}
+      Some {Name = "asInfon"; RetType = Type.Infon; ArgsType = [Type.Boolean]}
     | "implies" ->
       Some {Name = "implies"; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Infon]}
     | "said" ->

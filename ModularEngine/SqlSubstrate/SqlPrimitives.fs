@@ -10,16 +10,16 @@ type SqlPrimitives =
   /// it looks the type information to see if there is a match.
   static member SolveOverloadOperator (f: string) (t: IType) =
     match f with
-    | "and" when t = Type.Bool -> 
+    | "and" when t = Type.Boolean -> 
       Some {Name = f; ArgsType = [t;t]; RetType = t}
-    | "or" when t = Type.Bool -> 
+    | "or" when t = Type.Boolean -> 
       Some {Name = f; ArgsType = [t;t]; RetType = t}
-    | "not" when t = Type.Bool -> 
+    | "not" when t = Type.Boolean -> 
       Some {Name = f; ArgsType = [t]; RetType = t}
     | "eq" | "neq" when SqlPrimitives.HasEquality t -> 
-      Some {Name = f; ArgsType = [t;t]; RetType = Type.Bool}
+      Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean}
     | "le" | "leq" | "gt" | "gte" when SqlPrimitives.HasOrdering t ->
-      Some {Name = f; ArgsType = [t;t]; RetType = Type.Bool}
+      Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean}
     | "plus" when SqlPrimitives.HasSum t ->
       Some {Name = f; ArgsType = [t;t]; RetType = t}
     | "minus" when SqlPrimitives.HasSubstraction t ->

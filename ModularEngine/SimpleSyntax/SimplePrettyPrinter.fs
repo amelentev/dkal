@@ -14,7 +14,7 @@ open System.Collections.Generic
 /// which uses declared typed variables
 type SimplePrettyPrinter() =
   interface IInfonPrettyPrinter with
-    member spp.PrintType (t: IType) = t.Name.ToLower()
+    member spp.PrintType (t: IType) = t.FullName
 
     member spp.PrintTerm t =
       PrettyPrinter.PrettyPrint <| spp.TokenizeTerm t

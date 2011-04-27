@@ -112,12 +112,19 @@
     member private ctx.AddMacro (smd: SimpleMacroDeclaration) =
       if ctx.HasIdentifier smd.Name then
         failwith <| "Identifier " + smd.Name + " defined twice"
-      types.AddLevel smd.Args
-      types.AddToCurrentLevel ("Ret", smd.RetTyp)
+      let macroTypes = new Dictionary<string, IType>()
+      for arg, st in smd.Args do
+        macroTypes.[arg] <- types.LiftType st
+      macroTypes.["Ret"] <- types.LiftType smd.RetTyp
+
       let retTyp = types.LiftType smd.RetTyp
-      let body = ctx.LiftSimpleMetaTerm smd.Body <| Some Type.Bool
-      types.PopLevel()
-      macros.[smd.Name] <- (retTyp, body, smd.Args)
+      let substrate = SubstrateMap.GetSubstrate smd.Namespace
+      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" smd.Namespace macroTypes
+      let body = parser.ParseTerm smd.Body :> ITerm
+      if body.Type = Type.Boolean then
+        macros.[smd.Name] <- (retTyp, body, smd.Args)
+      else
+        failwithf "Macro %O body must be a boolean expression, regardless of return type" smd.Name
 
     /// Given a list of MetaTerm boolean conditions given by solvedMacros, it 
     /// returns a single boolean MetaTerm that encodes them all (conjunction).
@@ -213,7 +220,7 @@
                     failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
         | SimpleConst(c) ->
           match c with
-          | BoolSimpleConstant b when complies Type.Bool typ -> Const(SubstrateConstant b)
+          | BoolSimpleConstant b when complies Type.Boolean typ -> Const(SubstrateConstant b)
           | Int32SimpleConstant i when complies Type.Int32 typ -> Const(SubstrateConstant i)
           | DoubleSimpleConstant f when complies Type.Double typ -> Const(SubstrateConstant f)
           | StringSimpleConstant s when complies Type.String typ -> Const(SubstrateConstant s)
@@ -227,7 +234,11 @@
         | SimpleSubstrate(ns, exp) ->
           let substrate = SubstrateMap.GetSubstrate ns
           let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (types.AllLevels())
-          parser.ParseTerm exp :> ITerm
+          let t = parser.ParseTerm exp :> ITerm
+          if complies t.Type typ then
+            t
+          else
+            failDueToType smt typ
         | _ -> failwith <| "Malformed SimpleMetaTerm"
       let mainTerm = traverse smt typ
 //      let conditions = ctx.MacroConditions solvedMacros

@@ -3,14 +3,24 @@
 open Microsoft.Research.Dkal.Interfaces
 
 module Type = 
-  let Infon = { new IType with member t.Name = "infon" }
-  let Principal = { new IType with member t.Name = "principal" }
-  let Action = { new IType with member t.Name = "action" }
-  let Rule = { new IType with member t.Name = "rule" }
+  let Infon = { new IType with 
+                  member t.Name = "Infon" 
+                  member t.FullName = "Dkal.Infon" }
+  let Principal = { new IType with 
+                      member t.Name = "Principal" 
+                      member t.FullName = "Dkal.Principal" }
+  let Action =  { new IType with 
+                    member t.Name = "Action"
+                    member t.FullName = "Dkal.Action" }
+  let Rule =  { new IType with 
+                 member t.Name = "Rule" 
+                 member t.FullName = "Dkal.Rule" }
   
   type Substrate(typ: System.Type) = 
     interface IType
-      with member t.Name = typ.Name.ToString()
+      with 
+        member t.FullName = typ.FullName
+        member t.Name = typ.Name
     member s.Type = typ
     override s.Equals t' = match t' with
                            | :? Substrate as t' -> typ.Equals(t'.Type)
@@ -18,10 +28,18 @@ module Type =
     override s.GetHashCode() = typ.GetHashCode()
 
   // type shortcuts
-  let Bool = Substrate(typeof<bool>) :> IType
+  let Boolean = Substrate(typeof<bool>) :> IType
   let Int32 = Substrate(typeof<int32>) :> IType
   let Double = Substrate(typeof<double>) :> IType
   let String = Substrate(typeof<string>) :> IType
+
+  let FromFullName fn = 
+    match fn with
+    | "Dkal.Infon" -> Infon
+    | "Dkal.Principal" -> Principal
+    | "Dkal.Action" -> Action
+    | "Dkal.Rule" -> Rule
+    | fn -> Substrate(System.Type.GetType(fn)) :> IType
 
 /// Type is used to represent AST types
 //type Type = 

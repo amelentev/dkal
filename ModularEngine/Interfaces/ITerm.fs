@@ -2,6 +2,7 @@
 
 type IType = 
   abstract member Name: string
+  abstract member FullName: string
 
 type ITerm =
   abstract member Type: IType

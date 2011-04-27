@@ -1,10 +1,10 @@
 substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
 	namespaces "ct"
 
-relation participates(SITE: principal, TRIAL: int32)
-relation allocatedPatients(SITE: principal, N1: int32, N2: int32, TRIAL: int32)
+relation participates(SITE: Dkal.Principal, TRIAL: System.Int32)
+relation allocatedPatients(SITE: Dkal.Principal, N1: System.Int32, N2: System.Int32, TRIAL: System.Int32)
 
-with TRIAL: int32, SITE: int32, N1: int32, N2: int32, SITEP: principal
+with TRIAL: System.Int32, SITE: System.Int32, N1: System.Int32, N2: System.Int32, SITEP: Dkal.Principal
 	if me knows
 		asInfon({|"ct"|
 			TRIAL==trials.id && trials.cro==3

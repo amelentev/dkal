@@ -21,7 +21,7 @@ type TypedSqlPrettyPrinter() =
     member tpp.PrintSubstrate s = ""
       
   member private tpp.PrintTerm mt = (tpp :> ISubstratePrettyPrinter).PrintTerm mt
-  member private tpp.PrintType (t: IType) = t.Name.ToLower()
+  member private tpp.PrintType (t: IType) = t.FullName
 
   member private tpp.TokenizeTerm mt =
     match mt with
