@@ -66,7 +66,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
           let r = List.unzip (args |> List.map separateInnerSubstrates)
           (App(f, fst r), List.concat (snd r))
         | :? DummySubstrateTerm as st when namespaces.Contains((st:>ISubstrateTerm).Namespace) -> // our SubstrateTerm
-          st.Query, []
+          separateInnerSubstrates st.Query
         | :? ISubstrateTerm as st -> // external SubstrateTerm
           Const (SubstrateConstant true), [st] // TODO: boolean only?
         | t -> t, []
