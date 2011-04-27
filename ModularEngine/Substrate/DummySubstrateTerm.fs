@@ -16,3 +16,11 @@ type DummySubstrateTerm(query : ITerm, ns : string) =
     member this.Unify t = query.Unify t
   override this.ToString() = 
     "{| \"" + ns + "\" | " + query.ToString() + " |}"
+  override this.Equals (o: obj) =
+    match o with
+    | :? DummySubstrateTerm as d' ->
+      this.Query = d'.Query && (this :> ISubstrateTerm).Namespace = (d' :> ISubstrateTerm).Namespace
+    | _ -> false
+  override this.GetHashCode() =
+    (this.Query, (this :> ISubstrateTerm).Namespace).GetHashCode()
+

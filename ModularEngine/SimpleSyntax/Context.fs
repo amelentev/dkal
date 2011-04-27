@@ -26,7 +26,7 @@
 
     /// For each declared macro it holds its return Type, its body and its args
     /// (arguments Type and names)
-    let macros = new Dictionary<string, IType * ISubstrateTerm * SimpleArg list>()
+    let macros = new Dictionary<string, IType * ISubstrateTerm * IVar list>()
 
     /// Holds fresh variable ids that are used when solving macros
     let mutable freshVarId = 0
@@ -119,10 +119,11 @@
 
       let retTyp = types.LiftType smd.RetTyp
       let substrate = SubstrateMap.GetSubstrate smd.Namespace
-      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" smd.Namespace macroTypes
+      let args = List.map (fun (arg, st) -> {Name = arg; Type = types.LiftType st} :> IVar) smd.Args
+      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" smd.Namespace freshVarId macroTypes macros
       let body = parser.ParseTerm smd.Body
       if body.Type = Type.Boolean then
-        macros.[smd.Name] <- (retTyp, body, smd.Args)
+        macros.[smd.Name] <- (retTyp, body, args)
       else
         failwithf "Macro %O body must be a boolean expression, regardless of return type" smd.Name
 
@@ -157,14 +158,7 @@
               types.AddLevel args
               let cs', cw', a' = traverse cs (Some Type.Infon), traverse cw (Some Type.Infon), traverse a (Some Type.Action)
               types.PopLevel()
-  //            let conds = ctx.MacroConditions solvedMacros
-  //            let cs'' = Normalizer.normalize <| AndInfon([cs'; AsInfon(ctx.createSubstrateTerm(conds, ""))])
-  //            RuleRule(cs'', cw', a')
               RuleRule(cs', cw', a')
-  //        | SimpleApp([], f, [query; SimpleVar(ns)]) when f = "asInfon" ->
-  //            if not(complies Type.Infon typ) then failDueToType smt typ
-  //            let query' = traverse query (Some Type.Bool)
-  //            AsInfon(ctx.createSubstrateTerm(query', ns))
   //        | SimpleApp([], f, []) when f = "nil" ->
   //          match typ with
   //          | None -> failwith "Failed to infer sequence type from context"
@@ -186,13 +180,12 @@
                 let retTyp, body, args = value
                 if not(complies retTyp typ) then failDueToType smt typ
                 let mutable subst = Substitution.Id
-                for smt, (argName, argTyp) in List.zip smts args do
-                  let mt = traverse smt (Some <| types.LiftType argTyp)
-                  subst <- subst.Extend ({Name = argName; Type = mt.Type}, mt)
+                for smt, arg in List.zip smts args do
+                  let mt = traverse smt (Some <| arg.Type)
+                  subst <- subst.Extend ({Name = arg.Name; Type = mt.Type}, mt)
                 let newRet = Var(freshVar retTyp)
                 subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
                 solvedMacros.Add((body :> ITerm).Apply subst :?> ISubstrateTerm) |> ignore
-                printfn "%A" solvedMacros
                 newRet
               else
                 // check if it is a user defined relation/table/etc.
@@ -208,18 +201,7 @@
                     let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
                     App(func, mts)
                   | None ->
-                    // check if it is an overloaded operator
-  //                  if not(smts.IsEmpty) then
-  //                    let mt0 = traverse smts.[0] None
-  //                    match Primitives.SolveOverloadOperator f mt0.Type with
-  //                    | Some func -> 
-  //                      if not(complies func.RetType typ) then failDueToType smt typ
-  //                      let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
-  //                      App(func, mts)
-  //                    | None -> 
-  //                      failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
-  //                  else
-                      failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
+                    failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
           | SimpleConst(c) ->
             match c with
             | BoolSimpleConstant b when complies Type.Boolean typ -> Const(SubstrateConstant b)
@@ -235,7 +217,7 @@
             | _ -> failDueToType smt typ
           | SimpleSubstrate(ns, exp) ->
             let substrate = SubstrateMap.GetSubstrate ns
-            let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (types.AllLevels())
+            let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns freshVarId (types.AllLevels()) macros
             let t = parser.ParseTerm exp :> ITerm
             if complies t.Type typ then
               t

@@ -30,14 +30,6 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                             | App({Name="uninstall"}, [r]) -> Some r
                             | _ -> None
 
-//  // Substrate patterns
-//  let (|Sql|_|) mt =  match mt with 
-//                      | App({Name="sql"}, [mt']) -> Some mt'
-//                      | _ -> None
-//  let (|Xml|_|) mt =  match mt with 
-//                      | App({Name="xml"}, [mt']) -> Some mt'
-//                      | _ -> None
-
   // Infon patterns
   let (|EmptyInfon|_|) mt = match mt with 
                             | App({Name="emptyInfon"}, []) -> Some ()
@@ -58,14 +50,6 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                             | App({Name="said"}, [ppal; mt']) -> Some (ppal, mt')
                             | _ -> None
 
-  // Bool patterns
-//  let (|AndBool|_|) mt =  match mt with
-//                          | App({Name="and"; RetType=Bool}, mts) -> Some mts
-//                          | _ -> None
-//  let (|OrBool|_|) mt = match mt with
-//                        | App({Name="or"; RetType=Bool}, mts) -> Some mts
-//                        | _ -> None
-//
   // Literal patterns
   let (|SubstrateConstant|_|) mt =  match mt with
                                     | Const(c) ->

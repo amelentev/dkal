@@ -51,6 +51,7 @@ type Function = { Name: string;
                   ArgsType: IType list;
                   Identity: ITerm option }
 
+[<CustomEqualityAttribute; NoComparisonAttribute>]
 type Application = 
   { Function: Function; Args: ITerm list }
   interface ITerm with
@@ -119,3 +120,11 @@ type Application =
   override f.ToString() =
     f.Function.Name + "(" + 
       (String.concat ", " (List.map (fun a -> a.ToString()) f.Args)) + ")"
+  override f.Equals (o: obj) =
+    match o with
+    | :? Application as f' ->
+      f.Function = f'.Function && f.Args = f'.Args
+    | _ -> 
+      false
+  override f.GetHashCode() =
+    (f.Function, f.Args).GetHashCode()

@@ -15,14 +15,22 @@ type SimpleSqlParser() =
 
   let mutable _substrate: SqlSubstrate option = None
   let mutable _ns: string = null
+  let mutable _macros: Dictionary<string, IType * ISubstrateTerm * IVar list> = null
   let mutable _types: Dictionary<string, IType> = null
+  let mutable _tmpId: int = 0
 
   let lexbuff s = LexBuffer<char>.FromString(s)
 
   interface ISubstrateParser with
 
+    member sp.SetMacrosContext (macros: Dictionary<string, IType * ISubstrateTerm * IVar list>) = 
+      _macros <- macros
+
     member sp.SetTypesContext (types: Dictionary<string, IType>) =
       _types <- types
+
+    member sp.SetTempId (tmpId: int) =
+      _tmpId <- tmpId
 
     member sp.SetNamespace (ns: string) = 
       _ns <- ns
@@ -35,6 +43,6 @@ type SimpleSqlParser() =
 
     member sp.ParseTerm s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      let t = (new Context(_substrate.Value, _types)).LiftSimpleMetaTerm smt None
+      let t = (new Context(_substrate.Value, _types, _macros, _tmpId)).LiftSimpleMetaTerm smt None
       new DummySubstrateTerm(t, _ns) :> ISubstrateTerm
 

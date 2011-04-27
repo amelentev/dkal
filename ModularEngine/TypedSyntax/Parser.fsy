@@ -68,7 +68,7 @@ ITerm:
 	| SUBSTRATE_EXPRESSION								         
     { let ns, exp = $1;
       let substrate = SubstrateMap.GetSubstrate ns;
-      let parser = SubstrateParserFactory.SubstrateParser substrate "typed" ns (new Dictionary<_,_>());
+      let parser = SubstrateParserFactory.SubstrateParser substrate "typed" ns 0 (new Dictionary<_,_>()) (new Dictionary<_,_>());
       parser.ParseTerm exp :> ITerm }
 
 ITerms:

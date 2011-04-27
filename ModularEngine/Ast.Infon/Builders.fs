@@ -28,13 +28,6 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let UninstallAction (r: ITerm) = 
     App(Primitives.SolveFunction "uninstall" |> Option.get, [r])
 
-//  // Substrate builders
-//  let Sql (cs: ITerm) = 
-//    App(Primitives.SolveFunction "sql" |> Option.get, [cs])
-//
-//  let Xml (file: ITerm) = 
-//    App(Primitives.SolveFunction "xml" |> Option.get, [file])
-
   // Infon builders
   let EmptyInfon = 
     App(Primitives.SolveFunction "emptyInfon" |> Option.get, [])
@@ -54,18 +47,6 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let SaidInfon (ppal: ITerm, i: ITerm) = 
     App(Primitives.SolveFunction "said" |> Option.get, [ppal; i])
     
-//  // Bool builders
-//  let AndBool (bools: ITerm list) = 
-//    App({ Name = "and"; 
-//          RetType = Bool; 
-//          ArgsType = List.replicate bools.Length Bool }, bools)
-//    
-//
-//  let OrBool (bools: ITerm list) = 
-//    App({ Name = "or"; 
-//          RetType = Bool; 
-//          ArgsType = List.replicate bools.Length Bool }, bools)
-
 //  // Sequence builders
 //  let Nil (t: Type) =
 //    App({ Name = "nil";
