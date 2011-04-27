@@ -28,5 +28,5 @@ type SimpleMetaTerm =
 | SimpleApp of SimpleFunction * SimpleMetaTerm list
 | SimpleConst of SimpleConstant
 | SimpleVar of SimpleVariable
-
+| SimpleSubstrate of string * string 
 

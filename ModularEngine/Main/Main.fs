@@ -4,6 +4,7 @@ open System.IO
 
 open Microsoft.Research.Dkal.Factories
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Factories.Initializer
 
 module Main =
 
@@ -17,6 +18,9 @@ module Main =
       elif not (File.Exists (policyFile)) then
         printfn "File not found: %O" policyFile
       else
+        // Populate factories
+        FactoriesInitializer.Init()
+
         let parser, printer = ParserFactory.InfonParser kind, PrettyPrinterFactory.InfonPrinter kind
         let router = RouterFactory.Router kind routingFile
         let engine = EngineFactory.Engine kind
