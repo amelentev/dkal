@@ -8,6 +8,7 @@ open Parser
 
 let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
 let stringBuf = new System.Text.StringBuilder()
+let mutable remainingDelims = 0
 let add (ch:char) = stringBuf.Append ch |> ignore
 }
 
@@ -93,6 +94,7 @@ rule tokenize = parse
       let ns = ns.Substring(2, ns.Length-3).Trim();
       let ns = ns.Substring(1, ns.Length-2);
       stringBuf.Length <- 0;
+      remainingDelims <- 0;
       substrate lexbuf;
       SUBSTRATE_EXPRESSION (ns, stringBuf.ToString()) }
 
@@ -119,6 +121,14 @@ and string = parse
 | eof { () }
 
 and substrate = parse
-| '|' '}' { () }
+| '{' '|' { remainingDelims <- remainingDelims + 1;
+            add "{".[0]; 
+            add "|".[0]; 
+            substrate lexbuf }
+| '|' '}' { if remainingDelims > 0 then
+              remainingDelims <- remainingDelims - 1;
+              add "|".[0]; 
+              add "}".[0]; 
+              substrate lexbuf }
 | _ { add (lexbuf.Lexeme.[0]); substrate lexbuf }
 | eof { () }

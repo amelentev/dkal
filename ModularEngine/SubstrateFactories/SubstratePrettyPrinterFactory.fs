@@ -2,18 +2,20 @@
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.SqlSubstrate
-open Microsoft.Research.Dkal.Substrate.SimpleSqlSyntax
-open Microsoft.Research.Dkal.Substrate.TypedSqlSyntax
 
 open System.Collections.Generic
 
 type SubstratePrettyPrinterFactory() =
   
+  static let printers = new Dictionary<System.Type*string, System.Type>()
+
+  static member RegisterPrettyPrinter (substrateType: System.Type) (kind: string) (printerType: System.Type) =
+    printers.[(substrateType, kind)] <- printerType
+
   static member SubstratePrettyPrinter (s: ISubstrate) (kind: string) =  
-    match s with
-    | :? SqlSubstrate ->
-      match kind with
-      | "simple" -> new SimpleSqlPrettyPrinter() :> ISubstratePrettyPrinter
-      | "typed" -> new TypedSqlPrettyPrinter() :> ISubstratePrettyPrinter
-      | _ -> failwithf "Unknown SQL substrate syntax kind %O" kind
-    | _ -> failwith "Error while creating a substrate pretty printer: unknown substrate type"
+    if printers.ContainsKey (s.GetType(), kind) then
+      let spt = printers.[(s.GetType(), kind)]
+      let sp = spt.GetConstructor([||]).Invoke([||]) :?> ISubstratePrettyPrinter
+      sp
+    else
+      failwithf "Error while creating a substrate pretty printer: unknown substrate type/kind combination %O %O" (s.GetType()) kind

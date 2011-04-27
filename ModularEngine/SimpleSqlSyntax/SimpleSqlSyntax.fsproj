@@ -59,9 +59,19 @@
     <Compile Include="SimpleSqlPrettyPrinter.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Name>Globals</Name>
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\SqlSubstrate\SqlSubstrate.fsproj">
       <Name>SqlSubstrate</Name>
       <Project>{65b27d4b-16fb-441a-8fd7-2b01abe789ef}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SubstrateFactories\SubstrateFactories.fsproj">
+      <Name>SubstrateFactories</Name>
+      <Project>{82b5dc81-f8ea-4d29-b717-77b4a623d6f4}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Substrate\Substrate.fsproj">

@@ -2,18 +2,23 @@
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.SqlSubstrate
-open Microsoft.Research.Dkal.Substrate.SimpleSqlSyntax
-open Microsoft.Research.Dkal.Substrate.TypedSqlSyntax
 
 open System.Collections.Generic
 
 type SubstrateParserFactory() =
   
+  static let parsers = new Dictionary<System.Type * string, System.Type>()
+
+  static member RegisterParser (substrateType: System.Type) (kind: string) (parserType: System.Type) =
+    parsers.[(substrateType, kind)] <- parserType
+
   static member SubstrateParser (s: ISubstrate) (kind: string) (ns: string) (types: Dictionary<string, IType>) = 
-    match s with
-    | :? SqlSubstrate as s ->
-      match kind with
-      | "simple" -> new SimpleSqlParser(s, ns, types) :> ISubstrateParser
-      | "typed" -> new TypedSqlParser(ns) :> ISubstrateParser
-      | _ -> failwithf "Unknown SQL substrate syntax kind %O" kind
-    | _ -> failwith "Error while creating a substrate parser: unknown substrate type"
+    if parsers.ContainsKey (s.GetType(), kind) then
+      let spt = parsers.[(s.GetType(), kind)]
+      let sp = spt.GetConstructor([||]).Invoke([||]) :?> ISubstrateParser
+      sp.SetNamespace ns
+      sp.SetSubstrate s
+      sp.SetTypesContext types
+      sp
+    else
+      failwithf "Error while creating a substrate parser: unknown substrate type/kind combination %O %O" (s.GetType()) kind

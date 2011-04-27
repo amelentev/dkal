@@ -1,11 +1,14 @@
 ﻿%{
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.SqlSubstrate
+open Microsoft.Research.Dkal.Substrate.Factories
 
 open System
+open System.Collections.Generic
 %}
 
 // ------------------------------------------------------------------------------------------------------
@@ -29,6 +32,9 @@ open System
 %token <System.Double> FLOAT_LITERAL
 %token <System.String> STRING_LITERAL
 
+// Substrate expressions
+%token <System.String * System.String> SUBSTRATE_EXPRESSION
+
 // Identifiers
 %token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
 
@@ -48,7 +54,7 @@ open System
 
 ITerm:
 	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR			
-    { let types = $3 : List<IType>
+    { let types = $3 : IType list
       if types.Length > 0 then
         match SqlPrimitives.SolveOverloadOperator $1 types.[0] with
         | Some f -> App(f, $7) 
@@ -58,6 +64,11 @@ ITerm:
 	| Literal														                        { Const($1) }
 	| UPPER_IDENTIFIER COLON Type							              		{ Var({ Name = $1; Type = $3 }) }
 	| LPAR ITerm RPAR										                    		{ $2 }
+  | SUBSTRATE_EXPRESSION
+    { let ns, exp = $1;
+      let substrate = SubstrateMap.GetSubstrate ns;
+      let parser = SubstrateParserFactory.SubstrateParser substrate "typed" ns (new Dictionary<_,_>());
+      parser.ParseTerm exp :> ITerm }
 
 ITerms:
 	|										          	{ [] }

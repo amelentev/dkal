@@ -2,12 +2,14 @@
   
   open System.Collections.Generic
 
-  open Microsoft.Research.Dkal.Substrate.SimpleSqlSyntax.SimpleAst
-  open Microsoft.Research.Dkal.SqlSubstrate
   open Microsoft.Research.Dkal.Interfaces
+  open Microsoft.Research.Dkal.Globals
   open Microsoft.Research.Dkal.Ast.Tree
   open Microsoft.Research.Dkal.Ast.Infon
   open Microsoft.Research.Dkal.Ast
+  open Microsoft.Research.Dkal.Substrate.SimpleSqlSyntax.SimpleAst
+  open Microsoft.Research.Dkal.SqlSubstrate
+  open Microsoft.Research.Dkal.Substrate.Factories
   
   /// A Context is responsible for lifting untyped SimpleMetaTerms into typed
   /// MetaTerms. 
@@ -28,6 +30,14 @@
       let solvedMacros = new List<ITerm>()
       let rec traverse (smt: SimpleMetaTerm) (typ: IType option) : ITerm = 
         match smt with
+        | SimpleSubstrate(ns, exp) ->
+          let substrate = SubstrateMap.GetSubstrate ns
+          let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns types
+          let t = parser.ParseTerm exp :> ITerm
+          if complies t.Type typ then
+            t
+          else
+            failDueToType smt typ
         | SimpleApp(f, smts) ->
           // check if it is a table.column operator
           if f.Contains "." then
