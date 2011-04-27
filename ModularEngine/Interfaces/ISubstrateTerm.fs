@@ -4,3 +4,4 @@ type ISubstrateTerm =
   inherit ITerm
 
   abstract member Namespace : string
+  

@@ -47,9 +47,9 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       // translate all >2-ary functions functions to 2-ary
       let rec normalize2 = function
         | App(f, a1 :: a2 :: a3 :: tl) ->
-          let f' = {Name=f.Name; RetType=f.RetType; ArgsType=List.tail f.ArgsType}
+          let f' = {Name=f.Name; RetType=f.RetType; ArgsType=List.tail f.ArgsType; Identity=f.Identity}
           let n = normalize2( App(f', a2::a3::tl) )
-          let f'' = {Name=f.Name; RetType=f.RetType; ArgsType=[f.ArgsType.Head; f.RetType]}
+          let f'' = {Name=f.Name; RetType=f.RetType; ArgsType=[f.ArgsType.Head; f.RetType]; Identity=f.Identity}
           App(f'', [normalize2 a1; n])
         | App(f, lst) ->
           App(f, lst |> List.map normalize2)
@@ -57,7 +57,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       // translate boolean (table.column) to (table.column=1)
       let rec boolenize = function
         | App(f, []) when f.RetType = Type.Boolean && f.Name.Contains('.') ->
-          let eq = {Name="eq"; RetType=Type.Boolean; ArgsType=[Type.Int32; Type.Int32]} : Function
+          let eq = {Name="eq"; RetType=Type.Boolean; ArgsType=[Type.Int32; Type.Int32]; Identity=None} : Function
           App(eq, [App(f, []); Const(SubstrateConstant(1))])
         | t -> t
       let queries = queries |> Seq.map normalize2 |> Seq.map boolenize

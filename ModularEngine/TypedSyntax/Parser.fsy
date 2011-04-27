@@ -58,7 +58,10 @@ Policy:
 	| Policy ITerm								{ { Rules = $1.Rules @ [$2] } }
 
 ITerm:
-	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR			{ App({ Name = $1; ArgsType = $3; RetType = $5 }, $7) }
+	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR			
+    { match Primitives.SolveFunction $1 with
+        | Some f -> App(f, $7) 
+        | None -> App({ Name = $1; ArgsType = $3; RetType = $5; Identity = None }, $7) } 
 	| Literal														                        { Const($1) }
 	| UPPER_IDENTIFIER COLON Type						              			{ Var({ Name = $1; Type = $3 }) }
 	| LPAR ITerm RPAR											              	      { $2 }

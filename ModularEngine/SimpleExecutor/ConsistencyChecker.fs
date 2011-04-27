@@ -33,14 +33,14 @@ type ConsistencyChecker() =
     let learning = actions |> List.collect
                     (fun action ->  match action with
                                     | Learn(i) -> 
-                                      match Normalizer.normalize i with
+                                      match i.Normalize() with
                                       | AndInfon(is) -> is
                                       | i -> [i]
                                     | _ -> [])
     let forgetting = actions |> List.collect
                       (fun action ->  match action with
                                       | Forget(i) -> 
-                                        match Normalizer.normalize i with
+                                        match i.Normalize() with
                                         | AndInfon(is) -> is
                                         | i -> [i]
                                       | _ -> [])

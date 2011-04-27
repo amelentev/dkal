@@ -126,6 +126,7 @@ module SqlCompiler =
   type CompiledQuery = Expr * list<Variable*Expr>
   
   let init() =
+    // old functions: TODO remove after backward testing is done
     addSqlOp "&&" "AND"
     addSqlOp "||" "OR"
     addSqlOp "+" "+"
@@ -138,19 +139,29 @@ module SqlCompiler =
     addSqlOp ">" ">"
     addSqlOp "==" "="
     addSqlOp "!=" "<>"
-    addPrefixSqlOp "not" "NOT"
+    //addPrefixSqlOp "not" "NOT"
     addPrefixSqlOp "true" "1"
     addPrefixSqlOp "false" "0"
     addPrefixSqlOp "int_null" "NULL"
     addPrefixSqlOp "string_null" "NULL"
     addPrefixSqlOp "double_null" "NULL"
+   
+   
     // new functions
     addSqlOp "eq" "="
+    addSqlOp "neq" "<>"
     addSqlOp "and" "AND"
+    addSqlOp "or" "OR"
+    addPrefixSqlOp "not" "NOT"
     addSqlOp "gt" ">"
     addSqlOp "gte" ">="
     addSqlOp "lt" "<"
     addSqlOp "lte" "<="
+    addSqlOp "plus" "+"
+    addSqlOp "minus" "-"
+    addPrefixSqlOp "uminus" "-"
+    addSqlOp "times" "*"
+    addSqlOp "divide" "/"
   
   do init()
   

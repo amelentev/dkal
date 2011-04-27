@@ -44,10 +44,12 @@ type Constant() =
 
 /// Functions are used in App ITerms to indicate what function is applied.
 /// They have an arbitrary-sized typed list of arguments. They return a typed
-/// single value
+/// single value. The Identity field is None if the function is not 
+/// associative; it points to the ITerm that behaves as identity otherwise
 type Function = { Name: string; 
                   RetType: IType; 
-                  ArgsType: IType list }
+                  ArgsType: IType list;
+                  Identity: ITerm option }
 
 type Application = 
   { Function: Function; Args: ITerm list }
@@ -56,7 +58,41 @@ type Application =
     member f.Type = f.Function.RetType
     member f.Apply s = 
       { Function = f.Function; Args = List.map (fun (a: ITerm) -> a.Apply s) f.Args } :> ITerm
-    member f.Normalize () = f :> ITerm // TODO implement
+    
+    member f.Normalize () = 
+      /// Returns the children of mt, if mt encodes the application of function
+      /// f; returns an empty list if it founds an identity term for the given 
+      /// function; finally, it returns a singleton [t] in any other case
+      let children (f: Function) (identity: ITerm) (t: ITerm) =
+        match t with
+        | :? Application as app -> 
+          match app with 
+          | { Function=f'; Args=ts } when f = f' -> ts
+          | _ -> [t]
+        | t when t = identity -> []
+        | _ -> [t]
+          
+      // Normalize recursively
+      let args = List.map (fun (a: ITerm) -> a.Normalize()) f.Args
+      // If f.Function is associative, get the children of each child
+      let args =  match f.Function.Identity with
+                  | Some identity ->
+                    List.collect (children f.Function identity) args
+                  | None ->
+                    args
+      
+      // Remove malformed cases such as conjunction of zero elements, etc.
+      match args, f.Function.Identity with
+      | [t], Some _ -> t
+      | [], Some id -> id
+      | _ -> 
+        // Return application of normalized function
+        let f' =  { Name = f.Function.Name; 
+                    RetType = f.Function.RetType; 
+                    ArgsType = List.map (fun (a: ITerm) -> a.Type) args
+                    Identity = f.Function.Identity }
+        {Function = f'; Args = args } :> ITerm
+
     member f.UnifyFrom s t =
       match t with
       | :? IVar as v -> v.UnifyFrom s f

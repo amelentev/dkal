@@ -18,16 +18,13 @@ type SimpleEngine() =
   /// Stores the known facts
   let knowledge = new HashSet<ITerm>()
 
-  /// Substrate dispatcher
-  let substrateDispatcher = new SubstrateDispatcher()
-
   interface IEngine with
     member se.Start () = ()
     member se.Stop () = ()
 
     /// Split the infon into conjunctions and learn these recursively
     member se.Learn (infon: ITerm) = 
-      match Normalizer.normalize infon with
+      match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
       | AndInfon(infons) ->
@@ -39,7 +36,7 @@ type SimpleEngine() =
 
     /// Split the infon into conjunctions and forget these recursively
     member se.Forget (infon: ITerm) =
-      match Normalizer.normalize infon with
+      match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"
       | AndInfon(infons) ->
@@ -53,8 +50,8 @@ type SimpleEngine() =
     /// MetaTerms). Then return only those Substitutions that satisfy all their 
     /// side conditions.
     member se.Derive (target: ITerm) = 
-      [ for (subst, conds) in se.DoDerive [] (Substitution.Id, []) (Normalizer.normalize target) do
-          for subst' in substrateDispatcher.Solve conds [subst] do
+      [ for (subst, conds) in se.DoDerive [] (Substitution.Id, []) (target.Normalize()) do
+          for subst' in SubstrateDispatcher.Solve conds [subst] do
             yield subst' ]
 
   /// Given a prefix (list of principal MetaTerms) a current Substitution with 

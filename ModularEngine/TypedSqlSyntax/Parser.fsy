@@ -3,6 +3,7 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.SqlSubstrate
 
 open System
 %}
@@ -46,7 +47,14 @@ open System
 %%
 
 ITerm:
-	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR			{ App({ Name = $1; ArgsType = $3; RetType = $5 }, $7) }
+	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR			
+    { let types = $3 : List<IType>
+      if types.Length > 0 then
+        match SqlPrimitives.SolveOverloadOperator $1 types.[0] with
+        | Some f -> App(f, $7) 
+        | None -> App({ Name = $1; ArgsType = $3; RetType = $5; Identity = None }, $7) 
+      else
+        App({ Name = $1; ArgsType = $3; RetType = $5; Identity = None }, $7) } 
 	| Literal														                        { Const($1) }
 	| UPPER_IDENTIFIER COLON Type							              		{ Var({ Name = $1; Type = $3 }) }
 	| LPAR ITerm RPAR										                    		{ $2 }

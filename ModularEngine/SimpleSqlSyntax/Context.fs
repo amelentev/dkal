@@ -34,7 +34,7 @@
             match f.Split [|'.'|] with
             | [| table; column |] -> 
               let typ = Type.Substrate(substrate.GetColumnType ("dbo."+table) column)
-              App({Name=f; RetType=typ; ArgsType=[]}, [])
+              App({Name=f; RetType=typ; ArgsType=[]; Identity=None}, [])
             | _ -> failwithf "Incorrect table.column operator usage in %O" f
           else
             // check if it is an overloaded operator
@@ -67,10 +67,7 @@
           else
             failwith <| "Undeclared variable: " + v
       let mainTerm = traverse smt typ
-//      let normalTerm = normalize mainTerm
-//      normalTerm
-      // TODO: normalize
-      mainTerm
+      mainTerm.Normalize()
 
     
 

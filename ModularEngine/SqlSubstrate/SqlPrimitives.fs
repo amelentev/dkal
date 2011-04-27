@@ -2,6 +2,7 @@
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
 
 type SqlPrimitives =
@@ -11,25 +12,31 @@ type SqlPrimitives =
   static member SolveOverloadOperator (f: string) (t: IType) =
     match f with
     | "and" when t = Type.Boolean -> 
-      Some {Name = f; ArgsType = [t;t]; RetType = t}
+      Some {Name = f; ArgsType = [t;t]; RetType = t; 
+            Identity = Some True}
     | "or" when t = Type.Boolean -> 
-      Some {Name = f; ArgsType = [t;t]; RetType = t}
+      Some {Name = f; ArgsType = [t;t]; RetType = t;
+            Identity = Some False}
     | "not" when t = Type.Boolean -> 
-      Some {Name = f; ArgsType = [t]; RetType = t}
+      Some {Name = f; ArgsType = [t]; RetType = t; Identity = None}
     | "eq" | "neq" when SqlPrimitives.HasEquality t -> 
-      Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean}
+      Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean; Identity = None}
     | "le" | "leq" | "gt" | "gte" when SqlPrimitives.HasOrdering t ->
-      Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean}
+      Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean; Identity = None}
     | "plus" when SqlPrimitives.HasSum t ->
-      Some {Name = f; ArgsType = [t;t]; RetType = t}
+      Some {Name = f; ArgsType = [t;t]; RetType = t;
+            Identity = Some <| Const(SubstrateConstant(0))}
     | "minus" when SqlPrimitives.HasSubstraction t ->
-      Some {Name = f; ArgsType = [t;t]; RetType = t}
+      Some {Name = f; ArgsType = [t;t]; RetType = t;
+            Identity = Some <| Const(SubstrateConstant(0))}
     | "uminus" when SqlPrimitives.HasArithmeticNegation t ->
-      Some {Name = f; ArgsType = [t]; RetType = t}
+      Some {Name = f; ArgsType = [t]; RetType = t; Identity = None}
     | "times" when SqlPrimitives.HasMultiplication t ->
-      Some {Name = f; ArgsType = [t;t]; RetType = t}
+      Some {Name = f; ArgsType = [t;t]; RetType = t;
+            Identity = Some <| Const(SubstrateConstant(1))}
     | "divide" when SqlPrimitives.HasDivision t ->
-      Some {Name = f; ArgsType = [t;t]; RetType = t}
+      Some {Name = f; ArgsType = [t;t]; RetType = t;
+            Identity = Some <| Const(SubstrateConstant(1))}
     | _ -> 
       None
 

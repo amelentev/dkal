@@ -24,7 +24,7 @@ type Quarantine() =
 
   /// Match a wire condition (infon) to messages in quarantine
   member q.Matches (infon: ITerm) =
-    match Normalizer.normalize infon with
+    match infon.Normalize() with
     | EmptyInfon -> [Substitution.Id]
     | AsInfon(_) -> failwith "Trying to match asInfon(...) on wire"
     | AndInfon(infons) -> 

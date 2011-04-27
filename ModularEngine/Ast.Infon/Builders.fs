@@ -45,7 +45,8 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let AndInfon (infons: ITerm list) = 
     App({ Name = "and"; 
           RetType = Type.Infon; 
-          ArgsType = List.replicate infons.Length Type.Infon }, infons)
+          ArgsType = List.replicate infons.Length Type.Infon;
+          Identity = (Primitives.SolveFunction "and").Value.Identity }, infons)
     
   let ImpliesInfon (i1: ITerm, i2: ITerm) = 
     App(Primitives.SolveFunction "implies" |> Option.get, [i1; i2])
