@@ -1,0 +1,17 @@
+substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
+	namespaces "ct"
+
+relation participates(SITE: principal, TRIAL: int32)
+relation allocatedPatients(SITE: principal, N1: int32, N2: int32, TRIAL: int32)
+
+with TRIAL: int32, N1: int32, N2: int32
+	// TODO: participates(me, ...)
+	me knows org1 said participates(site1, TRIAL) && allocatedPatients(site1, N1, N2, TRIAL) -> participates(site1, TRIAL) && allocatedPatients(site1, N1, N2, TRIAL)
+
+with TRIAL: int32, N1: int32, N2: int32
+	if me knows
+		// TODO: participates(me, ...)
+		participates(site1, TRIAL) && allocatedPatients(site1, N1, N2, TRIAL)
+	then
+		send to site1
+			asInfon(true)

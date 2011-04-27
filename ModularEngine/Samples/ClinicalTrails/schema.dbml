@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database Name="edkaldemo" Class="Edkaldemo" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Table Name="dbo.dkal_principals" Member="Dkal_principals">
+    <Type Name="Dkal_principals">
+      <Column Name="id" Member="Id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="name" Member="Name" Type="System.String" DbType="Text" CanBeNull="true" UpdateCheck="Never" />
+      <Association Name="FK__physAssign__phys__2DE6D218" Member="PhysAssignments" ThisKey="Id" OtherKey="Phys" Type="PhysAssignments" DeleteRule="NO ACTION" />
+      <Association Name="FK__siteAssig__thesi__30C33EC3" Member="SiteAssignments" ThisKey="Id" OtherKey="Thesite" Type="SiteAssignments" DeleteRule="NO ACTION" />
+    </Type>
+  </Table>
+  <Table Name="dbo.keys" Member="Keys">
+    <Type Name="Keys">
+      <Column Name="record" Member="Record" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="thekey" Member="Thekey" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Association Name="FK__keys__record__2BFE89A6" Member="Records" ThisKey="Record" OtherKey="Id" Type="Records" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.physAssignments" Member="PhysAssignments">
+    <Type Name="PhysAssignments">
+      <Column Name="phys" Member="Phys" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="trial" Member="Trial" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="unnotified" Member="Unnotified" Type="System.Boolean" DbType="Bit" CanBeNull="true" />
+      <Column Name="n1" Member="N1" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="n2" Member="N2" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Association Name="FK__physAssig__trial__2EDAF651" Member="Trials" ThisKey="Trial" OtherKey="Id" Type="Trials" IsForeignKey="true" />
+      <Association Name="FK__physAssign__phys__2DE6D218" Member="Dkal_principals" ThisKey="Phys" OtherKey="Id" Type="Dkal_principals" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.physPatients" Member="PhysPatients">
+    <Type Name="PhysPatients">
+      <Column Name="id" Member="Id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="needInfo" Member="NeedInfo" Type="System.Boolean" DbType="Bit" CanBeNull="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.records" Member="Records">
+    <Type Name="Records">
+      <Column Name="id" Member="Id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="patient" Member="Patient" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="trial" Member="Trial" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="data" Member="Data" Type="System.String" DbType="Text" CanBeNull="true" UpdateCheck="Never" />
+      <Association Name="FK__keys__record__2BFE89A6" Member="Keys" ThisKey="Id" OtherKey="Record" Type="Keys" Cardinality="One" DeleteRule="NO ACTION" />
+      <Association Name="FK__records__trial__2739D489" Member="Trials" ThisKey="Trial" OtherKey="Id" Type="Trials" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.siteAssignments" Member="SiteAssignments">
+    <Type Name="SiteAssignments">
+      <Column Name="thesite" Member="Thesite" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="trial" Member="Trial" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="unnotified" Member="Unnotified" Type="System.Boolean" DbType="Bit" CanBeNull="true" />
+      <Column Name="n1" Member="N1" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="n2" Member="N2" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Association Name="FK__siteAssig__thesi__30C33EC3" Member="Dkal_principals" ThisKey="Thesite" OtherKey="Id" Type="Dkal_principals" IsForeignKey="true" />
+      <Association Name="FK__siteAssig__trial__31B762FC" Member="Trials" ThisKey="Trial" OtherKey="Id" Type="Trials" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.trials" Member="Trials">
+    <Type Name="Trials">
+      <Column Name="id" Member="Id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="cro" Member="Cro" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="name" Member="Name" Type="System.String" DbType="Text" CanBeNull="true" UpdateCheck="Never" />
+      <Association Name="FK__physAssig__trial__2EDAF651" Member="PhysAssignments" ThisKey="Id" OtherKey="Trial" Type="PhysAssignments" DeleteRule="NO ACTION" />
+      <Association Name="FK__records__trial__2739D489" Member="Records" ThisKey="Id" OtherKey="Trial" Type="Records" DeleteRule="NO ACTION" />
+      <Association Name="FK__siteAssig__trial__31B762FC" Member="SiteAssignments" ThisKey="Id" OtherKey="Trial" Type="SiteAssignments" DeleteRule="NO ACTION" />
+    </Type>
+  </Table>
+</Database>

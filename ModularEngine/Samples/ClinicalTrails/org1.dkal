@@ -1,0 +1,17 @@
+substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
+	namespaces "ct"
+
+relation participates(SITE: principal, TRIAL: int32)
+relation allocatedPatients(SITE: principal, N1: int32, N2: int32, TRIAL: int32)
+
+with TRIAL: int32, SITE: int32, N1: int32, N2: int32, SITEP: principal
+	if me knows
+		asInfon({|"ct"|
+			TRIAL==trials.id && trials.cro==3
+			&& siteAssignments.thesite==SITE && siteAssignments.trial==TRIAL 
+			&& siteAssignments.unnotified && siteAssignments.n1 == N1 && siteAssignments.n2 == N2
+			// PROBLEM: string!=principal:  && dkal_principals.id == SITE && dkal_principals.name == SITEP
+		|})
+	then
+		send to site1 // TODO: SITEP
+			participates(site1, TRIAL) && allocatedPatients(site1, N1, N2, TRIAL)

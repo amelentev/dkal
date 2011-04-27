@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RoutingTable me="site1" address="http://localhost:55331/Dkal/PrincipalService">
+	<Principal name="org1" address="http://localhost:55330/Dkal/PrincipalService"/>
+	<Principal name="site1" address="http://localhost:55331/Dkal/PrincipalService"/>
+</RoutingTable>
