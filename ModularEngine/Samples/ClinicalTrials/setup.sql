@@ -1,4 +1,4 @@
-// the same as old EDKAL-Paper sample
+-- the same as old EDKAL-Paper sample
 IF OBJECT_ID('dbo.physPatients','U') IS NOT NULL drop table physPatients;
 IF OBJECT_ID('dbo.siteAssignments','U') IS NOT NULL drop table siteAssignments;
 IF OBJECT_ID('dbo.physAssignments','U') IS NOT NULL drop table physAssignments;
