@@ -100,7 +100,7 @@ rule tokenize = parse
 
 // Identifiers
 | ['a'-'z']+ ['a'-'z''A'-'Z''0'-'9''_']* 		{ LOWER_IDENTIFIER (lexeme lexbuf) }
-| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9''_']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
+| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9''_''.']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
 
 // EOF
 | eof   { EOF }
