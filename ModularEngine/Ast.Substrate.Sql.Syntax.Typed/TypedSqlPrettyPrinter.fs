@@ -32,9 +32,13 @@ type TypedSqlPrettyPrinter() =
       let typedF = f.Name + ":" 
                     + String.concat "*" (List.map tpp.PrintType f.ArgsType) 
                     + "->" + tpp.PrintType f.RetType
+      let identityTokens =  match f.Identity with
+                            | None -> []
+                            | Some t -> [TextToken ":"] @ tpp.TokenizeTerm t
       [ TextToken <| typedF + "(" ]
-      @ (if args.IsEmpty then [] else List.reduce (fun t1 t2 -> t1 @ [TextToken ", "] @ t2) args)
-      @ [ TextToken ")"]
+        @ (if args.IsEmpty then [] else List.reduce (fun t1 t2 -> t1 @ [TextToken ", "] @ t2) args)
+        @ [ TextToken ")"]
+        @ identityTokens
     | Var(v) -> [TextToken <| v.Name + ":" + tpp.PrintType v.Type]
     | True -> [TextToken "true"]
     | False -> [TextToken "false"]

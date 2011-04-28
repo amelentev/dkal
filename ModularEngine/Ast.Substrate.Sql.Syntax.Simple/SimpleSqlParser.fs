@@ -3,6 +3,7 @@
 open System.IO
 open Microsoft.FSharp.Text.Lexing
 
+open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Substrate.Sql
@@ -43,6 +44,6 @@ type SimpleSqlParser() =
 
     member sp.ParseTerm s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      let t = (new Context(_substrate.Value, _types, _macros, _tmpId)).LiftSimpleMetaTerm smt None
+      let t = (new Context(_substrate.Value, _types, _macros, _tmpId)).LiftSimpleMetaTerm smt Type.Boolean
       new DummySubstrateTerm(t, _ns) :> ISubstrateTerm
 
