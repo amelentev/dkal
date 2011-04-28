@@ -3,7 +3,6 @@
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 open System.Collections.Generic
-open System.Linq
 
 /// Dummy implementation for ISubstrate
 type DummySubstrate() = 
