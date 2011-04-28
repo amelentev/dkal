@@ -28,80 +28,99 @@
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
     /// macros are solved and its conditions are added as an extra AsInfon
     /// expression in the end.
-    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) (typ: IType option) : ITerm =
-      let complies (typ: IType) (typ': IType option) =
-        match typ' with
-        | Some typ' when typ' = typ -> true
-        | None -> true
-        | _ -> false
-      let failDueToType (smt: SimpleMetaTerm) (typ: IType option) = 
-        failwith <| "Expecting a " + typ.Value.Name + "MetaTerm, found: " + (sprintf "%A" smt)
-      let solvedMacros = new List<ITerm>()
-      let rec traverse (smt: SimpleMetaTerm) (typ: IType option) : ITerm = 
-        match smt with
-        | SimpleSubstrate(ns, exp) ->
-          let substrate = SubstrateMap.GetSubstrate ns
-          let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns freshVarId types macros
-          let t = parser.ParseTerm exp :> ITerm
-          if complies t.Type typ then
-            t
-          else
-            failDueToType smt typ
-        | SimpleApp(f, smts) ->
-          // check if it is a table.column operator
-          if f.Contains "." then
-            match f.Split [|'.'|] with
-            | [| table; column |] -> 
-              let typ = Type.Substrate(substrate.GetColumnType ("dbo."+table) column)
-              App({Name=f; RetType=typ; ArgsType=[]; Identity=None}, [])
-            | _ -> failwithf "Incorrect table.column operator usage in %O" f
-          // check if it is a macro
-          elif macros.ContainsKey f then
-            let retTyp, body, args = macros.[f]
-            if not(complies retTyp typ) then failDueToType smt typ
-            let mutable subst = Substitution.Id
-            for smt, arg in List.zip smts args do
-              let mt = traverse smt (Some <| arg.Type)
-              subst <- subst.Extend ({Name = arg.Name; Type = mt.Type}, mt)
-            let newRet = Var(freshVar retTyp)
-            subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
-            solvedMacros.Add((body :> ITerm).Apply subst) |> ignore
-            newRet
-          // check if it is an overloaded operator
-          elif not(smts.IsEmpty) then
-            let mt0 = traverse smts.[0] None
-            match SqlPrimitives.SolveOverloadOperator f mt0.Type with
-            | Some func -> 
-              if not(complies func.RetType typ) then failDueToType smt typ
-              let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
-              App(func, mts)
-            | None -> 
-              failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
-          else
-            failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
-        | SimpleConst(c) ->
-          match c with
-          | BoolSimpleConstant b when complies Type.Boolean typ -> Const(SubstrateConstant b)
-          | Int32SimpleConstant i when complies Type.Int32 typ -> Const(SubstrateConstant i)
-          | DoubleSimpleConstant f when complies Type.Double typ -> Const(SubstrateConstant f)
-          | StringSimpleConstant s when complies Type.String typ -> Const(SubstrateConstant s)
-          | PrincipalSimpleConstant p when complies Type.Principal typ -> Const(PrincipalConstant p)
-          | _ -> failDueToType smt typ
-        | SimpleVar(v) ->
-          let found, typ' = types.TryGetValue v
-          if found then
-            if complies typ' typ then
-              Var({ Name = v; Type = typ' })
-            else
-              failDueToType smt typ
-          else
-            failwith <| "Undeclared variable: " + v
-      let mainTerm = traverse smt typ
+    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) (typ: IType) : ITerm =
+      let mainTerm, solvedMacros = ctx.Traverse smt typ
       let termWithMacros = AndBool((Seq.toList solvedMacros) @ [mainTerm])
-      solvedMacros.Clear()
       termWithMacros.Normalize()
 
+    member private ctx.LookaheadType (smt: SimpleMetaTerm) =
+      match smt with
+      | SimpleApp(f, smts) -> 
+        let t, _ = ctx.LiftSimpleApplication f smts false
+        t.Type
+      | SimpleConst(c) ->
+        ctx.LiftSimpleConstant(c).Type
+      | SimpleVar(v) ->
+        ctx.LiftSimpleVariable(v).Type
+      | SimpleSubstrate(ns, exp) ->
+        Type.Boolean
+  
+    member private ctx.Traverse (smt: SimpleMetaTerm) (typ: IType) =
+      let t, solvedMacros = 
+        match smt with
+        | SimpleApp(f, smts) -> 
+          ctx.LiftSimpleApplication f smts true
+          // TODO apply solved macros
+        | SimpleConst(c) ->
+          ctx.LiftSimpleConstant(c), []
+        | SimpleVar(v) ->
+          ctx.LiftSimpleVariable(v), []
+        | SimpleSubstrate(ns, exp) ->
+          ctx.LiftSimpleSubstrate ns exp, []
+      if t.Type = typ then 
+        t, solvedMacros
+      else 
+        failwithf "Expecting a %O MetaTerm, found %A" typ smt
+
+    member private ctx.LiftSimpleApplication (f: SimpleFunction) (smts: SimpleMetaTerm list) (goRecursively: bool) 
+                    : ITerm * ITerm list =
+      // check if it is a table.column operator
+      if f.Contains "." then
+        match f.Split [|'.'|] with
+        | [| table; column |] -> 
+          let typ = Type.Substrate(substrate.GetColumnType ("dbo."+table) column)
+          App({Name=f; RetType=typ; ArgsType=[]; Identity=None}, []), []
+        | _ -> failwithf "Incorrect table.column operator usage in %O" f
+      // check if it is a macro
+      elif macros.ContainsKey f then
+        let retTyp, body, args = macros.[f]
+        if goRecursively then
+          let mutable subst = Substitution.Id
+          let mutable accumSolvedMacros = []
+          for smt, arg in List.zip smts args do
+            let mt, solvedMacros = ctx.Traverse smt arg.Type
+            accumSolvedMacros <- accumSolvedMacros @ solvedMacros
+            subst <- subst.Extend ({Name = arg.Name; Type = mt.Type}, mt)
+          let newRet = Var(freshVar retTyp)
+          subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
+          accumSolvedMacros <- accumSolvedMacros @ [(body :> ITerm).Apply subst]
+          newRet, accumSolvedMacros
+        else
+          Var {Name="MacroResult"; Type=retTyp}, []
+      // check if it is an overloaded operator
+      elif not(smts.IsEmpty) then
+        let t = ctx.LookaheadType smts.[0]
+        match SqlPrimitives.SolveOverloadOperator f t with
+        | Some func -> 
+          if goRecursively then
+            let mts, solvedMacrosMany = List.unzip <| List.map2 (fun smt t -> ctx.Traverse smt t) smts func.ArgsType
+            App(func, mts), List.concat solvedMacrosMany
+          else
+            Var {Name="FunctionResult"; Type=func.RetType}, []
+        | None -> 
+          failwith <| "Undefined identifier: " + f 
+      else
+        failwith <| "Undefined identifier: " + f 
+
+    member private ctx.LiftSimpleConstant (c : SimpleConstant) : ITerm =
+      match c with
+      | BoolSimpleConstant b -> Const(SubstrateConstant b)
+      | Int32SimpleConstant i -> Const(SubstrateConstant i)
+      | DoubleSimpleConstant f -> Const(SubstrateConstant f)
+      | StringSimpleConstant s -> Const(SubstrateConstant s)
+      | PrincipalSimpleConstant p -> Const(PrincipalConstant p)
+
+    member private ctx.LiftSimpleVariable (v: SimpleVariable) : ITerm =
+      let found, typ' = types.TryGetValue v
+      if found then
+        Var({ Name = v; Type = typ' })
+      else
+        failwith <| "Undeclared variable: " + v
     
+    member private ctx.LiftSimpleSubstrate (ns: string) (exp: string) : ITerm =
+      let substrate = SubstrateMap.GetSubstrate ns
+      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns freshVarId types macros
+      parser.ParseTerm exp :> ITerm
 
 
 
