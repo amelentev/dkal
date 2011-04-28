@@ -37,7 +37,9 @@ type SqlPrimitives =
     | "divide" when SqlPrimitives.HasDivision t ->
       Some {Name = f; ArgsType = [t;t]; RetType = t;
             Identity = Some <| Const(SubstrateConstant(1))}
-    | _ -> 
+    | "ppalName" when t = Type.Principal ->
+      Some {Name = f; ArgsType = [Type.Principal]; RetType = Type.String; Identity=None}
+    | _ ->
       None
 
   static member private HasEquality (t: IType) =

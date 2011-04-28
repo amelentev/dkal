@@ -241,6 +241,8 @@ module SqlCompiler =
                 localCtx.bindings <- localCtx.bindings.Add (v.Name, expr)
                 expr
               | None -> Expr.Var v
+          | ActivePatterns.App(fn, [p]) when fn.Name="ppalName" ->
+            comp false localCtx p
           | ActivePatterns.App (fn, args) as t ->
             let args = List.map (comp false localCtx) args
             if sqlOps.ContainsKey fn.Name then
@@ -292,8 +294,8 @@ module SqlCompiler =
 
     let trace = opts.Trace
 //    let pp = new SimplePrettyPrinter() :> IPrettyPrinter
-//    if trace >= 1 then
-//      log ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> pp.PrintTerm s)))
+    if trace >= 1 then
+      log ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> s.ToString())))
     let body = Seq.map (comp true initCtx) theTerms |> sqlMultiAnd
     if trace >= 1 then
       log ("  Compiled " + body.ToString())

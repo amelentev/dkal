@@ -66,19 +66,20 @@ type SqlConnector(connStr) =
       while reader.Read() do
         yield reader }
       
-  member this.ReadVar (rd:Common.DbDataReader, var: IVar, idx:int) =
+  member this.ReadVar (rd:Common.DbDataReader, var: IVar, idx:int) : Constant =
+    let asc x = x :> Constant
     try
       if var.Type = Type.Boolean then
         match rd.GetValue idx with
-          | :? bool as b -> SubstrateConstant b
-          | :? int as i -> SubstrateConstant (i <> 0)
-          | _ -> SubstrateConstant (rd.GetBoolean idx)
+          | :? bool as b -> asc (SubstrateConstant b)
+          | :? int as i -> asc (SubstrateConstant (i <> 0))
+          | _ -> asc(SubstrateConstant (rd.GetBoolean idx))
       elif var.Type = Type.String then
-        SubstrateConstant (rd.GetString idx)
+        asc(SubstrateConstant (rd.GetString idx))
       elif var.Type = Type.Principal then
-        SubstrateConstant (rd.GetString idx)
+        asc(PrincipalConstant (rd.GetString idx))
       else
-        SubstrateConstant (rd.GetInt32 idx)
+        asc(SubstrateConstant (rd.GetValue idx))
     with :? InvalidCastException as e ->
       System.Console.WriteLine ("cannot convert parm #{0}, to {1}, value: '{2}'", idx, var.Type.Name, rd.GetValue idx)
       raise e

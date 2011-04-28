@@ -17,14 +17,18 @@ macro siteUnnotified(S: Int, T: Trial) : Bool
 macro sitePatients(S: Int, T: Trial, N1: Int, N2: Int) : Bool
 {|"ct"| siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.n1 == N1 && siteAssignments.n2 == N2 && Ret==true |}
 
-with TRIAL: Trial, SITE: Int, N1: Int, N2: Int, SITEP: Dkal.Principal
+macro ppalId(P: Dkal.Principal) : Int
+{|"ct"| Ret == dkal_principals.id && dkal_principals.name == ppalName(P)|}
+
+with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Dkal.Principal
 	if me knows
 		asInfon({|"ct"|
-			org(TRIAL) == 3 && // TODO: org(TRIAL) == me
-			siteUnnotified(SITE, TRIAL) &&
-			sitePatients(SITE, TRIAL, N1, N2)
-			// PROBLEM: string!=principal:  && dkal_principals.id == SITE && dkal_principals.name == ppalName(SITEP)
+			org(TRIAL) == 3 && // TODO: ppalId(org(TRIAL)) == me
+			siteUnnotified(SITEID, TRIAL) &&
+			sitePatients(SITEID, TRIAL, N1, N2) &&
+			//TODO: fix bug: ppalId(SITE) == SITEID
+			dkal_principals.id == SITEID && dkal_principals.name == ppalName(SITE)
 		|})
 	then
-		send to site1 // TODO: SITEP
-			participates(site1, TRIAL) && allocatedPatients(site1, N1, N2, TRIAL)
+		send to SITE
+			participates(SITE, TRIAL) && allocatedPatients(SITE, N1, N2, TRIAL)
