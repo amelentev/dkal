@@ -2,8 +2,8 @@
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Infon
-open Microsoft.Research.Dkal.Ast.SimpleSyntax
-open Microsoft.Research.Dkal.Ast.TypedSyntax
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Typed
 
 /// The ParserFactory provides a factory to construct different parsers. A 
 /// parser kind must be provided.

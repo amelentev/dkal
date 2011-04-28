@@ -1,0 +1,109 @@
+﻿{
+module Microsoft.Research.Dkal.Ast.Substrate.Sql.Syntax.Simple.Lexer
+
+open System
+open Microsoft.FSharp.Text.Lexing
+
+open Parser
+
+let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
+let stringBuf = new System.Text.StringBuilder()
+let mutable remainingDelims = 0
+let add (ch:char) = stringBuf.Append ch |> ignore
+}
+
+// These are some regular expression definitions
+let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+rule tokenize = parse
+// Whitespace
+| whitespace		{ tokenize lexbuf }
+| newline			  { tokenize lexbuf }
+
+// Comments
+| '/' '*'            { comment lexbuf }
+| '/' '/' [^ '\n']*  { tokenize lexbuf }
+
+// Binary operators
+| "&&"				{ AND }
+| "||"				{ OR }
+| "->"				{ IMPLIES }
+| "="				  { EQ }
+| "<>"				{ NEQ }
+| "<"			  	{ LT }
+| ">"				  { GT }
+| "+"				  { PLUS }
+| "-"				  { MINUS }
+| "*"				  { TIMES }
+| "/"				  { DIV }
+
+// Unary operators
+| "!"				{ NOT }
+
+// Delimiters
+| "{"				{ LBRACE }
+| "}"				{ RBRACE }
+| "("				{ LPAR }
+| ")"				{ RPAR }
+| "["				{ LSQ }
+| "]"				{ RSQ }
+| ":"				{ COLON }
+| ";"				{ SEMICOLON }
+| ","				{ COMMA }
+| "."				{ DOT }
+
+// Literals
+| "true"			{ TRUE } 
+| "false"			{ FALSE } 
+| ['-']?digit+									{ INT_LITERAL (Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit+('.'digit+)?(['e''E']digit+)?		{ FLOAT_LITERAL (Double.Parse(lexeme lexbuf)) }
+| '"'                { stringBuf.Length <- 0;
+                       string lexbuf;
+                       STRING_LITERAL (stringBuf.ToString()) }
+
+// Substrate expressions
+| '{' '|' (whitespace|newline)* '"' ['a'-'z']+ '"' (whitespace|newline)* '|'       
+    { let ns = lexeme lexbuf;
+      let ns = ns.Substring(2, ns.Length-3).Trim();
+      let ns = ns.Substring(1, ns.Length-2);
+      stringBuf.Length <- 0;
+      remainingDelims <- 0;
+      substrate lexbuf;
+      SUBSTRATE_EXPRESSION (ns, stringBuf.ToString()) }
+
+// Identifiers
+| ['a'-'z']+ ['a'-'z''A'-'Z''0'-'9''_''.']* 		{ LOWER_IDENTIFIER (lexeme lexbuf) }
+| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9''_''.']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
+
+// EOF
+| eof   { EOF }
+
+and comment = parse 
+| "*/"               { tokenize lexbuf }
+| eof                { EOF }
+| _                  { comment lexbuf }
+
+and string = parse
+| '"' { () }
+| '\\' 'n' { add '\n'; string lexbuf }
+| '\\' 'r' { add '\r'; string lexbuf }
+| '\\' 't' { add '\t'; string lexbuf }
+| '\\' _ { add (lexbuf.Lexeme.[1]); string lexbuf }
+| [^ '\\' '"']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
+| _ { add (lexbuf.Lexeme.[0]); string lexbuf }
+| eof { () }
+
+and substrate = parse
+| '{' '|' { remainingDelims <- remainingDelims + 1;
+            add "{".[0]; 
+            add "|".[0]; 
+            substrate lexbuf }
+| '|' '}' { if remainingDelims > 0 then
+              remainingDelims <- remainingDelims - 1;
+              add "|".[0]; 
+              add "}".[0]; 
+              substrate lexbuf }
+| _ { add (lexbuf.Lexeme.[0]); substrate lexbuf }
+| eof { () }

@@ -1,7 +1,7 @@
 ﻿namespace Microsoft.Research.Dkal.Factories
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.SimpleRouter
+open Microsoft.Research.Dkal.Router.Simple
 
 /// The RouterFactory provides a factory to construct different routers. Router
 /// kind and routingFile must be provided.

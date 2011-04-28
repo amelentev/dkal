@@ -1,0 +1,103 @@
+﻿%{
+open Microsoft.Research.Dkal.Ast.Substrate.Sql.Syntax.Simple.SimpleAst
+
+open System
+%}
+
+// ------------------------------------------------------------------------------------------------------
+// The start tokens become parser functions in the compiled code:
+
+%start MetaTerm
+
+// ------------------------------------------------------------------------------------------------------
+// These are the terminal tokens of the grammar along with the types of the data carried by each token:
+
+// Binary operators
+%token AND OR IMPLIES 
+%token EQ NEQ LT GT 
+%token PLUS MINUS TIMES DIV
+
+// Unary operators
+%token NOT
+
+// Delimiters
+%token LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT
+
+// Literals
+%token TRUE FALSE
+%token <System.Int32> INT_LITERAL
+%token <System.Double> FLOAT_LITERAL
+%token <System.String> STRING_LITERAL
+
+// Substrate expressions
+%token <System.String * System.String> SUBSTRATE_EXPRESSION
+
+// Identifiers
+%token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
+
+// EOF
+%token EOF
+
+// ------------------------------------------------------------------------------------------------------
+// This is the type of the data produced by successful reductions of each 'start' symbol:
+
+%type < SimpleMetaTerm > MetaTerm
+
+// ------------------------------------------------------------------------------------------------------
+// Precedence of operators
+
+%left IMPLIES
+%left OR
+%left AND
+%left EQ NEQ LT LTE GT GTE 
+%left PLUS MINUS
+%left TIMES DIV
+
+// ------------------------------------------------------------------------------------------------------
+// These are the rules of the grammar 
+
+%%
+
+MetaTerm:
+// Tables, relations and function/macro calls
+	| LOWER_IDENTIFIER LPAR MetaTerms RPAR		    { SimpleApp($1, $3) }
+	| LOWER_IDENTIFIER                            { SimpleApp($1, []) }
+
+// Bool constructs
+	| SUBSTRATE_EXPRESSION                      { SimpleSubstrate($1) }
+  | MetaTerm AND MetaTerm					          	{ SimpleApp("and", [$1; $3]) }
+	| MetaTerm OR MetaTerm					          	{ SimpleApp("or", [$1; $3]) }
+	| NOT MetaTerm							              	{ SimpleApp("not", [$2]) }
+	| MetaTerm EQ EQ MetaTerm		%prec EQ	      { SimpleApp("eq", [$1; $4]) }
+	| MetaTerm NOT EQ MetaTerm		%prec EQ	    { SimpleApp("neq", [$1; $4]) }
+	| MetaTerm LT MetaTerm					          	{ SimpleApp("lt", [$1; $3]) }
+	| MetaTerm LT EQ MetaTerm		%prec EQ	      { SimpleApp("lte", [$1; $4]) }
+	| MetaTerm GT MetaTerm					          	{ SimpleApp("gt", [$1; $3]) }
+	| MetaTerm GT EQ MetaTerm		%prec EQ	      { SimpleApp("gte", [$1; $4]) }
+
+// Arithmetic
+	| MetaTerm PLUS MetaTerm					  { SimpleApp("plus", [$1; $3]) }
+	| MetaTerm MINUS MetaTerm				  	{ SimpleApp("minus", [$1; $3]) }
+	| MINUS MetaTerm %prec TIMES				{ SimpleApp("uminus", [$2]) } 
+	| MetaTerm TIMES MetaTerm					  { SimpleApp("times", [$1; $3]) }
+	| MetaTerm DIV MetaTerm					  	{ SimpleApp("divide", [$1; $3]) }
+
+// Constants, variables, misc
+	| Literal							      		{ SimpleConst($1) }
+	| UPPER_IDENTIFIER							{ SimpleVar($1) }
+	| LPAR MetaTerm RPAR						{ $2 }
+
+MetaTerms:
+	|									          		{ [] }
+	| MetaTerm								    	{ [$1] }
+	| MetaTerm COMMA MetaTerms			{ $1 :: $3 }
+
+Literal:
+	| TRUE								    		{ BoolSimpleConstant(true) }
+	| FALSE									    	{ BoolSimpleConstant(false) }
+	| INT_LITERAL								  { Int32SimpleConstant($1) }
+	| FLOAT_LITERAL								{ DoubleSimpleConstant($1) }
+	| STRING_LITERAL							{ StringSimpleConstant($1) }
+	| LOWER_IDENTIFIER						{ PrincipalSimpleConstant($1) }
+
+		

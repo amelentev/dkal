@@ -1,7 +1,7 @@
 ﻿namespace Microsoft.Research.Dkal.Factories
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.SimpleEngine
+open Microsoft.Research.Dkal.Engine.Simple
 
 /// The EngineFactory provides a factory to construct different logic engines.
 /// An engine kind must be provided.

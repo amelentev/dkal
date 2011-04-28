@@ -5,12 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</ProjectGuid>
+    <ProjectGuid>{d417438a-74aa-4a41-8023-189916e3d2bd}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Ast</RootNamespace>
-    <AssemblyName>Ast</AssemblyName>
+    <RootNamespace>SimpleExecutor</RootNamespace>
+    <AssemblyName>Executor.Simple</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>Ast</Name>
+    <Name>Executor.Simple</Name>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -21,7 +21,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Ast.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Executor.Simple.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,7 +30,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Ast.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SimpleExecutor.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -39,11 +39,21 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Types.fs" />
-    <Compile Include="ActivePatterns.fs" />
-    <Compile Include="Substitution.fs" />
+    <Compile Include="Quarantine.fs" />
+    <Compile Include="ConsistencyChecker.fs" />
+    <Compile Include="SimpleExecutor.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
+      <Name>Ast.Infon</Name>
+      <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast</Name>
+      <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>

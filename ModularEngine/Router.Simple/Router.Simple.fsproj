@@ -5,13 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{e33580fb-e651-4b24-851d-689f6875284e}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>Main</RootNamespace>
-    <AssemblyName>Main</AssemblyName>
+    <ProjectGuid>{62c15ad9-06f2-4c97-a319-1ac3a5059b0e}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>SimpleRouter</RootNamespace>
+    <AssemblyName>Router.Simple</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <Name>Main</Name>
+    <Name>Router.Simple</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,9 +22,11 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Debug\Main.XML</DocumentationFile>
-    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Tests\TestWCF\</StartWorkingDirectory>
-    <StartArguments>Single.rt Single.pcy simple</StartArguments>
+    <DocumentationFile>bin\Debug\Router.Simple.XML</DocumentationFile>
+    <StartWorkingDirectory>
+    </StartWorkingDirectory>
+    <StartArguments>
+    </StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -34,20 +36,33 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Release\Main.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SimpleRouter.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="Main.fs" />
+    <Compile Include="RoutingTable.fs" />
+    <Compile Include="IPrincipalService.fs" />
+    <Compile Include="PrincipalService.fs" />
+    <Compile Include="ConnectionsHandler.fs" />
+    <Compile Include="SimpleRouter.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
       <Name>Ast.Infon</Name>
       <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Name>Ast.Tree</Name>
+      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Ast\Ast.fsproj">
@@ -55,26 +70,12 @@
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Factories.Initializer\Factories.Initializer.fsproj">
-      <Name>Factories.Initializer</Name>
-      <Project>{a7809ed2-ac1d-46cc-b594-b1422cfe0da7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Factories\Factories.fsproj">
-      <Name>Factories</Name>
-      <Project>{ffe9dac2-4f7a-44ba-a630-944e17cd4202}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Utils\Utils.fsproj">
-      <Name>Utils</Name>
-      <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
-      <Private>True</Private>
-    </ProjectReference>
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

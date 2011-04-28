@@ -1,0 +1,209 @@
+﻿%{
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple.SimpleAst
+
+open System
+
+let emptyInfon = SimpleApp([], "emptyInfon", [])
+%}
+
+// ------------------------------------------------------------------------------------------------------
+// The start tokens become parser functions in the compiled code:
+
+%start Assembly
+%start Signature
+%start Policy
+%start TypeDeclaration
+%start RelationDeclaration
+%start MacroDeclaration
+%start MetaTerm
+%start Type
+
+// ------------------------------------------------------------------------------------------------------
+// These are the terminal tokens of the grammar along with the types of the data carried by each token:
+
+// Binary operators
+%token AND IMPLIES 
+
+// Unary operators
+%token AS_INFON SAID
+
+// Delimiters
+%token EQ LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT
+
+// Substrate declarations
+%token SUBSTRATE NAMESPACES
+
+// Types
+%token TYPE 
+
+// Relation declarations
+%token RELATION
+
+// Macro declarations
+%token MACRO
+
+// Variable declarations
+%token WITH
+
+// Assertions
+%token ME KNOWS IF THEN WIRE HAS
+
+// Actions
+%token SEND TO LEARN FORGET INSTALL UNINSTALL
+
+// Literals
+%token TRUE FALSE
+%token <System.Int32> INT_LITERAL
+%token <System.Double> FLOAT_LITERAL
+%token <System.String> STRING_LITERAL
+
+// Substrate expressions
+%token <System.String * System.String> SUBSTRATE_EXPRESSION
+
+// Identifiers
+%token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
+
+// EOF
+%token EOF
+
+// ------------------------------------------------------------------------------------------------------
+// This is the type of the data produced by successful reductions of each 'start' symbol:
+
+%type < SimpleAssembly > Assembly
+%type < SimpleSignature > Signature
+%type < SimplePolicy > Policy
+%type < SimpleTypeDeclaration > TypeDeclaration
+%type < SimpleRelationDeclaration > RelationDeclaration
+%type < SimpleMacroDeclaration > MacroDeclaration
+%type < SimpleMetaTerm > MetaTerm
+%type < SimpleType > Type
+
+// ------------------------------------------------------------------------------------------------------
+// Precedence of operators
+
+%right SEMICOLON
+%left SEND LEARN
+%left IMPLIES
+%right SAID
+%left AND
+
+// ------------------------------------------------------------------------------------------------------
+// These are the rules of the grammar 
+
+%%
+
+Assembly:
+	| Signature Policy							{ { Signature = $1; Policy = $2 } }
+
+Signature:
+	|										                	{ SimpleSignature() }
+	| Signature SubstrateDeclaration 			{ $1.SubstrateDeclarations.Add($2); $1 }
+	| Signature TypeDeclaration 			  	{ $1.TypeDeclarations.Add($2); $1 }
+	| Signature RelationDeclaration 			{ $1.RelationDeclarations.Add($2); $1 }
+	| Signature MacroDeclaration 				  { $1.MacroDeclarations.Add($2); $1 }
+
+Policy:
+	|										        	{ SimplePolicy() }
+	| Policy MetaTerm							{ $1.Rules.Add($2); $1 }
+
+SubstrateDeclaration:
+	| SUBSTRATE LOWER_IDENTIFIER 
+		LPAR StringLiterals RPAR	
+		NAMESPACES StringLiterals			    	{ { Kind = $2; Args = $4; Namespaces = $7 } }
+
+TypeDeclaration:
+	| TYPE UPPER_IDENTIFIER EQ Type				{ { NewTyp = $2; TargetTyp = $4 } }
+
+Cols:
+	|										        	{ [] }
+	| Col								      		{ [$1] }
+	| Col COMMA Cols							{ $1 :: $3 }
+
+Col:
+	| LOWER_IDENTIFIER COLON Type				{ ($1, $3) }
+
+RelationDeclaration:
+	| RELATION LOWER_IDENTIFIER LPAR Args RPAR		{ { Name = $2; Args = $4 } }   
+
+Args:
+	|											      { [] }
+	| Arg									    	{ [$1] }
+	| Arg COMMA Args						{ $1 :: $3 }
+
+Arg:
+	| UPPER_IDENTIFIER COLON Type				{ ($1, $3) }
+
+Type:
+	| UPPER_IDENTIFIER							{ BasicSimpleType($1) }
+//	| SEQ LT Type GT							{ SeqSimpleType($3) }
+
+MacroDeclaration:
+	| MACRO LOWER_IDENTIFIER LPAR Args RPAR 
+		COLON Type SUBSTRATE_EXPRESSION 
+      { let ns, exp = $8;
+        { Name = $2; Args = $4; RetTyp = $7; Namespace = ns; Body = exp }; }
+
+MetaTerm:
+// Infon constructs
+	| AS_INFON LPAR TRUE RPAR							  	            { emptyInfon }
+	| AS_INFON LPAR SUBSTRATE_EXPRESSION RPAR							{ SimpleApp([], "asInfon", [SimpleSubstrate($3)]) }
+	| MetaTerm IMPLIES MetaTerm						            		{ SimpleApp([], "implies", [$1; $3]) }
+	| MetaTerm SAID MetaTerm							              	{ SimpleApp([], "said", [$1; $3]) }
+	| MetaTerm AND MetaTerm							            	  	{ SimpleApp([], "and", [$1; $3]) }
+
+// Relations and function/macro calls
+	| LOWER_IDENTIFIER LPAR MetaTerms RPAR		{ SimpleApp([], $1, $3) }
+
+// Constants, variables, misc
+	| Literal							      		{ SimpleConst($1) }
+	| UPPER_IDENTIFIER							{ SimpleVar($1) }
+	| LPAR MetaTerm RPAR						{ $2 }
+
+// Sequences
+//	| LSQ RSQ										                  	{ SimpleApp([], "nil", []) }
+//	| MetaTerm COLON COLON MetaTerm		%prec TIMES		{ SimpleApp([], "cons", [$1; $4]) }
+
+// Rules
+	| WITH Args ME KNOWS MetaTerm						        				          { SimpleApp($2, "rule", [emptyInfon; emptyInfon; SimpleApp([], "learn", [$5])]) }
+	| ME KNOWS MetaTerm											            	          	{ SimpleApp([], "rule", [emptyInfon; emptyInfon; SimpleApp([], "learn", [$3])]) }
+	| WITH Args IF ME KNOWS MetaTerm THEN Action					          	{ SimpleApp($2, "rule", [$6; emptyInfon; $8])}
+	| IF ME KNOWS MetaTerm THEN Action							              		{ SimpleApp([], "rule", [$4; emptyInfon; $6])}
+	| WITH Args IF ME KNOWS MetaTerm WIRE HAS MetaTerm THEN Action		{ SimpleApp($2, "rule", [$6; $9; $11])}
+	| IF ME KNOWS MetaTerm WIRE HAS MetaTerm THEN Action				      { SimpleApp([], "rule", [$4; $7; $9])}
+	| WITH Args IF WIRE HAS MetaTerm THEN Action					          	{ SimpleApp($2, "rule", [emptyInfon; $6; $8])}
+	| IF WIRE HAS MetaTerm THEN Action								              	{ SimpleApp([], "rule", [emptyInfon; $4; $6])}
+
+// Actions
+	| Action									{ $1 }
+
+Action:
+	| SEND TO MetaTerm MetaTerm			{ SimpleApp([], "send", [$3; $4]) }
+	| LEARN MetaTerm			      		{ SimpleApp([], "learn", [$2]) }
+	| FORGET MetaTerm				      	{ SimpleApp([], "forget", [$2]) }
+	| INSTALL MetaTerm			    		{ SimpleApp([], "install", [$2]) }
+	| UNINSTALL MetaTerm			    	{ SimpleApp([], "uninstall", [$2]) }
+	| Action SEMICOLON Action		  	{ SimpleApp([], "seq", [$1; $3]) }
+
+MetaTerms:
+	|											              { [] }
+	| MetaTerm									        { [$1] }
+	| MetaTerm COMMA MetaTerms					{ $1 :: $3 }
+
+Literals:
+	|									          		{ [] }
+	| Literal							      		{ [$1] }
+	| Literal COMMA Literals				{ $1 :: $3 }
+
+Literal:
+	| TRUE									    	{ BoolSimpleConstant(true) }
+	| FALSE									    	{ BoolSimpleConstant(false) }
+	| INT_LITERAL						  		{ Int32SimpleConstant($1) }
+	| FLOAT_LITERAL								{ DoubleSimpleConstant($1) }
+	| STRING_LITERAL							{ StringSimpleConstant($1) }
+	| LOWER_IDENTIFIER						{ PrincipalSimpleConstant($1) }
+
+StringLiterals:
+	|										                    	{ [] }
+	| STRING_LITERAL						            	{ [$1] }
+	| STRING_LITERAL COMMA StringLiterals	  	{ $1 :: $3 }
+		

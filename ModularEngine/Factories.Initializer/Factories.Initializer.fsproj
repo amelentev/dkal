@@ -5,13 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</ProjectGuid>
+    <ProjectGuid>{a7809ed2-ac1d-46cc-b594-b1422cfe0da7}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Ast</RootNamespace>
-    <AssemblyName>Ast</AssemblyName>
+    <RootNamespace>FactoriesInitializer</RootNamespace>
+    <AssemblyName>Factories.Initializer</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>Ast</Name>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <Name>Factories.Initializer</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Ast.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Factories.Initializer.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,23 +29,42 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Ast.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\FactoriesInitializer.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Types.fs" />
-    <Compile Include="ActivePatterns.fs" />
-    <Compile Include="Substitution.fs" />
+    <Compile Include="FactoriesInitializer.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Substrate.Sql.Syntax.Simple\Ast.Substrate.Sql.Syntax.Simple.fsproj">
+      <Name>Ast.Substrate.Sql.Syntax.Simple</Name>
+      <Project>{9c31b572-9dbc-49fd-86ec-33a448825420}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Sql.Syntax.Typed\Ast.Substrate.Sql.Syntax.Typed.fsproj">
+      <Name>Ast.Substrate.Sql.Syntax.Typed</Name>
+      <Project>{40a3407d-5ae5-4c09-a6f4-b1ed260215af}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Factories\Substrate.Factories.fsproj">
+      <Name>Substrate.Factories</Name>
+      <Project>{82b5dc81-f8ea-4d29-b717-77b4a623d6f4}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Sql\Substrate.Sql.fsproj">
+      <Name>Substrate.Sql</Name>
+      <Project>{65b27d4b-16fb-441a-8fd7-2b01abe789ef}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

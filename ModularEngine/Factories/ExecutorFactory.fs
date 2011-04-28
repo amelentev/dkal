@@ -1,7 +1,7 @@
 ﻿namespace Microsoft.Research.Dkal.Factories
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.SimpleExecutor
+open Microsoft.Research.Dkal.Executor.Simple
 
 /// The ExecutorFactory provides a factory to construct different executors.
 /// An executor kind, a router and a logic engine must all be provided. 
