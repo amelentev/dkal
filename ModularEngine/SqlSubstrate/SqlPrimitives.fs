@@ -21,7 +21,7 @@ type SqlPrimitives =
       Some {Name = f; ArgsType = [t]; RetType = t; Identity = None}
     | "eq" | "neq" when SqlPrimitives.HasEquality t -> 
       Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean; Identity = None}
-    | "le" | "leq" | "gt" | "gte" when SqlPrimitives.HasOrdering t ->
+    | "lt" | "lte" | "gt" | "gte" when SqlPrimitives.HasOrdering t ->
       Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean; Identity = None}
     | "plus" when SqlPrimitives.HasSum t ->
       Some {Name = f; ArgsType = [t;t]; RetType = t;

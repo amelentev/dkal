@@ -1,16 +1,29 @@
 substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
 	namespaces "ct"
 
-relation participates(SITE: Dkal.Principal, TRIAL: System.Int32)
-relation allocatedPatients(SITE: Dkal.Principal, N1: System.Int32, N2: System.Int32, TRIAL: System.Int32)
+type Int = System.Int32
+type Bool = System.Boolean
+type Trial = Int
 
-with TRIAL: System.Int32, SITE: System.Int32, N1: System.Int32, N2: System.Int32, SITEP: Dkal.Principal
+relation participates(SITE: Dkal.Principal, T: Trial)
+relation allocatedPatients(SITE: Dkal.Principal, N1: Int, N2: Int, T: Trial)
+
+macro org(T: Trial) : Int
+{|"ct"| T==trials.id && Ret==trials.cro |}
+
+macro siteUnnotified(S: Int, T: Trial) : Bool
+{|"ct"| Ret==siteAssignments.unnotified && siteAssignments.thesite == S && siteAssignments.trial == T |}
+
+macro sitePatients(S: Int, T: Trial, N1: Int, N2: Int) : Bool
+{|"ct"| siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.n1 == N1 && siteAssignments.n2 == N2 && Ret==true |}
+
+with TRIAL: Trial, SITE: Int, N1: Int, N2: Int, SITEP: Dkal.Principal
 	if me knows
 		asInfon({|"ct"|
-			TRIAL==trials.id && trials.cro==3
-			&& siteAssignments.thesite==SITE && siteAssignments.trial==TRIAL 
-			&& siteAssignments.unnotified && siteAssignments.n1 == N1 && siteAssignments.n2 == N2
-			// PROBLEM: string!=principal:  && dkal_principals.id == SITE && dkal_principals.name == SITEP
+			org(TRIAL) == 3 && // TODO: org(TRIAL) == me
+			siteUnnotified(SITE, TRIAL) &&
+			sitePatients(SITE, TRIAL, N1, N2)
+			// PROBLEM: string!=principal:  && dkal_principals.id == SITE && dkal_principals.name == ppalName(SITEP)
 		|})
 	then
 		send to site1 // TODO: SITEP

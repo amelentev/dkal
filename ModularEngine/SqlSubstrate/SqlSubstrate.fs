@@ -68,7 +68,10 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
         | :? DummySubstrateTerm as st when namespaces.Contains((st:>ISubstrateTerm).Namespace) -> // our SubstrateTerm
           separateInnerSubstrates st.Query
         | :? ISubstrateTerm as st -> // external SubstrateTerm
-          Const (SubstrateConstant true), [st] // TODO: boolean only?
+          // Works only when used on top level without disjunctions
+          Const (SubstrateConstant true), [st]
+          // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
+          //  So check than all negative SubstrateTerms gives no substitutions, get a substitutions from all positive SubstrateTerms and execute the rest.
         | t -> t, []
       let (queries, substrateTerms) = queries |> Seq.map separateInnerSubstrates |> Seq.toList |> List.unzip
       let substrateTerms = List.concat substrateTerms
