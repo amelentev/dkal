@@ -147,7 +147,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
     match condition with
     | EmptyCondition -> substs
     | WireCondition(i) -> 
-      quarantine.Matches i substs
+      quarantine.Matches(i, substs)
     | KnownCondition(i) ->
       engine.Derive(i, substs)
     | SeqCondition(conds) ->

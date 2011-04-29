@@ -80,6 +80,9 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
 
   let SaidInfon (ppal: ITerm, i: ITerm) = 
     App(Primitives.SolveFunction "said" |> Option.get, [ppal; i])
+  
+  let PrefixedInfon (ppals: ITerm list, i: ITerm) =
+    List.foldBack (fun ppal i -> SaidInfon(ppal, i)) ppals i
     
 //  // Sequence builders
 //  let Nil (t: Type) =
