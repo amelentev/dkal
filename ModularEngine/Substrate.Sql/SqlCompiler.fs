@@ -22,6 +22,7 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Substrate
 
 module SqlCompiler =
   // glue to old SqlCompiler
@@ -122,65 +123,42 @@ module SqlCompiler =
       this.Map (function Expr.Var v when dict.ContainsKey v.Name -> Some (dict.[v.Name]) | _ -> None)
 
   type CompiledQuery = Expr * list<Variable*Expr>
-  
+
   let init() =
-    // old functions: TODO remove after backward testing is done
-    addSqlOp "&&" "AND"
-    addSqlOp "||" "OR"
-    addSqlOp "+" "+"
-    addSqlOp "-" "-"
-    addSqlOp "*" "*"
-    addSqlOp "/" "/"
-    addSqlOp "<=" "<="
-    addSqlOp ">=" ">="
-    addSqlOp "<" "<"
-    addSqlOp ">" ">"
-    addSqlOp "==" "="
-    addSqlOp "!=" "<>"
-    //addPrefixSqlOp "not" "NOT"
+    addPrefixSqlOp "not" "NOT"
     addPrefixSqlOp "true" "1"
     addPrefixSqlOp "false" "0"
     addPrefixSqlOp "int_null" "NULL"
     addPrefixSqlOp "string_null" "NULL"
     addPrefixSqlOp "double_null" "NULL"
-   
-   
-    // new functions
+    addPrefixSqlOp "uminus" "-"
+
     addSqlOp "eq" "="
     addSqlOp "neq" "<>"
     addSqlOp "and" "AND"
     addSqlOp "or" "OR"
-    addPrefixSqlOp "not" "NOT"
     addSqlOp "gt" ">"
     addSqlOp "gte" ">="
     addSqlOp "lt" "<"
     addSqlOp "lte" "<="
     addSqlOp "plus" "+"
     addSqlOp "minus" "-"
-    addPrefixSqlOp "uminus" "-"
     addSqlOp "times" "*"
     addSqlOp "divide" "/"
-  
+
   do init()
   
-  let sqlEq (a, b) = Op (sqlOps.["=="], [a;b])
-  let sqlNeq (a, b) = Op (sqlOps.["!="], [a;b])
+  let sqlEq (a, b) = Op (sqlOps.["eq"], [a;b])
+  let sqlNeq (a, b) = Op (sqlOps.["neq"], [a;b])
   let sqlTrue = Op (sqlOps.["true"], [])
   let sqlFalse = Op (sqlOps.["false"], [])
   let sqlAnd a b = 
     if a = sqlTrue then b
     elif b = sqlTrue then a
-    else Op (sqlOps.["&&"], [a;b])
+    else Op (sqlOps.["and"], [a;b])
   
   let sqlMultiAnd : (Expr seq -> Expr) = Seq.fold sqlAnd sqlTrue
     
-  type LocalCtx = 
-    {
-      currentScope : int
-      mutable pendingEqs : list<Expr>      
-      mutable bindings : Map<string, Expr>
-    }
-
   let err (t:ITerm) (msg:string) : unit =
     failwith ("SQL compilation error: " + msg + " at '" + t.ToString() + "'")
 
@@ -189,10 +167,10 @@ module SqlCompiler =
     let eqs = ref []
     let rec findEqs (expr:Expr) =
       match expr with
-        | Expr.Op (op, [a; b]) when op = sqlOps.["&&"] ->
+        | Expr.Op (op, [a; b]) when op = sqlOps.["and"] ->
           sqlAnd (findEqs a) (findEqs b)
         | Expr.Op (op, [Expr.Var _ as c1; c2])
-        | Expr.Op (op, [c2; Expr.Var _ as c1]) when op = sqlOps.["=="] ->
+        | Expr.Op (op, [c2; Expr.Var _ as c1]) when op = sqlOps.["eq"] ->
           eqs := (c1, c2) :: !eqs
           sqlTrue
         | t -> t
@@ -223,78 +201,35 @@ module SqlCompiler =
     loop !eqs
   
   let compile (opts:Options) nextId (theTerms:ITerm seq) =
-    let nextScope = ref 1
-    let fresh (v:Variable) : Variable =
-      let id = nextId()
-      { v with Name = v.Name + "#" + id.ToString() }
-    let rec comp top (localCtx:LocalCtx) (term:ITerm) = 
-      let res =
+    let nextScope = ref 0
+    let rec comp currentScope (term:ITerm) = 
         match term with
-          | ActivePatterns.Const(c) -> Expr.Const c
+          | ActivePatterns.Column(t, c) -> 
+            Expr.Column({ scope = currentScope; name = t}, c)
+          | ActivePatterns.Const(c) -> 
+            Expr.Const c
           | ActivePatterns.Var(v) ->
-            match localCtx.bindings.TryFind v.Name with
-              | Some r -> r
-              | None when localCtx.currentScope <> 0 ->
-                let expr = Expr.Var (fresh v)
-                localCtx.bindings <- localCtx.bindings.Add (v.Name, expr)
-                expr
-              | None -> Expr.Var v
-          | ActivePatterns.App(fn, [p]) when fn.Name="ppalName" ->
-            comp false localCtx p
+            Expr.Var v
+          | ActivePatterns.App(fn, [p]) when fn.Name="ppalName" -> // skip ppalName function
+            comp currentScope p
           | ActivePatterns.App (fn, args) as t ->
-            let args = List.map (comp false localCtx) args
+            let args = List.map (comp currentScope) args
             if sqlOps.ContainsKey fn.Name then
               Expr.Op (sqlOps.[fn.Name], args)
-            else if fn.Name.Contains(".") then
-              //old:| Term.Const (Const.Column (t, c)) ->
-              //      Expr.Column ({ scope = localCtx.currentScope; name = t }, c)
-              let i = fn.Name.IndexOf('.')
-              let t = fn.Name.Substring(0, i)
-              let c = fn.Name.Substring(i+1)
-              Expr.Column({ scope = localCtx.currentScope; name = t }, c)
             else
               log("warning: unmapped operation '" + fn.Name + "'")
               let op = {name=fn.Name; infix=(args.Length>1)} : SqlOp
               Expr.Op (op, args)
-              //failwith ("no translation to SQL for '" + fn.Name + "'")
-            (*old: match fn.body with
-              | :? Term as body ->
-                let resV = fresh fn.retType
-                let bindings = 
-                  List.zip (fn.retType :: fn.argTypes) (Expr.Var resV :: args) |>
-                    (Map.empty |> List.fold (fun acc (v, expr) -> acc.Add (v.id, expr)))
-                let newCtx = { currentScope = !nextScope
-                               pendingEqs = []
-                               bindings = bindings
-                               }
-                incr nextScope
-                let res = comp false newCtx body
-                if opts.Trace >= 2 then
-                  log ("Body " + body.ToString() + " =====> " + res.ToString())
-                localCtx.pendingEqs <- res :: newCtx.pendingEqs @ localCtx.pendingEqs
-                if fn.retType.typ = Type.Bool then
-                  sqlNeq (Expr.Var resV, sqlFalse)
-                else
-                  Expr.Var resV
-              | _ when sqlOps.ContainsKey fn.name ->
-                Expr.Op (sqlOps.[fn.name], args)
-              | _ -> err t ("no translation to SQL for '" + fn.name + "'")*)
+          | :? DummySubstrateTerm as st ->
+            incr nextScope
+            let res = comp !nextScope st.Query
+            res
           | _ as t -> failwithf "unknown term %A" t
-      if top then
-        let res = List.fold sqlAnd res localCtx.pendingEqs
-        localCtx.pendingEqs <- []
-        res
-      else
-        res
-    let initCtx = { currentScope = 0
-                    pendingEqs = []
-                    bindings = Map.empty }
 
     let trace = opts.Trace
-//    let pp = new SimplePrettyPrinter() :> IPrettyPrinter
     if trace >= 1 then
       log ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> s.ToString())))
-    let body = Seq.map (comp true initCtx) theTerms |> sqlMultiAnd
+    let body = Seq.map (comp !nextScope) theTerms |> sqlMultiAnd
     if trace >= 1 then
       log ("  Compiled " + body.ToString())
     let body, bindings = body |> simplify
@@ -361,7 +296,7 @@ module SqlCompiler =
               failwith ("substitution maps " + v.Name + " to term " + t.ToString() + " not constant")
               
         | Expr.Op (op, [tr;a]) 
-        | Expr.Op (op, [a;tr]) when op = sqlOps.["&&"] && tr = sqlTrue -> print a
+        | Expr.Op (op, [a;tr]) when op = sqlOps.["and"] && tr = sqlTrue -> print a
         | Expr.Op (op, a1::atl) when op.infix ->
           pr "("
           print a1

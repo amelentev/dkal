@@ -53,6 +53,8 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
           App(f'', [normalize2 a1; n])
         | App(f, lst) ->
           App(f, lst |> List.map normalize2)
+        | :? DummySubstrateTerm as st when namespaces.Contains (st:>ISubstrateTerm).Namespace ->
+          DummySubstrateTerm(normalize2 st.Query, (st:>ISubstrateTerm).Namespace) :> ITerm
         | t -> t
       // translate boolean (table.column) to (table.column=1)
       let rec boolenize = function
@@ -61,19 +63,17 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
           App(eq, [App(f, []); Const(SubstrateConstant(1))])
         | t -> t
       // collect SubstrateTerms and remove them from the query
-      let rec separateInnerSubstrates = function
+      let rec separateExternalSubstrates = function
         | App(f, args) ->
-          let r = List.unzip (args |> List.map separateInnerSubstrates)
+          let r = List.unzip (args |> List.map separateExternalSubstrates)
           (App(f, fst r), List.concat (snd r))
-        | :? DummySubstrateTerm as st when namespaces.Contains((st:>ISubstrateTerm).Namespace) -> // our SubstrateTerm
-          separateInnerSubstrates st.Query
-        | :? ISubstrateTerm as st -> // external SubstrateTerm
+        | :? ISubstrateTerm as st when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
           // Works only when used on top level without disjunctions
           Const (SubstrateConstant true), [st]
           // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
           //  So check than all negative SubstrateTerms gives no substitutions, get a substitutions from all positive SubstrateTerms and execute the rest.
         | t -> t, []
-      let (queries, substrateTerms) = queries |> Seq.map separateInnerSubstrates |> Seq.toList |> List.unzip
+      let (queries, substrateTerms) = queries |> Seq.map separateExternalSubstrates |> Seq.toList |> List.unzip
       let substrateTerms = List.concat substrateTerms
       let queries = queries |> Seq.map normalize2 |> Seq.map boolenize
       let options = {Trace=9} : SqlCompiler.Options
