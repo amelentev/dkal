@@ -12,10 +12,10 @@ type Quarantine() =
   let msgs = new HashSet<ITerm>()
 
   /// Move incoming messages to quarantine and split Ands
-  member q.Add (msg: ITerm) (from: ITerm) =
+  member q.Add (msg: ITerm) =
     match msg with
-    | AndInfon(msgs) -> List.iter (fun msg -> q.Add msg from) msgs
-    | _ -> msgs.Add (SaidInfon(from, msg)) |> ignore
+    | AndInfon(msgs) -> List.iter (fun msg -> q.Add msg) msgs
+    | _ -> msgs.Add msg |> ignore
 
   /// Called at the end of each round to eliminate "old" messages
   member q.Prune () = 

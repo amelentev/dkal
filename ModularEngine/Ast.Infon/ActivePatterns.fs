@@ -34,6 +34,9 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|Send|_|) mt = match mt with
                       | App({Name="send"}, [ppal; i]) -> Some (ppal, i)
                       | _ -> None
+  let (|Say|_|) mt =  match mt with
+                      | App({Name="say"}, [ppal; i]) -> Some (ppal, i)
+                      | _ -> None
   let (|Learn|_|) mt =  match mt with
                         | App({Name="learn"}, [i]) -> Some i
                         | _ -> None

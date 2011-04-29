@@ -71,9 +71,10 @@ rule tokenize = parse
 | "if"        { IF }
 
 // Actions
-| "send"			{ SEND }
-| "to"				{ TO }
-| "learn"			{ LEARN }
+| "send"			  { SEND }
+| "say"			    { SAY }
+| "to"				  { TO }
+| "learn"			  { LEARN }
 | "forget"			{ FORGET }
 | "install"			{ INSTALL }
 | "uninstall"		{ UNINSTALL }

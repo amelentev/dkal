@@ -52,7 +52,7 @@ let emptyInfon = SimpleApp([], "emptyInfon", [])
 %token UPON IF
 
 // Actions
-%token SEND TO LEARN FORGET INSTALL UNINSTALL
+%token SEND SAY TO LEARN FORGET INSTALL UNINSTALL
 
 // Literals
 %token TRUE FALSE
@@ -184,6 +184,7 @@ Condition:
   | Condition Condition               { SimpleApp([], "seqCondition", [$1; $2]) }
 
 Action:
+	| SAY TO MetaTerm MetaTerm			{ SimpleApp([], "say", [$3; $4]) }
 	| SEND TO MetaTerm MetaTerm			{ SimpleApp([], "send", [$3; $4]) }
 	| LEARN MetaTerm			      		{ SimpleApp([], "learn", [$2]) }
 	| FORGET MetaTerm				      	{ SimpleApp([], "forget", [$2]) }

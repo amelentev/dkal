@@ -15,9 +15,8 @@ type IRouter =
 
   /// Sets a receive message handler. The function passed as argument is 
   /// going to be invoked by the router whenever a new message arrives. The
-  /// first argument will be the received infon ITerm and the second 
-  /// argument will be the sender principal MetaTerm
-  abstract member Receive: (ITerm -> ITerm -> unit) -> unit
+  /// argument will be the received infon ITerm 
+  abstract member Receive: (ITerm -> unit) -> unit
 
   /// Sends an infon ITerm to the target principal ITerm
   abstract member Send: infon: ITerm -> ppal: ITerm -> unit

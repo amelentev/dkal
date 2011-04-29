@@ -83,6 +83,11 @@ type SimplePrettyPrinter() =
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
           UntabToken; NewLineToken ]
+      elif fSymbol = "say" then
+        [ TextToken <| "say to " + spp.PrintTerm mts.[0];
+          TabToken; NewLineToken;
+          ManyTokens <| spp.TokenizeTerm mts.[1];
+          UntabToken; NewLineToken ]
       elif fSymbol = "send" then
         [ TextToken <| "send to " + spp.PrintTerm mts.[0];
           TabToken; NewLineToken;

@@ -32,6 +32,9 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let SendAction (ppal: ITerm, i: ITerm) = 
     App(Primitives.SolveFunction "send" |> Option.get, [ppal; i])
     
+  let SayAction (ppal: ITerm, i: ITerm) = 
+    App(Primitives.SolveFunction "say" |> Option.get, [ppal; i])
+
   let LearnAction (i: ITerm) = 
     App(Primitives.SolveFunction "learn" |> Option.get, [i])
     

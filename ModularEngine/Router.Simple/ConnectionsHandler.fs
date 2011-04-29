@@ -55,6 +55,6 @@ type ConnectionsHandler(rt: RoutingTable, messageProcessingFunc) =
   member ch.Send (msg: string) (ppal: string) =
     let found, channel = channels.TryGetValue ppal
     if found then
-      channel.ReceiveMessage(msg, rt.Me)
+      channel.ReceiveMessage(msg)
     else
       failwith <| "Unknown destination: " + ppal

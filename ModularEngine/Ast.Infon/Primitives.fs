@@ -33,6 +33,8 @@ type Primitives =
       Some {Name = "emptyAction"; RetType = Type.Action; ArgsType = []; Identity = None}
     | "send" -> 
       Some {Name = "send"; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
+    | "say" -> 
+      Some {Name = "say"; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
     | "learn" -> 
       Some {Name = "learn"; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
     | "forget" -> 

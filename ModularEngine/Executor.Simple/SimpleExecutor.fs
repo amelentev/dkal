@@ -15,7 +15,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
   
   /// The inbox holds the messages that arrive from the router but still
   /// haven't been moved to Quarantine
-  let inbox = new Queue<ITerm * ITerm>()
+  let inbox = new Queue<ITerm>()
 
   /// The quarantine holds all incoming messages of relevance. We need to
   /// call quarantine.Prune() in order to remove old/unnecessary messages
@@ -43,9 +43,9 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
 
     member se.Start () = 
       // Start communications
-      router.Receive(fun msg from -> 
+      router.Receive(fun msg -> 
                       lock inbox (fun () ->
-                        inbox.Enqueue((msg, from))
+                        inbox.Enqueue(msg)
                         notEmpty.Set() |> ignore))
       router.Start()
 
@@ -85,9 +85,9 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
       // Move messages (if any) to quarantine
       lock inbox (fun () -> 
                   while inbox.Count > 0 do
-                    let msg, from = inbox.Dequeue()
-                    printfn "GOT FROM %O:\r\n %O" from msg
-                    quarantine.Add msg from)
+                    let msg = inbox.Dequeue()
+                    printfn "GOT %O" msg
+                    quarantine.Add msg)
 
   member private se.ExecuteRound() =
     printfn "------------------------------------------------------------------------"
@@ -128,6 +128,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
         | Learn(infon) -> engine.Learn infon
         | Forget(infon) -> engine.Forget infon
         | Send(ppal, infon) -> router.Send infon ppal; false
+        | Say(ppal, infon) -> router.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
         | Install(rule) -> rules.Add(rule)
         | Uninstall(rule) -> rules.Remove(rule)
         | _ -> failwithf "Unrecognized action %O" action
