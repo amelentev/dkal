@@ -55,8 +55,6 @@ type SimplePrettyPrinter() =
         | _ -> failwith "Incorrect arguments in AsInfon(...)"
       elif fSymbol = "emptyInfon" then
         [ TextToken <| "asInfon(true)" ]
-      elif not infix && mts = [] then
-        [ TextToken <| fSymbol ]
       elif fSymbol = "rule" then
         let vars = mt.Vars |> Seq.toList
         let varsDecl = List.map (fun (v: IVar) -> v.Name + ": " + spp.PrintType v.Type) vars
@@ -67,59 +65,39 @@ type SimplePrettyPrinter() =
                                   else
                                     [], []
         let mainTokens = 
-          match mts.[0], mts.[1], mts.[2] with
-          | EmptyInfon, EmptyInfon, App(f, [mt']) when 
-            f.Name = "learn" ->
-            [ TextToken <| "me knows"; 
-              TabToken; NewLineToken;
-              ManyTokens <| spp.TokenizeTerm mt'
-              UntabToken ]
-          | _, EmptyInfon, _ ->
-            [ TextToken <| "if me knows"; 
-              TabToken; NewLineToken;
-              ManyTokens <| spp.TokenizeTerm mts.[0]
-              UntabToken; NewLineToken;
-              TextToken <| "then";
-              TabToken; NewLineToken;
-              ManyTokens <| spp.TokenizeTerm mts.[2]
-              UntabToken]
-          | EmptyInfon, _, _ ->
-            [ TextToken <| "if wire has"; 
-              TabToken; NewLineToken;
-              ManyTokens <| spp.TokenizeTerm mts.[1]
-              UntabToken; NewLineToken;
-              TextToken <| "then";
-              TabToken; NewLineToken;
-              ManyTokens <| spp.TokenizeTerm mts.[2]
-              UntabToken]
-          | _ -> 
-              [ TextToken <| "if me knows"; 
-                TabToken; NewLineToken;
-                ManyTokens <| spp.TokenizeTerm mts.[0]
-                UntabToken; NewLineToken;
-                TextToken <| "wire has"; 
-                TabToken; NewLineToken;
-                ManyTokens <| spp.TokenizeTerm mts.[1]
-                UntabToken; NewLineToken;
-                TextToken <| "then";
-                TabToken; NewLineToken;
-                ManyTokens <| spp.TokenizeTerm mts.[2]
-                UntabToken]
+          [ ManyTokens <| spp.TokenizeTerm mts.[0] ]
+          @ [ TextToken <| "do" ]
+          @ [ TabToken; NewLineToken ]
+          @ [ ManyTokens <| spp.TokenizeTerm mts.[1] ]
+          @ [ UntabToken ]
         beginVars @ mainTokens @ endVars
+      elif fSymbol = "wireCondition" then
+        [ TextToken <| "upon";
+          TabToken; NewLineToken;
+          ManyTokens <| spp.TokenizeTerm mts.[0];
+          UntabToken; NewLineToken ]
+      elif fSymbol = "emptyAction" || fSymbol = "emptyCondition" then
+        []
+      elif fSymbol = "knownCondition" then
+        [ TextToken <| "if";
+          TabToken; NewLineToken;
+          ManyTokens <| spp.TokenizeTerm mts.[0];
+          UntabToken; NewLineToken ]
       elif fSymbol = "send" then
         [ TextToken <| "send to " + spp.PrintTerm mts.[0];
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[1];
-          UntabToken ]
+          UntabToken; NewLineToken ]
       elif fSymbol = "learn" then
         [ TextToken <| "learn";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
-          UntabToken ]
-      elif fSymbol = "seq" then
+          UntabToken; NewLineToken ]
+      elif fSymbol = "seqAction" || fSymbol = "seqCondition" then
         [ ManyTokens <| spp.TokenizeTerm mts.[0];
-          TextToken ";"; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[1] ]
+      elif not infix && mts = [] then
+        [ TextToken <| fSymbol ]
       else
         [ TextToken <| fSymbol + "(" ]
         @ List.reduce (fun t1 t2 -> t1 @ [TextToken ", "] @ t2) args

@@ -49,10 +49,11 @@ type SimpleEngine() =
     /// Obtain a list of Substitution with accompanying side conditions (AsInfon
     /// MetaTerms). Then return only those Substitutions that satisfy all their 
     /// side conditions.
-    member se.Derive (target: ITerm) = 
-      [ for (subst, conds) in se.DoDerive [] (Substitution.Id, []) (target.Normalize()) do
-          for subst' in SubstrateDispatcher.Solve conds [subst] do
-            yield subst' ]
+    member se.Derive (target: ITerm, substs: ISubstitution list) = 
+      [ for subst in substs do      
+          for (subst, conds) in se.DoDerive [] (subst, []) (target.Normalize()) do
+            for subst' in SubstrateDispatcher.Solve conds [subst] do
+              yield subst' ]
 
   /// Given a prefix (list of principal MetaTerms) a current Substitution with 
   /// side conditions (AsInfo MetaTerms) and a target infon MetaTerm to derive

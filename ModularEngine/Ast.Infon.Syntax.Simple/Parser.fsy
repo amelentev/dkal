@@ -45,8 +45,11 @@ let emptyInfon = SimpleApp([], "emptyInfon", [])
 // Variable declarations
 %token WITH
 
-// Assertions
-%token ME KNOWS IF THEN WIRE HAS
+// Rules
+%token DO
+
+// Conditions
+%token UPON IF
 
 // Actions
 %token SEND TO LEARN FORGET INSTALL UNINSTALL
@@ -164,17 +167,21 @@ MetaTerm:
 //	| MetaTerm COLON COLON MetaTerm		%prec TIMES		{ SimpleApp([], "cons", [$1; $4]) }
 
 // Rules
-	| WITH Args ME KNOWS MetaTerm						        				          { SimpleApp($2, "rule", [emptyInfon; emptyInfon; SimpleApp([], "learn", [$5])]) }
-	| ME KNOWS MetaTerm											            	          	{ SimpleApp([], "rule", [emptyInfon; emptyInfon; SimpleApp([], "learn", [$3])]) }
-	| WITH Args IF ME KNOWS MetaTerm THEN Action					          	{ SimpleApp($2, "rule", [$6; emptyInfon; $8])}
-	| IF ME KNOWS MetaTerm THEN Action							              		{ SimpleApp([], "rule", [$4; emptyInfon; $6])}
-	| WITH Args IF ME KNOWS MetaTerm WIRE HAS MetaTerm THEN Action		{ SimpleApp($2, "rule", [$6; $9; $11])}
-	| IF ME KNOWS MetaTerm WIRE HAS MetaTerm THEN Action				      { SimpleApp([], "rule", [$4; $7; $9])}
-	| WITH Args IF WIRE HAS MetaTerm THEN Action					          	{ SimpleApp($2, "rule", [emptyInfon; $6; $8])}
-	| IF WIRE HAS MetaTerm THEN Action								              	{ SimpleApp([], "rule", [emptyInfon; $4; $6])}
+  | DO Action                          { SimpleApp([], "rule", [SimpleApp([], "emptyCondition", []); $2]) }
+  | WITH Args DO Action                { SimpleApp($2, "rule", [SimpleApp([], "emptyCondition", []); $4]) }
+  | Condition DO Action                { SimpleApp([], "rule", [$1; $3]) }
+  | WITH Args Condition DO Action      { SimpleApp($2, "rule", [$3; $5]) }
+
+// Conditions
+  | Condition               { $1 }
 
 // Actions
 	| Action									{ $1 }
+
+Condition:
+  | UPON MetaTerm                     { SimpleApp([], "wireCondition", [$2]) }
+  | IF MetaTerm                       { SimpleApp([], "knownCondition", [$2]) }
+  | Condition Condition               { SimpleApp([], "seqCondition", [$1; $2]) }
 
 Action:
 	| SEND TO MetaTerm MetaTerm			{ SimpleApp([], "send", [$3; $4]) }
@@ -182,7 +189,7 @@ Action:
 	| FORGET MetaTerm				      	{ SimpleApp([], "forget", [$2]) }
 	| INSTALL MetaTerm			    		{ SimpleApp([], "install", [$2]) }
 	| UNINSTALL MetaTerm			    	{ SimpleApp([], "uninstall", [$2]) }
-	| Action SEMICOLON Action		  	{ SimpleApp([], "seq", [$1; $3]) }
+	| Action Action		  	          { SimpleApp([], "seqAction", [$1; $2]) }
 
 MetaTerms:
 	|											              { [] }

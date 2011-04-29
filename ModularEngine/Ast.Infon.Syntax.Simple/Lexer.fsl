@@ -63,13 +63,12 @@ rule tokenize = parse
 // Variable declarations
 | "with"			{ WITH }
 
-// Assertions
-| "me"				{ ME }
-| "knows"			{ KNOWS }
-| "if"				{ IF }
-| "then"			{ THEN }
-| "wire"			{ WIRE }
-| "has"				{ HAS }
+// Rules
+| "do"			  { DO }
+
+// Conditions
+| "upon"      { UPON }
+| "if"        { IF }
 
 // Actions
 | "send"			{ SEND }

@@ -7,13 +7,30 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
 
   // Rule patterns
   let (|Rule|_|) mt = match mt with
-                      | App({Name="rule"}, [cs; cw; a]) -> Some (cs, cw, a)
+                      | App({Name="rule"}, [c; a]) -> Some (c, a)
                       | _ -> None
 
+  // Condition patterns
+  let (|SeqCondition|_|) mt = match mt with
+                              | App({Name="seqCondition"}, [c1; c2]) -> Some (c1, c2)
+                              | _ -> None
+  let (|EmptyCondition|_|) mt = match mt with
+                                | App({Name="emptyCondition"}, []) -> Some ()
+                                | _ -> None
+  let (|WireCondition|_|) mt =  match mt with
+                                | App({Name="wireCondition"}, [i]) -> Some i
+                                | _ -> None
+  let (|KnownCondition|_|) mt = match mt with
+                                | App({Name="knownCondition"}, [i]) -> Some i
+                                | _ -> None
+
   // Action patterns
-  let (|Seq|_|) mt =  match mt with
-                      | App({Name="seq"}, [a1; a2]) -> Some (a1, a2)
-                      | _ -> None
+  let (|SeqAction|_|) mt =  match mt with
+                            | App({Name="seqAction"}, [a1; a2]) -> Some (a1, a2)
+                            | _ -> None
+  let (|EmptyAction|_|) mt =  match mt with
+                              | App({Name="emptyAction"}, []) -> Some ()
+                              | _ -> None
   let (|Send|_|) mt = match mt with
                       | App({Name="send"}, [ppal; i]) -> Some (ppal, i)
                       | _ -> None

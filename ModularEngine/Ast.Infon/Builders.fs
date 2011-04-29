@@ -6,12 +6,28 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   open Microsoft.Research.Dkal.Ast
 
   // Rule builders
-  let RuleRule (cs: ITerm, cw: ITerm, a: ITerm) = 
-    App(Primitives.SolveFunction "rule" |> Option.get, [cs; cw; a])
+  let RuleRule (c: ITerm, a: ITerm) = 
+    App(Primitives.SolveFunction "rule" |> Option.get, [c; a])
+
+  // Condition builders
+  let SeqCondition (c1: ITerm, c2: ITerm) = 
+    App(Primitives.SolveFunction "seqCondition" |> Option.get, [c1; c2])
+
+  let EmptyCondition = 
+    App(Primitives.SolveFunction "emptyCondition" |> Option.get, [])
+
+  let WireCondition (i: ITerm) = 
+    App(Primitives.SolveFunction "wireCondition" |> Option.get, [i])
+
+  let KnownCondition (i: ITerm) = 
+    App(Primitives.SolveFunction "knownCondition" |> Option.get, [i])
 
   // Action builders
   let SeqAction (a1: ITerm, a2: ITerm) = 
-    App(Primitives.SolveFunction "seq" |> Option.get, [a1; a2])
+    App(Primitives.SolveFunction "seqAction" |> Option.get, [a1; a2])
+
+  let EmptyAction = 
+    App(Primitives.SolveFunction "emptyAction" |> Option.get, [])
 
   let SendAction (ppal: ITerm, i: ITerm) = 
     App(Primitives.SolveFunction "send" |> Option.get, [ppal; i])

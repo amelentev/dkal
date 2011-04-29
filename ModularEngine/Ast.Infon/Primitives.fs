@@ -10,10 +10,27 @@ type Primitives =
   /// None otherwise
   static member SolveFunction (f: string) =
     match f with
+    // Rules
     | "rule" -> 
-      Some {Name = "rule"; RetType = Type.Rule; ArgsType = [Type.Infon; Type.Infon; Type.Action]; Identity = None}
-    | "seq" -> 
-      Some {Name = "seq"; RetType = Type.Action; ArgsType = [Type.Action; Type.Action]; Identity = None}
+      Some {Name = "rule"; RetType = Type.Rule; ArgsType = [Type.Condition; Type.Action]; Identity = None}
+
+    // Conditions
+    | "seqCondition" -> 
+      Some {Name = "seqCondition"; RetType = Type.Condition; ArgsType = [Type.Condition; Type.Condition]; 
+            Identity = Some <| ({Function=(Primitives.SolveFunction "emptyCondition").Value; Args=[]} :> ITerm) }
+    | "emptyCondition" -> 
+      Some {Name = "emptyCondition"; RetType = Type.Condition; ArgsType = []; Identity = None}
+    | "wireCondition" -> 
+      Some {Name = "wireCondition"; RetType = Type.Condition; ArgsType = [Type.Infon]; Identity = None}
+    | "knownCondition" -> 
+      Some {Name = "knownCondition"; RetType = Type.Condition; ArgsType = [Type.Infon]; Identity = None}
+
+    // Actions
+    | "seqAction" -> 
+      Some {Name = "seqAction"; RetType = Type.Action; ArgsType = [Type.Action; Type.Action]; 
+            Identity = Some <| ({Function=(Primitives.SolveFunction "emptyAction").Value; Args=[]} :> ITerm) }
+    | "emptyAction" -> 
+      Some {Name = "emptyAction"; RetType = Type.Action; ArgsType = []; Identity = None}
     | "send" -> 
       Some {Name = "send"; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
     | "learn" -> 
@@ -24,6 +41,8 @@ type Primitives =
       Some {Name = "install"; RetType = Type.Action; ArgsType = [Type.Rule]; Identity = None}
     | "uninstall" -> 
       Some {Name = "uninstall"; RetType = Type.Action; ArgsType = [Type.Rule]; Identity = None}
+    
+    // Infons
     | "emptyInfon" ->
       Some {Name = "emptyInfon"; RetType = Type.Infon; ArgsType = []; Identity = None}
     | "asInfon" ->

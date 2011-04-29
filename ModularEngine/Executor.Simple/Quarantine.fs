@@ -22,15 +22,18 @@ type Quarantine() =
     // TODO: implement some algorithm to remove unnecessary/old messages
     () 
 
-  /// Match a wire condition (infon) to messages in quarantine
-  member q.Matches (infon: ITerm) =
+  /// Match a wire condition (infon) to messages in quarantine. It returns a 
+  /// subset of (possibly specialized) substitutions
+  member q.Matches (infon: ITerm) (substs: ISubstitution list) =
     match infon.Normalize() with
-    | EmptyInfon -> [Substitution.Id]
+    | EmptyInfon -> substs
     | AsInfon(_) -> failwith "Trying to match asInfon(...) on wire"
     | AndInfon(infons) -> 
-      q.MatchesMany infons Substitution.Id
+      [ for subst in substs do
+          yield! q.MatchesMany [for infon in infons -> infon.Apply subst] subst ]
     | infon -> 
-      q.MatchesMany [infon] Substitution.Id
+      [ for subst in substs do
+          yield! q.MatchesMany [infon.Apply subst] subst ]
       
   /// Match a list of wire conditions to messages in quarantine with an 
   /// initial substitution and returning all possible substitutions (if any)

@@ -3,6 +3,7 @@
 open System.Collections.Generic
 open System.Threading
 
+open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Interfaces
 
@@ -98,10 +99,9 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
     // Traverse rules
     for rule in rules do
       match rule with
-      | Rule(cs, cw, a) -> 
-        for subs in quarantine.Matches cw do
-          for subs' in engine.Derive <| cs.Apply subs do
-            actions.Add((a.Apply subs).Apply subs') |> ignore
+      | Rule(condition, action) ->
+          for subst in se.SolveCondition condition [Substitution.Id] do
+            actions.Add (action.Apply subst) |> ignore
       | _ -> failwith <| "Expecting rule when executing round"
 
     // Check consistency and apply changes
@@ -117,19 +117,32 @@ type SimpleExecutor(router: IRouter, engine: IEngine) =
     // Return true if some change was computed
     changed
     
-  /// Given a set list of action MetaTerms, each of the actions is applied.
+  /// Given a set list of action terms, each of the actions is applied.
   /// Returns true iff at least one of the actions produced a change.
   member private se.ApplyActions (actions: ITerm list) = 
     let mutable changed = false
     for action in actions do
       let changes = 
         match action with
-        | Seq(a1, a2) -> se.ApplyActions [a1; a2]
+        | SeqAction(a1, a2) -> se.ApplyActions [a1; a2]
         | Learn(infon) -> engine.Learn infon
         | Forget(infon) -> engine.Forget infon
         | Send(ppal, infon) -> router.Send infon ppal; false
         | Install(rule) -> rules.Add(rule)
         | Uninstall(rule) -> rules.Remove(rule)
-        | _ -> failwith <| "Unrecognized action"
+        | _ -> failwithf "Unrecognized action %O" action
       changed <- changed || changes        
     changed
+
+  /// Given a condition term and a list of substitutions, it returns a subset of
+  /// substitutions that satisfy the condition, possibly specialized.
+  member private se.SolveCondition (condition: ITerm) (substs: ISubstitution list) =
+    match condition with
+    | EmptyCondition -> substs
+    | WireCondition(i) -> 
+      quarantine.Matches i substs
+    | KnownCondition(i) ->
+      engine.Derive(i, substs)
+    | SeqCondition(c1, c2) ->
+      se.SolveCondition c2 <| se.SolveCondition c1 substs
+    | _ -> failwithf "Unrecognized condition %O" condition

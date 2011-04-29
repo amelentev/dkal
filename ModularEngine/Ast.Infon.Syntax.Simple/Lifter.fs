@@ -112,13 +112,12 @@
       let rec traverse (smt: SimpleMetaTerm) (typ: IType option) (context: IParsingContext) = 
         let term = 
           match smt with
-          | SimpleApp(args, f, [cs; cw; a]) when f = "rule" ->
+          | SimpleApp(args, f, [c; a]) when f = "rule" ->
               if not(complies Type.Rule typ) then failDueToType smt typ
               let localParsingContext = new LocalParsingContext(ctx.LiftArgs args, context)
-              let cs', cw', a' = traverse cs (Some Type.Infon) localParsingContext, 
-                                  traverse cw (Some Type.Infon) localParsingContext, 
-                                  traverse a (Some Type.Action) localParsingContext
-              RuleRule(cs', cw', a')
+              let c', a' = traverse c (Some Type.Condition) localParsingContext, 
+                           traverse a (Some Type.Action) localParsingContext
+              RuleRule(c', a')
   //        | SimpleApp([], f, []) when f = "nil" ->
   //          match typ with
   //          | None -> failwith "Failed to infer sequence type from context"
@@ -155,6 +154,8 @@
                   match Primitives.SolveFunction f with
                   | Some func -> 
                     if not(complies func.RetType typ) then failDueToType smt typ
+                    if smts.Length <> func.ArgsType.Length then
+                      failwithf "Incorrect amount of arguments on %O: %A" f smts
                     let mts = List.map2 (fun smt t -> traverse smt (Some t) context) smts func.ArgsType
                     App(func, mts)
                   | None ->

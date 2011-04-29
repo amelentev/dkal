@@ -7,7 +7,7 @@ module Microsoft.Research.Dkal.Ast.Tree.Builders
     if List.forall2 (fun (t: IType) (a: ITerm) -> t = a.Type) f.ArgsType args then
       { Function = f; Args = args } :> ITerm
     else
-      failwith <| "Incorrect parameter types when building " + f.Name
+      failwithf "Incorrect parameter types when building %O: %O" f.Name args
 
   let Const (c: Constant) =
     c :> ITerm
