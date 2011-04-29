@@ -76,7 +76,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       let (queries, substrateTerms) = queries |> Seq.map separateExternalSubstrates |> Seq.toList |> List.unzip
       let substrateTerms = List.concat substrateTerms
       let queries = queries |> Seq.map normalize2 |> Seq.map boolenize
-      let options = {Trace=9} : SqlCompiler.Options
+      let options = {Trace=1} : SqlCompiler.Options
       let vars = new HashSet<IVar>()
       queries |> Seq.iter (fun q -> vars.UnionWith(q.Vars))
       let checkAssumptions (subst:ISubstitution) (assumptions: ITerm seq)=

@@ -230,10 +230,10 @@ module SqlCompiler =
     if trace >= 1 then
       log ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> s.ToString())))
     let body = Seq.map (comp !nextScope) theTerms |> sqlMultiAnd
-    if trace >= 1 then
+    if trace >= 2 then
       log ("  Compiled " + body.ToString())
     let body, bindings = body |> simplify
-    if trace >= 1 then  
+    if trace >= 3 then  
       log ("  Simplified " + body.ToString() + " @ " + String.concat ", " (List.map (fun (v:Variable,e:Expr) -> v.ToString() + " -> " + e.ToString()) bindings))
     let rec boolenize = function
       | Expr.Op(op, exprs) when op.name="AND" ->
@@ -249,7 +249,7 @@ module SqlCompiler =
         Expr.Op(op, exprs |> List.map boolenize)
       | t -> t
     let body1 = body |> boolenize
-    if trace >= 1 then  
+    if trace >= 4 then  
       log ("  Boolenized " + body1.ToString())
 
     body1, bindings

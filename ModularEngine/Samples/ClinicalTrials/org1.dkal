@@ -5,10 +5,11 @@ type Int = System.Int32
 type Bool = System.Boolean
 type Trial = Int
 type Record = Int
+type Principal = Dkal.Principal
 
-relation participates(SITE: Dkal.Principal, T: Trial)
-relation allocatedPatients(SITE: Dkal.Principal, N1: Int, N2: Int, T: Trial)
-relation mayRead(P: Dkal.Principal, R: Record)
+relation participates(SITE: Principal, T: Trial)
+relation allocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
+relation mayRead(P: Principal, R: Record)
 
 macro org(T: Trial) : Int
 {|"ct"| T==trials.id && Ret==trials.cro |}
@@ -19,25 +20,25 @@ macro siteUnnotified(S: Int, T: Trial) : Bool
 macro sitePatients(S: Int, T: Trial, N1: Int, N2: Int) : Bool
 {|"ct"| siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.n1 == N1 && siteAssignments.n2 == N2 && Ret==true |}
 
-macro ppalId(P: Dkal.Principal) : Int
+macro ppalId(P: Principal) : Int
 {|"ct"| Ret == dkal_principals.id && dkal_principals.name == ppalName(P)|}
 
 macro record (N: Int, T:Trial): Record
 {|"ct"| Ret == records.id && records.patient == N && records.trial == T |}
 
-with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Dkal.Principal, PERSON: Dkal.Principal, R: Int, N: Int
-	if me knows
+with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int, N: Int
+	if
 		asInfon({|"ct"|
 			ppalId(Me) == org(TRIAL) &&
 			siteUnnotified(SITEID, TRIAL) &&
 			sitePatients(SITEID, TRIAL, N1, N2) &&
 			ppalId(SITE) == SITEID
 		|})
-	then
-		send to SITE
-			participates(SITE, TRIAL) && allocatedPatients(SITE, N1, N2, TRIAL);
-		send to SITE
-			SITE said mayRead(PERSON, R)) && asInfon({|"ct"|
+	do
+		say to SITE:
+			participates(SITE, TRIAL) && allocatedPatients(SITE, N1, N2, TRIAL)
+		send to SITE:
+			SITE said mayRead(PERSON, R) && asInfon({|"ct"|
 				N1 <= N && N <= N2
 				&& R == record(N, TRIAL)
 			|})
