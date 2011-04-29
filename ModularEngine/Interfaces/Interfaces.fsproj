@@ -44,7 +44,7 @@
     <Compile Include="ISubstrateTerm.fs" />
     <Compile Include="ISubstrate.fs" />
     <Compile Include="IRouter.fs" />
-    <Compile Include="IEngine.fs" />
+    <Compile Include="ILogicEngine.fs" />
     <Compile Include="IExecutor.fs" />
     <Compile Include="IParsingContext.fs" />
     <Compile Include="ISubstrateParser.fs" />

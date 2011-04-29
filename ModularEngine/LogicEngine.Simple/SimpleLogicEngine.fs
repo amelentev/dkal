@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Research.Dkal.Engine.Simple
+﻿namespace Microsoft.Research.Dkal.LogicEngine.Simple
 
 open System.Collections.Generic
 
@@ -13,12 +13,12 @@ open Microsoft.Research.Dkal.Substrate
 /// have an accompanying list of side conditions to be checked against the 
 /// substrate(s). Only those Substitutions that pass the side conditions are
 /// returned
-type SimpleEngine() = 
+type SimpleLogicEngine() = 
 
   /// Stores the known facts
   let knowledge = new HashSet<ITerm>()
 
-  interface IEngine with
+  interface ILogicEngine with
     member se.Start () = ()
     member se.Stop () = ()
 
@@ -29,7 +29,7 @@ type SimpleEngine() =
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
       | AndInfon(infons) ->
         List.fold (fun ch i -> 
-                    let ch' = (se :> IEngine).Learn i
+                    let ch' = (se :> ILogicEngine).Learn i
                     ch' || ch) false infons 
       | infon -> 
         knowledge.Add infon
@@ -41,7 +41,7 @@ type SimpleEngine() =
       | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"
       | AndInfon(infons) ->
         List.fold (fun ch i -> 
-                    let ch' = (se :> IEngine).Forget i
+                    let ch' = (se :> ILogicEngine).Forget i
                     ch' || ch) false infons 
       | infon -> 
         knowledge.Remove infon

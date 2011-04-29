@@ -8,9 +8,9 @@
     <ProjectGuid>{1ea3b178-b4de-4ac9-9f1c-02fa83f565e4}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>SimpleEngine</RootNamespace>
-    <AssemblyName>Engine.Simple</AssemblyName>
+    <AssemblyName>LogicEngine.Simple</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>Engine.Simple</Name>
+    <Name>LogicEngine.Simple</Name>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -21,7 +21,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Engine.Simple.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\LogicEngine.Simple.XML</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -40,7 +40,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SimpleEngine.fs" />
+    <Compile Include="SimpleLogicEngine.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">

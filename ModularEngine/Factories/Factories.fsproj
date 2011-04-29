@@ -43,7 +43,7 @@
     <Compile Include="ParserFactory.fs" />
     <Compile Include="PrettyPrinterFactory.fs" />
     <Compile Include="RouterFactory.fs" />
-    <Compile Include="EngineFactory.fs" />
+    <Compile Include="LogicEngineFactory.fs" />
     <Compile Include="ExecutorFactory.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -72,11 +72,6 @@
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Engine.Simple\Engine.Simple.fsproj">
-      <Name>Engine.Simple</Name>
-      <Project>{1ea3b178-b4de-4ac9-9f1c-02fa83f565e4}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Executor.Simple\Executor.Simple.fsproj">
       <Name>Executor.Simple</Name>
       <Project>{d417438a-74aa-4a41-8023-189916e3d2bd}</Project>
@@ -85,6 +80,11 @@
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.Simple\LogicEngine.Simple.fsproj">
+      <Name>LogicEngine.Simple</Name>
+      <Project>{1ea3b178-b4de-4ac9-9f1c-02fa83f565e4}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Router.Simple\Router.Simple.fsproj">

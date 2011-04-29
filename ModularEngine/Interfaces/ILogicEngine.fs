@@ -1,8 +1,8 @@
 ﻿namespace Microsoft.Research.Dkal.Interfaces
 
-/// IEngine provides an interface for logic reasoning engines that handle
+/// ILogicEngine provides an interface for logic reasoning engines that handle
 /// the infostrate
-type IEngine =
+type ILogicEngine =
   
   /// Must be called to initialize the engine
   abstract member Start: unit -> unit

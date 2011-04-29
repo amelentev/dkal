@@ -11,7 +11,7 @@ open Microsoft.Research.Dkal.Interfaces
 /// processed to see if it has to be applied. All necessary changes are saved
 /// until the end of the iteration. If the set of changes is consistent, they
 /// all get applied and a new iteration starts.
-type SimpleExecutor(router: IRouter, engine: IEngine) = 
+type SimpleExecutor(router: IRouter, engine: ILogicEngine) = 
   
   /// The inbox holds the messages that arrive from the router but still
   /// haven't been moved to Quarantine
