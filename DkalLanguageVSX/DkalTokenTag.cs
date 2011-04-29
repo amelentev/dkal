@@ -48,27 +48,23 @@ namespace DkalLanguage
             _dkalTypes[@"/\*(.|[\n])*?\*/"] = DkalTokenTypes.DkalComment; // XXX not working unless delimiters are in the same line
             _dkalTypes[@"//[^\n]*"] = DkalTokenTypes.DkalComment;
 
-            _dkalTypes[@"(?i)\bprincipal\b"] = DkalTokenTypes.DkalType; // principal
-            _dkalTypes[@"(?i)\bint\b"] = DkalTokenTypes.DkalType; // int
-            _dkalTypes[@"(?i)\bbool\b"] = DkalTokenTypes.DkalType; // bool
-            _dkalTypes[@"(?i)\btext\b"] = DkalTokenTypes.DkalType; // text
+            _dkalTypes[@"(?-i)\b[A-Z]+([A-Z]|[a-z]|_|[0-9])*[.]([A-Z]|[a-z]|_|[0-9])*\b"] = DkalTokenTypes.DkalType; // types
 
-            _dkalTypes[@"(?i)\btype\b"] = DkalTokenTypes.DkalKeyword; // type
-            _dkalTypes[@"(?i)\bfunction\b"] = DkalTokenTypes.DkalKeyword; // function
-            _dkalTypes[@"(?i)\breturns\b"] = DkalTokenTypes.DkalKeyword; // returns
-            _dkalTypes[@"(?i)\bis\b"] = DkalTokenTypes.DkalKeyword; // is
-            _dkalTypes[@"(?i)\battribute\b"] = DkalTokenTypes.DkalKeyword; // attribute
-            _dkalTypes[@"(?i)\bif\b"] = DkalTokenTypes.DkalKeyword; // if
-            _dkalTypes[@"(?i)\bknows\b"] = DkalTokenTypes.DkalKeyword; // knows
-            _dkalTypes[@"(?i)\bthen\b"] = DkalTokenTypes.DkalKeyword; // then
-            _dkalTypes[@"(?i)\bsaid\b"] = DkalTokenTypes.DkalKeyword; // said
-            _dkalTypes[@"(?i)\bimplied\b"] = DkalTokenTypes.DkalKeyword; // implied
-            _dkalTypes[@"(?i)\btdonS\b"] = DkalTokenTypes.DkalKeyword; // tdonS
-            _dkalTypes[@"(?i)\btdonI\b"] = DkalTokenTypes.DkalKeyword; // tdonI
-            _dkalTypes[@"(?i)\bsend\s+(with\s+justification\s+)?to\b"] = DkalTokenTypes.DkalKeyword; // send (with justification) to
-            _dkalTypes[@"(?i)\bsay\s+(with\s+justification\s+)?to\b"] = DkalTokenTypes.DkalKeyword; // say (with justification) to
-
-            _dkalTypes[@"(?i)\basInfon\b"] = DkalTokenTypes.DkalSubstrate; // asInfon
+            _dkalTypes[@"(?-i)\bwith\b"] = DkalTokenTypes.DkalKeyword; // with
+            _dkalTypes[@"(?-i)\bdo\b"] = DkalTokenTypes.DkalKeyword; // do
+            _dkalTypes[@"(?-i)\bupon\b"] = DkalTokenTypes.DkalKeyword; // upon
+            _dkalTypes[@"(?-i)\bif\b"] = DkalTokenTypes.DkalKeyword; // if
+            _dkalTypes[@"(?-i)\bsend\b"] = DkalTokenTypes.DkalKeyword; // send
+            _dkalTypes[@"(?-i)\bsay\b"] = DkalTokenTypes.DkalKeyword; // say
+            _dkalTypes[@"(?-i)\bto\b"] = DkalTokenTypes.DkalKeyword; // to
+            _dkalTypes[@"(?-i)\blearn\b"] = DkalTokenTypes.DkalKeyword; // learn
+            _dkalTypes[@"(?-i)\bforget\b"] = DkalTokenTypes.DkalKeyword; // forget
+            _dkalTypes[@"(?-i)\binstall\b"] = DkalTokenTypes.DkalKeyword; // install
+            _dkalTypes[@"(?-i)\buninstall\b"] = DkalTokenTypes.DkalKeyword; // uninstall
+            _dkalTypes[@"(?-i)\bsaid\b"] = DkalTokenTypes.DkalKeyword; // said
+            _dkalTypes[@"(?-i)\basInfon\b"] = DkalTokenTypes.DkalKeyword; // asInfon
+            _dkalTypes[@"(?-i)\bfalse\b"] = DkalTokenTypes.DkalKeyword; // false
+            _dkalTypes[@"(?-i)\btrue\b"] = DkalTokenTypes.DkalKeyword; // true
 
             _dkalTypes[@"(?-i)\b[A-Z]+([A-Z]|[a-z]|_|[0-9])*\b"] = DkalTokenTypes.DkalVariable; // variables (identifiers starting with UPPERCASE)
 
@@ -76,7 +72,11 @@ namespace DkalLanguage
             
             _dkalTypes[@"""[^""\\]*(?:\\.[^""\\]*)*"""] = DkalTokenTypes.DkalString; // string literals
 
-            _dkalTypes[@"(?i)#include\b"] = DkalTokenTypes.DkalDirective; // #include
+            _dkalTypes[@"(?-i)\btype\b"] = DkalTokenTypes.DkalDirective; // type
+            _dkalTypes[@"(?-i)\brelation\b"] = DkalTokenTypes.DkalDirective; // returns
+            _dkalTypes[@"(?-i)\bmacro\b"] = DkalTokenTypes.DkalDirective; // function
+            _dkalTypes[@"(?-i)\bsubstrate\b"] = DkalTokenTypes.DkalDirective; // substrate
+            _dkalTypes[@"(?-i)\bnamespaces\b"] = DkalTokenTypes.DkalDirective; // namespaces
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged

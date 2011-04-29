@@ -2,7 +2,7 @@
 <Vsix xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
   <Identifier Id="DkalLanguage..c729d6b2-f512-49ed-893d-a8f61f25db98">
     <Name>DkalLanguage</Name>
-    <Author />
+    <Author>Microsoft Research</Author>
     <Version>1.0</Version>
     <Description xml:space="preserve">Dkal extension for the Visual Studio Editor.</Description>
     <Locale>1033</Locale>

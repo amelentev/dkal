@@ -61,7 +61,7 @@ namespace DkalLanguage
         public DkalVariableFormat()
         {
             this.DisplayName = "DkalVariable"; //human readable version of the name
-            this.ForegroundColor = Colors.Salmon;
+            this.ForegroundColor = Colors.DimGray; // Colors.DarkSlateGray;
         }
     }
 
@@ -118,7 +118,7 @@ namespace DkalLanguage
         public DkalTypeFormat()
         {
             this.DisplayName = "DkalType"; //human readable version of the name
-            this.ForegroundColor = Colors.Brown;
+            this.ForegroundColor = Color.FromRgb(43,145,175);
         }
     }
 
@@ -137,7 +137,7 @@ namespace DkalLanguage
         public DkalNumberFormat()
         {
             this.DisplayName = "DkalNumber"; //human readable version of the name
-            this.ForegroundColor = Colors.BlueViolet;
+            // this.ForegroundColor = Colors.BlueViolet;
         }
     }
 
