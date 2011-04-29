@@ -9,16 +9,7 @@ type SimpleFunction = string
 type SimpleVariable = string
 
 /// To easily store parsed types
-type SimpleType = 
-| BasicSimpleType of string
-//| SeqSimpleType of SimpleType
-//| TupleSimpleType of SimpleType * SimpleType
-with 
-  override st.ToString() = 
-    match st with
-    | BasicSimpleType(name) -> name
-//    | SeqSimpleType(st') -> "seq<" + st'.ToString() + ">"
-//    | TupleSimpleType(st1, st2) -> st1.ToString() + " * " + st2.ToString()
+type SimpleType = string
 
 /// To easily store parsed arguments
 type SimpleArg = string * SimpleType

@@ -6,6 +6,9 @@ open Microsoft.Research.Dkal.Interfaces
 type IInfonParser =
   inherit IParser
 
+  /// Sets the IParsingContext implementation
+  abstract member SetParsingContext: IParsingContext -> unit
+
   /// Parse an infon (ITerm) from the input string
   abstract member ParseInfon: string -> ITerm
 

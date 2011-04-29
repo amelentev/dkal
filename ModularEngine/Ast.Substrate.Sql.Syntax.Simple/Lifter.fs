@@ -11,18 +11,9 @@
   open Microsoft.Research.Dkal.Substrate.Sql
   open Microsoft.Research.Dkal.Substrate.Factories
   
-  /// A Context is responsible for lifting untyped SimpleMetaTerms into typed
+  /// A Lifter is responsible for lifting untyped SimpleMetaTerms into typed
   /// MetaTerms. 
-  type Context(substrate: SqlSubstrate, types: Dictionary<SimpleVariable, IType>, macros: Dictionary<string, IType * ISubstrateTerm * IVar list>, tmpId: int) =
-
-    /// Holds fresh variable ids that are used when solving macros
-    let mutable freshVarId = tmpId
-
-    /// Returns a fresh Variable of the given type
-    let freshVar t = 
-      freshVarId <- freshVarId + 1
-      { Name = "Tmp" + freshVarId.ToString(); 
-        Type = t }
+  type Lifter(substrate: SqlSubstrate, context: IParsingContext) =
 
     /// Given a SimpleMetaTerm smt and a Type t, it returns its the 
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
@@ -50,7 +41,6 @@
         match smt with
         | SimpleApp(f, smts) -> 
           ctx.LiftSimpleApplication f smts true
-          // TODO apply solved macros
         | SimpleConst(c) ->
           ctx.LiftSimpleConstant(c), []
         | SimpleVar(v) ->
@@ -72,21 +62,19 @@
           App({Name=f; RetType=typ; ArgsType=[]; Identity=None}, []), []
         | _ -> failwithf "Incorrect table.column operator usage in %O" f
       // check if it is a macro
-      elif macros.ContainsKey f then
-        let retTyp, body, args = macros.[f]
+      elif context.HasMacro f then
+        let args = context.GetMacroArgs f
         if goRecursively then
-          let mutable subst = Substitution.Id
           let mutable accumSolvedMacros = []
+          let mutable concreteArgs = []
           for smt, arg in List.zip smts args do
             let mt, solvedMacros = ctx.Traverse smt arg.Type
             accumSolvedMacros <- accumSolvedMacros @ solvedMacros
-            subst <- subst.Extend ({Name = arg.Name; Type = mt.Type}, mt)
-          let newRet = Var(freshVar retTyp)
-          subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
-          accumSolvedMacros <- accumSolvedMacros @ [(body :> ITerm).Apply subst]
-          newRet, accumSolvedMacros
+            concreteArgs <- concreteArgs @ [mt]
+          let ret, solvedMacro = context.ApplyMacro(f, concreteArgs)
+          ret, accumSolvedMacros @ [solvedMacro]
         else
-          Var {Name="MacroResult"; Type=retTyp}, []
+          Var {Name="MacroResult"; Type=context.GetMacroRetType f}, []
       // check if it is an overloaded operator
       elif not(smts.IsEmpty) then
         let t = ctx.LookaheadType smts.[0]
@@ -111,15 +99,14 @@
       | PrincipalSimpleConstant p -> Const(PrincipalConstant p)
 
     member private ctx.LiftSimpleVariable (v: SimpleVariable) : ITerm =
-      let found, typ' = types.TryGetValue v
-      if found then
-        Var({ Name = v; Type = typ' })
+      if v = "Me" then
+        Const <| PrincipalConstant(context.Me)
       else
-        failwith <| "Undeclared variable: " + v
+        Var({ Name = v; Type = context.VariableType v })
     
     member private ctx.LiftSimpleSubstrate (ns: string) (exp: string) : ITerm =
       let substrate = SubstrateMap.GetSubstrate ns
-      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns freshVarId types macros
+      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (Some context)
       parser.ParseTerm exp :> ITerm
 
 

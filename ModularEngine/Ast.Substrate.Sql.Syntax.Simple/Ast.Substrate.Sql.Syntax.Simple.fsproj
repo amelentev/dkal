@@ -54,7 +54,7 @@
       <Visible>false</Visible>
       <Link>Lexer.fs</Link>
     </Compile>
-    <Compile Include="Context.fs" />
+    <Compile Include="Lifter.fs" />
     <Compile Include="SimpleSqlParser.fs" />
     <Compile Include="SimpleSqlPrettyPrinter.fs" />
   </ItemGroup>

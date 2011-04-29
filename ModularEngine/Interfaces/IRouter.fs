@@ -4,6 +4,9 @@
 /// Implementations of IRouter handle both incoming and outcoming messages
 type IRouter =
   
+  /// Returns the current principal name
+  abstract member Me: string
+
   /// Must be called to initialize the router
   abstract member Start: unit -> unit
 

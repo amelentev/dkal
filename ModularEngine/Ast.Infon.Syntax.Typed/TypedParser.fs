@@ -14,6 +14,10 @@ type TypedParser() =
   let lexbuff s = LexBuffer<char>.FromString(s)
 
   interface IInfonParser with
+
+    member sp.SetParsingContext (context: IParsingContext) = 
+      ()
+
     member sp.ParseType s =
       Parser.Type Lexer.tokenize (lexbuff s)
     

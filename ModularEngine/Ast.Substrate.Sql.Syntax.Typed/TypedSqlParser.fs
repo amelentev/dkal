@@ -17,13 +17,7 @@ type TypedSqlParser() =
   
   interface ISubstrateParser with
 
-    member sp.SetMacrosContext (macros: Dictionary<string, IType * ISubstrateTerm * IVar list>) = 
-      ()
-
-    member sp.SetTypesContext (types: Dictionary<string, IType>) =
-      ()
-
-    member sp.SetTempId (tmpId: int) =
+    member sp.SetParsingContext (context: IParsingContext) = 
       ()
       
     member sp.SetNamespace (ns: string) = 

@@ -8,38 +8,18 @@
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Ast.Tree
   open Microsoft.Research.Dkal.Ast.Infon
+  open Microsoft.Research.Dkal.Ast.Syntax.ParsingContext
   open Microsoft.Research.Dkal.Substrate.Factories
 
-  /// A Context is responsible for lifting untyped SimpleMetaTerms into typed
+  /// A Lifter is responsible for lifting untyped SimpleMetaTerms into typed
   /// MetaTerms. It solves the macros that appear in the SimpleMetaTerms and 
   /// uses the type information from relation declarations, type renames, etc.
-  type Context() =
+  type Lifter(context: IParsingContext) =
     let substrates = new HashSet<ISubstrate>()
     
-    /// Holds type information (SimpleType to Type mapping, and SimpleVariable 
-    /// type info)
-    let types = new TypeInfo()
-
-    /// For each declared identifier (relations, tables, etc.) it holds the 
-    /// appropiate Function element to be used in MetaTerm App nodes
-    let identifiers = new Dictionary<string, Function>()
-
-    /// For each declared macro it holds its return Type, its body and its args
-    /// (arguments Type and names)
-    let macros = new Dictionary<string, IType * ISubstrateTerm * IVar list>()
-
-    /// Holds fresh variable ids that are used when solving macros
-    let mutable freshVarId = 0
-
-    /// Returns a fresh Variable of the given type
-    let freshVar t = 
-      freshVarId <- freshVarId + 1
-      { Name = "Tmp" + freshVarId.ToString(); 
-        Type = t }
-
-    /// Given a SimpleType it returns its corresponding Type
-    member ctx.LiftSimpleType (st: SimpleType) =
-      types.LiftType st
+    /// For each declared relation it holds the appropiate Function element to 
+    /// be used in App nodes
+    let relations = new Dictionary<string, Function>()
 
     /// Given a SimpleAssembly it returns its corresponding Assembly
     member ctx.LiftSimpleAssembly (sa: SimpleAssembly) =
@@ -69,22 +49,13 @@
       Seq.iter ctx.AddRelation ss.RelationDeclarations
       Seq.iter ctx.AddMacro ss.MacroDeclarations
 
+    member private ctx.HasIdentifier (name: string) =
+      context.HasMacro name || relations.ContainsKey name
+
     /// Given a list of SimpleArgs (SimpleVariable * SimpleType) returns a 
     /// list of Variables
     member private ctx.LiftArgs (args: SimpleArg list) : IVar list = 
-      List.map (fun (name, t) -> { Name = name; Type = types.LiftType t } :> IVar) args
-
-    /// Returns true if the given name is already associated with an identifier
-    /// (either primitive function, table, relation, macro, etc.)
-    member private ctx.HasIdentifier name =
-      identifiers.ContainsKey name || macros.ContainsKey name 
-
-    /// Adds a the given function as a new identifier in the Context and saves
-    /// it so that it can be used to lift SimpleMetaTerms
-    member private ctx.AddIdentifier (func: Function) =
-      if ctx.HasIdentifier func.Name then
-        failwith <| "Identifier " + func.Name + " defined twice"
-      identifiers.[func.Name] <- func
+      List.map (fun (name, t) -> { Name = name; Type = context.TypeFromName t } :> IVar) args
 
     /// Adds a substrate declaration so that it can be used in AsInfon 
     /// SimpleMetaTerms. This information is used when lifting these
@@ -94,17 +65,19 @@
 
     /// Adds a new type rename
     member private ctx.AddType (std: SimpleTypeDeclaration) =
-      types.AddTypeRename std.NewTyp std.TargetTyp
+      context.AddTypeRename(std.NewTyp, std.TargetTyp)
 
     /// Adds a relation declaration and saves it so that now SimpleMetaTerms
     /// can use it.
     member private ctx.AddRelation (srd: SimpleRelationDeclaration) =
+      if ctx.HasIdentifier srd.Name then
+        failwith <| "Identifier " + srd.Name + " defined twice"
       let _, argsTyp = List.unzip srd.Args
-      let realArgsTyp = List.map (fun st -> types.LiftType st) argsTyp
-      ctx.AddIdentifier { Name = srd.Name; 
-                          RetType = Type.Infon; 
-                          ArgsType = realArgsTyp;
-                          Identity = None }
+      let realArgsTyp = List.map (fun st -> context.TypeFromName st) argsTyp
+      relations.[srd.Name] <- { Name = srd.Name; 
+                                RetType = Type.Infon; 
+                                ArgsType = realArgsTyp;
+                                Identity = None }
 
     /// Adds a macro declaration, lifting its body into a MetaTerm and saving
     /// it so that now SimpleMetaTerms can use it. All referenced macros in the
@@ -112,30 +85,16 @@
     member private ctx.AddMacro (smd: SimpleMacroDeclaration) =
       if ctx.HasIdentifier smd.Name then
         failwith <| "Identifier " + smd.Name + " defined twice"
-      let macroTypes = new Dictionary<string, IType>()
-      for arg, st in smd.Args do
-        macroTypes.[arg] <- types.LiftType st
-      macroTypes.["Ret"] <- types.LiftType smd.RetTyp
-
-      let retTyp = types.LiftType smd.RetTyp
+      let retTyp = context.TypeFromName smd.RetTyp
+      let args = List.map (fun (arg, st) -> {Name = arg; Type = context.TypeFromName st} :> IVar) smd.Args
+      let localContext = new LocalParsingContext(args @ [{Name="Ret"; Type=retTyp}], context)
       let substrate = SubstrateMap.GetSubstrate smd.Namespace
-      let args = List.map (fun (arg, st) -> {Name = arg; Type = types.LiftType st} :> IVar) smd.Args
-      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" smd.Namespace freshVarId macroTypes macros
+      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" smd.Namespace (Some <| (localContext :> IParsingContext))
       let body = parser.ParseTerm smd.Body
       if body.Type = Type.Boolean then
-        macros.[smd.Name] <- (retTyp, body, args)
+        context.AddMacro(smd.Name, retTyp, body, args)
       else
         failwithf "Macro %O body must be a boolean expression, regardless of return type" smd.Name
-
-    /// Given a list of MetaTerm boolean conditions given by solvedMacros, it 
-    /// returns a single boolean MetaTerm that encodes them all (conjunction).
-//    member private ctx.MacroConditions (solvedMacros: List<ITerm>) =
-//      if solvedMacros.Count > 0 then
-//        let ret = AndBool <| Seq.toList solvedMacros
-//        solvedMacros.Clear()
-//        ret
-//      else
-//        True
 
     /// Given a SimpleMetaTerm smt and a Type t, it returns its the 
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
@@ -150,14 +109,15 @@
       let failDueToType (smt: SimpleMetaTerm) (typ: IType option) = 
         failwith <| "Expecting a " + typ.Value.Name + "MetaTerm, found: " + (sprintf "%A" smt)
       let solvedMacros = new List<ISubstrateTerm>()
-      let rec traverse (smt: SimpleMetaTerm) (typ: IType option) = 
+      let rec traverse (smt: SimpleMetaTerm) (typ: IType option) (context: IParsingContext) = 
         let term = 
           match smt with
           | SimpleApp(args, f, [cs; cw; a]) when f = "rule" ->
               if not(complies Type.Rule typ) then failDueToType smt typ
-              types.AddLevel args
-              let cs', cw', a' = traverse cs (Some Type.Infon), traverse cw (Some Type.Infon), traverse a (Some Type.Action)
-              types.PopLevel()
+              let localParsingContext = new LocalParsingContext(ctx.LiftArgs args, context)
+              let cs', cw', a' = traverse cs (Some Type.Infon) localParsingContext, 
+                                  traverse cw (Some Type.Infon) localParsingContext, 
+                                  traverse a (Some Type.Action) localParsingContext
               RuleRule(cs', cw', a')
   //        | SimpleApp([], f, []) when f = "nil" ->
   //          match typ with
@@ -175,30 +135,27 @@
   //          Cons e' list'
           | SimpleApp([], f, smts) ->
               // check if it is a macro
-              let found, value = macros.TryGetValue f
-              if found then
-                let retTyp, body, args = value
-                if not(complies retTyp typ) then failDueToType smt typ
-                let mutable subst = Substitution.Id
+              if context.HasMacro f then
+                let args = context.GetMacroArgs f
+                let mutable concreteArgs = []
                 for smt, arg in List.zip smts args do
-                  let mt = traverse smt (Some <| arg.Type)
-                  subst <- subst.Extend ({Name = arg.Name; Type = mt.Type}, mt)
-                let newRet = Var(freshVar retTyp)
-                subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
-                solvedMacros.Add((body :> ITerm).Apply subst :?> ISubstrateTerm) |> ignore
-                newRet
+                  let mt = traverse smt (Some arg.Type) context
+                  concreteArgs <- concreteArgs @ [mt]
+                let ret, solvedMacro = context.ApplyMacro(f, concreteArgs)
+                solvedMacros.Add solvedMacro |> ignore
+                ret
               else
-                // check if it is a user defined relation/table/etc.
-                let found, func = identifiers.TryGetValue f
+                // check if it is a relation
+                let found, func = relations.TryGetValue f
                 if found then
-                  let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
+                  let mts = List.map2 (fun smt t -> traverse smt (Some t) context) smts func.ArgsType
                   App(func, mts)
                 else
                   // check if it is a primitive operator
                   match Primitives.SolveFunction f with
                   | Some func -> 
                     if not(complies func.RetType typ) then failDueToType smt typ
-                    let mts = List.map2 (fun smt t -> traverse smt (Some t)) smts func.ArgsType
+                    let mts = List.map2 (fun smt t -> traverse smt (Some t) context) smts func.ArgsType
                     App(func, mts)
                   | None ->
                     failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
@@ -211,13 +168,18 @@
             | PrincipalSimpleConstant p when complies Type.Principal typ -> Const(PrincipalConstant p)
             | _ -> failDueToType smt typ
           | SimpleVar(v) ->
-            match types.VariableType v with
-            | None -> failwith <| "Undeclared variable: " + v
-            | Some typ' when complies typ' typ -> Var({ Name = v; Type = typ' })
-            | _ -> failDueToType smt typ
+            let ret = 
+              if v = "Me" then
+                Const <| PrincipalConstant(context.Me)
+              else
+                Var({ Name = v; Type = context.VariableType v })
+            if complies ret.Type typ then 
+              ret
+            else
+              failDueToType smt typ
           | SimpleSubstrate(ns, exp) ->
             let substrate = SubstrateMap.GetSubstrate ns
-            let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns freshVarId (types.AllLevels()) macros
+            let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (Some context)
             let t = parser.ParseTerm exp :> ITerm
             if complies t.Type typ then
               t
@@ -231,7 +193,7 @@
         else
           term
         
-      let mainTerm = traverse smt typ  
+      let mainTerm = traverse smt typ context
       if solvedMacros.Count > 0 then
         failwithf "Unresolved macros in %O" mainTerm
       mainTerm.Normalize()

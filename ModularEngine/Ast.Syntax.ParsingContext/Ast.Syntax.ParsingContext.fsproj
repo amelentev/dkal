@@ -5,13 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</ProjectGuid>
+    <ProjectGuid>{e8840d2a-aa70-46c8-a5f6-319503f7a8b1}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Interfaces</RootNamespace>
-    <AssemblyName>Interfaces</AssemblyName>
+    <RootNamespace>Ast.Syntax.Context</RootNamespace>
+    <AssemblyName>Ast.Syntax.ParsingContext</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>Interfaces</Name>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <Name>Ast.Syntax.ParsingContext</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Interfaces.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Ast.Syntax.ParsingContext.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,25 +29,35 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Interfaces.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Ast.Syntax.Context.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ITerm.fs" />
-    <Compile Include="IParser.fs" />
-    <Compile Include="IPrettyPrinter.fs" />
-    <Compile Include="ISubstrateTerm.fs" />
-    <Compile Include="ISubstrate.fs" />
-    <Compile Include="IRouter.fs" />
-    <Compile Include="IEngine.fs" />
-    <Compile Include="IExecutor.fs" />
-    <Compile Include="IParsingContext.fs" />
-    <Compile Include="ISubstrateParser.fs" />
-    <Compile Include="ISubstratePrettyPrinter.fs" />
+    <Compile Include="ParsingContext.fs" />
+    <Compile Include="LocalParsingContext.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Name>Ast.Tree</Name>
+      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast (Ast\Ast)</Name>
+      <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
+      <Name>Interfaces</Name>
+      <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />

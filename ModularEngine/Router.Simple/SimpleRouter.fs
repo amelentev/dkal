@@ -32,6 +32,8 @@ type SimpleRouter (routingFile: string, parser: IInfonParser, printer: IInfonPre
                                                     elevateMessageFunction infon ppal)
 
   interface IRouter with
+    member sr.Me = routingTable.Me
+    
     member sr.Receive newElevateMessageFunction =
       elevateMessageFunction <- newElevateMessageFunction
     

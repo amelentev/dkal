@@ -21,8 +21,8 @@ module Main =
         // Populate factories
         FactoriesInitializer.Init()
 
-        let parser, printer = ParserFactory.InfonParser kind, PrettyPrinterFactory.InfonPrinter kind
         let router = RouterFactory.Router kind routingFile
+        let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
         let engine = EngineFactory.Engine kind
         let executor = ExecutorFactory.Executor kind router engine
 

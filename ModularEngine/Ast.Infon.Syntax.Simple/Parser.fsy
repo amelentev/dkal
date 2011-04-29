@@ -134,7 +134,7 @@ Arg:
 	| UPPER_IDENTIFIER COLON Type				{ ($1, $3) }
 
 Type:
-	| UPPER_IDENTIFIER							{ BasicSimpleType($1) }
+	| UPPER_IDENTIFIER							{ $1 }
 //	| SEQ LT Type GT							{ SeqSimpleType($3) }
 
 MacroDeclaration:
