@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<RoutingTable me="phys1" address="http://localhost:55332/Dkal/PrincipalService">	
+<RoutingTable me="keyMgr" address="http://localhost:55333/Dkal/PrincipalService">	
 	<Principal name="phys1" address="http://localhost:55332/Dkal/PrincipalService"/>
 	<Principal name="keyMgr" address="http://localhost:55333/Dkal/PrincipalService"/>
 </RoutingTable>

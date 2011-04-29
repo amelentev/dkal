@@ -4,6 +4,49 @@ substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dk
 type Int = System.Int32
 type Bool = System.Boolean
 type Trial = Int
+type Principal = Dkal.Principal
+type Record = Int
 
-relation physParticipates(PHYS: Dkal.Principal, T: Trial, SITE: Dkal.Principal)
-relation physAllocatedPatients(PHYS: Dkal.Principal, P1: Int, P2: Int, T: Trial, SITE: Dkal.Principal)
+relation physParticipates(PHYS: Principal, T: Trial, SITE: Principal)
+relation physAllocatedPatients(PHYS: Principal, P1: Int, P2: Int, T: Trial, SITE: Principal)
+relation requestToRead(P: Principal, R: Record)
+relation mayRead(P: Principal, R: Record)
+relation keyForRecord(K: Int, R: Record)
+
+macro needInfo(N: Int) : Bool
+{|"ct"| physPatients.id == N && Ret == physPatients.needInfo |}
+
+macro record (N: Int, T:Trial): Record
+{|"ct"| Ret == records.id && records.patient == N && records.trial == T |}
+
+macro ppalId(P: Principal) : Int
+{|"ct"| Ret == dkal_principals.id && dkal_principals.name == ppalName(P)|}
+
+macro orgId(T: Trial) : Int
+{|"ct"| T==trials.id && Ret==trials.cro |}
+
+with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int
+	upon SITE said physParticipates(Me, TRIAL, SITE)
+	do learn physParticipates(Me, TRIAL, SITE)
+
+	upon SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
+	do learn physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
+
+with K: Int, R: Int
+	upon keyMgr said keyForRecord(K, R)
+	do learn keyForRecord(K, R)
+
+with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int
+	if
+		physParticipates(Me, TRIAL, SITE) &&
+		physAllocatedPatients(Me, P1, P2, TRIAL, SITE) &&
+		asInfon({|"ct"|
+			P1 <= N && N <= P2 &&
+			needInfo(N) &&
+			ppalId(ORG) == orgId(TRIAL) &&
+			R == record(N, TRIAL)
+		|})
+	do
+		send to keyMgr:
+			(Me said requestToRead(Me, R)) &&
+			(ORG said mayRead(Me, R))

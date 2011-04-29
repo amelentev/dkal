@@ -5,12 +5,13 @@ type Int = System.Int32
 type Bool = System.Boolean
 type Trial = Int
 type Record = Int
+type Principal = Dkal.Principal
 
-relation participates(SITE: Dkal.Principal, T: Trial)
-relation allocatedPatients(SITE: Dkal.Principal, N1: Int, N2: Int, T: Trial)
+relation participates(SITE: Principal, T: Trial)
+relation allocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
 
-relation physParticipates(PHYS: Dkal.Principal, T: Trial, SITE: Dkal.Principal)
-relation physAllocatedPatients(PHYS: Dkal.Principal, P1: Int, P2: Int, Trial: Int, SITE: Dkal.Principal)
+relation physParticipates(PHYS: Principal, T: Trial, SITE: Dkal.Principal)
+relation physAllocatedPatients(PHYS: Principal, P1: Int, P2: Int, Trial: Int, SITE: Dkal.Principal)
 relation mayRead(PHYS: Dkal.Principal, R: Int)
 
 macro physUnnotified(P: Int, T: Trial) : Bool
@@ -19,23 +20,27 @@ macro physUnnotified(P: Int, T: Trial) : Bool
 macro physPatients(P: Int, T: Trial, N1: Int, N2: Int) : Bool
 {|"ct"|physAssignments.phys == P && physAssignments.trial == T && physAssignments.n1 == N1 && physAssignments.n2 == N2 && Ret == true|}
 
-macro ppalId(P: Dkal.Principal) : Int
+macro ppalId(P: Principal) : Int
 {|"ct"| Ret == dkal_principals.id && dkal_principals.name == ppalName(P)|}
 
 macro record (N: Int, T:Trial): Record
 {|"ct"| Ret == records.id && records.patient == N && records.trial == T |}
 
-macro org(T: Trial) : Int
+macro orgId(T: Trial) : Int
 {|"ct"| T==trials.id && Ret==trials.cro |}
 
 
-with TRIAL: Trial
-	if wire has org1 said participates(Me, TRIAL) then learn participates(Me, TRIAL)
-with TRIAL: Trial, N1: Int, N2: Int
-	if wire has org1 said allocatedPatients(Me, N1, N2, TRIAL) then learn allocatedPatients(Me, N1, N2, TRIAL)
+with TRIAL: Trial, N1: Int, N2: Int, ORG: Principal
+	upon ORG said participates(Me, TRIAL)
+	if asInfon({|"ct"| orgId(TRIAL) == ppalId(ORG) |})
+	do learn participates(Me, TRIAL)
 
-with TRIAL: Trial, N1: Int, N2: Int, PID: Int, P1: Int, P2: Int, PHYS: Dkal.Principal, N: Int, R: Record, ORG: Dkal.Principal
-	if me knows
+	upon ORG said allocatedPatients(Me, N1, N2, TRIAL) 
+	if asInfon({|"ct"| orgId(TRIAL) == ppalId(ORG) |})
+	do learn allocatedPatients(Me, N1, N2, TRIAL)
+
+with TRIAL: Trial, N1: Int, N2: Int, PID: Int, P1: Int, P2: Int, PHYS: Principal, N: Int, R: Record, ORG: Principal
+	if
 		participates(Me, TRIAL) && 
 		allocatedPatients(Me, N1, N2, TRIAL) &&
 		asInfon({|"ct"|
@@ -43,23 +48,23 @@ with TRIAL: Trial, N1: Int, N2: Int, PID: Int, P1: Int, P2: Int, PHYS: Dkal.Prin
 			&& N1 <= P1 && P2 <= N2 
 			&& ppalId(PHYS) == PID
 		|})
-	then
-		send to PHYS
+	do
+		say to PHYS:
 			physParticipates(PHYS, TRIAL, Me) &&
-			physAllocatedPatients(PHYS, P1, P2, TRIAL, Me);
-		send to PHYS
+			physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
+		send to PHYS:
 			asInfon({|"ct"|
 				P1 <= N && N <= P2 
 				&& R == record(N,TRIAL)
 			|})
 			->
-			Me said mayRead(PHYS, R);
-		send to PHYS
+			Me said mayRead(PHYS, R)
+		send to PHYS:
 			Me said mayRead(PHYS, R)
 			&& asInfon({|"ct"|
 				P1 <= N && N <= P2 
 				&& R == record(N,TRIAL)
-				&& ppalId(ORG) == org(TRIAL)
-				|})
+				&& ppalId(ORG) == orgId(TRIAL)
+			|})
 			->
 			ORG said mayRead(PHYS, R)
