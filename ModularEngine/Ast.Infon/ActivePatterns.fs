@@ -6,13 +6,19 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   open Microsoft.Research.Dkal.Ast
 
   // Rule patterns
+  let (|SeqRule|_|) mt =  match mt with
+                          | App({Name="seqRule"}, rs) -> Some rs
+                          | _ -> None
+  let (|EmptyRule|_|) mt =  match mt with
+                            | App({Name="emptyRule"}, []) -> Some ()
+                            | _ -> None
   let (|Rule|_|) mt = match mt with
                       | App({Name="rule"}, [c; a]) -> Some (c, a)
                       | _ -> None
 
   // Condition patterns
   let (|SeqCondition|_|) mt = match mt with
-                              | App({Name="seqCondition"}, [c1; c2]) -> Some (c1, c2)
+                              | App({Name="seqCondition"}, cs) -> Some cs
                               | _ -> None
   let (|EmptyCondition|_|) mt = match mt with
                                 | App({Name="emptyCondition"}, []) -> Some ()
@@ -26,7 +32,7 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
 
   // Action patterns
   let (|SeqAction|_|) mt =  match mt with
-                            | App({Name="seqAction"}, [a1; a2]) -> Some (a1, a2)
+                            | App({Name="seqAction"}, actions) -> Some actions
                             | _ -> None
   let (|EmptyAction|_|) mt =  match mt with
                               | App({Name="emptyAction"}, []) -> Some ()

@@ -11,6 +11,11 @@ type Primitives =
   static member SolveFunction (f: string) =
     match f with
     // Rules
+    | "seqRule" -> 
+      Some {Name = "seqRule"; RetType = Type.Rule; ArgsType = [Type.Rule; Type.Rule]; 
+            Identity = Some <| ({Function=(Primitives.SolveFunction "emptyRule").Value; Args=[]} :> ITerm) }
+    | "emptyRule" -> 
+      Some {Name = "emptyRule"; RetType = Type.Rule; ArgsType = []; Identity = None}
     | "rule" -> 
       Some {Name = "rule"; RetType = Type.Rule; ArgsType = [Type.Condition; Type.Action]; Identity = None}
 

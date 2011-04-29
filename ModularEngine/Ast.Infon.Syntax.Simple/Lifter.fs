@@ -112,12 +112,10 @@
       let rec traverse (smt: SimpleMetaTerm) (typ: IType option) (context: IParsingContext) = 
         let term = 
           match smt with
-          | SimpleApp(args, f, [c; a]) when f = "rule" ->
-              if not(complies Type.Rule typ) then failDueToType smt typ
-              let localParsingContext = new LocalParsingContext(ctx.LiftArgs args, context)
-              let c', a' = traverse c (Some Type.Condition) localParsingContext, 
-                           traverse a (Some Type.Action) localParsingContext
-              RuleRule(c', a')
+          | SimpleVarDeclaration(args, smt) ->
+            let localParsingContext = new LocalParsingContext(ctx.LiftArgs args, context)
+            let mt = traverse smt (Some Type.Rule) localParsingContext 
+            mt
   //        | SimpleApp([], f, []) when f = "nil" ->
   //          match typ with
   //          | None -> failwith "Failed to infer sequence type from context"
@@ -132,7 +130,7 @@
   //              e', traverse list (Some <| Sequence(e'.Type :?> Type))
   //            | Some typ' -> failwith <| "Expecting a sequence type, found " + typ'.ToString() + " on " + (sprintf "%A" smt)
   //          Cons e' list'
-          | SimpleApp([], f, smts) ->
+          | SimpleApp(f, smts) ->
               // check if it is a macro
               if context.HasMacro f then
                 let args = context.GetMacroArgs f
@@ -186,7 +184,6 @@
               t
             else
               failDueToType smt typ
-          | _ -> failwith <| "Malformed SimpleMetaTerm"
         if term.Type = Type.Infon then
           let termWithSolvedMacros = AndInfon <| List.map AsInfon (Seq.toList solvedMacros) @ [term]
           solvedMacros.Clear()

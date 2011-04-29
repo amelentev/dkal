@@ -37,7 +37,10 @@ type SimplePrettyPrinter() =
     | "said" -> "said", true
     | f -> f, false
 
-  member private spp.TokenizeTerm mt =
+  member private spp.TokenizeTerm (mt: ITerm, ?withVars: bool) =
+    let withVars =  match withVars with
+                    | None -> true
+                    | Some b -> b
     match mt with
     | App(f, mts) -> 
       let fSymbol, infix = SimplePrettyPrinter.FindFunctionSymbol f.Name
@@ -56,21 +59,27 @@ type SimplePrettyPrinter() =
       elif fSymbol = "emptyInfon" then
         [ TextToken <| "asInfon(true)" ]
       elif fSymbol = "rule" then
-        let vars = mt.Vars |> Seq.toList
-        let varsDecl = List.map (fun (v: IVar) -> v.Name + ": " + spp.PrintType v.Type) vars
-        let beginVars, endVars =  if varsDecl.Length > 0 then
-                                    [ TextToken <| "with " + (String.concat ", " varsDecl);
-                                      TabToken;
-                                      NewLineToken ], [UntabToken]
-                                  else
-                                    [], []
+        let beginVars, endVars =  
+          if withVars then 
+            spp.TokenizeVariableDeclaration (mt.Vars |> Seq.toList)
+          else
+            [], []
         let mainTokens = 
-          [ ManyTokens <| spp.TokenizeTerm mts.[0] ]
+          [ ManyTokens <| spp.TokenizeTerm(mts.[0], false)]
           @ [ TextToken <| "do" ]
           @ [ TabToken; NewLineToken ]
-          @ [ ManyTokens <| spp.TokenizeTerm mts.[1] ]
-          @ [ UntabToken ]
+          @ [ ManyTokens <| spp.TokenizeTerm(mts.[1], false)]
+          @ [ UntabToken; NewLineToken ]
         beginVars @ mainTokens @ endVars
+      elif fSymbol = "seqRule" then
+        let beginVars, endVars =  
+          if withVars then 
+            spp.TokenizeVariableDeclaration (mt.Vars |> Seq.toList)
+          else
+            [], []
+        beginVars
+        @ List.map (fun mt -> ManyTokens <| spp.TokenizeTerm(mt, false)) mts
+        @ endVars
       elif fSymbol = "wireCondition" then
         [ TextToken <| "upon";
           TabToken; NewLineToken;
@@ -99,8 +108,7 @@ type SimplePrettyPrinter() =
           ManyTokens <| spp.TokenizeTerm mts.[0];
           UntabToken; NewLineToken ]
       elif fSymbol = "seqAction" || fSymbol = "seqCondition" then
-        [ ManyTokens <| spp.TokenizeTerm mts.[0];
-          ManyTokens <| spp.TokenizeTerm mts.[1] ]
+        List.concat (List.map spp.TokenizeTerm mts)
       elif not infix && mts = [] then
         [ TextToken <| fSymbol ]
       else
@@ -120,8 +128,17 @@ type SimplePrettyPrinter() =
       [ TextToken <| "{| \"" + t.Namespace + "\" | " + printedSubstrateTerm + " |}" ]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %A" mt
    
+  member private spp.TokenizeVariableDeclaration (vars: IVar list) =
+    let varsDecl = List.map (fun (v: IVar) -> v.Name + ": " + spp.PrintType v.Type) vars
+    if varsDecl.Length > 0 then
+      [ TextToken <| "with " + (String.concat ", " varsDecl);
+        TabToken;
+        NewLineToken ], [UntabToken; NewLineToken]
+    else
+      [], []
+
   member private spp.TokenizePolicy (p: Policy) =
-    List.collect (fun a -> spp.TokenizeTerm a @ [ NewLineToken; NewLineToken ]) p.Rules
+    List.collect (fun a -> spp.TokenizeTerm a) p.Rules
 
   member private spp.TokenizeSignature (s: Signature) =
     List.collect (fun sd -> spp.TokenizeSubstrateDeclaration sd @ [ NewLineToken; NewLineToken ]) s.Substrates

@@ -96,13 +96,19 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
     // To store the changes to be applied at the end of the round
     let actions = new HashSet<ITerm>()
 
-    // Traverse rules
-    for rule in rules do
+    let rec traverse rule = 
       match rule with
       | Rule(condition, action) ->
           for subst in se.SolveCondition condition [Substitution.Id] do
             actions.Add (action.Apply subst) |> ignore
+      | EmptyRule -> ()
+      | SeqRule (rules) ->
+        List.iter traverse rules
       | _ -> failwith <| "Expecting rule when executing round"
+
+    // Traverse rules
+    for rule in rules do
+      traverse rule
 
     // Check consistency and apply changes
     let actions = Seq.toList actions
@@ -124,7 +130,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
     for action in actions do
       let changes = 
         match action with
-        | SeqAction(a1, a2) -> se.ApplyActions [a1; a2]
+        | SeqAction(actions) -> se.ApplyActions actions
         | Learn(infon) -> engine.Learn infon
         | Forget(infon) -> engine.Forget infon
         | Send(ppal, infon) -> router.Send infon ppal; false
@@ -144,6 +150,6 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
       quarantine.Matches i substs
     | KnownCondition(i) ->
       engine.Derive(i, substs)
-    | SeqCondition(c1, c2) ->
-      se.SolveCondition c2 <| se.SolveCondition c1 substs
+    | SeqCondition(conds) ->
+      List.fold (fun substs cond -> se.SolveCondition cond substs) substs conds
     | _ -> failwithf "Unrecognized condition %O" condition

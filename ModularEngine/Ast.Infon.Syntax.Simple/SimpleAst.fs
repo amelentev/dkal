@@ -26,7 +26,8 @@ type SimpleConstant =
 /// parsed elements before they are transformed (lifted) to typed MetaTerms by
 /// the Context class
 type SimpleMetaTerm = 
-| SimpleApp of SimpleArg list * SimpleFunction * SimpleMetaTerm list
+| SimpleVarDeclaration of SimpleArg list * SimpleMetaTerm
+| SimpleApp of SimpleFunction * SimpleMetaTerm list
 | SimpleConst of SimpleConstant
 | SimpleVar of SimpleVariable
 | SimpleSubstrate of string * string 

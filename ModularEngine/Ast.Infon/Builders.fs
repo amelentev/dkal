@@ -6,12 +6,24 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   open Microsoft.Research.Dkal.Ast
 
   // Rule builders
+  let SeqRule (rs: ITerm list) = 
+    App({ Name = "seqRule"; 
+          RetType = Type.Rule; 
+          ArgsType = List.replicate rs.Length Type.Rule;
+          Identity = (Primitives.SolveFunction "seqRule").Value.Identity }, rs)
+
+  let EmptyRule = 
+    App(Primitives.SolveFunction "emptyRule" |> Option.get, [])
+
   let RuleRule (c: ITerm, a: ITerm) = 
     App(Primitives.SolveFunction "rule" |> Option.get, [c; a])
 
   // Condition builders
-  let SeqCondition (c1: ITerm, c2: ITerm) = 
-    App(Primitives.SolveFunction "seqCondition" |> Option.get, [c1; c2])
+  let SeqCondition (conds: ITerm list) = 
+    App({ Name = "seqCondition"; 
+          RetType = Type.Condition; 
+          ArgsType = List.replicate conds.Length Type.Condition;
+          Identity = (Primitives.SolveFunction "seqCondition").Value.Identity }, conds)
 
   let EmptyCondition = 
     App(Primitives.SolveFunction "emptyCondition" |> Option.get, [])
@@ -23,8 +35,11 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
     App(Primitives.SolveFunction "knownCondition" |> Option.get, [i])
 
   // Action builders
-  let SeqAction (a1: ITerm, a2: ITerm) = 
-    App(Primitives.SolveFunction "seqAction" |> Option.get, [a1; a2])
+  let SeqAction (actions: ITerm list) = 
+    App({ Name = "seqAction"; 
+          RetType = Type.Action; 
+          ArgsType = List.replicate actions.Length Type.Action;
+          Identity = (Primitives.SolveFunction "seqAction").Value.Identity }, actions)
 
   let EmptyAction = 
     App(Primitives.SolveFunction "emptyAction" |> Option.get, [])
