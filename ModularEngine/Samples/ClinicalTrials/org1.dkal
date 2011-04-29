@@ -4,9 +4,11 @@ substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dk
 type Int = System.Int32
 type Bool = System.Boolean
 type Trial = Int
+type Record = Int
 
 relation participates(SITE: Dkal.Principal, T: Trial)
 relation allocatedPatients(SITE: Dkal.Principal, N1: Int, N2: Int, T: Trial)
+relation mayRead(P: Dkal.Principal, R: Record)
 
 macro org(T: Trial) : Int
 {|"ct"| T==trials.id && Ret==trials.cro |}
@@ -20,15 +22,24 @@ macro sitePatients(S: Int, T: Trial, N1: Int, N2: Int) : Bool
 macro ppalId(P: Dkal.Principal) : Int
 {|"ct"| Ret == dkal_principals.id && dkal_principals.name == ppalName(P)|}
 
-with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Dkal.Principal
+macro record (N: Int, T:Trial): Record
+{|"ct"| Ret == records.id && records.patient == N && records.trial == T |}
+
+with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Dkal.Principal, PERSON: Dkal.Principal, R: Int, N: Int
 	if me knows
 		asInfon({|"ct"|
-			org(TRIAL) == 3 && // TODO: ppalId(org(TRIAL)) == me
+			ppalId(Me) == org(TRIAL) &&
 			siteUnnotified(SITEID, TRIAL) &&
 			sitePatients(SITEID, TRIAL, N1, N2) &&
-			//TODO: fix bug: ppalId(SITE) == SITEID
-			dkal_principals.id == SITEID && dkal_principals.name == ppalName(SITE)
+			ppalId(SITE) == SITEID
 		|})
 	then
 		send to SITE
-			participates(SITE, TRIAL) && allocatedPatients(SITE, N1, N2, TRIAL)
+			participates(SITE, TRIAL) && allocatedPatients(SITE, N1, N2, TRIAL);
+		send to SITE
+			SITE said mayRead(PERSON, R)) && asInfon({|"ct"|
+				N1 <= N && N <= N2
+				&& R == record(N, TRIAL)
+			|})
+			->
+			Me said mayRead(PERSON, R)

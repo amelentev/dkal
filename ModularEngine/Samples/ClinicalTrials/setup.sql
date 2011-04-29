@@ -9,7 +9,7 @@ IF OBJECT_ID('dbo.dkal_principals','U') IS NOT NULL drop table dkal_principals;
 
 create table dkal_principals (
   id int primary key,
-  name text 
+  name varchar(MAX)
 );
 insert into dkal_principals values
   ( 1, 'keyManager'),
