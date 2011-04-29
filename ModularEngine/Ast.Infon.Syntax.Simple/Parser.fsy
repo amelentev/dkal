@@ -189,13 +189,13 @@ Condition:
   | Condition Condition               { SimpleApp("seqCondition", [$1; $2]) }
 
 Action:
-	| SAY TO MetaTerm MetaTerm			{ SimpleApp("say", [$3; $4]) }
-	| SEND TO MetaTerm MetaTerm			{ SimpleApp("send", [$3; $4]) }
-	| LEARN MetaTerm			      		{ SimpleApp("learn", [$2]) }
-	| FORGET MetaTerm				      	{ SimpleApp("forget", [$2]) }
-	| INSTALL MetaTerm			    		{ SimpleApp("install", [$2]) }
-	| UNINSTALL MetaTerm			    	{ SimpleApp("uninstall", [$2]) }
-	| Action Action		  	          { SimpleApp("seqAction", [$1; $2]) }
+	| SAY TO MetaTerm COLON MetaTerm			{ SimpleApp("say", [$3; $5]) }
+	| SEND TO MetaTerm COLON MetaTerm			{ SimpleApp("send", [$3; $5]) }
+	| LEARN MetaTerm			      		      { SimpleApp("learn", [$2]) }
+	| FORGET MetaTerm				            	{ SimpleApp("forget", [$2]) }
+	| INSTALL MetaTerm			    		      { SimpleApp("install", [$2]) }
+	| UNINSTALL MetaTerm			    	      { SimpleApp("uninstall", [$2]) }
+	| Action Action		  	                { SimpleApp("seqAction", [$1; $2]) }
 
 MetaTerms:
 	|											              { [] }
