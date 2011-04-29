@@ -27,7 +27,8 @@ module Main =
         let executor = ExecutorFactory.Executor kind router engine
 
         let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
-        printfn "%O" <| printer.PrintAssembly assembly
+        printfn "Principal %O running..." router.Me
+        printfn "------------------------------------------------------------------------"
         for rule in assembly.Policy.Rules do
           executor.InstallRule rule
         executor.Start()

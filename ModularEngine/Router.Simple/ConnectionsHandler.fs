@@ -40,7 +40,7 @@ type ConnectionsHandler(rt: RoutingTable, messageProcessingFunc) =
       channels.[ppal] <- factory.CreateChannel()
       factories.[ppal] <- factory
       factory.Closing.Add (fun _ -> printfn "Channel for %O closing..." ppal)
-
+    
   /// Stops the server-side host
   member ch.StopServer() =
     host.Close()
