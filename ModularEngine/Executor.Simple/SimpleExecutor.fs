@@ -86,7 +86,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
       lock inbox (fun () -> 
                   while inbox.Count > 0 do
                     let msg = inbox.Dequeue()
-                    printfn "GOT %O" msg
+                    printfn "<<<<<<\r\n<<<<<< GOT %O\r\n<<<<<<" msg
                     quarantine.Add msg)
 
   member private se.ExecuteRound() =

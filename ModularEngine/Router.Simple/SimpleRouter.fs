@@ -39,6 +39,7 @@ type SimpleRouter (routingFile: string, parser: IInfonParser, printer: IInfonPre
     member sr.Send infon ppal = 
       match ppal with
       | Principal(target) -> 
+        printfn ">>>>>>\r\n>>>>>> SENT TO %O: %O\r\n>>>>>>" target infon
         let msg = printer.PrintTerm infon
         connectionsHandler.Send msg target
       | _ -> failwith "Expecting principal constant as destination when sending message"
