@@ -31,13 +31,9 @@ macro orgId(T: Trial) : Int
 
 
 with TRIAL: Trial, N1: Int, N2: Int, ORG: Principal
-	upon ORG said participates(Me, TRIAL)
+	upon ORG said participates(Me, TRIAL) && allocatedPatients(Me, N1, N2, TRIAL) 
 	if asInfon({|"ct"| orgId(TRIAL) == ppalId(ORG) |})
-	do learn participates(Me, TRIAL)
-
-	upon ORG said allocatedPatients(Me, N1, N2, TRIAL) 
-	if asInfon({|"ct"| orgId(TRIAL) == ppalId(ORG) |})
-	do learn allocatedPatients(Me, N1, N2, TRIAL)
+	do learn participates(Me, TRIAL) && allocatedPatients(Me, N1, N2, TRIAL)
 
 with TRIAL: Trial, N1: Int, N2: Int, PID: Int, P1: Int, P2: Int, PHYS: Principal, N: Int, R: Record, ORG: Principal
 	if
