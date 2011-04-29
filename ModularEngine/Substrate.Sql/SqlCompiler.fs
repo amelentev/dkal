@@ -349,5 +349,5 @@ module SqlCompiler =
       let addToSubst rd (idx, subst:ISubstitution) (var : IVar) =
         let constVal = sql.ReadVar (rd, var, idx)
         (idx + 1, subst.Extend(var, constVal))
-      sql.ExecQuery (sb.ToString(), parms, opts.Trace >= 1) |>
+      sql.ExecQuery (sb.ToString(), parms, opts.Trace >= 2) |>
         Seq.map (fun rd -> Seq.fold (addToSubst rd) (0, subst) resSubst |> snd)
