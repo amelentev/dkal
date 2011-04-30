@@ -5,12 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{82b5dc81-f8ea-4d29-b717-77b4a623d6f4}</ProjectGuid>
+    <ProjectGuid>{d0f09e66-4145-4efa-b2bc-758e59b1940a}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>SubstrateFactories</RootNamespace>
-    <AssemblyName>Substrate.Factories</AssemblyName>
+    <RootNamespace>Substrate.Crypto</RootNamespace>
+    <AssemblyName>Substrate.Crypto</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>Substrate.Factories</Name>
+    <Name>Substrate.Crypto</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -20,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Substrate.Factories.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Substrate.Crypto.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,29 +29,28 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\SubstrateFactories.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Substrate.Crypto.XML</DocumentationFile>
   </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <ItemGroup>
+    <Compile Include="CryptoSubstrate.fs" />
+    <None Include="DebugScript.fsx" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="SubstrateParserFactory.fs" />
-    <Compile Include="SubstrateFactory.fs" />
-    <Compile Include="SubstratePrettyPrinterFactory.fs" />
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Name>Ast.Tree</Name>
+      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Substrate.Crypto\Substrate.Crypto.fsproj">
-      <Name>Substrate.Crypto</Name>
-      <Project>{d0f09e66-4145-4efa-b2bc-758e59b1940a}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Substrate.FSharp\Substrate.FSharp.fsproj">
@@ -59,14 +58,7 @@
       <Project>{82ba007c-b7fc-41d1-b7a8-19bfa5bb7f68}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Substrate.Sql\Substrate.Sql.fsproj">
-      <Name>Substrate.Sql</Name>
-      <Project>{65b27d4b-16fb-441a-8fd7-2b01abe789ef}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">
