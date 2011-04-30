@@ -9,6 +9,9 @@
 #I @"C:\Users\larsku\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Substrate.Crypto\bin\debug\"
 #r @"Substrate.Crypto.dll"
 
+#r "FSharp.PowerPack.dll"
+open Microsoft.FSharp.Math
+
 open Microsoft.Research.Dkal.Substrate.FSharp
 open Microsoft.Research.Dkal.Substrate.Crypto
 
@@ -55,3 +58,35 @@ let zval = (Seq.head r3).Apply(toVar z)
 let zconst = toConstElem (zval :?> FunctionTerm)
 printfn "%s" (zconst.ToString()) 
 
+// Add string length function
+sub.Add "length" (fun (x:string) -> x.Length)
+let len x = sub.createFunctionTerm "length" [x]
+
+// Query4 (value of type string)
+let query4 = (x -+- y) -@- (len (con "abc"))
+
+let r4 = sub.Solve [query4] [subst]
+printfn "%s" ((not <| Seq.isEmpty r4).ToString())
+
+// Query5
+let query5 = len (con "abc") -+- x -@- z
+
+let r5 = sub.Solve [query5] [subst]
+printfn "%s" ((not <| Seq.isEmpty r5).ToString())
+let zval2 = (Seq.head r5).Apply (toVar z)
+let zconst2 = toConstElem (zval2 :?> FunctionTerm)
+printfn "%s" (zconst2.ToString()) 
+
+(* Does not yet work
+// generic function
+let gplus (x:'a) (y:'a) = 
+  GlobalAssociations.GetNumericAssociation<'a>().Add(x,y) 
+
+sub.Add "gplus" gplus
+let (-++-) x y  = sub.createFunctionTerm "gplus" [x;y]
+
+let query6 = (con 4.0) -++- (con 3.0) -@- (con 7.0)
+
+let r6 = sub.Solve [query6] [subst]
+printfn "%s" ((not <| Seq.isEmpty r6).ToString())
+*) 
