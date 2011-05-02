@@ -71,6 +71,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Substrate.Crypto", "Substra
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ast.Substrate.Xml.Syntax.Simple", "Ast.Substrate.Xml.Syntax.Simple\Ast.Substrate.Xml.Syntax.Simple.fsproj", "{338D7A88-4612-41E9-9107-BAD8984A5CB5}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ast.Substrate.Xml.Syntax.Typed", "Ast.Substrate.Xml.Syntax.Typed\Ast.Substrate.Xml.Syntax.Typed.fsproj", "{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -319,6 +321,16 @@ Global
 		{338D7A88-4612-41E9-9107-BAD8984A5CB5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{338D7A88-4612-41E9-9107-BAD8984A5CB5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{338D7A88-4612-41E9-9107-BAD8984A5CB5}.Release|x86.ActiveCfg = Release|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -350,5 +362,6 @@ Global
 		{7CB6DDAD-0BBB-4826-A260-6F968B9DCCF7} = {7ACA9380-5DE9-41DB-B9F7-8C57E100FD79}
 		{D10A6E81-4DF6-4F74-8140-7D5D0293F005} = {7ACA9380-5DE9-41DB-B9F7-8C57E100FD79}
 		{338D7A88-4612-41E9-9107-BAD8984A5CB5} = {95C85929-0A29-4268-BCB7-7C424AF8F05F}
+		{496E343B-FEA0-4F1D-99F7-0CDC4850D99F} = {95C85929-0A29-4268-BCB7-7C424AF8F05F}
 	EndGlobalSection
 EndGlobal
