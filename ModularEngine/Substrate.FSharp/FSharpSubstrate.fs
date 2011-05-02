@@ -56,13 +56,13 @@ module FSharp =
 
     member this.Vars = 
       match this with
-      | Function { Args = args } -> List.collect (fun (x:#ITerm) -> x.Vars) args
+      | Function { Args = args } -> List.collect (fun (x:FunctionTerm) -> x.Vars) args
       | Const _ -> []
       | Var v -> [v]
 
     member this.Apply s = 
       match this with
-      | Function ({ Args = args } as func) -> Function { func with Args = List.map (fun (x:#ITerm) -> (x.Apply s) :?> FunctionTerm) args } :> ITerm
+      | Function ({ Args = args } as func) -> Function { func with Args = List.map (fun (x:FunctionTerm) -> ((x :> ITerm).Apply s) :?> FunctionTerm) args } :> ITerm
       | Var v ->  
         match s.Apply v with
         | :? FunctionTerm as x -> x :> ITerm
@@ -73,7 +73,7 @@ module FSharp =
 
     member this.Normalize() =
       match this with
-      | Function ({Args = args } as func) -> Function { func with Args = List.map (fun (x:#ITerm) -> x.Normalize() :?> FunctionTerm) args } :> ITerm
+      | Function ({Args = args } as func) -> Function { func with Args = List.map (fun (x:FunctionTerm) -> (x :> ITerm).Normalize() :?> FunctionTerm) args } :> ITerm
       | x -> x  :> ITerm
 
     member this.isGround =
