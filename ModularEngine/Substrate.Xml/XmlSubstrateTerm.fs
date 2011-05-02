@@ -3,6 +3,7 @@
 open System.Collections.Generic
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
+open System.Text
 
 /// xpath - xpath expression with (optional) input variables encoded as "$VARNAME"
 /// vars - input variables
@@ -14,6 +15,12 @@ type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: ID
   member x.XPath = xpath
   member x.Vars = vars
   member x.OutputVars = outputVars
+
+  override x.ToString() =
+    let sout = outputVars.Keys |> Seq.map (function
+        | "" -> outputVars.[""].Name
+        | attr -> outputVars.[attr].Name + "<->\"" + attr+"\"") |> String.concat ", "
+    "{| \""+ns+"\" | " + xpath + " | " + sout + " |}"
 
   interface ISubstrateTerm with
     
