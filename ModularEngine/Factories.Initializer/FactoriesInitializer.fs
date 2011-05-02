@@ -6,6 +6,7 @@ open Microsoft.Research.Dkal.Ast.Substrate.Sql.Syntax.Simple
 open Microsoft.Research.Dkal.Ast.Substrate.Sql.Syntax.Typed
 open Microsoft.Research.Dkal.Substrate.Xml
 open Microsoft.Research.Dkal.Ast.Substrate.Xml.Syntax.Simple
+open Microsoft.Research.Dkal.Ast.Substrate.Xml.Syntax.Typed
 
 type FactoriesInitializer() =
   
@@ -20,8 +21,8 @@ type FactoriesInitializer() =
 
     // XML Substrate parsers
     SubstrateParserFactory.RegisterParser typeof<XmlSubstrate> "simple" typeof<SimpleXmlParser>
-    // SubstrateParserFactory.RegisterParser typeof<XmlSubstrate> "typed" typeof<TypedXmlParser>
+    SubstrateParserFactory.RegisterParser typeof<XmlSubstrate> "typed" typeof<TypedXmlParser>
 
     // XML substrate pretty printers
     SubstratePrettyPrinterFactory.RegisterPrettyPrinter typeof<XmlSubstrate> "simple" typeof<SimpleXmlPrettyPrinter>
-    // SubstratePrettyPrinterFactory.RegisterPrettyPrinter typeof<XmlSubstrate> "typed" typeof<TypedXmlPrettyPrinter>
+    SubstratePrettyPrinterFactory.RegisterPrettyPrinter typeof<XmlSubstrate> "typed" typeof<TypedXmlPrettyPrinter>

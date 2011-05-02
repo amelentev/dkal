@@ -57,6 +57,11 @@
       <Project>{338d7a88-4612-41e9-9107-bad8984a5cb5}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Xml.Syntax.Typed\Ast.Substrate.Xml.Syntax.Typed.fsproj">
+      <Name>Ast.Substrate.Xml.Syntax.Typed</Name>
+      <Project>{496e343b-fea0-4f1d-99f7-0cdc4850d99f}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
