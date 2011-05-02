@@ -1,9 +1,13 @@
 ﻿namespace Microsoft.Research.Dkal.Substrate.Xml
 
+open System.Collections.Generic
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 
-type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: IVar list) =
+/// xpath - xpath expression with (optional) input variables encoded as "$VARNAME"
+/// vars - input variables
+/// outputVars - map from result nodes attribute names (or node name in case of "") to output variable
+type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: IDictionary<string, IVar>) =
 
   let mutable subst = Substitution.Id
 
@@ -23,4 +27,3 @@ type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: IV
     member x.Unify _ = None
 
     member x.Namespace = ns
-

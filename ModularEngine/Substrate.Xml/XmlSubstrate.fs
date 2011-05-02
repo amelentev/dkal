@@ -6,12 +6,13 @@ open System.Collections.Generic
 open System.Xml
 open System.Xml.Linq
 open System.Xml.XPath
+open System.Linq
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Interfaces
 
-type XmlSubstrate(xmldoc: XDocument, xsdFile: string, namespaces: string list) = 
+type XmlSubstrate(xmldoc: XDocument, namespaces: string list) = 
   
   let quote s =
     s // XXX: full quote
@@ -32,6 +33,15 @@ type XmlSubstrate(xmldoc: XDocument, xsdFile: string, namespaces: string list) =
         SubstrateConstant value :> Constant
     subst.Extend(var, sc)
 
+  let getValue (elem: XElement) attr =
+    match attr with
+    | "" -> elem.Name.ToString()
+    | _ -> elem.Attribute(xn attr).Value
+
+  let bindXE (subst: ISubstitution) (vars: IDictionary<string, IVar>) (elem: XElement) =
+    vars.Keys |> Seq.fold (fun subst attr ->
+      bind subst vars.[attr] (getValue elem attr)) subst
+
   let solve11 (query: XmlSubstrateTerm) (subst: ISubstitution) =
     let xpath = query.Vars |> List.fold (fun (s:string) (x:IVar) -> 
       let value = (subst.Apply x)
@@ -39,18 +49,15 @@ type XmlSubstrate(xmldoc: XDocument, xsdFile: string, namespaces: string list) =
     printfn "xpath: %A" xpath
     let res = xmldoc.Root.XPathEvaluate(xpath) :?> IEnumerable<obj>
     seq {
-      for a in res do
-        match a with
+      for elem in res do
+        match elem with
         | :? XElement as xe ->
-          let res = bind subst query.OutputVars.Head (xe.Name.ToString())
-          yield query.OutputVars.Tail |>
-            List.fold (fun acc var ->
-              let value = xe.Attribute(xn var.Name).Value
-              bind acc var value) res
-        | :? XAttribute as xa ->
-          yield bind subst query.OutputVars.Head xa.Value
+          yield bindXE subst query.OutputVars xe
+        | :? XAttribute as xa when query.OutputVars.Count=1 ->
+          let var = query.OutputVars.Values.First()
+          yield bind subst var xa.Value
         | _ ->
-          failwithf "unknown xpath result: %A" a
+          failwithf "unknown xpath result: %A" elem
     }
 
   interface ISubstrate with
@@ -65,4 +72,4 @@ type XmlSubstrate(xmldoc: XDocument, xsdFile: string, namespaces: string list) =
         substs |> Seq.collect (solve11 query)
       queries |> Seq.fold solve1Many substs
 
-  new(xmlFile: string, xdsFile: string, namespaces: string list) = XmlSubstrate(XDocument.Load(xmlFile), xdsFile, namespaces)
+  new(xmlFile: string, xdsFile: string, namespaces: string list) = XmlSubstrate(XDocument.Load(xmlFile), namespaces)
