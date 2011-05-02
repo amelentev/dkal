@@ -72,4 +72,4 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
         substs |> Seq.collect (solve11 query)
       queries |> Seq.fold solve1Many substs
 
-  new(xmlFile: string, xdsFile: string, namespaces: string list) = XmlSubstrate(XDocument.Load(xmlFile), namespaces)
+  new(xmlFile: string, namespaces: string list) = new XmlSubstrate(XDocument.Load(xmlFile), namespaces)

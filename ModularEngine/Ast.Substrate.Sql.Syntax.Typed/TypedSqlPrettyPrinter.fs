@@ -20,8 +20,6 @@ type TypedSqlPrettyPrinter() =
         PrettyPrinter.PrettyPrint <| tpp.TokenizeTerm t.Query
       | _ -> failwith "Expecting DummySubstrateTerm when printing TypedSqlSyntax"
 
-    member tpp.PrintSubstrate s = ""
-      
   member private tpp.PrintTerm mt = (tpp :> ISubstratePrettyPrinter).PrintTerm mt
   member private tpp.PrintType (t: IType) = t.FullName
 

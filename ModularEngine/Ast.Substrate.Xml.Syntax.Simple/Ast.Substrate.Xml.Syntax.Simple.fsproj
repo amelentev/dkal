@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{338d7a88-4612-41e9-9107-bad8984a5cb5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Ast.Substrate.Xml.Syntax.Simple</RootNamespace>
+    <AssemblyName>Ast.Substrate.Xml.Syntax.Simple</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <Name>Ast.Substrate.Xml.Syntax.Simple</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Ast.Substrate.Xml.Syntax.Simple.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Ast.Substrate.Xml.Syntax.Simple.XML</DocumentationFile>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\FSharpPowerPack-2.0.0.0\bin\FSharp.PowerPack.targets" />
+  <PropertyGroup>
+    <FsLexOutputFolder>$(IntermediateOutputPath)</FsLexOutputFolder>
+    <FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
+  </PropertyGroup>
+  <ItemGroup>
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module Microsoft.Research.Dkal.Ast.Substrate.Xml.Syntax.Simple.Parser</OtherFlags>
+    </FsYacc>
+    <Compile Include="$(IntermediateOutputPath)\Parser.fs">
+      <Visible>false</Visible>
+      <Link>Parser.fs</Link>
+    </Compile>
+    <Compile Include="$(IntermediateOutputPath)\Lexer.fs">
+      <Visible>false</Visible>
+      <Link>Lexer.fs</Link>
+    </Compile>
+    <Compile Include="SimpleXmlParser.fs" />
+    <Compile Include="SimpleXmlPrettyPrinter.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FSharp.PowerPack, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Name>Ast.Tree</Name>
+      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast (Ast\Ast)</Name>
+      <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
+      <Name>Interfaces</Name>
+      <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Xml\Substrate.Xml.fsproj">
+      <Name>Substrate.Xml</Name>
+      <Project>{66db220d-6608-45f4-874a-860f1acaeab9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.fsproj">
+      <Name>Utils</Name>
+      <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

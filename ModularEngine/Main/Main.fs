@@ -29,6 +29,8 @@ module Main =
         let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
         printfn "Principal %O running..." router.Me
         printfn "------------------------------------------------------------------------"
+        printfn "%O" <| printer.PrintPolicy assembly.Policy
+        printfn "------------------------------------------------------------------------"
         for rule in assembly.Policy.Rules do
           executor.InstallRule rule
         executor.Start()

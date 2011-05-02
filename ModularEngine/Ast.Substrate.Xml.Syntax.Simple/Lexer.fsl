@@ -1,0 +1,58 @@
+﻿{
+module Microsoft.Research.Dkal.Ast.Substrate.Xml.Syntax.Simple.Lexer
+
+open System
+open Microsoft.FSharp.Text.Lexing
+
+open Parser
+
+let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
+let stringBuf = new System.Text.StringBuilder()
+let add (ch:char) = stringBuf.Append ch |> ignore
+}
+
+// These are some regular expression definitions
+let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+rule tokenize = parse
+// Whitespace
+| whitespace		{ tokenize lexbuf }
+| newline			  { tokenize lexbuf }
+
+// Comments
+| '/' '*'            { comment lexbuf }
+| '/' '/' [^ '\n']*  { tokenize lexbuf }
+
+// Delimiters
+| "|"				{ PIPE }
+| "<->"     { MAPS }
+| ","				{ COMMA }
+
+// Literals
+| '"'                { stringBuf.Length <- 0;
+                       string lexbuf;
+                       STRING_LITERAL (stringBuf.ToString()) }
+
+// Identifiers
+| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9''_''.']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
+
+// EOF
+| eof   { EOF }
+
+and comment = parse 
+| "*/"               { tokenize lexbuf }
+| eof                { EOF }
+| _                  { comment lexbuf }
+
+and string = parse
+| '"' { () }
+| '\\' 'n' { add '\n'; string lexbuf }
+| '\\' 'r' { add '\r'; string lexbuf }
+| '\\' 't' { add '\t'; string lexbuf }
+| '\\' _ { add (lexbuf.Lexeme.[1]); string lexbuf }
+| [^ '\\' '"']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
+| _ { add (lexbuf.Lexeme.[0]); string lexbuf }
+| eof { () }
+

@@ -141,11 +141,7 @@ type SimplePrettyPrinter() =
     List.collect (fun a -> spp.TokenizeTerm a) p.Rules
 
   member private spp.TokenizeSignature (s: Signature) =
-    List.collect (fun sd -> spp.TokenizeSubstrateDeclaration sd @ [ NewLineToken; NewLineToken ]) s.Substrates
-      @ List.collect (fun rd -> spp.TokenizeRelationDeclaration rd @ [ NewLineToken; NewLineToken ]) s.Relations
-
-  member private spp.TokenizeSubstrateDeclaration (s: ISubstrate) =
-    [TextToken <| (SubstratePrettyPrinterFactory.SubstratePrettyPrinter s "simple").PrintSubstrate s ]
+    List.collect (fun rd -> spp.TokenizeRelationDeclaration rd @ [ NewLineToken; NewLineToken ]) s.Relations
 
   member private spp.TokenizeRelationDeclaration (rd: RelationDeclaration) =
     [TextToken <| "relation " + rd.Name + "(";

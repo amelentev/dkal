@@ -21,14 +21,6 @@ type SimpleSqlPrettyPrinter() =
         PrettyPrinter.PrettyPrint <| spp.TokenizeTerm t.Query
       | _ -> failwith "Expecting DummySubstrateTerm when printing SimpleSqlSyntax"
 
-    member spp.PrintSubstrate s =
-      match s with
-      | :? SqlSubstrate as s ->
-        "substrate sql(\"" + s.ConnectionString + "\", \"" + s.SchemaFile + "\") namespaces " +
-          (String.concat ", " (Seq.map (fun ns -> "\"" + ns + "\"") (s :> ISubstrate).Namespaces))
-      | _ -> failwith "Expecting SqlSubstrate when printing substrate"
-
-
   member private spp.PrintTerm mt = (spp :> ISubstratePrettyPrinter).PrintTerm mt
 
   static member FindFunctionSymbol f = 
