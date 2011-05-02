@@ -1,12 +1,12 @@
 ﻿
-#I @"C:\Users\larsku\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Substrate.FSharp\bin\debug\"
+#I @"..\Substrate.FSharp\bin\debug\"
 #r "Substrate.FSharp.dll"
 #r "Ast.dll"
 #r "Ast.Infon.dll"
 #r "Ast.Tree.dll"
 #r "Interfaces.dll"
 
-#I @"C:\Users\larsku\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Substrate.Crypto\bin\debug\"
+#I @"..\Substrate.Crypto\bin\debug\"
 #r @"Substrate.Crypto.dll"
 
 #r "FSharp.PowerPack.dll"
