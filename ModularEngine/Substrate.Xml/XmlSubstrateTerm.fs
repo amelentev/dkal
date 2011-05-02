@@ -3,9 +3,13 @@
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 
-type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVar: IVar) =
+type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: IVar list) =
 
   let mutable subst = Substitution.Id
+
+  member x.XPath = xpath
+  member x.Vars = vars
+  member x.OutputVars = outputVars
 
   interface ISubstrateTerm with
     
