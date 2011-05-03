@@ -22,10 +22,41 @@ open Microsoft.Research.Dkal.Interfaces
 // create substrate
 let sub = CryptoSubstrate()
 
+type Result = | Sat | UnSat
+
+// helper functions for checking queries
+let subsumes (t:#ITerm) (s1:#ISubstitution) (s2:#ISubstitution) =
+  (t.Apply s2).Apply s1 = t.Apply s1
+
+type resultT() = 
+  let mutable (res:list<string * string>) = []
+  with
+  member this.succeed(n:string) = 
+    System.Console.WriteLine ("success: " + n)
+    res <- res @ [(n,"passed")]
+    true
+  member this.fail(n:string) =
+    System.Console.WriteLine ("fail: " + n)
+    res <- res @ [(n,"failed")]
+    false
+  member this.report() = List.fold (fun s (x,y) -> s + "\n" + x + ": " + y) "" res
+  override this.ToString() = res.ToString()
+
+let results = new resultT()
+
+let check n res query subst resultSubst =
+  match (res, sub.Solve [query] [subst]) with
+  | UnSat, r when Seq.isEmpty r -> results.succeed n
+  | Sat, r when not (Seq.isEmpty r) && subsumes query (Seq.head r) resultSubst -> results.succeed n 
+  | _ -> results.fail n
+
+let ids = Substitution.Id
+
 // Convenient syntax for terms
-let x = var "x"
-let y = var "y"
-let z = var "z"
+let x = var<int> "x"
+let y = var<int> "y"
+let z = var<int> "z"
+let s = var<string> "s"
 
 let (-+-) x y = sub.createFunctionTerm "plus" [x;y]
 let (---) x y = sub.createFunctionTerm "minus" [x;y]
@@ -34,49 +65,49 @@ let (-=-) x y = sub.createFunctionTerm "eq" [x;y]
 
 let (-@-) x y = sub.createQueryTerm x y
 
-// Query1 (only constants)
-let query1 = (con 1 -+- con 2) -@- (con 3)
-
-let r1 = sub.Solve [query1] [Substitution.Id]
-printf "%s" ((not <| Seq.isEmpty r1).ToString())
-
-// Substitution for variables x and y
-let subst = Substitution.Id.Extend(toVar x, con 1).Extend(toVar y, con 2)
-
-// Query2 (constant result)
-let query2 = (x -+- y) -@- (con 3)
-
-let r2 = sub.Solve [query2] [subst]
-printf "%s" ((not <| Seq.isEmpty r2).ToString())
-
-// Query3 (compute value for z)
-let query3 = (x -+- y) -@- z
-
-let r3 = sub.Solve [query3] [subst]
-printfn "%s" ((not <| Seq.isEmpty r3).ToString())
-let zval = (Seq.head r3).Apply(toVar z)
-//let zconst = toConstElem (zval :?> FunctionTerm)
-//printfn "%s" (zconst.ToString()) 
-
 // Add string length function
 sub.Add "length" (fun (x:string) -> x.Length)
 let len x = sub.createFunctionTerm "length" [x]
 
+// Add substring function
+sub.Add "substring" (fun (x:string) (i:int) (l:int) -> x.Substring(i,l))
+let substring x i l = sub.createFunctionTerm "substring" [x;i;l]
+
+// Substitutions for variables x and y
+let subst = ids.Extend(toVar x, con 1).Extend(toVar y, con 2)
+let substf = ids.Extend(toVar x, con 1).Extend(toVar y, con 3)
+
+// Query1 (only constants)
+let query1 = (con 1 -+- con 2) -@- (con 3)
+check "query1" Sat query1 ids ids
+
+// Query2 (constant result)
+let query2 = (x -+- y) -@- (con 3)
+check "query2" Sat query2 subst ids
+check "query2 (wrong subsitution)" UnSat query2 substf ids
+
+let query2f = (x -+- y) -@- (con 4)
+check "query2f" UnSat query2f subst ids
+
+// Query3 (compute value for z)
+let query3 = (x -+- y) -@- z
+check "query3" Sat query3 subst <| ids.Extend(toVar z, con 3)
+
 // Query4 (value of type string)
 let query4 = (x -+- y) -@- (len (con "abc"))
-
-let r4 = sub.Solve [query4] [subst]
-printfn "%s" ((not <| Seq.isEmpty r4).ToString())
+check "query4" Sat query4 subst ids
+check "query4 (wrong substitution)" UnSat query4 substf ids
 
 // Query5
 let query5 = len (con "abc") -+- x -@- z
+check "query5" Sat query5 subst <| ids.Extend(toVar z, con 4)
 
-let r5 = sub.Solve [query5] [subst]
-printfn "%s" ((not <| Seq.isEmpty r5).ToString())
-let zval2 = (Seq.head r5).Apply (toVar z)
-()
-//let zconst2 = toConstElem (zval2 :?> FunctionTerm)
-//printfn "%s" (zconst2.ToString()) 
+let query6 = substring (con "abcde") (con 1) (con 3) -@- con "bcd"
+check "query6" Sat query6 ids ids
+
+// string variable
+let query7 = substring (con "abcde") (con 1) (con 3) -@- s
+check "query7" Sat query7 ids <| ids.Extend(toVar s, con "bcd")
 
 (* Does not yet work
 // generic function
@@ -87,7 +118,6 @@ sub.Add "gplus" gplus
 let (-++-) x y  = sub.createFunctionTerm "gplus" [x;y]
 
 let query6 = (con 4.0) -++- (con 3.0) -@- (con 7.0)
-
-let r6 = sub.Solve [query6] [subst]
-printfn "%s" ((not <| Seq.isEmpty r6).ToString())
 *) 
+
+results.report()
