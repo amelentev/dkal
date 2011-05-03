@@ -26,6 +26,8 @@ namespace Microsoft.Research.DkalController
     [STAThread]
     static void Main(string[] args)
     {
+      try
+      {
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
 
@@ -90,7 +92,10 @@ namespace Microsoft.Research.DkalController
       Application.Run(comm);
 
       e.Close();
+      } catch (Exception ex)
+      {
+          MessageBox.Show(ex.ToString());
+      }
     }
   }
 }
-
