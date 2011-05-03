@@ -13,4 +13,6 @@ type ISubstrate =
   
   abstract member Update: ISubstrateUpdateTerm -> bool
 
+  abstract member AreConsistentUpdates: ISubstrateUpdateTerm seq -> bool
+
   abstract member RequiredVars: query: ISubstrateQueryTerm -> IVar list

@@ -29,4 +29,5 @@ type SimpleMetaTerm =
 | SimpleConst of SimpleConstant
 | SimpleVar of SimpleVariable
 | SimpleSubstrate of string * string 
+| SimpleModify of SimpleMetaTerm * (string * SimpleMetaTerm) list
 

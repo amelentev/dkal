@@ -220,7 +220,7 @@ module SqlCompiler =
               log("warning: unmapped operation '" + fn.Name + "'")
               let op = {name=fn.Name; infix=(args.Length>1)} : SqlOp
               Expr.Op (op, args)
-          | :? DummySubstrateTerm as st ->
+          | :? DummySubstrateQueryTerm as st ->
             incr nextScope
             let res = comp !nextScope st.Query
             res

@@ -3,6 +3,7 @@
 open System.Collections.Generic
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Ast.Infon
 
 /// Provides functionality to check if a set of action Metaterms is consistent
@@ -13,7 +14,8 @@ type ConsistencyChecker() =
   /// Checks that the given list of actions is consistent
   static member AreConsistentActions (actions: ITerm list) = 
     not(ConsistencyChecker.HasInstallingConflicts(actions) || 
-        ConsistencyChecker.HasLearningConflicts(actions))
+        ConsistencyChecker.HasLearningConflicts(actions) || 
+        ConsistencyChecker.HasUpdateConflicts(actions))
       
   /// Checks install/uninstall conflicts
   static member private HasInstallingConflicts (actions: ITerm list) =
@@ -26,7 +28,6 @@ type ConsistencyChecker() =
                                           | Uninstall(r) -> [r]
                                           | _ -> [])
     List.exists (fun r1 -> List.exists (fun r2 -> r1 = r2) uninstalling) installing
-
 
   /// Checks learn/forget conflicts
   static member private HasLearningConflicts (actions: ITerm list) =
@@ -44,6 +45,12 @@ type ConsistencyChecker() =
                                         | AndInfon(is) -> is
                                         | i -> [i]
                                       | _ -> [])
-
     List.exists (fun (i1 : ITerm) -> List.exists (fun i2 -> i1.Unify i2 <> None) learning) forgetting
 
+  /// Checks substrate update conflicts
+  static member private HasUpdateConflicts (actions: ITerm list) =
+    let updates = actions |> List.collect
+                    (fun action ->  match action with
+                                    | Apply(su) -> [su]
+                                    | _ -> [])
+    SubstrateDispatcher.CheckConsistency updates

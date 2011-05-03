@@ -3,6 +3,7 @@
 open System.Collections.Generic
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Ast
 
 /// TODO:
 type SqlSubstrateModifyTerm(ns: string, query: ITerm, colsMapping : IDictionary<string, ITerm>) = 
@@ -16,7 +17,7 @@ type SqlSubstrateModifyTerm(ns: string, query: ITerm, colsMapping : IDictionary<
   interface ISubstrateUpdateTerm with
     member this.Namespace = ns
   interface ITerm with
-    member this.Type = query.Type
+    member this.Type = Type.SubstrateUpdate
     member this.Vars = query.Vars
     member this.Apply s = SqlSubstrateModifyTerm(ns, query.Apply s, this.dictApply s) :> ITerm
     member this.Normalize() = SqlSubstrateModifyTerm(ns, query.Normalize(), colsMapping) :> ITerm

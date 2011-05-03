@@ -53,6 +53,8 @@ rule tokenize = parse
 | ";"				{ SEMICOLON }
 | ","				{ COMMA }
 | "."				{ DOT }
+| "|"       { PIPE }
+| ":="      { GETS }
 
 // Literals
 | "true"			{ TRUE } 

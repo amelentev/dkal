@@ -73,4 +73,6 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
 
     member xs.Update _ = failwith "XML substrate does not support updates"
 
+    member xs.AreConsistentUpdates _ = failwith "XML substrate does not support updates"
+
   new(xmlFile: string, namespaces: string list) = new XmlSubstrate(XDocument.Load(xmlFile), namespaces)

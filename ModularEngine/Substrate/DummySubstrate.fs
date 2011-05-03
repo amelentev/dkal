@@ -11,3 +11,4 @@ type DummySubstrate() =
     member this.Namespaces = new HashSet<string>()
     member this.RequiredVars (query: ISubstrateQueryTerm) = query.Vars
     member this.Update _ = false
+    member this.AreConsistentUpdates _ = true

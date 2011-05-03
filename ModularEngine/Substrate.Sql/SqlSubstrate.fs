@@ -32,7 +32,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
     xd.Load(schemaFile)
     let xnm = new XmlNamespaceManager(xd.NameTable)
     xnm.AddNamespace("dbml", "http://schemas.microsoft.com/linqtosql/dbml/2007")
-    let node = xd.DocumentElement.SelectSingleNode("//dbml:Database/dbml:Table[@Name='" + table + "']/dbml:Type/dbml:Column[@Name='" + column + "']", xnm)
+    let node = xd.DocumentElement.SelectSingleNode("//dbml:Database/dbml:Table[@Name='dbo." + table + "']/dbml:Type/dbml:Column[@Name='" + column + "']", xnm)
     if node = null then
       failwithf "Could not find column %O in table %O" column table
     else 
@@ -42,7 +42,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
   interface ISubstrate with
     member this.Solve queries substs =
       let queries = queries |> Seq.map (function
-        | :? DummySubstrateTerm as t -> t.Query
+        | :? DummySubstrateQueryTerm as t -> t.Query
         | _ as t -> failwithf "not DummySubstrateTerm: %A" t)
       // translate all >2-ary functions functions to 2-ary
       let rec normalize2 = function
@@ -53,8 +53,8 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
           App(f'', [normalize2 a1; n])
         | App(f, lst) ->
           App(f, lst |> List.map normalize2)
-        | :? DummySubstrateTerm as st when namespaces.Contains (st:>ISubstrateTerm).Namespace ->
-          DummySubstrateTerm(normalize2 st.Query, (st:>ISubstrateTerm).Namespace) :> ITerm
+        | :? DummySubstrateQueryTerm as st when namespaces.Contains (st:>ISubstrateTerm).Namespace ->
+          DummySubstrateQueryTerm(normalize2 st.Query, (st:>ISubstrateTerm).Namespace) :> ITerm
         | t -> t
       // translate boolean (table.column) to (table.column=1)
       let rec boolenize = function
@@ -67,7 +67,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
         | App(f, args) ->
           let r = List.unzip (args |> List.map separateExternalSubstrates)
           (App(f, fst r), List.concat (snd r))
-        | :? ISubstrateTerm as st when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
+        | :? ISubstrateQueryTerm as st when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
           // Works only when used on top level without disjunctions
           Const (Constant true), [st]
           // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
@@ -87,5 +87,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
 
     member this.Update substrateUpdateTerm = failwith "TODO: implement" // TODO
 
+    member xs.AreConsistentUpdates _ = failwith "TODO: implement" // TODO
+
     member this.Namespaces = new HashSet<_>(namespaces)
-    member this.RequiredVars (query: ISubstrateTerm) = []
+    member this.RequiredVars (query: ISubstrateQueryTerm) = []

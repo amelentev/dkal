@@ -8,21 +8,36 @@
   open Microsoft.Research.Dkal.Ast.Infon
   open Microsoft.Research.Dkal.Ast
   open Microsoft.Research.Dkal.Ast.Substrate.Sql.Syntax.Simple.SimpleAst
+  open Microsoft.Research.Dkal.Substrate
   open Microsoft.Research.Dkal.Substrate.Sql
   open Microsoft.Research.Dkal.Substrate.Factories
   
   /// A Lifter is responsible for lifting untyped SimpleMetaTerms into typed
   /// MetaTerms. 
-  type Lifter(substrate: SqlSubstrate, context: IParsingContext) =
+  type Lifter(substrate: SqlSubstrate, context: IParsingContext, ns: string) =
 
     /// Given a SimpleMetaTerm smt and a Type t, it returns its the 
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
     /// macros are solved and its conditions are added as an extra AsInfon
     /// expression in the end.
-    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) (typ: IType) : ITerm =
-      let mainTerm, solvedMacros = ctx.Traverse smt typ
-      let termWithMacros = AndBool((Seq.toList solvedMacros) @ [mainTerm])
-      termWithMacros.Normalize()
+    member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) : ISubstrateTerm =
+      let queryWithMacros smt = 
+        let mainTerm, solvedMacros = ctx.Traverse smt Type.Boolean
+        let termWithMacros = AndBool((Seq.toList solvedMacros) @ [mainTerm])
+        termWithMacros.Normalize()
+
+      match smt with
+      | SimpleModify(query, cols) -> 
+        let colsMapping = new Dictionary<string, ITerm>()
+        for (tableCol, smt) in cols do
+          let table, column = ctx.SplitTableCol tableCol
+          let t, (macros: ITerm list) = ctx.Traverse smt (Type.Substrate(substrate.GetColumnType table column))
+          if not(macros.IsEmpty) then
+            failwith "Unresolved macros inside SQL modify statement"
+          colsMapping.[tableCol] <- t
+        SqlSubstrateModifyTerm(ns, queryWithMacros query, colsMapping) :> ISubstrateTerm
+      | _ ->
+        new DummySubstrateQueryTerm(queryWithMacros smt, ns) :> ISubstrateTerm
 
     member private ctx.LookaheadType (smt: SimpleMetaTerm) =
       match smt with
@@ -35,6 +50,8 @@
         ctx.LiftSimpleVariable(v).Type
       | SimpleSubstrate(ns, exp) ->
         Type.Boolean
+      | SimpleModify(_) -> 
+        Type.SubstrateUpdate
   
     member private ctx.Traverse (smt: SimpleMetaTerm) (typ: IType) =
       let t, solvedMacros = 
@@ -47,6 +64,8 @@
           ctx.LiftSimpleVariable(v), []
         | SimpleSubstrate(ns, exp) ->
           ctx.LiftSimpleSubstrate ns exp, []
+        | SimpleModify(query, cols) ->
+          failwith "Found modification statement inside substrate expression"
       if t.Type = typ then 
         t, solvedMacros
       else 
@@ -56,11 +75,9 @@
                     : ITerm * ITerm list =
       // check if it is a table.column operator
       if f.Contains "." then
-        match f.Split [|'.'|] with
-        | [| table; column |] -> 
-          let typ = Type.Substrate(substrate.GetColumnType ("dbo."+table) column)
-          App({Name=f; RetType=typ; ArgsType=[]; Identity=None}, []), []
-        | _ -> failwithf "Incorrect table.column operator usage in %O" f
+        let table, column = ctx.SplitTableCol f
+        let typ = Type.Substrate(substrate.GetColumnType table column)
+        App({Name=f; RetType=typ; ArgsType=[]; Identity=None}, []), []
       // check if it is a macro
       elif context.HasMacro f then
         let args = context.GetMacroArgs f
@@ -109,5 +126,8 @@
       let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (Some context)
       parser.ParseTerm exp :> ITerm
 
-
-
+    member private ctx.SplitTableCol (tableCol: string) =
+      match tableCol.Split [|'.'|] with
+      | [| table; column |] -> 
+        table, column
+      | _ -> failwithf "Incorrect table.column operator usage in %O" tableCol

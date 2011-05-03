@@ -36,6 +36,6 @@ type SimpleSqlParser() =
 
     member sp.ParseTerm s = 
       let smt = Parser.MetaTerm Lexer.tokenize (lexbuff s)
-      let t = (new Lifter(_substrate.Value, _context.Value)).LiftSimpleMetaTerm smt Type.Boolean
-      new DummySubstrateQueryTerm(t, _ns) :> ISubstrateTerm
-
+      let lifter = new Lifter(_substrate.Value, _context.Value, _ns)
+      lifter.LiftSimpleMetaTerm smt
+      

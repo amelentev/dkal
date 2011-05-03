@@ -6,6 +6,7 @@ open System.Threading
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Substrate
 
 /// The SimpleExecutor runs an endless loop. On each iteration, every rule is 
 /// processed to see if it has to be applied. All necessary changes are saved
@@ -137,6 +138,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
         | Say(ppal, infon) -> router.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
         | Install(rule) -> rules.Add(rule)
         | Uninstall(rule) -> rules.Remove(rule)
+        | Apply(su) -> SubstrateDispatcher.Update su
         | _ -> failwithf "Unrecognized action %O" action
       changed <- changed || changes        
     changed

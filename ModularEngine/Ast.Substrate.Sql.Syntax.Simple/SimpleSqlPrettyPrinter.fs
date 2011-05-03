@@ -20,6 +20,12 @@ type SimpleSqlPrettyPrinter() =
       match t with
       | :? DummySubstrateQueryTerm as t ->
         PrettyPrinter.PrettyPrint <| spp.TokenizeTerm t.Query
+      | :? SqlSubstrateModifyTerm as t ->
+        PrettyPrinter.PrettyPrint <| 
+          [ ManyTokens <| spp.TokenizeTerm t.Query;
+            TextToken <| " | ";
+            TextToken <| String.concat ", " 
+              (Seq.map (fun (kv: KeyValuePair<_,_>) -> kv.Key + " := " + (PrettyPrinter.PrettyPrint <| spp.TokenizeTerm kv.Value)) t.ColsMapping) ] 
       | _ -> failwith "Expecting DummySubstrateTerm when printing SimpleSqlSyntax"
 
   member private spp.PrintTerm mt = (spp :> ISubstratePrettyPrinter).PrintTerm mt
