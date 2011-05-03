@@ -53,4 +53,4 @@ type ConsistencyChecker() =
                     (fun action ->  match action with
                                     | Apply(su) -> [su]
                                     | _ -> [])
-    SubstrateDispatcher.CheckConsistency updates
+    not(SubstrateDispatcher.AreConsistentUpdates updates)

@@ -17,7 +17,7 @@ type SubstrateDispatcher() =
       |> Seq.groupBy (fun q -> q.Namespace)
       |> Seq.fold (fun res (ns, qs) -> (SubstrateMap.GetSubstrate ns).Solve qs res) substs
 
-  static member CheckConsistency (updates: ISubstrateUpdateTerm seq) = 
+  static member AreConsistentUpdates (updates: ISubstrateUpdateTerm seq) = 
     updates
       |> Seq.groupBy (fun q -> q.Namespace) 
       |> Seq.fold (fun res (ns, updates) -> res && (SubstrateMap.GetSubstrate ns).AreConsistentUpdates updates) true

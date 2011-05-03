@@ -39,8 +39,8 @@
     <Compile Include="ActivePatterns.fs" />
     <Compile Include="SqlConnector.fs" />
     <Compile Include="SqlCompiler.fs" />
-    <Compile Include="SqlSubstrate.fs" />
     <Compile Include="SqlSubstrateModifyTerm.fs" />
+    <Compile Include="SqlSubstrate.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

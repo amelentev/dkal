@@ -87,7 +87,19 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
 
     member this.Update substrateUpdateTerm = failwith "TODO: implement" // TODO
 
-    member xs.AreConsistentUpdates _ = failwith "TODO: implement" // TODO
+    // As of now, we check that there are no updates that try to modify the same table
+    member xs.AreConsistentUpdates updates = 
+      let table (tableCol: string) = (tableCol.Split '.').[0]
+      let tableSets = seq { for update in updates do
+                              match update with
+                              | :? SqlSubstrateModifyTerm as t -> 
+                                yield new HashSet<_> (seq { for tableCol in t.ColsMapping.Keys -> table tableCol })
+                              | _ -> failwith "SQL substrate does not understand update" }
+      let allTables = new HashSet<string>()
+      Seq.fold (fun consistent tableSet -> 
+                  let ret = consistent && not(allTables.Overlaps(tableSet))
+                  allTables.UnionWith(tableSet)
+                  ret) true tableSets
 
     member this.Namespaces = new HashSet<_>(namespaces)
     member this.RequiredVars (query: ISubstrateQueryTerm) = []
