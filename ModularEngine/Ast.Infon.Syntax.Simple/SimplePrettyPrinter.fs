@@ -2,8 +2,9 @@
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Globals
-open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
 open Microsoft.Research.Dkal.Substrate.Factories
 
@@ -118,7 +119,7 @@ type SimplePrettyPrinter() =
     | Var(v) -> [TextToken v.Name]
     | True -> [TextToken "true"]
     | False -> [TextToken "false"]
-    | Principal(p) -> [TextToken(p)]
+    | PrincipalConstant(p) -> [TextToken(p)]
     | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
     | SubstrateConstant(o) -> [TextToken(o.ToString())]
     | :? ISubstrateTerm as t -> 

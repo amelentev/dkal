@@ -8,14 +8,13 @@ module Microsoft.Research.Dkal.Substrate.Sql.Builders
 
   // Bool builders
   let AndBool (bools: ITerm list) = 
-    App({ Name = "and"; 
+    App({ Name = SqlPrimitives.And; 
           RetType = Type.Boolean; 
           ArgsType = List.replicate bools.Length Type.Boolean;
           Identity = Some True }, bools)
-    
 
   let OrBool (bools: ITerm list) = 
-    App({ Name = "or"; 
+    App({ Name = SqlPrimitives.Or; 
           RetType = Type.Boolean; 
           ArgsType = List.replicate bools.Length Type.Boolean;
           Identity = Some False }, bools)

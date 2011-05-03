@@ -7,79 +7,79 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
 
   // Rule builders
   let SeqRule (rs: ITerm list) = 
-    App({ Name = "seqRule"; 
+    App({ Name = Primitives.SeqRule; 
           RetType = Type.Rule; 
           ArgsType = List.replicate rs.Length Type.Rule;
-          Identity = (Primitives.SolveFunction "seqRule").Value.Identity }, rs)
+          Identity = (Primitives.SolveFunction Primitives.SeqRule).Value.Identity }, rs)
 
   let EmptyRule = 
-    App(Primitives.SolveFunction "emptyRule" |> Option.get, [])
+    App(Primitives.SolveFunction Primitives.EmptyRule |> Option.get, [])
 
   let RuleRule (c: ITerm, a: ITerm) = 
-    App(Primitives.SolveFunction "rule" |> Option.get, [c; a])
+    App(Primitives.SolveFunction Primitives.Rule |> Option.get, [c; a])
 
   // Condition builders
   let SeqCondition (conds: ITerm list) = 
-    App({ Name = "seqCondition"; 
+    App({ Name = Primitives.SeqCondition; 
           RetType = Type.Condition; 
           ArgsType = List.replicate conds.Length Type.Condition;
-          Identity = (Primitives.SolveFunction "seqCondition").Value.Identity }, conds)
+          Identity = (Primitives.SolveFunction Primitives.SeqCondition).Value.Identity }, conds)
 
   let EmptyCondition = 
-    App(Primitives.SolveFunction "emptyCondition" |> Option.get, [])
+    App(Primitives.SolveFunction Primitives.EmptyCondition |> Option.get, [])
 
   let WireCondition (i: ITerm) = 
-    App(Primitives.SolveFunction "wireCondition" |> Option.get, [i])
+    App(Primitives.SolveFunction Primitives.WireCondition |> Option.get, [i])
 
   let KnownCondition (i: ITerm) = 
-    App(Primitives.SolveFunction "knownCondition" |> Option.get, [i])
+    App(Primitives.SolveFunction Primitives.KnownCondition |> Option.get, [i])
 
   // Action builders
   let SeqAction (actions: ITerm list) = 
-    App({ Name = "seqAction"; 
+    App({ Name = Primitives.SeqAction; 
           RetType = Type.Action; 
           ArgsType = List.replicate actions.Length Type.Action;
-          Identity = (Primitives.SolveFunction "seqAction").Value.Identity }, actions)
+          Identity = (Primitives.SolveFunction Primitives.SeqAction).Value.Identity }, actions)
 
   let EmptyAction = 
-    App(Primitives.SolveFunction "emptyAction" |> Option.get, [])
+    App(Primitives.SolveFunction Primitives.EmptyAction |> Option.get, [])
 
   let SendAction (ppal: ITerm, i: ITerm) = 
-    App(Primitives.SolveFunction "send" |> Option.get, [ppal; i])
+    App(Primitives.SolveFunction Primitives.Send |> Option.get, [ppal; i])
     
   let SayAction (ppal: ITerm, i: ITerm) = 
-    App(Primitives.SolveFunction "say" |> Option.get, [ppal; i])
+    App(Primitives.SolveFunction Primitives.Say |> Option.get, [ppal; i])
 
   let LearnAction (i: ITerm) = 
-    App(Primitives.SolveFunction "learn" |> Option.get, [i])
+    App(Primitives.SolveFunction Primitives.Learn |> Option.get, [i])
     
   let ForgetAction (i: ITerm) = 
-    App(Primitives.SolveFunction "forget" |> Option.get, [i])
+    App(Primitives.SolveFunction Primitives.Forget |> Option.get, [i])
     
   let InstallAction (r: ITerm) = 
-    App(Primitives.SolveFunction "install" |> Option.get, [r])
+    App(Primitives.SolveFunction Primitives.Install |> Option.get, [r])
 
   let UninstallAction (r: ITerm) = 
-    App(Primitives.SolveFunction "uninstall" |> Option.get, [r])
+    App(Primitives.SolveFunction Primitives.Uninstall |> Option.get, [r])
 
   // Infon builders
   let EmptyInfon = 
-    App(Primitives.SolveFunction "emptyInfon" |> Option.get, [])
+    App(Primitives.SolveFunction Primitives.EmptyInfon |> Option.get, [])
     
   let AsInfon (query: ISubstrateTerm) = 
-    App(Primitives.SolveFunction "asInfon" |> Option.get, [query])
+    App(Primitives.SolveFunction Primitives.AsInfon |> Option.get, [query])
     
   let AndInfon (infons: ITerm list) = 
-    App({ Name = "and"; 
+    App({ Name = Primitives.And; 
           RetType = Type.Infon; 
           ArgsType = List.replicate infons.Length Type.Infon;
-          Identity = (Primitives.SolveFunction "and").Value.Identity }, infons)
+          Identity = (Primitives.SolveFunction Primitives.And).Value.Identity }, infons)
     
   let ImpliesInfon (i1: ITerm, i2: ITerm) = 
-    App(Primitives.SolveFunction "implies" |> Option.get, [i1; i2])
+    App(Primitives.SolveFunction Primitives.Implies |> Option.get, [i1; i2])
 
   let SaidInfon (ppal: ITerm, i: ITerm) = 
-    App(Primitives.SolveFunction "said" |> Option.get, [ppal; i])
+    App(Primitives.SolveFunction Primitives.Said |> Option.get, [ppal; i])
   
   let PrefixedInfon (ppals: ITerm list, i: ITerm) =
     List.foldBack (fun ppal i -> SaidInfon(ppal, i)) ppals i
@@ -95,10 +95,4 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
 //          RetType = Sequence(e.Type :?>  Type) ;
 //          ArgsType = [e.Type :?> Type; Sequence(e.Type :?> Type)] }, [e; es])
 
-  // Literal builders
-  let Principal (ppal: string) = 
-    Const(PrincipalConstant(ppal))
-
-  let True = Const(SubstrateConstant(true))
-  let False = Const(SubstrateConstant(false))
 

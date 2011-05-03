@@ -1,7 +1,7 @@
 ﻿namespace Microsoft.Research.Dkal.Router.Simple
 
 open Microsoft.Research.Dkal.Ast.Infon
-open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 
 
@@ -38,7 +38,7 @@ type SimpleRouter (routingFile: string, parser: IInfonParser, printer: IInfonPre
     
     member sr.Send infon ppal = 
       match ppal with
-      | Principal(target) -> 
+      | PrincipalConstant(target) -> 
         printfn ">>>>>>\r\n>>>>>> SENT TO %O: %O\r\n>>>>>>" target infon
         let msg = printer.PrintTerm infon
         connectionsHandler.Send msg target

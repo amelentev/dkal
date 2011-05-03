@@ -40,8 +40,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Types.fs" />
-    <Compile Include="ActivePatterns.fs" />
     <Compile Include="Substitution.fs" />
+    <Compile Include="Variable.fs" />
+    <Compile Include="Constants.fs" />
+    <Compile Include="ActivePatterns.fs" />
+    <Compile Include="Builders.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">

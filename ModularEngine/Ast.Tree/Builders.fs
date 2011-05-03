@@ -9,9 +9,4 @@ module Microsoft.Research.Dkal.Ast.Tree.Builders
     else
       failwithf "Incorrect parameter types when building %O: %O" f.Name args
 
-  let Const (c: Constant) =
-    c :> ITerm
-
-  let Var (v: Variable) =
-    v :> ITerm
 

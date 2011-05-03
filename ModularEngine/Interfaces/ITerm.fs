@@ -16,6 +16,10 @@ and IVar =
   inherit ITerm
   abstract member Name: string
 
+and IConst<'t> =
+  inherit ITerm
+  abstract member Value: 't
+
 and ISubstitution =
   abstract member Apply: IVar -> ITerm
   abstract member Extend: v: IVar * t: ITerm -> ISubstitution

@@ -46,13 +46,13 @@ module FSharp =
   and FunctionTerm = 
   | Function of Function
   | Var of IVar
-  | Const of SubstrateConstant
+  | Const of Constant<obj>
     with
     member this.Type =
       match this with
       | Function { ReturnType = t } -> Type.Substrate(t) :> IType
       | Var v -> v.Type
-      | Const c -> c.Type
+      | Const c -> (c :> ITerm).Type
 
     member this.Vars = 
       match this with
@@ -67,7 +67,7 @@ module FSharp =
         match s.Apply v with
         | :? FunctionTerm as x -> x :> ITerm
         | :? IVar as x -> Var x :> ITerm
-        | :? SubstrateConstant as x -> Const x :> ITerm
+        | :? Constant<obj> as x -> Const x :> ITerm
         | _ -> failwith "Illegal substitution"
       | Const c as x -> x :> ITerm
 
@@ -138,8 +138,8 @@ module FSharp =
 
  
   /// Convenient Functions for in memory construction and inspection of FunctionTerms and FunctionQueryTerms 
-  let var (n:string) : FunctionTerm = Var {Tree.Name=n; Tree.Type=Type.Substrate(typeof<int>); }
-  let con c : FunctionTerm = Const <| SubstrateConstant (box c)
+  let var (n:string) : FunctionTerm = Var {Name=n; Type=Type.Substrate(typeof<int>); }
+  let con c : FunctionTerm = Const <| Constant (box c)
   
   let toVar = function
   | Var x -> x
@@ -192,7 +192,7 @@ module FSharp =
       let res = compute a.Body
           
       match a.Result with
-      | Var v -> [subst.Extend(v,Const (SubstrateConstant res))]
+      | Var v -> [subst.Extend(v,Const (Constant res))]
       | x -> let ret = compute x
              if unbox ret = unbox res then [subst]
                                       else []

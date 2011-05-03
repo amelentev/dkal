@@ -62,7 +62,7 @@ ITerm:
     { App({ Name = $1; ArgsType = $3; RetType = $5; Identity = Some $10 }, $7) } 
 	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR	
     { App({ Name = $1; ArgsType = $3; RetType = $5; Identity = None }, $7) } 
-	| Literal														                        { Const($1) }
+	| Literal														                        { $1 }
 	| UPPER_IDENTIFIER COLON Type						              			{ Var({ Name = $1; Type = $3 }) }
 	| LPAR ITerm RPAR											              	      { $2 }
 	| SUBSTRATE_EXPRESSION								         
@@ -77,12 +77,12 @@ ITerms:
 	| ITerm COMMA ITerms			{ $1 :: $3 }
 
 Literal:
-	| TRUE										{ SubstrateConstant(true) :> Constant }
-	| FALSE										{ SubstrateConstant(false) :> Constant }
-	| INT_LITERAL							{ SubstrateConstant($1) :> Constant }
-	| FLOAT_LITERAL						{ SubstrateConstant($1) :> Constant }
-	| STRING_LITERAL					{ SubstrateConstant($1) :> Constant }
-	| LOWER_IDENTIFIER				{ PrincipalConstant($1) :> Constant }
+	| TRUE										{ Constant<bool>(true) :> ITerm }
+	| FALSE										{ Constant<bool>(false) :> ITerm }
+	| INT_LITERAL							{ Constant<int>($1) :> ITerm }
+	| FLOAT_LITERAL						{ Constant<double>($1) :> ITerm }
+	| STRING_LITERAL					{ Constant<string>($1) :> ITerm }
+	| LOWER_IDENTIFIER				{ PrincipalConstant($1) :> ITerm }
 
 Type:
 	| UPPER_IDENTIFIER				{ Type.FromFullName $1 }

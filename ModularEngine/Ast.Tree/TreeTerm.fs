@@ -5,43 +5,6 @@ open Microsoft.Research.Dkal.Interfaces
 
 open System.Collections.Generic
 
-/// Variables are typed
-type Variable = 
-  { Name: string; Type: IType }
-  interface IVar with
-    member v.Name = v.Name
-    member v.Type = v.Type
-    member v.Vars = [v]
-    member v.Apply s = s.Apply v
-    member v.Normalize () = v :> ITerm
-    member v.UnifyFrom s t = 
-      match (v :> IVar), t with
-      | v1, v2 when (v1 :> ITerm) = v2 -> Some s
-      | v, t when not(List.exists (fun v' -> v = v') t.Vars) -> Some (s.Extend (v, t))
-      | _ -> None
-    member v.Unify t = 
-      (v :> ITerm).UnifyFrom (Substitution.Id) t
-  override v.ToString() = v.Name    
-
-/// Constants are implicitly typed (they have the type of the wrapped
-/// element)
-[<AbstractClassAttribute>]
-type Constant() = 
-  abstract member Type : IType
-
-  interface ITerm with
-    member c.Vars = []
-    member c.Type = c.Type
-    member c.Apply s = c :> ITerm
-    member c.Normalize () = c :> ITerm
-    member c.UnifyFrom s t =
-      match (c :> ITerm), t with
-      | c1, c2 when c1 = c2 -> Some s
-      | c1, (:? IVar as v2) -> (v2 :> ITerm).UnifyFrom s c1
-      | _ -> None
-    member c.Unify t = 
-      (c :> ITerm).UnifyFrom (Substitution.Id) t
-
 /// Functions are used in App ITerms to indicate what function is applied.
 /// They have an arbitrary-sized typed list of arguments. They return a typed
 /// single value. The Identity field is None if the function is not 
@@ -51,6 +14,8 @@ type Function = { Name: string;
                   ArgsType: IType list;
                   Identity: ITerm option }
 
+/// Application ITerms are the inner nodes of the AST tree. They have a Function
+/// and a list of arguments
 [<CustomEqualityAttribute; NoComparisonAttribute>]
 type Application = 
   { Function: Function; Args: ITerm list }

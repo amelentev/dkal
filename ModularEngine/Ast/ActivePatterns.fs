@@ -12,3 +12,39 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
   let (|Substrate|_|) (t: IType) =  match t with
                                     | :? Type.Substrate as t -> Some t.Type
                                     | _ -> None
+
+  // Variables
+  let (|Var|_|) (t: ITerm) =  match t with
+                              | :? Variable as v -> Some v
+                              | _ -> None
+
+  // Constants                            
+  let (|Const|_|) (t: ITerm) =  match t with
+                                | :? IConst<_> as c -> Some c
+                                | _ -> None
+
+  // Literal patterns
+  let (|SubstrateConstant|_|) mt =  match mt with
+                                    | Const(c) ->
+                                      match c with
+                                      | :? Constant<_> as c -> Some c.Value
+                                      | _ -> None
+                                    | _ -> None
+  let (|PrincipalConstant|_|) mt =  match mt with
+                                    | Const(c) -> 
+                                      match c with
+                                      | :? PrincipalConstant as p -> Some p.Name
+                                      | _ -> None
+                                    | _ -> None
+  let (|True|_|) mt = match mt with
+                      | Const(c) -> 
+                        match c with
+                        | :? Constant<bool> as bc when bc.Value = true -> Some ()
+                        | _ -> None
+                      | _ -> None
+  let (|False|_|) mt =  match mt with
+                        | Const(c) -> 
+                          match c with
+                          | :? Constant<bool> as bc when bc.Value = false -> Some ()
+                          | _ -> None
+                        | _ -> None
