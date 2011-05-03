@@ -27,7 +27,10 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
   let (|SubstrateConstant|_|) mt =  match mt with
                                     | Const(c) ->
                                       match c with
-                                      | :? Constant<_> as c -> Some c.Value
+                                      | :? Constant<_> as c -> 
+                                        match (c :> ITerm).Type with 
+                                        | Substrate(_) -> Some c.Value
+                                        | _ -> None
                                       | _ -> None
                                     | _ -> None
   let (|PrincipalConstant|_|) mt =  match mt with

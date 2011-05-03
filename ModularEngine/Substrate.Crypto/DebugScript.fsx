@@ -55,8 +55,8 @@ let query3 = (x -+- y) -@- z
 let r3 = sub.Solve [query3] [subst]
 printfn "%s" ((not <| Seq.isEmpty r3).ToString())
 let zval = (Seq.head r3).Apply(toVar z)
-let zconst = toConstElem (zval :?> FunctionTerm)
-printfn "%s" (zconst.ToString()) 
+//let zconst = toConstElem (zval :?> FunctionTerm)
+//printfn "%s" (zconst.ToString()) 
 
 // Add string length function
 sub.Add "length" (fun (x:string) -> x.Length)
@@ -74,8 +74,9 @@ let query5 = len (con "abc") -+- x -@- z
 let r5 = sub.Solve [query5] [subst]
 printfn "%s" ((not <| Seq.isEmpty r5).ToString())
 let zval2 = (Seq.head r5).Apply (toVar z)
-let zconst2 = toConstElem (zval2 :?> FunctionTerm)
-printfn "%s" (zconst2.ToString()) 
+()
+//let zconst2 = toConstElem (zval2 :?> FunctionTerm)
+//printfn "%s" (zconst2.ToString()) 
 
 (* Does not yet work
 // generic function

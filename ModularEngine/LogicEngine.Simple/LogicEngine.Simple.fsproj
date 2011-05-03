@@ -48,11 +48,6 @@
       <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
-      <Name>Ast.Tree</Name>
-      <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
