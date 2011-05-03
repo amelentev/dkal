@@ -128,6 +128,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
   /// Returns true iff at least one of the actions produced a change.
   member private se.ApplyActions (actions: ITerm list) = 
     let mutable changed = false
+    let substrateUpdates = new HashSet<ISubstrateUpdateTerm>()
     for action in actions do
       let changes = 
         match action with
@@ -138,10 +139,12 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
         | Say(ppal, infon) -> router.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
         | Install(rule) -> rules.Add(rule)
         | Uninstall(rule) -> rules.Remove(rule)
-        | Apply(su) -> SubstrateDispatcher.Update su
+        | Apply(su) -> 
+          substrateUpdates.Add su |> ignore; false
         | _ -> failwithf "Unrecognized action %O" action
       changed <- changed || changes        
-    changed
+    let changedFromSubstrateUpdates = SubstrateDispatcher.Update substrateUpdates
+    changed || changedFromSubstrateUpdates
 
   /// Given a condition term and a list of substitutions, it returns a subset of
   /// substitutions that satisfy the condition, possibly specialized.
