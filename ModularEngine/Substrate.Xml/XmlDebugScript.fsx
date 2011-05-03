@@ -49,23 +49,22 @@ let output (vars: seq<IVar>) (res: seq<ISubstitution>) =
 
 let var name typ = {Name=name; Type=typ} :> IVar
 
-let outputvar1 = {Name="TRIAL"; Type=Type.String;} :> IVar
-let inputvar1 = {Name="ORG"; Type=Type.Principal;}
-let query1 = new XmlSubstrateTerm("xct", "/root/trials/*[@org='$ORG']", [inputvar1], dict ["", outputvar1])
+let trialvar = var "TRIAL" Type.String
+let orgvar = var "ORG" Type.Principal
+let query1 = new XmlSubstrateTerm("xct", "/root/trials/*[@org='$ORG']", [orgvar], dict ["", trialvar])
 
-let subst1 = Substitution.Id.Extend(inputvar1, SubstrateConstant "org1")
-xmlsubstr.Solve [query1] [subst1] |> output [outputvar1]
+let subst1 = Substitution.Id.Extend(orgvar, SubstrateConstant "org1")
+xmlsubstr.Solve [query1] [subst1] |> output [trialvar]
 
-
-let inputvar2 = outputvar1
-let outputvars2: IDictionary<string, IVar> = dict ["", var "SITE" Type.Principal; "n1", var "N1" Type.Int32; "n2", var "N2" Type.Int32]
-let query2 = new XmlSubstrateTerm("xct", "/root/trials/$TRIAL/*[@unnotified='true']", [inputvar2], outputvars2)
-let subst2 = Substitution.Id.Extend(inputvar2, SubstrateConstant "trial1")
+let sitevar = var "SITE" Type.Principal
+let outputvars2: IDictionary<string, IVar> = dict ["", sitevar; "n1", var "N1" Type.Int32; "n2", var "N2" Type.Int32]
+let query2 = new XmlSubstrateTerm("xct", "/root/trials/$TRIAL/*[@unnotified='true']", [trialvar], outputvars2)
+let subst2 = Substitution.Id.Extend(trialvar, SubstrateConstant "trial1")
 xmlsubstr.Solve [query2] [subst2] |> output outputvars2.Values
 
-xmlsubstr.Solve [query1; query2] [subst1] |> output (Seq.append [outputvar1] outputvars2.Values)
+xmlsubstr.Solve [query1; query2] [subst1] |> output (Seq.append [trialvar] outputvars2.Values)
 
-let outputvar3 = dict ["", var "PHYS" Type.Principal]
-let query3 = new XmlSubstrateTerm("xct", "/root/trials/trial1/site1/*[1100<=@P1 and @P2<=1249]", [], outputvar3)
+let physvar = var "PHYS" Type.Principal
+let query3 = new XmlSubstrateTerm("xct", "/root/trials/$TRIAL/$SITE/*[1100<=@P1 and @P2<=1249]", [trialvar; sitevar], dict ["", physvar])
 
-xmlsubstr.Solve [query3] [Substitution.Id] |> output outputvar3.Values
+xmlsubstr.Solve [query1; query2; query3] [subst1] |> output (Seq.append [physvar] outputvars2.Values)
