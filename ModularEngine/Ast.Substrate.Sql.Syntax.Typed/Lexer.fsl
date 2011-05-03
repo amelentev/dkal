@@ -30,6 +30,8 @@ rule tokenize = parse
 | "("				{ LPAR }
 | ")"				{ RPAR }
 | ","				{ COMMA }
+| "|"       { PIPE }
+| ":="      { GETS }
 
 // Types
 | ":"			  	{ COLON }

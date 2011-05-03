@@ -6,8 +6,11 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Substrate
+open Microsoft.Research.Dkal.Substrate.Sql
 open Microsoft.Research.Dkal.Substrate.Factories
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
+
+open System.Collections.Generic
 
 /// The TypedSqlPrettyPrinter prints substrate elements into the typed concrete syntax,
 /// which carries type annotations in every function application and every 
@@ -19,6 +22,12 @@ type TypedSqlPrettyPrinter() =
       match t with
       | :? DummySubstrateQueryTerm as t -> 
         PrettyPrinter.PrettyPrint <| tpp.TokenizeTerm t.Query
+      | :? SqlSubstrateModifyTerm as t ->
+         PrettyPrinter.PrettyPrint <| 
+          [ ManyTokens <| tpp.TokenizeTerm t.Query;
+            TextToken <| " | ";
+            TextToken <| String.concat ", " 
+              (Seq.map (fun (kv: KeyValuePair<_,_>) -> kv.Key + " := " + (PrettyPrinter.PrettyPrint <| tpp.TokenizeTerm kv.Value)) t.ColsMapping) ] 
       | _ -> failwith "Expecting DummySubstrateTerm when printing TypedSqlSyntax"
 
   member private tpp.PrintTerm mt = (tpp :> ISubstratePrettyPrinter).PrintTerm mt
