@@ -206,6 +206,7 @@ module FSharp =
 
     interface ISubstrate with
       member this.Solve queries substs = this.Solve queries substs
+      member this.Update _ = failwith "F# substrate does not support update (for now?)"
       member x.Namespaces = namespaces
       member x.RequiredVars mt =
         match mt with

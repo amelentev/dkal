@@ -11,4 +11,6 @@ type ISubstrate =
   /// returns seq of resolved substitutions (more specialized than substs)
   abstract member Solve :  queries : ISubstrateTerm seq -> substs : ISubstitution seq -> ISubstitution seq
   
+  abstract member Update: ISubstrateUpdateTerm -> bool
+
   abstract member RequiredVars: query: ISubstrateTerm -> IVar list

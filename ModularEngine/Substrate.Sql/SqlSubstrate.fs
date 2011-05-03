@@ -85,5 +85,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
         SqlCompiler.execQuery (conn, options, sqlExpr, subst, Seq.toList(vars.AsEnumerable()))
       substs |> SubstrateDispatcher.Solve(substrateTerms) |> Seq.collect (fun subst -> checkAssumptions subst queries)
 
+    member this.Update substrateUpdateTerm = failwith "TODO: implement" // TODO
+
     member this.Namespaces = new HashSet<_>(namespaces)
     member this.RequiredVars (query: ISubstrateTerm) = []

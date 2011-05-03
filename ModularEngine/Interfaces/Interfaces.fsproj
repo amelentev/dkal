@@ -41,6 +41,7 @@
     <Compile Include="ITerm.fs" />
     <Compile Include="IParser.fs" />
     <Compile Include="IPrettyPrinter.fs" />
+    <Compile Include="ISubstrateUpdateTerm.fs" />
     <Compile Include="ISubstrateTerm.fs" />
     <Compile Include="ISubstrate.fs" />
     <Compile Include="IRouter.fs" />

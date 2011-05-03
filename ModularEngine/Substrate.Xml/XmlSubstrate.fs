@@ -71,4 +71,6 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
         substs |> Seq.collect (solve11 query)
       queries |> Seq.fold solve1Many substs
 
+    member xs.Update _ = failwith "XML substrate does not support updates"
+
   new(xmlFile: string, namespaces: string list) = new XmlSubstrate(XDocument.Load(xmlFile), namespaces)
