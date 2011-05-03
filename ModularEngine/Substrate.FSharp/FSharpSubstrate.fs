@@ -197,7 +197,7 @@ module FSharp =
              if unbox ret = unbox res then [subst]
                                       else []
 
-    member this.Solve (queries:seq<#ISubstrateTerm>) substs =
+    member this.Solve (queries:seq<ISubstrateQueryTerm>) substs =
       try
         let cq:seq<FunctionQueryTerm> = Seq.cast queries
         seq { for subst in substs do yield Seq.fold (fun s query -> List.head (this.simpleSolve query s)) subst cq}

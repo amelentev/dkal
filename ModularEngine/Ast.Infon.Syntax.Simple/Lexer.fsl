@@ -78,6 +78,7 @@ rule tokenize = parse
 | "forget"			{ FORGET }
 | "install"			{ INSTALL }
 | "uninstall"		{ UNINSTALL }
+| "apply"		    { APPLY }
 
 // Literals
 | "true"			{ TRUE } 

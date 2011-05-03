@@ -55,6 +55,9 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|Uninstall|_|) mt =  match mt with
                             | App({Name=Primitives.Uninstall}, [r]) -> Some r
                             | _ -> None
+  let (|Apply|_|) mt =  match mt with
+                        | App({Name=Primitives.Apply}, [su]) -> Some su
+                        | _ -> None
 
   // Infon patterns
   let (|EmptyInfon|_|) mt = match mt with 
@@ -63,7 +66,7 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|AsInfon|_|) mt =  match mt with 
                           | App({Name=Primitives.AsInfon}, [exp]) -> 
                             match exp with
-                            | :? ISubstrateTerm as exp -> Some exp
+                            | :? ISubstrateQueryTerm as exp -> Some exp
                             | _ -> None
                           | _ -> None
   let (|AndInfon|_|) mt = match mt with

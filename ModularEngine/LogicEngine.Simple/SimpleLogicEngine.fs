@@ -58,7 +58,7 @@ type SimpleLogicEngine() =
   /// side conditions (AsInfo MetaTerms) and a target infon MetaTerm to derive
   /// this method will recursively derive the target infon depending on its
   /// structure.
-  member private se.DoDerive (pref: ITerm list) ((subst, conds): ISubstitution * ISubstrateTerm list) (infon: ITerm) = 
+  member private se.DoDerive (pref: ITerm list) ((subst, conds): ISubstitution * ISubstrateQueryTerm list) (infon: ITerm) = 
     match infon with
     | AndInfon(infons) -> 
       // In the case of conjunction we start with the current substitution and side conditions and 

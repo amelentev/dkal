@@ -50,7 +50,7 @@ type SimplePrettyPrinter() =
         [ TextToken "(" ]
         @ List.reduce (fun t1 t2 -> t1 @ [TextToken <| " " + fSymbol + " "] @ t2) args
         @ [ TextToken ")" ]
-      elif fSymbol = "asInfon" then
+      elif fSymbol = Primitives.AsInfon then
         match mts with
         | [exp] -> 
           [ TextToken <| f.Name + "(";
@@ -59,7 +59,7 @@ type SimplePrettyPrinter() =
         | _ -> failwith "Incorrect arguments in AsInfon(...)"
       elif fSymbol = "emptyInfon" then
         [ TextToken <| "asInfon(true)" ]
-      elif fSymbol = "rule" then
+      elif fSymbol = Primitives.Rule then
         let beginVars, endVars =  
           if withVars then 
             spp.TokenizeVariableDeclaration (mt.Vars |> Seq.toList)
@@ -72,7 +72,7 @@ type SimplePrettyPrinter() =
           @ [ ManyTokens <| spp.TokenizeTerm(mts.[1], false)]
           @ [ UntabToken; NewLineToken ]
         beginVars @ mainTokens @ endVars
-      elif fSymbol = "seqRule" then
+      elif fSymbol = Primitives.SeqRule then
         let beginVars, endVars =  
           if withVars then 
             spp.TokenizeVariableDeclaration (mt.Vars |> Seq.toList)
@@ -81,34 +81,39 @@ type SimplePrettyPrinter() =
         beginVars
         @ List.map (fun mt -> ManyTokens <| spp.TokenizeTerm(mt, false)) mts
         @ endVars
-      elif fSymbol = "wireCondition" then
+      elif fSymbol = Primitives.WireCondition then
         [ TextToken <| "upon";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
           UntabToken; NewLineToken ]
-      elif fSymbol = "emptyAction" || fSymbol = "emptyCondition" then
+      elif fSymbol = Primitives.EmptyAction || fSymbol = Primitives.EmptyCondition then
         []
-      elif fSymbol = "knownCondition" then
+      elif fSymbol = Primitives.KnownCondition then
         [ TextToken <| "if";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
           UntabToken; NewLineToken ]
-      elif fSymbol = "say" then
+      elif fSymbol = Primitives.Say then
         [ TextToken <| "say to " + spp.PrintTerm mts.[0] + ":";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[1];
           UntabToken; NewLineToken ]
-      elif fSymbol = "send" then
+      elif fSymbol = Primitives.Send then
         [ TextToken <| "send to " + spp.PrintTerm mts.[0] + ":";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[1];
           UntabToken; NewLineToken ]
-      elif fSymbol = "learn" then
+      elif fSymbol = Primitives.Learn then
         [ TextToken <| "learn";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
           UntabToken; NewLineToken ]
-      elif fSymbol = "seqAction" || fSymbol = "seqCondition" then
+      elif fSymbol = Primitives.Apply then
+        [ TextToken <| "apply";
+          TabToken; NewLineToken;
+          ManyTokens <| spp.TokenizeTerm mts.[0];
+          UntabToken; NewLineToken ]
+      elif fSymbol = Primitives.SeqAction || fSymbol = Primitives.SeqCondition then
         List.concat (List.map spp.TokenizeTerm mts)
       elif not infix && mts = [] then
         [ TextToken <| fSymbol ]

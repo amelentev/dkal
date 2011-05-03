@@ -6,6 +6,7 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
   // Type patterns
   let (|Infon|_|) t = if t = Type.Infon then Some () else None
   let (|Principal|_|) t = if t = Type.Principal then Some () else None
+  let (|SubstrateUpdate|_|) t = if t = Type.SubstrateUpdate then Some () else None
   let (|Action|_|) t = if t = Type.Action then Some () else None
   let (|Condition|_|) t = if t = Type.Condition then Some () else None
   let (|Rule|_|) t = if t = Type.Rule then Some () else None

@@ -41,7 +41,7 @@
   <ItemGroup>
     <Compile Include="DummySubstrate.fs" />
     <Compile Include="SubstrateDispatcher.fs" />
-    <Compile Include="DummySubstrateTerm.fs" />
+    <Compile Include="DummySubstrateQueryTerm.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">

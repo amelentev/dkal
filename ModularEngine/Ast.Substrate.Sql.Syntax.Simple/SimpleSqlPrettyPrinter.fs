@@ -18,7 +18,7 @@ type SimpleSqlPrettyPrinter() =
   interface ISubstratePrettyPrinter with
     member spp.PrintTerm t =
       match t with
-      | :? DummySubstrateTerm as t ->
+      | :? DummySubstrateQueryTerm as t ->
         PrettyPrinter.PrettyPrint <| spp.TokenizeTerm t.Query
       | _ -> failwith "Expecting DummySubstrateTerm when printing SimpleSqlSyntax"
 

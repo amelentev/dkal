@@ -1,5 +1,5 @@
 ﻿namespace Microsoft.Research.Dkal.Interfaces
 
-type ISubstrateUpdateTerm =
+type ISubstrateQueryTerm =
   inherit ISubstrateTerm
   

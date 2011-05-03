@@ -53,7 +53,7 @@ let emptyInfon = SimpleApp(Primitives.EmptyInfon, [])
 %token UPON IF
 
 // Actions
-%token SEND SAY TO LEARN FORGET INSTALL UNINSTALL
+%token SEND SAY TO LEARN FORGET INSTALL UNINSTALL APPLY
 
 // Literals
 %token TRUE FALSE
@@ -185,17 +185,20 @@ Rule:
   | Rule Rule                          { SimpleApp(Primitives.SeqRule, [$1; $2]) }
 
 Condition:
+  | UPPER_IDENTIFIER							    { SimpleVar($1) }
   | UPON MetaTerm                     { SimpleApp(Primitives.WireCondition, [$2]) }
   | IF MetaTerm                       { SimpleApp(Primitives.KnownCondition, [$2]) }
   | Condition Condition               { SimpleApp(Primitives.SeqCondition, [$1; $2]) }
 
 Action:
-	| SAY TO MetaTerm COLON MetaTerm			{ SimpleApp(Primitives.Say, [$3; $5]) }
+	| UPPER_IDENTIFIER							      { SimpleVar($1) }
+  | SAY TO MetaTerm COLON MetaTerm			{ SimpleApp(Primitives.Say, [$3; $5]) }
 	| SEND TO MetaTerm COLON MetaTerm			{ SimpleApp(Primitives.Send, [$3; $5]) }
 	| LEARN MetaTerm			      		      { SimpleApp(Primitives.Learn, [$2]) }
 	| FORGET MetaTerm				            	{ SimpleApp(Primitives.Forget, [$2]) }
 	| INSTALL MetaTerm			    		      { SimpleApp(Primitives.Install, [$2]) }
 	| UNINSTALL MetaTerm			    	      { SimpleApp(Primitives.Uninstall, [$2]) }
+	| APPLY MetaTerm			    	          { SimpleApp(Primitives.Apply, [$2]) }
 	| Action Action		  	                { SimpleApp(Primitives.SeqAction, [$1; $2]) }
 
 MetaTerms:

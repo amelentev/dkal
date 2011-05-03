@@ -29,6 +29,6 @@ type TypedSqlParser() =
     member sp.ParseTerm s =
       let lexbuff s = LexBuffer<char>.FromString(s)
       let t = Parser.ITerm Lexer.tokenize (lexbuff s)
-      new DummySubstrateTerm(t, _ns) :> ISubstrateTerm
+      new DummySubstrateQueryTerm(t, _ns) :> ISubstrateTerm
 
 

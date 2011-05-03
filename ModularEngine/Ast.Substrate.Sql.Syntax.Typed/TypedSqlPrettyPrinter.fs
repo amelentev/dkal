@@ -17,7 +17,7 @@ type TypedSqlPrettyPrinter() =
   interface ISubstratePrettyPrinter with
     member tpp.PrintTerm t =
       match t with
-      | :? DummySubstrateTerm as t -> 
+      | :? DummySubstrateQueryTerm as t -> 
         PrettyPrinter.PrettyPrint <| tpp.TokenizeTerm t.Query
       | _ -> failwith "Expecting DummySubstrateTerm when printing TypedSqlSyntax"
 

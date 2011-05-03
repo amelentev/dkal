@@ -9,6 +9,9 @@ module Type =
   let Principal = { new IType with 
                       member t.Name = "Principal" 
                       member t.FullName = "Dkal.Principal" }
+  let SubstrateUpdate = { new IType with 
+                            member t.Name = "SubstrateUpdate"
+                            member t.FullName = "Dkal.SubstrateUpdate" }
   let Action =  { new IType with 
                     member t.Name = "Action"
                     member t.FullName = "Dkal.Action" }
@@ -40,6 +43,7 @@ module Type =
     match fn with
     | "Dkal.Infon" -> Infon
     | "Dkal.Principal" -> Principal
+    | "Dkal.SubstrateUpdate" -> SubstrateUpdate
     | "Dkal.Condition" -> Condition
     | "Dkal.Action" -> Action
     | "Dkal.Rule" -> Rule

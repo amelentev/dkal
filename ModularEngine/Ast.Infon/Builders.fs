@@ -62,6 +62,9 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let UninstallAction (r: ITerm) = 
     App(Primitives.SolveFunction Primitives.Uninstall |> Option.get, [r])
 
+  let ApplyAction (su: ITerm) = 
+    App(Primitives.SolveFunction Primitives.Apply |> Option.get, [su])
+
   // Infon builders
   let EmptyInfon = 
     App(Primitives.SolveFunction Primitives.EmptyInfon |> Option.get, [])

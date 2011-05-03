@@ -9,8 +9,8 @@ type ISubstrate =
   /// queries : boolean expression MetaTerms
   /// substs  : seq of substitutions for queryes variables
   /// returns seq of resolved substitutions (more specialized than substs)
-  abstract member Solve :  queries : ISubstrateTerm seq -> substs : ISubstitution seq -> ISubstitution seq
+  abstract member Solve :  queries : ISubstrateQueryTerm seq -> substs : ISubstitution seq -> ISubstitution seq
   
   abstract member Update: ISubstrateUpdateTerm -> bool
 
-  abstract member RequiredVars: query: ISubstrateTerm -> IVar list
+  abstract member RequiredVars: query: ISubstrateQueryTerm -> IVar list

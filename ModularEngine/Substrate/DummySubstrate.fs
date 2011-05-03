@@ -9,5 +9,5 @@ type DummySubstrate() =
   interface ISubstrate with
     member this.Solve query substs = substs 
     member this.Namespaces = new HashSet<string>()
-    member this.RequiredVars (query: ISubstrateTerm) = query.Vars
+    member this.RequiredVars (query: ISubstrateQueryTerm) = query.Vars
     member this.Update _ = false
