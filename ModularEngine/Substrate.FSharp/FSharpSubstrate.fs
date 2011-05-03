@@ -41,7 +41,7 @@ module FSharp =
   let internal getMethodInfo f = f.GetType().GetMethod("Invoke",[|getFirstArg f|])
   let internal invoke (mi:System.Reflection.MethodInfo) f o =  mi.Invoke(f,[|o|])
   let internal apply f o = invoke (getMethodInfo f) f o
-  
+
   type Function = { Name:string; ReturnType:System.Type; Args:list<FunctionTerm> }
   and FunctionTerm = 
   | Function of Function
@@ -135,10 +135,16 @@ module FSharp =
       member this.Normalize() = this.Normalize()
       member this.UnifyFrom s t = this.UnifyFrom s t
       member this.Unify t = this.UnifyFrom Substitution.Id t
-
+    override this.Equals (o: obj) =
+      match o with
+      | :? FunctionQueryTerm as o ->
+        this.Body = o.Body && this.Result = o.Result && this.Namespace = o.Namespace
+      | _ -> false
+    override this.GetHashCode() =
+      (this.Body, this.Result, this.Namespace).GetHashCode()
  
   /// Convenient Functions for in memory construction and inspection of FunctionTerms and FunctionQueryTerms 
-  let var (n:string) : FunctionTerm = Var {Name=n; Type=Type.Substrate(typeof<int>); }
+  let var<'t> (n:string) : FunctionTerm = Var {Name=n; Type=Type.Substrate(typeof<'t>); }
   let con c : FunctionTerm = Const <| Constant (box c)
   
   let toVar = function
@@ -200,7 +206,12 @@ module FSharp =
     member this.Solve (queries:seq<ISubstrateQueryTerm>) substs =
       try
         let cq:seq<FunctionQueryTerm> = Seq.cast queries
-        seq { for subst in substs do yield Seq.fold (fun s query -> List.head (this.simpleSolve query s)) subst cq}
+        let runQuery q s =
+          match this.simpleSolve q s with
+          | [] -> None
+          | [s'] -> Some s'
+          | _ -> failwith "Must not happen"
+        substs |> Seq.choose (fun sub -> Seq.fold (fun s q -> Option.bind (runQuery q) s) (Some sub) cq)
       with
       | _ -> failwith <| sprintf "Solve: This substrate does not handle queries of this kind. %s" ((Seq.head queries).ToString())
 
