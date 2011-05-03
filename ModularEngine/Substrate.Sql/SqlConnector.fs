@@ -66,6 +66,16 @@ type SqlConnector(connStr) =
       while reader.Read() do
         yield reader }
 
+  member this.ExecUpdate (s:string, parms:seq<obj>, log) =
+    check()
+    if log then
+      System.Console.WriteLine ("execU: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
+    let addParm (comm:SqlCommand) (idx:int) o =
+      comm.Parameters.AddWithValue ("p__" + idx.ToString(), o) |> ignore
+    use comm = new SqlCommand(s, conn)
+    do Seq.iteri (addParm comm) parms
+    comm.ExecuteNonQuery()
+
   member this.ReadVar (rd:Common.DbDataReader, var: IVar, idx:int) : ITerm =
     try
       if var.Type = Type.Boolean then

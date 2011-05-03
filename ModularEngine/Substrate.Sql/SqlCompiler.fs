@@ -253,7 +253,7 @@ module SqlCompiler =
       log ("  Boolenized " + body1.ToString())
 
     body1, bindings
-    
+
   let execQuery (sql:SqlConnector, opts:Options, cc:CompiledQuery, subst:ISubstitution, vars:list<IVar>) =    
     if cc = (sqlTrue, []) then
       seq [subst]
@@ -351,3 +351,82 @@ module SqlCompiler =
         (idx + 1, subst.Extend(var, constVal))
       sql.ExecQuery (sb.ToString(), parms, opts.Trace >= 2) |>
         Seq.map (fun rd -> Seq.fold (addToSubst rd) (0, subst) resSubst |> snd)
+
+  let execUpdate (sql:SqlConnector, opts:Options, cc:CompiledQuery, update: list<string * Expr>) =
+    // TODO: if there are several tables to update we shoud duplicate the query for each table and update it per one. update on several tables is not supported in many dbs
+    let tables = dict()
+    let tableList = vec()
+    let parms = vec()
+    let sb = StringBuilder()
+    let pr (o:obj) = sb.Append o |> ignore
+    let parm (v:obj) =
+      match v with
+        | :? int as i ->
+          pr (i.ToString())
+        | _ ->
+          let id = parms.Count
+          parms.Add (v:obj)
+          pr "@p__"
+          pr id
+    let rec print = function
+      | Expr.Column (t, c) ->
+        if not (tables.ContainsKey t) then
+          let name = "t__" + tables.Count.ToString()
+          tables.Add (t, name)
+          tableList.Add (t.name + " AS " + name)
+        pr tables.[t]
+        pr "."
+        pr c
+      | Expr.Const (True) -> print sqlTrue
+      | Expr.Const (False) -> pr "NOT "; print sqlTrue
+      | Expr.Const (PrincipalConstant p) ->
+        parm p
+      | Expr.Const (SubstrateConstant o) -> parm o
+      | Expr.Var v ->
+        failwith ("unbound variable in query: " + v.Name)
+      | Expr.Op (op, [tr;a])
+      | Expr.Op (op, [a;tr]) when op = sqlOps.["and"] && tr = sqlTrue -> print a
+      | Expr.Op (op, a1::atl) when op.infix ->
+        pr "("
+        print a1
+        pr " "
+        atl |> List.iter (fun a -> pr op.name; pr " "; print a)
+        pr ")"
+      | Expr.Op (op, [a]) when not op.infix -> 
+        pr (op.name + " (")
+        print a
+        pr ")"
+      | Expr.Op (op, []) -> pr op.name
+      | Expr.Op (op, es) -> failwith ("impossible " + op.name + " " + es.Length.ToString())
+      | _ as t -> failwithf "impossible %A" t
+      
+    let bound, unbound = snd cc |> List.partition (fun (v, _) -> false)
+    let expr = bound |> List.fold (fun sofar (v, expr) -> sqlAnd sofar (sqlEq (expr, Expr.Var v))) (fst cc)
+    print expr
+    let whereClause = sb.ToString()
+    sb.Length <- 0
+    pr "UPDATE "
+
+    let updateTables = update |> List.map (fun x -> (fst x).Split('.').[0] ) |> Set.ofList
+    if updateTables.Count > 1 then
+      failwith "update on multiple tables not supported yet" 
+      // TODO: if there are several tables to update we shoud duplicate the query for each table and update it per one. update on several tables is not supported in many dbs
+    
+    pr (updateTables.First())
+
+    pr " SET "
+    update |> Seq.iteri (fun i col ->
+      if i>0 then
+        pr ", "
+      pr (fst col)
+      pr " = "
+      print (snd col)
+    )
+    if tableList.Count > 0 then
+      pr " FROM "
+      pr (String.concat ", " tableList)
+    pr " WHERE "
+    let whereClause = if whereClause = "1" then "1 > 0" else whereClause
+    pr whereClause
+
+    sql.ExecUpdate (sb.ToString(), parms, opts.Trace >= 2) > 0

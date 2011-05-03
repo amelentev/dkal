@@ -19,6 +19,45 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
   let mutable nextId = 0
   let conn = SqlConnector(connStr)
 
+  let prepareQuery (query: ISubstrateTerm) =
+    let extractQueries = fun (x: ITerm) -> 
+      match x with
+      | :? DummySubstrateQueryTerm as t -> t.Query
+      | :? SqlSubstrateModifyTerm as t -> t.Query
+      | _ as t -> failwithf "not DummySubstrateTerm: %A" t
+    // translate all >2-ary functions functions to 2-ary
+    let rec normalize2 = function
+      | App(f, a1 :: a2 :: a3 :: tl) ->
+        let f' = {Name=f.Name; RetType=f.RetType; ArgsType=List.tail f.ArgsType; Identity=f.Identity}
+        let n = normalize2( App(f', a2::a3::tl) )
+        let f'' = {Name=f.Name; RetType=f.RetType; ArgsType=[f.ArgsType.Head; f.RetType]; Identity=f.Identity}
+        App(f'', [normalize2 a1; n])
+      | App(f, lst) ->
+        App(f, lst |> List.map normalize2)
+      | :? DummySubstrateQueryTerm as st when namespaces.Contains (st:>ISubstrateTerm).Namespace ->
+        DummySubstrateQueryTerm(normalize2 st.Query, (st:>ISubstrateTerm).Namespace) :> ITerm
+      | t -> t
+    // translate boolean (table.column) to (table.column=1)
+    let rec boolenize = function
+      | Column(_, _) as c when c.Type = Type.Boolean ->
+        let eq = {Name="eq"; RetType=Type.Boolean; ArgsType=[Type.Boolean; Type.Boolean]; Identity=None} : Function
+        App(eq, [c; True])
+      | t -> t
+    // collect SubstrateTerms and remove them from the query
+    let rec separateExternalSubstrates = function
+      | App(f, args) ->
+        let r = List.unzip (args |> List.map separateExternalSubstrates)
+        (App(f, fst r), List.concat (snd r))
+      | :? ISubstrateQueryTerm as st when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
+        // Works only when used on top level without disjunctions
+        Const (Constant true), [st]
+        // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
+        //  So check than all negative SubstrateTerms gives no substitutions, get a substitutions from all positive SubstrateTerms and execute the rest.
+      | t -> t, []
+    let (query, ests) = query |> separateExternalSubstrates
+    let query = query |> extractQueries |> normalize2 |> boolenize
+    (query, ests)
+
   member private this.NextId () =
     nextId <- nextId - 1
     nextId
@@ -41,51 +80,33 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
 
   interface ISubstrate with
     member this.Solve queries substs =
-      let queries = queries |> Seq.map (function
-        | :? DummySubstrateQueryTerm as t -> t.Query
-        | _ as t -> failwithf "not DummySubstrateTerm: %A" t)
-      // translate all >2-ary functions functions to 2-ary
-      let rec normalize2 = function
-        | App(f, a1 :: a2 :: a3 :: tl) ->
-          let f' = {Name=f.Name; RetType=f.RetType; ArgsType=List.tail f.ArgsType; Identity=f.Identity}
-          let n = normalize2( App(f', a2::a3::tl) )
-          let f'' = {Name=f.Name; RetType=f.RetType; ArgsType=[f.ArgsType.Head; f.RetType]; Identity=f.Identity}
-          App(f'', [normalize2 a1; n])
-        | App(f, lst) ->
-          App(f, lst |> List.map normalize2)
-        | :? DummySubstrateQueryTerm as st when namespaces.Contains (st:>ISubstrateTerm).Namespace ->
-          DummySubstrateQueryTerm(normalize2 st.Query, (st:>ISubstrateTerm).Namespace) :> ITerm
-        | t -> t
-      // translate boolean (table.column) to (table.column=1)
-      let rec boolenize = function
-        | App(f, []) when f.RetType = Type.Boolean && f.Name.Contains('.') ->
-          let eq = {Name="eq"; RetType=Type.Boolean; ArgsType=[Type.Int32; Type.Int32]; Identity=None} : Function
-          App(eq, [App(f, []); Const(Constant(1))])
-        | t -> t
-      // collect SubstrateTerms and remove them from the query
-      let rec separateExternalSubstrates = function
-        | App(f, args) ->
-          let r = List.unzip (args |> List.map separateExternalSubstrates)
-          (App(f, fst r), List.concat (snd r))
-        | :? ISubstrateQueryTerm as st when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
-          // Works only when used on top level without disjunctions
-          Const (Constant true), [st]
-          // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
-          //  So check than all negative SubstrateTerms gives no substitutions, get a substitutions from all positive SubstrateTerms and execute the rest.
-        | t -> t, []
-      let (queries, substrateTerms) = queries |> Seq.map separateExternalSubstrates |> Seq.toList |> List.unzip
-      let substrateTerms = List.concat substrateTerms
-      let queries = queries |> Seq.map normalize2 |> Seq.map boolenize
-      let options = {Trace=1} : SqlCompiler.Options
+      let (queries, substrateTerms) = queries |> Seq.toList |> List.map prepareQuery |> List.unzip
+      let substrateTerms = List.concat substrateTerms      
       let vars = new HashSet<IVar>()
       queries |> Seq.iter (fun q -> vars.UnionWith(q.Vars))
+
+      let options = {Trace=1} : SqlCompiler.Options
       let checkAssumptions (subst:ISubstitution) (assumptions: ITerm seq)=
         let apply (t:ITerm) = t.Apply subst
         let sqlExpr = SqlCompiler.compile options this.NextId (assumptions |> Seq.map apply)
         SqlCompiler.execQuery (conn, options, sqlExpr, subst, Seq.toList(vars.AsEnumerable()))
       substs |> SubstrateDispatcher.Solve(substrateTerms) |> Seq.collect (fun subst -> checkAssumptions subst queries)
 
-    member this.Update substrateUpdateTerm = failwith "TODO: implement" // TODO
+    member this.Update substrateUpdateTerm =
+      let sut = substrateUpdateTerm :?> Microsoft.Research.Dkal.Substrate.Sql.SqlSubstrateModifyTerm
+      let (query, substrateTerms) = prepareQuery sut
+      if substrateTerms.Length>0 then
+        failwith "nested substrateTerms in SubstrateUpdateTerm not supported"
+      if query.Vars.Length > 0 then
+        failwithf "Free variables in SubstrateUpdateTerm: %A"  query
+      let options = {Trace=1} : SqlCompiler.Options
+
+      let updates = sut.ColsMapping |> Seq.map (fun x ->
+        (x.Key, fst (SqlCompiler.compile options this.NextId [x.Value]))) |> List.ofSeq
+      let where = SqlCompiler.compile options this.NextId [query]
+      
+
+      SqlCompiler.execUpdate (conn, options, where, updates)
 
     // As of now, we check that there are no updates that try to modify the same table
     member xs.AreConsistentUpdates updates = 

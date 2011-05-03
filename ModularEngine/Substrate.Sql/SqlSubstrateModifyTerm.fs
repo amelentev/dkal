@@ -8,7 +8,7 @@ open Microsoft.Research.Dkal.Ast
 /// TODO:
 type SqlSubstrateModifyTerm(ns: string, query: ITerm, colsMapping : IDictionary<string, ITerm>) = 
 
-  member internal this.dictApply (s: ISubstitution) =
+  member private this.dictApply (s: ISubstitution) =
     dict ( colsMapping.Keys |> Seq.map (fun k -> k, colsMapping.[k].Apply s) )
 
   member this.Query = query
