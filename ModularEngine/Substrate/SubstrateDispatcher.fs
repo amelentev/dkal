@@ -25,4 +25,5 @@ type SubstrateDispatcher() =
   static member Update (updates: ISubstrateUpdateTerm seq) = 
     updates
       |> Seq.groupBy (fun q -> q.Namespace) 
-      |> Seq.fold (fun res (ns, updates) -> res || (SubstrateMap.GetSubstrate ns).Update updates) false 
+      |> Seq.fold (fun res (ns, updates) -> let change = (SubstrateMap.GetSubstrate ns).Update updates
+                                            change || res) false 
