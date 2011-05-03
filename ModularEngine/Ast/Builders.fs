@@ -8,12 +8,12 @@ module Microsoft.Research.Dkal.Ast.Builders
     v :> ITerm
 
   // Constants
-  let Const (c: IConst<_>) =
+  let Const (c: IConst) =
     c :> ITerm
   
   // Literal builders
   let Principal (ppal: string) = 
     Const(PrincipalConstant(ppal))
 
-  let True = Const(Constant<bool>(true))
-  let False = Const(Constant<bool>(false))
+  let True = Const(Constant(true))
+  let False = Const(Constant(false))

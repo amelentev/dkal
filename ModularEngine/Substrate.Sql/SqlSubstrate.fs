@@ -60,7 +60,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       let rec boolenize = function
         | App(f, []) when f.RetType = Type.Boolean && f.Name.Contains('.') ->
           let eq = {Name="eq"; RetType=Type.Boolean; ArgsType=[Type.Int32; Type.Int32]; Identity=None} : Function
-          App(eq, [App(f, []); Const(SubstrateConstant(1))])
+          App(eq, [App(f, []); Const(Constant(1))])
         | t -> t
       // collect SubstrateTerms and remove them from the query
       let rec separateExternalSubstrates = function
@@ -69,7 +69,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
           (App(f, fst r), List.concat (snd r))
         | :? ISubstrateTerm as st when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
           // Works only when used on top level without disjunctions
-          Const (SubstrateConstant true), [st]
+          Const (Constant true), [st]
           // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
           //  So check than all negative SubstrateTerms gives no substitutions, get a substitutions from all positive SubstrateTerms and execute the rest.
         | t -> t, []

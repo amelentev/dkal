@@ -4,8 +4,8 @@ open Microsoft.Research.Dkal.Interfaces
 
 /// Constants are implicitly typed (they have the type of the wrapped
 /// element)
-type Constant<'t when 't: equality>(value: 't) = 
-  interface IConst<'t> with
+type Constant(value: obj) = 
+  interface IConst with
     member c.Vars = []
     member c.Type = Type.Substrate(value.GetType()) :> IType
     member c.Apply s = c :> ITerm
@@ -18,10 +18,10 @@ type Constant<'t when 't: equality>(value: 't) =
     member c.Unify t = 
       (c :> ITerm).UnifyFrom (Substitution.Id) t
     member c.Value = value
-  member c.Value = (c :> IConst<_>).Value
+  member c.Value = (c :> IConst).Value
   override c.Equals (o: obj) =
     match o with
-    | :? Constant<'t> as c' -> c.Value.Equals c'.Value
+    | :? Constant as c' -> c.Value.Equals c'.Value
                                  && (c :> ITerm).Type.Equals (c' :> ITerm).Type
     | _ -> false
   override c.GetHashCode() = ((c :> ITerm).Type, c.Value).GetHashCode()
@@ -29,8 +29,8 @@ type Constant<'t when 't: equality>(value: 't) =
 
 /// Principal constants
 type PrincipalConstant(name: string) =
-  inherit Constant<string>(name)
-  interface IConst<string> with
+  inherit Constant(name)
+  interface IConst with
     override pc.Type = Type.Principal
   member pc.Name = name
   override pc.ToString() = name

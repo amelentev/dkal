@@ -92,10 +92,10 @@
 
     member private ctx.LiftSimpleConstant (c : SimpleConstant) : ITerm =
       match c with
-      | BoolSimpleConstant b -> Const(Constant<_> b)
-      | Int32SimpleConstant i -> Const(Constant<_> i)
-      | DoubleSimpleConstant f -> Const(Constant<_> f)
-      | StringSimpleConstant s -> Const(Constant<_> s)
+      | BoolSimpleConstant b -> Const(Constant b)
+      | Int32SimpleConstant i -> Const(Constant i)
+      | DoubleSimpleConstant f -> Const(Constant f)
+      | StringSimpleConstant s -> Const(Constant s)
       | PrincipalSimpleConstant p -> Const(PrincipalConstant p)
 
     member private ctx.LiftSimpleVariable (v: SimpleVariable) : ITerm =

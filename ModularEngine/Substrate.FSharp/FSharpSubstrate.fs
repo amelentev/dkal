@@ -46,7 +46,7 @@ module FSharp =
   and FunctionTerm = 
   | Function of Function
   | Var of IVar
-  | Const of Constant<obj>
+  | Const of Constant
     with
     member this.Type =
       match this with
@@ -67,7 +67,7 @@ module FSharp =
         match s.Apply v with
         | :? FunctionTerm as x -> x :> ITerm
         | :? IVar as x -> Var x :> ITerm
-        | :? Constant<obj> as x -> Const x :> ITerm
+        | :? Constant as x -> Const x :> ITerm
         | _ -> failwith "Illegal substitution"
       | Const c as x -> x :> ITerm
 

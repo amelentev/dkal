@@ -60,7 +60,7 @@ module SqlCompiler =
   type Expr =
     | Column of TableId * string
     | Var of Variable
-    | Const of Constant
+    | Const of IConst
     | Op of SqlOp * list<Expr>
     
     member this.Map f =
@@ -283,7 +283,7 @@ module SqlCompiler =
           pr c
         | Expr.Const (True) -> print sqlTrue
         | Expr.Const (False) -> pr "NOT "; print sqlTrue
-        | Expr.Const (Principal p) ->
+        | Expr.Const (PrincipalConstant p) ->
           parm p
         | Expr.Const (SubstrateConstant o) -> parm o
         | Expr.Var v ->

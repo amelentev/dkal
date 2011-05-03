@@ -9,7 +9,6 @@ open System.Xml.XPath
 open System.Linq
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
-open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Interfaces
 
 type XmlSubstrate(xmldoc: XDocument, namespaces: string list) = 
@@ -24,13 +23,13 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
   let xn s = XName.Get s
 
   let bind (subst: ISubstitution) (var: IVar) value =
-    let sc : Constant = 
+    let sc : ITerm = 
       if var.Type=Type.Int32 then
-        SubstrateConstant (System.Int32.Parse(value)) :> Constant
+        Constant (System.Int32.Parse(value)) :> ITerm
       else if var.Type=Type.Principal then
-        PrincipalConstant value :> Constant
+        PrincipalConstant value :> ITerm
       else
-        SubstrateConstant value :> Constant
+        Constant value :> ITerm
     subst.Extend(var, sc)
 
   let getValue (elem: XElement) attr =

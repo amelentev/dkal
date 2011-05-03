@@ -160,10 +160,10 @@
                     failwith <| "Undefined identifier: " + f + " on " + (sprintf "%A" smt)
           | SimpleConst(c) ->
             match c with
-            | BoolSimpleConstant b when complies Type.Boolean typ -> Const(Constant<_> b)
-            | Int32SimpleConstant i when complies Type.Int32 typ -> Const(Constant<_> i)
-            | DoubleSimpleConstant f when complies Type.Double typ -> Const(Constant<_> f)
-            | StringSimpleConstant s when complies Type.String typ -> Const(Constant<_> s)
+            | BoolSimpleConstant b when complies Type.Boolean typ -> Const(Constant b)
+            | Int32SimpleConstant i when complies Type.Int32 typ -> Const(Constant i)
+            | DoubleSimpleConstant f when complies Type.Double typ -> Const(Constant f)
+            | StringSimpleConstant s when complies Type.String typ -> Const(Constant s)
             | PrincipalSimpleConstant p when complies Type.Principal typ -> Const(PrincipalConstant p)
             | _ -> failDueToType smt typ
           | SimpleVar(v) ->

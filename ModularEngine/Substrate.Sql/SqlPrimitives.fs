@@ -101,18 +101,18 @@ module SqlPrimitives =
       Some {Name = f; ArgsType = [t;t]; RetType = Type.Boolean; Identity = None}
     | Plus when HasSum t ->
       Some {Name = f; ArgsType = [t;t]; RetType = t;
-            Identity = Some <| Const(SubstrateConstant(0))}
+            Identity = Some <| Const(Constant(0))}
     | Minus when HasSubstraction t ->
       Some {Name = f; ArgsType = [t;t]; RetType = t;
-            Identity = Some <| Const(SubstrateConstant(0))}
+            Identity = Some <| Const(Constant(0))}
     | Uminus when HasArithmeticNegation t ->
       Some {Name = f; ArgsType = [t]; RetType = t; Identity = None}
     | Times when HasMultiplication t ->
       Some {Name = f; ArgsType = [t;t]; RetType = t;
-            Identity = Some <| Const(SubstrateConstant(1))}
+            Identity = Some <| Const(Constant(1))}
     | Divide when HasDivision t ->
       Some {Name = f; ArgsType = [t;t]; RetType = t;
-            Identity = Some <| Const(SubstrateConstant(1))}
+            Identity = Some <| Const(Constant(1))}
     | PpalName when t = Type.Principal ->
       Some {Name = f; ArgsType = [Type.Principal]; RetType = Type.String; Identity=None}
     | _ ->

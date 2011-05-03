@@ -53,13 +53,13 @@ let trialvar = var "TRIAL" Type.String
 let orgvar = var "ORG" Type.Principal
 let query1 = new XmlSubstrateTerm("xct", "/root/trials/*[@org='$ORG']", [orgvar], dict ["", trialvar])
 
-let subst1 = Substitution.Id.Extend(orgvar, SubstrateConstant "org1")
+let subst1 = Substitution.Id.Extend(orgvar, Constant "org1")
 xmlsubstr.Solve [query1] [subst1] |> output [trialvar]
 
 let sitevar = var "SITE" Type.Principal
 let outputvars2: IDictionary<string, IVar> = dict ["", sitevar; "n1", var "N1" Type.Int32; "n2", var "N2" Type.Int32]
 let query2 = new XmlSubstrateTerm("xct", "/root/trials/$TRIAL/*[@unnotified='true']", [trialvar], outputvars2)
-let subst2 = Substitution.Id.Extend(trialvar, SubstrateConstant "trial1")
+let subst2 = Substitution.Id.Extend(trialvar, Constant "trial1")
 xmlsubstr.Solve [query2] [subst2] |> output outputvars2.Values
 
 xmlsubstr.Solve [query1; query2] [subst1] |> output (Seq.append [trialvar] outputvars2.Values)

@@ -20,14 +20,14 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
 
   // Constants                            
   let (|Const|_|) (t: ITerm) =  match t with
-                                | :? IConst<_> as c -> Some c
+                                | :? IConst as c -> Some c
                                 | _ -> None
 
   // Literal patterns
   let (|SubstrateConstant|_|) mt =  match mt with
                                     | Const(c) ->
                                       match c with
-                                      | :? Constant<_> as c -> 
+                                      | :? Constant as c -> 
                                         match (c :> ITerm).Type with 
                                         | Substrate(_) -> Some c.Value
                                         | _ -> None
@@ -42,12 +42,18 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
   let (|True|_|) mt = match mt with
                       | Const(c) -> 
                         match c with
-                        | :? Constant<bool> as bc when bc.Value = true -> Some ()
+                        | :? Constant as bc -> 
+                          match bc.Value with
+                          | :? bool as b when b = true -> Some ()
+                          | _ -> None
                         | _ -> None
                       | _ -> None
   let (|False|_|) mt =  match mt with
                         | Const(c) -> 
                           match c with
-                          | :? Constant<bool> as bc when bc.Value = false -> Some ()
+                          | :? Constant as bc ->
+                            match bc.Value with
+                            | :? bool as b when b = false -> Some ()
+                            | _ -> None
                           | _ -> None
                         | _ -> None
