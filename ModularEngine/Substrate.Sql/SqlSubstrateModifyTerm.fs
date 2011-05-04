@@ -21,8 +21,8 @@ type SqlSubstrateModifyTerm(ns: string, query: ITerm, colsMapping : IDictionary<
     member this.Vars = query.Vars
     member this.Apply s = SqlSubstrateModifyTerm(ns, query.Apply s, this.dictApply s) :> ITerm
     member this.Normalize() = SqlSubstrateModifyTerm(ns, query.Normalize(), colsMapping) :> ITerm
-    member this.UnifyFrom s t = query.UnifyFrom s t
-    member this.Unify t = query.Unify t
+    member this.UnifyFrom s t = query.UnifyFrom s t // TODO: unify in colsMapping
+    member this.Unify t = (this:>ITerm).UnifyFrom Substitution.Id t
   override this.ToString() = 
     "{| \"" + ns + "\" | " + query.ToString() + " |}"
   override this.Equals (o: obj) =

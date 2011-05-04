@@ -22,7 +22,7 @@ type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: ID
         | attr -> outputVars.[attr].Name + "<->\"" + attr+"\"") |> String.concat ", "
     "{| \""+ns+"\" | " + xpath + " | " + sout + " |}"
 
-  interface ISubstrateTerm with
+  interface ISubstrateQueryTerm with
     
     member x.Type = Type.Boolean
     member x.Vars = vars

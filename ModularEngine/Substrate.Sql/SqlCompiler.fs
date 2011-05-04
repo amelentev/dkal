@@ -282,7 +282,7 @@ module SqlCompiler =
           pr "."
           pr c
         | Expr.Const (True) -> print sqlTrue
-        | Expr.Const (False) -> pr "NOT "; print sqlTrue
+        | Expr.Const (False) -> print sqlFalse
         | Expr.Const (PrincipalConstant p) ->
           parm p
         | Expr.Const (SubstrateConstant o) -> parm o
@@ -378,7 +378,7 @@ module SqlCompiler =
         pr "."
         pr c
       | Expr.Const (True) -> print sqlTrue
-      | Expr.Const (False) -> pr "NOT "; print sqlTrue
+      | Expr.Const (False) -> print sqlFalse
       | Expr.Const (PrincipalConstant p) ->
         parm p
       | Expr.Const (SubstrateConstant o) -> parm o

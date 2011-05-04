@@ -92,21 +92,23 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
         SqlCompiler.execQuery (conn, options, sqlExpr, subst, Seq.toList(vars.AsEnumerable()))
       substs |> SubstrateDispatcher.Solve(substrateTerms) |> Seq.collect (fun subst -> checkAssumptions subst queries)
 
-    member this.Update substrateUpdateTerm =
-      let sut = substrateUpdateTerm :?> Microsoft.Research.Dkal.Substrate.Sql.SqlSubstrateModifyTerm
-      let (query, substrateTerms) = prepareQuery sut
-      if substrateTerms.Length>0 then
-        failwith "nested substrateTerms in SubstrateUpdateTerm not supported"
-      if query.Vars.Length > 0 then
-        failwithf "Free variables in SubstrateUpdateTerm: %A"  query
-      let options = {Trace=1} : SqlCompiler.Options
+    member this.Update terms =
+      let update1 (substrateUpdateTerm : ISubstrateUpdateTerm) =
+        let sut = substrateUpdateTerm :?> Microsoft.Research.Dkal.Substrate.Sql.SqlSubstrateModifyTerm
+        let (query, substrateTerms) = prepareQuery sut
+        if substrateTerms.Length>0 then
+          failwith "nested substrateTerms in SubstrateUpdateTerm not supported"
+        if query.Vars.Length > 0 then
+          failwithf "Free variables in SubstrateUpdateTerm: %A"  query
+        let options = {Trace=1} : SqlCompiler.Options
 
-      let updates = sut.ColsMapping |> Seq.map (fun x ->
-        (x.Key, fst (SqlCompiler.compile options this.NextId [x.Value]))) |> List.ofSeq
-      let where = SqlCompiler.compile options this.NextId [query]
+        let updates = sut.ColsMapping |> Seq.map (fun x ->
+          (x.Key, fst (SqlCompiler.compile options this.NextId [x.Value]))) |> List.ofSeq
+        let where = SqlCompiler.compile options this.NextId [query]      
       
-
-      SqlCompiler.execUpdate (conn, options, where, updates)
+        SqlCompiler.execUpdate (conn, options, where, updates)
+       
+      terms |> Seq.map update1 |> List.ofSeq |> List.exists(fun x -> x)
 
     // We return true, and we postpone actual consistency checking until execution
     member xs.AreConsistentUpdates updates = true
