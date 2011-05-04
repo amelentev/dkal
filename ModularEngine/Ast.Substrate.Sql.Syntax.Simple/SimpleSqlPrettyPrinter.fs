@@ -23,10 +23,19 @@ type SimpleSqlPrettyPrinter() =
       | :? SqlSubstrateModifyTerm as t ->
         PrettyPrinter.PrettyPrint <| 
           [ ManyTokens <| spp.TokenizeTerm t.Query;
-            TextToken <| " | ";
+            TextToken <| " | update ";
             TextToken <| String.concat ", " 
               (Seq.map (fun (kv: KeyValuePair<_,_>) -> kv.Key + " := " + (PrettyPrinter.PrettyPrint <| spp.TokenizeTerm kv.Value)) t.ColsMapping) ] 
-      | _ -> failwith "Expecting DummySubstrateTerm when printing SimpleSqlSyntax"
+      | :? SqlSubstrateInsertTerm as t ->
+        PrettyPrinter.PrettyPrint <| 
+          [ TextToken <| String.concat ", " 
+              (Seq.map (fun (kv: KeyValuePair<_,_>) -> kv.Key + " := " + (PrettyPrinter.PrettyPrint <| spp.TokenizeTerm kv.Value)) t.Values);
+            TextToken <| " | insert " + t.Table ] 
+      | :? SqlSubstrateDeleteTerm as t ->
+        PrettyPrinter.PrettyPrint <| 
+          [ ManyTokens <| spp.TokenizeTerm t.Query;
+            TextToken <| " | delete " + t.Table ] 
+      | _ -> failwithf "Unexpected term when printing simple SQL syntax: %O" t
 
   member private spp.PrintTerm mt = (spp :> ISubstratePrettyPrinter).PrintTerm mt
 

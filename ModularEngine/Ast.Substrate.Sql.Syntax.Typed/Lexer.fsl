@@ -26,6 +26,11 @@ rule tokenize = parse
 | '/' '*'            { comment lexbuf }
 | '/' '/' [^ '\n']*  { tokenize lexbuf }
 
+// Updates
+| "update"    { UPDATE }
+| "insert"    { INSERT }
+| "delete"    { DELETE }
+
 // Delimiters
 | "("				{ LPAR }
 | ")"				{ RPAR }

@@ -12,14 +12,13 @@ open Microsoft.Research.Dkal.Ast.Syntax.Parsing
 /// type information, relation declarations, etc.
 type SimpleParser() = 
 
-  let normalizeAndApplyMacros (t: ITerm) (typ: IType option) =
+  let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) (typ: IType option) =
     let finalTerm = 
       if typ.IsNone || typ.Value = t.Type then
         if t.Type = Type.Infon then
-          let termWithSolvedMacros = AndInfon <| List.map AsInfon (Seq.toList Parser.solvedMacros) @ [t]
-          Parser.solvedMacros.Clear()
+          let termWithSolvedMacros = AndInfon <| List.map AsInfon solvedMacros @ [t]
           termWithSolvedMacros
-        elif Parser.solvedMacros.Count = 0 then
+        elif solvedMacros.IsEmpty then
           t
         else
           failwithf "Unresolved macros in %O" t
@@ -35,15 +34,15 @@ type SimpleParser() =
       GeneralParser.TryParse (Parser.Type Lexer.tokenize) s 
       
     member sp.ParseTerm s = 
-      let t = GeneralParser.TryParse (Parser.MetaTerm Lexer.tokenize) s 
+      let t = GeneralParser.TryParse (Parser.Term Lexer.tokenize) s 
       normalizeAndApplyMacros t None
       
     member sp.ParseInfon s = 
-      let t = GeneralParser.TryParse (Parser.MetaTerm Lexer.tokenize) s 
+      let t = GeneralParser.TryParse (Parser.Term Lexer.tokenize) s 
       normalizeAndApplyMacros t (Some Type.Infon)
       
     member sp.ParseRule s = 
-      let t = GeneralParser.TryParse (Parser.MetaTerm Lexer.tokenize) s 
+      let t = GeneralParser.TryParse (Parser.Term Lexer.tokenize) s 
       normalizeAndApplyMacros t (Some Type.Rule)
     
     member sp.ParsePolicy s = 

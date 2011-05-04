@@ -7,14 +7,11 @@ open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Substrate.Sql
 open Microsoft.Research.Dkal.Substrate.Factories
 
-open System
 open System.Collections.Generic
 
 let mutable ctx : IParsingContext option = None
 let mutable substrate: SqlSubstrate option = None
 let mutable ns : string = null
-
-let solvedMacros = new List<ISubstrateQueryTerm>()
 
 let splitTableCol (tableCol: string) =
   match tableCol.Split [|'.'|] with
@@ -29,9 +26,8 @@ let primitiveApp (f: string, args: ITerm list) =
   | None ->
     failwithf "Unknown SQL function %O for arguments %O" f args
 
-let queryWithMacros t = 
-  let termWithMacros = AndBool((Seq.toList (Seq.map AsBoolean solvedMacros)) @ [t])
-  solvedMacros.Clear()
+let queryWithMacros t solvedMacros = 
+  let termWithMacros = AndBool((List.map AsBoolean solvedMacros) @ [t])
   termWithMacros.Normalize()
 
 %}
@@ -43,6 +39,9 @@ let queryWithMacros t =
 
 // ------------------------------------------------------------------------------------------------------
 // These are the terminal tokens of the grammar along with the types of the data carried by each token:
+
+// Updates
+%token UPDATE INSERT DELETE
 
 // Binary operators
 %token AND OR IMPLIES 
@@ -92,62 +91,120 @@ let queryWithMacros t =
 
 SubstrateTerm:
   | Term EOF                                       
-    { new DummySubstrateQueryTerm(queryWithMacros $1, ns) :> ISubstrateTerm }
-  | Term PIPE ColUpdates EOF                       
-    { let colsMapping = new Dictionary<string, ITerm>()
-      for (tableCol, t) in $3 do
-        // TODO if not(macros.IsEmpty) then
-          // failwith "Unresolved macros inside SQL modify statement"
+    { let t, solvedMacros = $1
+      new DummySubstrateQueryTerm(queryWithMacros t solvedMacros, ns) :> ISubstrateTerm }
+  | Term PIPE UPDATE ColUpdates EOF                       
+    { let t, solvedMacros = $1
+      let colsMapping = new Dictionary<string, ITerm>()
+      for (tableCol, t: ITerm) in $4 do
+        let table, col = splitTableCol tableCol
+        let typ = substrate.Value.GetColumnType table col
+        if Type.Substrate(typ) :> IType <> t.Type then
+          failwithf "Expecting a %O value in SQL statement, found %O" typ t
         colsMapping.[tableCol] <- t
-      SqlSubstrateModifyTerm(ns, queryWithMacros $1, colsMapping) :> ISubstrateTerm }
+      SqlSubstrateModifyTerm(ns, queryWithMacros t solvedMacros, colsMapping) :> ISubstrateTerm }
+  | ColInserts PIPE INSERT LOWER_IDENTIFIER EOF
+    { let colsMapping = new Dictionary<string, ITerm>()
+      if not(substrate.Value.HasTable $4) then
+        failwithf "There is no %O table in the SQL database" $4
+      for (col, t: ITerm) in $1 do
+        let typ = substrate.Value.GetColumnType $4 col
+        if Type.Substrate(typ) :> IType <> t.Type then
+          failwithf "Expecting a %O value in SQL statement, found %O" typ t
+        colsMapping.[col] <- t
+      SqlSubstrateInsertTerm(ns, $4, colsMapping) :> ISubstrateTerm }
+  | Term PIPE DELETE LOWER_IDENTIFIER EOF                       
+    { let t, solvedMacros = $1
+      if not(substrate.Value.HasTable $4) then
+        failwithf "There is no %O table in the SQL database" $4
+      SqlSubstrateDeleteTerm(ns, queryWithMacros t solvedMacros, $4) :> ISubstrateTerm }
 
 Term:
 // Tables and function/macro calls
 	| LOWER_IDENTIFIER DOT LOWER_IDENTIFIER 
     { let typ = Type.Substrate(substrate.Value.GetColumnType $1 $3)
-      App({Name=$1+"."+$3; RetType=typ; ArgsType=[]; Identity=None}, []) }
+      App({Name=$1+"."+$3; RetType=typ; ArgsType=[]; Identity=None}, []), [] }
 
 	| LOWER_IDENTIFIER LPAR Terms RPAR	    	    
-    { let concreteArgs: ITerm list = $3
+    { let (concreteArgs: ITerm list), (sms: ISubstrateQueryTerm list list) = List.unzip $3
       if ctx.Value.HasMacro $1 then
         // it is a macro
         let ret, solvedMacro = ctx.Value.ApplyMacro($1, concreteArgs)
-        solvedMacros.Add solvedMacro |> ignore
-        ret
+        ret, (List.concat sms) @ [solvedMacro]
       elif concreteArgs.Length > 0 then
         // it is an overloaded operator
-        primitiveApp($1, $3) 
+        primitiveApp($1, concreteArgs), (List.concat sms)
       else
-        failwithf "Unknown or malformed function application in %O(%O)" $1 $3 }
+        failwithf "Unknown or malformed function application in %O(%O)" $1 concreteArgs }
 
 // Nested substrates
 	| SUBSTRATE_EXPRESSION              
     { let ns, exp = $1
       let substrate = SubstrateMap.GetSubstrate ns
       let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns ctx
-      parser.ParseTerm exp :> ITerm }
+      parser.ParseTerm exp :> ITerm, [] }
 
 // Bool constructs
-  | Term AND Term					          	{ primitiveApp(SqlPrimitives.And, [$1; $3]) }
-	| Term OR Term					          	{ primitiveApp(SqlPrimitives.Or, [$1; $3]) }
-	| NOT Term							            { primitiveApp(SqlPrimitives.Not, [$2]) }
-	| Term EQ EQ Term		%prec EQ	      { primitiveApp(SqlPrimitives.Eq, [$1; $4]) }
-	| Term NOT EQ Term		%prec EQ	    { primitiveApp(SqlPrimitives.Neq, [$1; $4]) }
-	| Term LT Term					          	{ primitiveApp(SqlPrimitives.Lt, [$1; $3]) }
-	| Term LT EQ Term		%prec EQ	      { primitiveApp(SqlPrimitives.Lte, [$1; $4]) }
-	| Term GT Term					          	{ primitiveApp(SqlPrimitives.Gt, [$1; $3]) }
-	| Term GT EQ Term		%prec EQ	      { primitiveApp(SqlPrimitives.Gte, [$1; $4]) }
+  | Term AND Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.And, [t1; t2]), sm1 @ sm2 }
+	| Term OR Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.Or, [t1; t2]), sm1 @ sm2 }
+	| NOT Term
+    { let t, sm = $2
+      primitiveApp(SqlPrimitives.Not, [t]), sm }
+	| Term EQ EQ Term		%prec EQ
+    { let t1, sm1 = $1
+      let t2, sm2 = $4
+      primitiveApp(SqlPrimitives.Eq, [t1; t2]), sm1 @ sm2 }
+	| Term NOT EQ Term		%prec EQ
+    { let t1, sm1 = $1
+      let t2, sm2 = $4
+      primitiveApp(SqlPrimitives.Neq, [t1; t2]), sm1 @ sm2 }
+	| Term LT Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.Lt, [t1; t2]), sm1 @ sm2 }
+	| Term LT EQ Term		%prec EQ
+    { let t1, sm1 = $1
+      let t2, sm2 = $4
+      primitiveApp(SqlPrimitives.Lte, [t1; t2]), sm1 @ sm2 }
+	| Term GT Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.Gt, [t1; t2]), sm1 @ sm2 }
+	| Term GT EQ Term		%prec EQ
+    { let t1, sm1 = $1
+      let t2, sm2 = $4
+      primitiveApp(SqlPrimitives.Gte, [t1; t2]), sm1 @ sm2 }
 
 // Arithmetic
-	| Term PLUS Term					  { primitiveApp(SqlPrimitives.Plus, [$1; $3]) }
-	| Term MINUS Term				  	{ primitiveApp(SqlPrimitives.Minus, [$1; $3]) }
-	| MINUS Term %prec TIMES		{ primitiveApp(SqlPrimitives.Uminus, [$2]) } 
-	| Term TIMES Term					  { primitiveApp(SqlPrimitives.Times, [$1; $3]) }
-	| Term DIV Term					  	{ primitiveApp(SqlPrimitives.Divide, [$1; $3]) }
+	| Term PLUS Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.Plus, [t1; t2]), sm1 @ sm2 }
+	| Term MINUS Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.Minus, [t1; t2]), sm1 @ sm2 }
+	| MINUS Term %prec TIMES
+    { let t, sm = $2
+      primitiveApp(SqlPrimitives.Uminus, [t]), sm } 
+	| Term TIMES Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.Times, [t1; t2]), sm1 @ sm2 }
+	| Term DIV Term
+    { let t1, sm1 = $1
+      let t2, sm2 = $3
+      primitiveApp(SqlPrimitives.Divide, [t1; t2]), sm1 @ sm2 }
 
 // Constants, variables, misc
-	| Literal							      		{ $1 }
-	| Variable        							{ $1 }
+	| Literal							      		{ $1, [] }
+	| Variable        							{ $1, [] }
 	| LPAR Term RPAR			      		{ $2 }
 
 Terms:
@@ -171,8 +228,23 @@ Literal:
 	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }
 
 ColUpdate:
-  | LOWER_IDENTIFIER DOT LOWER_IDENTIFIER GETS Term              { ($1 + "." + $3, $5) }
+  | LOWER_IDENTIFIER DOT LOWER_IDENTIFIER GETS Term
+    { let t, sm = $5
+      if not sm.IsEmpty then
+        failwithf "Unsolved macros in SQL statement %O" t
+      ($1 + "." + $3, t) }
 
 ColUpdates:
   | ColUpdate                   { [$1] }
   | ColUpdate COMMA ColUpdates  { $1 :: $3 }
+
+ColInsert:
+  | LOWER_IDENTIFIER GETS Term
+    { let t, sm = $3
+      if not sm.IsEmpty then
+        failwithf "Unsolved macros in SQL statement %O" t
+      ($1, t) }
+
+ColInserts:
+  | ColInsert                   { [$1] }
+  | ColInsert COMMA ColInserts  { $1 :: $3 }

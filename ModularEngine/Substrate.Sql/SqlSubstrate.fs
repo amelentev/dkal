@@ -67,6 +67,14 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
 
   member this.SchemaFile = schemaFile
 
+  member this.HasTable (table: string) =
+    let xd = new XmlDocument()
+    xd.Load(schemaFile)
+    let xnm = new XmlNamespaceManager(xd.NameTable)
+    xnm.AddNamespace("dbml", "http://schemas.microsoft.com/linqtosql/dbml/2007")
+    let node = xd.DocumentElement.SelectSingleNode("//dbml:Database/dbml:Table[@Name='dbo." + table + "']", xnm)
+    node <> null 
+
   member this.GetColumnType (table: string) (column: string) =
     let xd = new XmlDocument()
     xd.Load(schemaFile)

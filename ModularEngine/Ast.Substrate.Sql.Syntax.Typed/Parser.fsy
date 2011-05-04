@@ -23,6 +23,9 @@ let mutable ns: string = null
 // ------------------------------------------------------------------------------------------------------
 // These are the terminal tokens of the grammar along with the types of the data carried by each token:
 
+// Updates
+%token UPDATE INSERT DELETE
+
 // Delimiters
 %token LPAR RPAR COMMA PIPE GETS
 
@@ -58,11 +61,18 @@ let mutable ns: string = null
 ISubstrateTerm:
   | ITerm EOF                     
     { new DummySubstrateQueryTerm($1, ns) :> ISubstrateTerm }
-  | ITerm PIPE ColUpdates EOF     
+  | ITerm PIPE UPDATE ColUpdates EOF     
     { let colsMapping = new Dictionary<string, ITerm>()
-      for (tableCol, t) in $3 do
+      for (tableCol, t) in $4 do
         colsMapping.[tableCol] <- t
       SqlSubstrateModifyTerm(ns, $1, colsMapping) :> ISubstrateTerm }
+  | ColUpdates PIPE INSERT LOWER_IDENTIFIER EOF
+    { let colsMapping = new Dictionary<string, ITerm>()
+      for (col, t) in $1 do
+        colsMapping.[col] <- t
+      SqlSubstrateInsertTerm(ns, $4, colsMapping) :> ISubstrateTerm }
+  | ITerm PIPE DELETE LOWER_IDENTIFIER EOF                       
+    { SqlSubstrateDeleteTerm(ns, $1, $4) :> ISubstrateTerm }
 
 ITerm:
 	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR	COLON ITerm		
