@@ -32,7 +32,7 @@ module Main =
         printfn "%O" <| printer.PrintPolicy assembly.Policy
         printfn "------------------------------------------------------------------------"
         for rule in assembly.Policy.Rules do
-          executor.InstallRule rule
+          executor.InstallRule rule |> ignore
         executor.Start()
 
     | _ -> failwith "Wrong number of parameters"

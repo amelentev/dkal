@@ -12,6 +12,9 @@ type IExecutor =
   abstract member Stop: unit -> unit 
 
   /// Installs the given rule ITerm on the executor. The rule is followed from 
-  /// this point onwards
-  abstract member InstallRule: ITerm -> unit
+  /// this point onwards. Returns false if the rule was already installed
+  abstract member InstallRule: ITerm -> bool
     
+  /// Uninstalls the given rule ITerm on the executor. Returns true if the rule 
+  /// was not present
+  abstract member UninstallRule: ITerm -> bool

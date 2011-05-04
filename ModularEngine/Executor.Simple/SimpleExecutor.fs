@@ -40,7 +40,14 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
   interface IExecutor with
     
     member se.InstallRule (r: ITerm) =
-      rules.Add(r) |> ignore
+      match r with
+      | SeqRule(rs) -> List.fold (fun change rule -> (se :> IExecutor).InstallRule rule || change) false rs
+      | _ -> rules.Add(r)
+
+    member se.UninstallRule (r: ITerm) =
+      match r with
+      | SeqRule(rs) -> List.fold (fun change rule -> (se :> IExecutor).UninstallRule rule || change) false rs
+      | _ -> rules.Remove(r)
 
     member se.Start () = 
       // Start communications
@@ -137,8 +144,8 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
         | Forget(infon) -> engine.Forget infon
         | Send(ppal, infon) -> router.Send infon ppal; false
         | Say(ppal, infon) -> router.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
-        | Install(rule) -> rules.Add(rule)
-        | Uninstall(rule) -> rules.Remove(rule)
+        | Install(rule) -> (se :> IExecutor).InstallRule rule
+        | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
         | Apply(su) -> 
           substrateUpdates.Add su |> ignore; false
         | _ -> failwithf "Unrecognized action %O" action
