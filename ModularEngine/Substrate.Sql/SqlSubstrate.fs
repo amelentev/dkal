@@ -18,13 +18,9 @@ open System.Xml
 type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list) = 
   let mutable nextId = 0
   let conn = SqlConnector(connStr)
+  let trace = 1
 
-  let prepareQuery (query: ISubstrateTerm) =
-    let extractQueries = fun (x: ITerm) -> 
-      match x with
-      | :? DummySubstrateQueryTerm as t -> t.Query
-      | :? SqlSubstrateModifyTerm as t -> t.Query
-      | _ as t -> failwithf "not DummySubstrateTerm: %A" t
+  let prepareQuery (query: ITerm) =
     // translate all >2-ary functions functions to 2-ary
     let rec normalize2 = function
       | AsBoolean(st) -> AsBoolean (normalize2 (st :> ITerm) :?> ISubstrateQueryTerm)
@@ -46,7 +42,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       | t -> t
     // collect SubstrateTerms and remove them from the query
     let rec separateExternalSubstrates = function
-      | AsBoolean(st) when (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
+      | AsBoolean(st) when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
         // Works only when used on top level without disjunctions
         Const (Constant true), [st]
         // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
@@ -56,8 +52,16 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
         (App(f, fst r), List.concat (snd r))
       | t -> t, []
     let (query, ests) = query |> separateExternalSubstrates
-    let query = query |> extractQueries |> normalize2 |> boolenize
+    let query = query |> normalize2 |> boolenize
     (query, ests)
+
+  let prepareUpdateQuery (query: ITerm) =
+    let (query, ests) = prepareQuery query
+    if ests.Length>0 then
+      failwith "nested substrateTerms in SubstrateUpdateTerm not supported"
+    if query.Vars.Length > 0 then
+      failwithf "Free variables in SubstrateUpdateTerm: %A"  query
+    query
 
   member private this.NextId () =
     nextId <- nextId - 1
@@ -79,14 +83,33 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       let typ = node.Attributes.["Type"].Value
       System.Type.GetType(typ)
 
+  member this.modify (sut: SqlSubstrateModifyTerm) =
+    let query = prepareUpdateQuery sut.Query
+    let updates = sut.ColsMapping |> Seq.map (fun x ->
+      (x.Key, fst (SqlCompiler.compile trace this.NextId [x.Value]))) |> List.ofSeq
+    let where = SqlCompiler.compile trace this.NextId [query]
+    SqlCompiler.execUpdate (conn, trace, where, updates)
+
+  member this.delete (sdt: SqlSubstrateDeleteTerm) =
+    let query = prepareUpdateQuery sdt.Query
+    let where = SqlCompiler.compile trace this.NextId [query]
+    SqlCompiler.execDelete (conn, trace, where, sdt.Table)
+
+  member this.insert (sit: SqlSubstrateInsertTerm) =
+    let values = sit.Values |> Seq.map (fun x -> 
+      let cc = SqlCompiler.compile trace this.NextId [x.Value]
+      (x.Key, fst cc)
+    )
+    SqlCompiler.execInsert (conn, trace, sit.Table, dict values)
+
   interface ISubstrate with
     member this.Solve queries substs =
-      let (queries, substrateTerms) = queries |> Seq.toList |> List.map prepareQuery |> List.unzip
-      let substrateTerms = List.concat substrateTerms      
+      let (queries: seq<DummySubstrateQueryTerm>) = queries |> Seq.cast
+      let (queries, substrateTerms) = queries |> Seq.toList |> List.map (fun t -> t.Query) |> List.map prepareQuery |> List.unzip
+      let substrateTerms = List.concat substrateTerms
       let vars = new HashSet<IVar>()
       queries |> Seq.iter (fun q -> vars.UnionWith(q.Vars))
 
-      let trace = 1
       let checkAssumptions (subst:ISubstitution) (assumptions: ITerm seq)=
         let apply (t:ITerm) = t.Apply subst
         let sqlExpr = SqlCompiler.compile trace this.NextId (assumptions |> Seq.map apply)
@@ -94,20 +117,15 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       substs |> SubstrateDispatcher.Solve(substrateTerms) |> Seq.collect (fun subst -> checkAssumptions subst queries)
 
     member this.Update terms =
-      let update1 (substrateUpdateTerm : ISubstrateUpdateTerm) =
-        let sut = substrateUpdateTerm :?> Microsoft.Research.Dkal.Substrate.Sql.SqlSubstrateModifyTerm
-        let (query, substrateTerms) = prepareQuery sut
-        if substrateTerms.Length>0 then
-          failwith "nested substrateTerms in SubstrateUpdateTerm not supported"
-        if query.Vars.Length > 0 then
-          failwithf "Free variables in SubstrateUpdateTerm: %A"  query
-        let trace = 1
-        let updates = sut.ColsMapping |> Seq.map (fun x ->
-          (x.Key, fst (SqlCompiler.compile trace this.NextId [x.Value]))) |> List.ofSeq
-        let where = SqlCompiler.compile trace this.NextId [query]      
-      
-        SqlCompiler.execUpdate (conn, trace, where, updates)
-       
+      let update1 (term: ISubstrateUpdateTerm) = 
+        match term with
+        | :? SqlSubstrateModifyTerm as smt ->
+          this.modify smt
+        | :? SqlSubstrateDeleteTerm as sdt ->
+          this.delete sdt
+        | :? SqlSubstrateInsertTerm as sit ->
+          this.insert sit
+        | _ as t -> failwithf "unknown SubstrateUpdateTerm: %A" t
       terms |> Seq.map update1 |> List.ofSeq |> List.exists(fun x -> x)
 
     // We return true, and we postpone actual consistency checking until execution

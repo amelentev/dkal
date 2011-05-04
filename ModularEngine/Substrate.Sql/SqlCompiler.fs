@@ -255,7 +255,7 @@ module SqlCompiler =
     member x.get(preffix: string) = 
       let res = sb.ToString()
       sb.Length <- 0
-      if res="" then ""
+      if res="" || res = "1" then ""
       else preffix + res
     member x.parm (v:obj) =
       match v with
