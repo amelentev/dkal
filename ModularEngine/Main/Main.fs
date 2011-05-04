@@ -5,6 +5,7 @@ open System.IO
 open Microsoft.Research.Dkal.Factories
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Factories.Initializer
+open Microsoft.Research.Dkal.Utils.Exceptions
 
 module Main =
 
@@ -36,8 +37,9 @@ module Main =
         executor.Start()
 
     | _ -> failwith "Wrong number of parameters"
-  with e -> 
-    printfn "%O" e
+  with 
+  | ParseException(msg, text, line, col) -> printfn "Error while parsing in line %O, column %O: %O\r\n %O" line col msg text
+  | e -> printfn "%O" e
 
 
 

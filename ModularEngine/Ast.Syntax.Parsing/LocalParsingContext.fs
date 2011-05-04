@@ -1,6 +1,7 @@
-﻿namespace Microsoft.Research.Dkal.Ast.Syntax.ParsingContext
+﻿namespace Microsoft.Research.Dkal.Ast.Syntax.Parsing
   
   open System.Collections.Generic
+  open Microsoft.FSharp.Text.Lexing
 
   open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast.Tree
@@ -30,8 +31,8 @@
         else
           parent.VariableType varName
 
-      member lpc.AddTypeRename(newType: string, targetType: string) =
-        parent.AddTypeRename(newType, targetType)
+      member lpc.AddTypeRename (newTypeName: string, targetType: IType) =
+        parent.AddTypeRename(newTypeName, targetType)
 
       member lpc.TypeFromName(typeName: string) =
         parent.TypeFromName typeName

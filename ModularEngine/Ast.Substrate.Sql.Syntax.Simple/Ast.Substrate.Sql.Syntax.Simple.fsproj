@@ -39,7 +39,6 @@
     <FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="SimpleAst.fs" />
     <Compile Include="SimpleSqlPrettyPrinter.fs" />
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
@@ -55,10 +54,14 @@
       <Visible>false</Visible>
       <Link>Lexer.fs</Link>
     </Compile>
-    <Compile Include="Lifter.fs" />
     <Compile Include="SimpleSqlParser.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Syntax.Parsing\Ast.Syntax.Parsing.fsproj">
+      <Name>Ast.Syntax.Parsing</Name>
+      <Project>{e8840d2a-aa70-46c8-a5f6-319503f7a8b1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Globals\Globals.fsproj">
       <Name>Globals</Name>
       <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>

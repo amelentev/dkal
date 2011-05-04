@@ -24,7 +24,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\Main.XML</DocumentationFile>
     <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Samples\Single\</StartWorkingDirectory>
-    <StartArguments>Single.rt Single.pcy simple</StartArguments>
+    <StartArguments>Single.rt Single.dkal simple</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -42,6 +42,11 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Utils\Utils.fsproj">
+      <Name>Utils</Name>
+      <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -68,11 +73,6 @@
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Utils\Utils.fsproj">
-      <Name>Utils</Name>
-      <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

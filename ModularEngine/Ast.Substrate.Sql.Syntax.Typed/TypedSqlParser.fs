@@ -2,7 +2,7 @@
 
 open System.IO
 open System.Collections.Generic
-open Microsoft.FSharp.Text.Lexing
+open Microsoft.Research.Dkal.Ast.Syntax.Parsing
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Infon
@@ -24,6 +24,5 @@ type TypedSqlParser() =
       ()
 
     member sp.ParseTerm s =
-      let lexbuff s = LexBuffer<char>.FromString(s)
-      Parser.ISubstrateTerm Lexer.tokenize (lexbuff s)
+      GeneralParser.TryParse (Parser.ISubstrateTerm Lexer.tokenize) s
       

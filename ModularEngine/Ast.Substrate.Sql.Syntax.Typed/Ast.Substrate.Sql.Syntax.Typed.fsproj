@@ -70,6 +70,11 @@
       <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Ast.Syntax.Parsing\Ast.Syntax.Parsing.fsproj">
+      <Name>Ast.Syntax.Parsing</Name>
+      <Project>{e8840d2a-aa70-46c8-a5f6-319503f7a8b1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
       <Name>Ast.Tree</Name>
       <Project>{5b90f678-20f2-453f-b9a6-3344f1edef85}</Project>

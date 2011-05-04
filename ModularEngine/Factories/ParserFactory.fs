@@ -2,7 +2,7 @@
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Infon
-open Microsoft.Research.Dkal.Ast.Syntax.ParsingContext
+open Microsoft.Research.Dkal.Ast.Syntax.Parsing
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Typed
 

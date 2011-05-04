@@ -1,6 +1,7 @@
-﻿namespace Microsoft.Research.Dkal.Ast.Syntax.ParsingContext
+﻿namespace Microsoft.Research.Dkal.Ast.Syntax.Parsing
   
   open System.Collections.Generic
+  open Microsoft.FSharp.Text.Lexing
 
   open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Ast.Tree
@@ -13,6 +14,9 @@
     let variables = new Dictionary<string, IType>()
     let macros = new Dictionary<string, IType * ISubstrateQueryTerm * IVar list>()
     let types = new Dictionary<string, IType>()
+
+    /// Holds a parsing position
+    let mutable pos = Position.Empty
 
     /// Holds fresh variable ids that are used when solving macros
     let mutable freshVarId = 1
@@ -37,8 +41,8 @@
         else
           failwithf "Undefined variable %O" varName
 
-      member c.AddTypeRename (newType: string, targetType: string) =
-        types.[newType] <- (c :> IParsingContext).TypeFromName(targetType)
+      member c.AddTypeRename (newTypeName: string, targetType: IType) =
+        types.[newTypeName] <- targetType
 
       member c.TypeFromName (typeName: string) =
         let found, typ = types.TryGetValue typeName

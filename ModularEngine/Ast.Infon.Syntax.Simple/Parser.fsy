@@ -1,10 +1,23 @@
 ﻿%{
-open Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple.SimpleAst
+open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
+open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Ast.Syntax.Parsing
+open Microsoft.Research.Dkal.Substrate.Factories
 
 open System
+open System.Collections.Generic
 
-let emptyInfon = SimpleApp(Primitives.EmptyInfon, [])
+let relations = new Dictionary<string, Function>()
+
+let mutable ctxs = new Stack<IParsingContext>()
+
+let solvedMacros = new List<ISubstrateQueryTerm>()
+
+let primitiveApp (f: string, args: ITerm list) = 
+  App((Primitives.SolveFunction f).Value, args)
 %}
 
 // ------------------------------------------------------------------------------------------------------
@@ -13,9 +26,6 @@ let emptyInfon = SimpleApp(Primitives.EmptyInfon, [])
 %start Assembly
 %start Signature
 %start Policy
-%start TypeDeclaration
-%start RelationDeclaration
-%start MacroDeclaration
 %start MetaTerm
 %start Type
 
@@ -73,14 +83,11 @@ let emptyInfon = SimpleApp(Primitives.EmptyInfon, [])
 // ------------------------------------------------------------------------------------------------------
 // This is the type of the data produced by successful reductions of each 'start' symbol:
 
-%type < SimpleAssembly > Assembly
-%type < SimpleSignature > Signature
-%type < SimplePolicy > Policy
-%type < SimpleTypeDeclaration > TypeDeclaration
-%type < SimpleRelationDeclaration > RelationDeclaration
-%type < SimpleMacroDeclaration > MacroDeclaration
-%type < SimpleMetaTerm > MetaTerm
-%type < SimpleType > Type
+%type < Assembly > Assembly
+%type < Signature > Signature
+%type < Policy > Policy
+%type < ITerm > MetaTerm
+%type < IType > Type
 
 // ------------------------------------------------------------------------------------------------------
 // Precedence of operators
@@ -100,23 +107,27 @@ Assembly:
 	| Signature Policy EOF							  { { Signature = $1; Policy = $2 } }
 
 Signature:
-	|										                	{ SimpleSignature() }
-	| Signature SubstrateDeclaration 			{ $1.SubstrateDeclarations.Add($2); $1 }
-	| Signature TypeDeclaration 			  	{ $1.TypeDeclarations.Add($2); $1 }
-	| Signature RelationDeclaration 			{ $1.RelationDeclarations.Add($2); $1 }
-	| Signature MacroDeclaration 				  { $1.MacroDeclarations.Add($2); $1 }
+	|										                	{ {Substrates = []; Relations = []} }
+	| Signature SubstrateDeclaration 			{ {$1 with Substrates = $1.Substrates @ [$2]} }
+	| Signature TypeDeclaration 			  	{ $1 }
+	| Signature RelationDeclaration 			{ {$1 with Relations = $1.Relations @ [$2]} }
+	| Signature MacroDeclaration 				  { $1 }
 
 Policy:
-	|										        	{ SimplePolicy() }
-	| Policy MetaTerm							{ $1.Rules.Add($2); $1 }
+	|										        	{ {Rules = []} }
+	| Policy MetaTerm							{ {$1 with Rules = $1.Rules @ [$2]} }
 
 SubstrateDeclaration:
 	| SUBSTRATE LOWER_IDENTIFIER 
 		LPAR StringLiterals RPAR	
-		NAMESPACES StringLiterals			    	{ { Kind = $2; Args = $4; Namespaces = $7 } }
+		NAMESPACES StringLiterals			    	
+      { let s = SubstrateFactory.Substrate $2 $4 $7
+        SubstrateMap.AddSubstrate s
+        s }
 
 TypeDeclaration:
-	| TYPE UPPER_IDENTIFIER EQ Type				{ { NewTyp = $2; TargetTyp = $4 } }
+	| TYPE UPPER_IDENTIFIER EQ Type				
+    { ctxs.Peek().AddTypeRename($2, $4) }
 
 Cols:
 	|										        	{ [] }
@@ -127,7 +138,10 @@ Col:
 	| LOWER_IDENTIFIER COLON Type				{ ($1, $3) }
 
 RelationDeclaration:
-	| RELATION LOWER_IDENTIFIER LPAR Args RPAR		{ { Name = $2; Args = $4 } }   
+	| RELATION LOWER_IDENTIFIER LPAR Args RPAR		
+    { let rel = { Name = $2; ArgsType = (List.map (fun (v:IVar) -> v.Type) $4); RetType = Type.Infon; Identity = None}
+      relations.[$2] <- rel
+      { Name = $2; Args = $4 } }   
 
 Args:
 	|											      { [] }
@@ -135,35 +149,58 @@ Args:
 	| Arg COMMA Args						{ $1 :: $3 }
 
 Arg:
-	| UPPER_IDENTIFIER COLON Type				{ ($1, $3) }
+	| UPPER_IDENTIFIER COLON Type				{ {Name = $1; Type = $3} :> IVar }
 
 Type:
-	| UPPER_IDENTIFIER							{ $1 }
-//	| SEQ LT Type GT							{ SeqSimpleType($3) }
+	| UPPER_IDENTIFIER							{ ctxs.Peek().TypeFromName($1) }
 
 MacroDeclaration:
 	| MACRO LOWER_IDENTIFIER LPAR Args RPAR 
 		COLON Type SUBSTRATE_EXPRESSION 
       { let ns, exp = $8;
-        { Name = $2; Args = $4; RetTyp = $7; Namespace = ns; Body = exp }; }
+        let localContext = new LocalParsingContext($4 @ [{Name="Ret"; Type=$7}], ctxs.Peek())
+        let substrate = SubstrateMap.GetSubstrate ns
+        let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (Some <| (localContext :> IParsingContext))
+        match parser.ParseTerm(exp) with
+        | :? ISubstrateQueryTerm as body when body.Type = Type.SubstrateQuery ->
+          ctxs.Peek().AddMacro($2, $7, body, $4)
+        | _ ->
+          failwithf "Macro %O body must be substrate query expression, regardless of return type" $2 }
+
+VarsDeclaration:
+  | WITH Args
+    { ctxs.Push <| new LocalParsingContext($2, ctxs.Peek())}
 
 MetaTerm:
 // Variable declarations
-  | WITH Args Rule                                    { SimpleVarDeclaration($2, $3) }
+  | VarsDeclaration Rule                                    
+    { ctxs.Pop() |> ignore
+      $2 }
 
 // Infon constructs
-	| AS_INFON LPAR TRUE RPAR							  	            { emptyInfon }
-	| AS_INFON LPAR MetaTerm RPAR							            { SimpleApp(Primitives.AsInfon, [$3]) }
-	| MetaTerm IMPLIES MetaTerm						            		{ SimpleApp(Primitives.Implies, [$1; $3]) }
-	| MetaTerm SAID MetaTerm							              	{ SimpleApp(Primitives.Said, [$1; $3]) }
-	| MetaTerm AND MetaTerm							            	  	{ SimpleApp(Primitives.And, [$1; $3]) }
+	| AS_INFON LPAR TRUE RPAR							  	            { primitiveApp(Primitives.EmptyInfon, []) }
+	| AS_INFON LPAR MetaTerm RPAR							            { primitiveApp(Primitives.AsInfon, [$3]) }
+	| MetaTerm IMPLIES MetaTerm						            		{ primitiveApp(Primitives.Implies, [$1; $3]) }
+	| MetaTerm SAID MetaTerm							              	{ primitiveApp(Primitives.Said, [$1; $3]) }
+	| MetaTerm AND MetaTerm							            	  	{ primitiveApp(Primitives.And, [$1; $3]) }
 
 // Relations and function/macro calls
-	| LOWER_IDENTIFIER LPAR MetaTerms RPAR		{ SimpleApp($1, $3) }
+	| LOWER_IDENTIFIER LPAR MetaTerms RPAR		
+    { if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, $3)
+        solvedMacros.Add solvedMacro |> ignore
+        ret
+      else
+        // check if it is a relation
+        let found, func = relations.TryGetValue $1
+        if found then
+          App(func, $3)
+        else
+          failwithf "Undefined identifier: %O" $1 }
 
 // Constants, variables, misc
-	| Literal							      		{ SimpleConst($1) }
-	| UPPER_IDENTIFIER							{ SimpleVar($1) }
+	| Literal							      		{ $1 }
+	| Variable        							{ $1 }
 	| LPAR MetaTerm RPAR						{ $2 }
 
 // Sequences
@@ -180,34 +217,45 @@ MetaTerm:
 	| Action									{ $1 }
 
 // Substrate expression
-  | SUBSTRATE_EXPRESSION    { SimpleSubstrate($1) }
+  | SUBSTRATE_EXPRESSION    
+    { let ns, exp = $1
+      let substrate = SubstrateMap.GetSubstrate ns
+      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (Some <| ctxs.Peek())
+      parser.ParseTerm exp :> ITerm }
 
 Rule:
-  | DO Action                          { SimpleApp(Primitives.Rule, [SimpleApp(Primitives.EmptyCondition, []); $2]) }
-  | Condition DO Action                { SimpleApp(Primitives.Rule, [$1; $3]) }
-  | Rule Rule                          { SimpleApp(Primitives.SeqRule, [$1; $2]) }
+  | DO Action                          { primitiveApp(Primitives.Rule, [primitiveApp(Primitives.EmptyCondition, []); $2]) }
+  | Condition DO Action                { primitiveApp(Primitives.Rule, [$1; $3]) }
+  | Rule Rule                          { primitiveApp(Primitives.SeqRule, [$1; $2]) }
 
 Condition:
-  | UPPER_IDENTIFIER							    { SimpleVar($1) }
-  | UPON MetaTerm                     { SimpleApp(Primitives.WireCondition, [$2]) }
-  | IF MetaTerm                       { SimpleApp(Primitives.KnownCondition, [$2]) }
-  | Condition Condition               { SimpleApp(Primitives.SeqCondition, [$1; $2]) }
+  | Variable        							    { $1 }
+  | UPON MetaTerm                     { primitiveApp(Primitives.WireCondition, [$2]) }
+  | IF MetaTerm                       { primitiveApp(Primitives.KnownCondition, [$2]) }
+  | Condition Condition               { primitiveApp(Primitives.SeqCondition, [$1; $2]) }
 
 Action:
-	| UPPER_IDENTIFIER							      { SimpleVar($1) }
-  | SAY TO MetaTerm COLON MetaTerm			{ SimpleApp(Primitives.Say, [$3; $5]) }
-	| SEND TO MetaTerm COLON MetaTerm			{ SimpleApp(Primitives.Send, [$3; $5]) }
-	| LEARN MetaTerm			      		      { SimpleApp(Primitives.Learn, [$2]) }
-	| FORGET MetaTerm				            	{ SimpleApp(Primitives.Forget, [$2]) }
-	| INSTALL MetaTerm			    		      { SimpleApp(Primitives.Install, [$2]) }
-	| UNINSTALL MetaTerm			    	      { SimpleApp(Primitives.Uninstall, [$2]) }
-	| APPLY MetaTerm			    	          { SimpleApp(Primitives.Apply, [$2]) }
-	| Action Action		  	                { SimpleApp(Primitives.SeqAction, [$1; $2]) }
+  | Variable        							      { $1 }
+  | SAY TO MetaTerm COLON MetaTerm			{ primitiveApp(Primitives.Say, [$3; $5]) }
+	| SEND TO MetaTerm COLON MetaTerm			{ primitiveApp(Primitives.Send, [$3; $5]) }
+	| LEARN MetaTerm			      		      { primitiveApp(Primitives.Learn, [$2]) }
+	| FORGET MetaTerm				            	{ primitiveApp(Primitives.Forget, [$2]) }
+	| INSTALL MetaTerm			    		      { primitiveApp(Primitives.Install, [$2]) }
+	| UNINSTALL MetaTerm			    	      { primitiveApp(Primitives.Uninstall, [$2]) }
+	| APPLY MetaTerm			    	          { primitiveApp(Primitives.Apply, [$2]) }
+	| Action Action		  	                { primitiveApp(Primitives.SeqAction, [$1; $2]) }
 
 MetaTerms:
 	|											              { [] }
 	| MetaTerm									        { [$1] }
 	| MetaTerm COMMA MetaTerms					{ $1 :: $3 }
+
+Variable:
+  | UPPER_IDENTIFIER 
+    { if $1 = "Me" then
+        Const <| PrincipalConstant(ctxs.Peek().Me)
+      else
+        Var({ Name = $1; Type = ctxs.Peek().VariableType $1 }) }
 
 Literals:
 	|									          		{ [] }
@@ -215,12 +263,12 @@ Literals:
 	| Literal COMMA Literals				{ $1 :: $3 }
 
 Literal:
-	| TRUE									    	{ BoolSimpleConstant(true) }
-	| FALSE									    	{ BoolSimpleConstant(false) }
-	| INT_LITERAL						  		{ Int32SimpleConstant($1) }
-	| FLOAT_LITERAL								{ DoubleSimpleConstant($1) }
-	| STRING_LITERAL							{ StringSimpleConstant($1) }
-	| LOWER_IDENTIFIER						{ PrincipalSimpleConstant($1) }
+	| TRUE									    	{ Const(Constant(true)) }
+	| FALSE									    	{ Const(Constant(false)) }
+	| INT_LITERAL						  		{ Const(Constant($1)) }
+	| FLOAT_LITERAL								{ Const(Constant($1)) }
+	| STRING_LITERAL							{ Const(Constant($1)) }
+	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }
 
 StringLiterals:
 	|										                    	{ [] }

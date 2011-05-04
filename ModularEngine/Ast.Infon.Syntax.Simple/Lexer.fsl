@@ -20,7 +20,7 @@ let newline = ('\n' | '\r' '\n')
 rule tokenize = parse
 // Whitespace
 | whitespace		{ tokenize lexbuf }
-| newline			  { tokenize lexbuf }
+| newline			  { lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf }
 
 // Comments
 | '/' '*'            { comment lexbuf }

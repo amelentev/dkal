@@ -59,7 +59,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infon", "Infon", "{7ACA9380
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Factories", "Factories", "{075A4DEF-4DC6-4A81-B04F-20AA48D9A936}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ast.Syntax.ParsingContext", "Ast.Syntax.ParsingContext\Ast.Syntax.ParsingContext.fsproj", "{E8840D2A-AA70-46C8-A5F6-319503F7A8B1}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ast.Syntax.Parsing", "Ast.Syntax.Parsing\Ast.Syntax.Parsing.fsproj", "{E8840D2A-AA70-46C8-A5F6-319503F7A8B1}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Substrate.Xml", "Substrate.Xml\Substrate.Xml.fsproj", "{66DB220D-6608-45F4-874A-860F1ACAEAB9}"
 EndProject

@@ -1,5 +1,7 @@
 ﻿namespace Microsoft.Research.Dkal.Interfaces
 
+open Microsoft.FSharp.Text.Lexing
+
 /// IParsingContext provides an interface for contexts that keep information
 /// necessary during the parsing process such as variable types, macro 
 /// definitions, etc.
@@ -10,7 +12,7 @@ type IParsingContext =
   abstract HasVariable: string -> bool
   abstract VariableType: string -> IType 
 
-  abstract AddTypeRename: newType: string * targetType: string -> unit
+  abstract AddTypeRename: newTypeName: string * targetType: IType -> unit
   abstract TypeFromName: string -> IType 
   
   abstract HasMacro: string -> bool
