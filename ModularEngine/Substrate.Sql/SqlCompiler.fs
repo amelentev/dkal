@@ -204,6 +204,7 @@ module SqlCompiler =
     let nextScope = ref 0
     let rec comp currentScope (term:ITerm) = 
         match term with
+          | AsBoolean(st) -> comp currentScope st
           | ActivePatterns.Column(t, c) -> 
             Expr.Column({ scope = currentScope; name = t}, c)
           | ActivePatterns.Const(c) -> 

@@ -20,4 +20,4 @@ module Microsoft.Research.Dkal.Substrate.Sql.Builders
           Identity = Some False }, bools)
      
   let AsBoolean (query: ISubstrateQueryTerm) = 
-    App(Primitives.SolveFunction SqlPrimitives.AsBoolean |> Option.get, [query])
+    App(SqlPrimitives.SolveOverloadOperator SqlPrimitives.AsBoolean Type.SubstrateQuery |> Option.get, [query])

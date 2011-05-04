@@ -27,6 +27,7 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       | _ as t -> failwithf "not DummySubstrateTerm: %A" t
     // translate all >2-ary functions functions to 2-ary
     let rec normalize2 = function
+      | AsBoolean(st) -> AsBoolean (normalize2 (st :> ITerm) :?> ISubstrateQueryTerm)
       | App(f, a1 :: a2 :: a3 :: tl) ->
         let f' = {Name=f.Name; RetType=f.RetType; ArgsType=List.tail f.ArgsType; Identity=f.Identity}
         let n = normalize2( App(f', a2::a3::tl) )
@@ -45,14 +46,14 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       | t -> t
     // collect SubstrateTerms and remove them from the query
     let rec separateExternalSubstrates = function
-      | App(f, args) ->
-        let r = List.unzip (args |> List.map separateExternalSubstrates)
-        (App(f, fst r), List.concat (snd r))
-      | :? ISubstrateQueryTerm as st when not (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
+      | AsBoolean(st) when (namespaces.Contains(st.Namespace)) -> // external SubstrateTerm
         // Works only when used on top level without disjunctions
         Const (Constant true), [st]
         // The problem with arbitrary formula can be resolved by translating the formula to disjunctive normal form and handle each conjunction separately:
         //  So check than all negative SubstrateTerms gives no substitutions, get a substitutions from all positive SubstrateTerms and execute the rest.
+      | App(f, args) ->
+        let r = List.unzip (args |> List.map separateExternalSubstrates)
+        (App(f, fst r), List.concat (snd r))
       | t -> t, []
     let (query, ests) = query |> separateExternalSubstrates
     let query = query |> extractQueries |> normalize2 |> boolenize
