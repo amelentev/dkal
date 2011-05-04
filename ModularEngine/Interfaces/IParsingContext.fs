@@ -14,7 +14,7 @@ type IParsingContext =
   abstract TypeFromName: string -> IType 
   
   abstract HasMacro: string -> bool
-  abstract AddMacro: macroName: string * retType: IType * body: ISubstrateTerm * args: IVar list -> unit
+  abstract AddMacro: macroName: string * retType: IType * body: ISubstrateQueryTerm * args: IVar list -> unit
   abstract GetMacroArgs: macroName: string -> IVar list 
   abstract GetMacroRetType: macroName: string -> IType
-  abstract ApplyMacro: macroName: string * concreteArgs: ITerm list -> ITerm * ISubstrateTerm
+  abstract ApplyMacro: macroName: string * concreteArgs: ITerm list -> ITerm * ISubstrateQueryTerm

@@ -113,6 +113,7 @@ module Primitives =
     | And ->
       Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Infon]; 
             Identity = Some <| ({Function=(SolveFunction EmptyInfon).Value; Args=[]} :> ITerm) }
+
     | _ -> 
       None
 

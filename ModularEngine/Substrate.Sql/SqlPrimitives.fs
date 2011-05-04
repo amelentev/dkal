@@ -38,6 +38,8 @@ module SqlPrimitives =
   let Divide = "divide"
   [<Literal>] 
   let PpalName = "ppalName"
+  [<Literal>] 
+  let AsBoolean = "asBoolean"
 
   /// Returns true iff the given IType supports equality in SQL
   let private HasEquality (t: IType) =
@@ -115,5 +117,7 @@ module SqlPrimitives =
             Identity = Some <| Const(Constant(1))}
     | PpalName when t = Type.Principal ->
       Some {Name = f; ArgsType = [Type.Principal]; RetType = Type.String; Identity=None}
+    | AsBoolean ->
+      Some {Name = f; RetType = Type.Boolean; ArgsType = [Type.SubstrateQuery]; Identity = None}
     | _ ->
       None

@@ -11,7 +11,7 @@
   type ParsingContext(me: string) =
 
     let variables = new Dictionary<string, IType>()
-    let macros = new Dictionary<string, IType * ISubstrateTerm * IVar list>()
+    let macros = new Dictionary<string, IType * ISubstrateQueryTerm * IVar list>()
     let types = new Dictionary<string, IType>()
 
     /// Holds fresh variable ids that are used when solving macros
@@ -50,7 +50,7 @@
       member c.HasMacro (macroName: string) = 
         macros.ContainsKey macroName
 
-      member c.AddMacro (macroName: string, retType: IType, body: ISubstrateTerm, args: IVar list) =
+      member c.AddMacro (macroName: string, retType: IType, body: ISubstrateQueryTerm, args: IVar list) =
         macros.[macroName] <- (retType, body, args)
 
       member c.GetMacroArgs (macroName: string) =
@@ -69,5 +69,5 @@
           subst <- subst.Extend ({Name = arg.Name; Type = concreteArg.Type}, concreteArg)
         let newRet = Var(c.FreshVar retTyp)
         subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
-        newRet, (body :> ITerm).Apply subst :?> ISubstrateTerm
+        newRet, (body :> ITerm).Apply subst :?> ISubstrateQueryTerm
 

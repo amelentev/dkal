@@ -12,6 +12,12 @@ module Microsoft.Research.Dkal.Substrate.Sql.ActivePatterns
   let (|OrBool|_|) mt = match mt with
                         | App({Name=SqlPrimitives.Or; RetType=Substrate(b)}, mts) when b = typeof<bool> -> Some mts
                         | _ -> None
+  let (|AsBoolean|_|) mt =  match mt with 
+                            | App({Name=SqlPrimitives.AsBoolean}, [exp]) -> 
+                              match exp with
+                              | :? ISubstrateQueryTerm as exp -> Some exp
+                              | _ -> failwith "Expecting ISubstrateQueryTerm in AsBoolean"
+                            | _ -> None
 
   // Table patterns
   let (|Column|_|) mt = match mt with

@@ -69,7 +69,7 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let EmptyInfon = 
     App(Primitives.SolveFunction Primitives.EmptyInfon |> Option.get, [])
     
-  let AsInfon (query: ISubstrateTerm) = 
+  let AsInfon (query: ISubstrateQueryTerm) = 
     App(Primitives.SolveFunction Primitives.AsInfon |> Option.get, [query])
     
   let AndInfon (infons: ITerm list) = 
@@ -86,7 +86,8 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   
   let PrefixedInfon (ppals: ITerm list, i: ITerm) =
     List.foldBack (fun ppal i -> SaidInfon(ppal, i)) ppals i
-    
+
+
 //  // Sequence builders
 //  let Nil (t: Type) =
 //    App({ Name = "nil";

@@ -23,7 +23,7 @@
     member ctx.LiftSimpleMetaTerm (smt: SimpleMetaTerm) : ISubstrateTerm =
       let queryWithMacros smt = 
         let mainTerm, solvedMacros = ctx.Traverse smt Type.Boolean
-        let termWithMacros = AndBool((Seq.toList solvedMacros) @ [mainTerm])
+        let termWithMacros = AndBool((Seq.toList (List.map AsBoolean solvedMacros)) @ [mainTerm])
         termWithMacros.Normalize()
 
       match smt with
@@ -31,7 +31,7 @@
         let colsMapping = new Dictionary<string, ITerm>()
         for (tableCol, smt) in cols do
           let table, column = ctx.SplitTableCol tableCol
-          let t, (macros: ITerm list) = ctx.Traverse smt (Type.Substrate(substrate.GetColumnType table column))
+          let t, (macros: ISubstrateQueryTerm list) = ctx.Traverse smt (Type.Substrate(substrate.GetColumnType table column))
           if not(macros.IsEmpty) then
             failwith "Unresolved macros inside SQL modify statement"
           colsMapping.[tableCol] <- t
@@ -72,7 +72,7 @@
         failwithf "Expecting a %O MetaTerm, found %A" typ smt
 
     member private ctx.LiftSimpleApplication (f: SimpleFunction) (smts: SimpleMetaTerm list) (goRecursively: bool) 
-                    : ITerm * ITerm list =
+                    : ITerm * ISubstrateQueryTerm list =
       // check if it is a table.column operator
       if f.Contains "." then
         let table, column = ctx.SplitTableCol f

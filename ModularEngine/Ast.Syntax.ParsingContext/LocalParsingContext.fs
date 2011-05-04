@@ -39,7 +39,7 @@
       member lpc.HasMacro(macroName: string) =
         parent.HasMacro macroName
 
-      member lpc.AddMacro(macroName: string, retType: IType, body: ISubstrateTerm, args: IVar list) =
+      member lpc.AddMacro(macroName: string, retType: IType, body: ISubstrateQueryTerm, args: IVar list) =
         parent.AddMacro(macroName, retType, body, args)
 
       member lpc.GetMacroArgs(macroName: string) =

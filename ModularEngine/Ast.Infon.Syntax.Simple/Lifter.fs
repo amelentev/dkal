@@ -91,10 +91,11 @@
       let substrate = SubstrateMap.GetSubstrate smd.Namespace
       let parser = SubstrateParserFactory.SubstrateParser substrate "simple" smd.Namespace (Some <| (localContext :> IParsingContext))
       let body = parser.ParseTerm smd.Body
-      if body.Type = Type.Boolean then
+      match body with
+      | :? ISubstrateQueryTerm as body when body.Type = Type.SubstrateQuery ->
         context.AddMacro(smd.Name, retTyp, body, args)
-      else
-        failwithf "Macro %O body must be a boolean expression, regardless of return type" smd.Name
+      | _ ->
+        failwithf "Macro %O body must be substrate query expression, regardless of return type" smd.Name
 
     /// Given a SimpleMetaTerm smt and a Type t, it returns its the 
     /// corresponding MetaTerm, if smt encodes a MetaTerm of Type t. All 
@@ -108,7 +109,7 @@
         | _ -> false
       let failDueToType (smt: SimpleMetaTerm) (typ: IType option) = 
         failwith <| "Expecting a " + typ.Value.Name + "MetaTerm, found: " + (sprintf "%A" smt)
-      let solvedMacros = new List<ISubstrateTerm>()
+      let solvedMacros = new List<ISubstrateQueryTerm>()
       let rec traverse (smt: SimpleMetaTerm) (typ: IType option) (context: IParsingContext) = 
         let term = 
           match smt with

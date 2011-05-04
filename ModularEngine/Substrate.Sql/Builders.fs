@@ -18,4 +18,6 @@ module Microsoft.Research.Dkal.Substrate.Sql.Builders
           RetType = Type.Boolean; 
           ArgsType = List.replicate bools.Length Type.Boolean;
           Identity = Some False }, bools)
- 
+     
+  let AsBoolean (query: ISubstrateQueryTerm) = 
+    App(Primitives.SolveFunction SqlPrimitives.AsBoolean |> Option.get, [query])
