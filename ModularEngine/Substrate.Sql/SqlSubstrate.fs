@@ -86,11 +86,11 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
       let vars = new HashSet<IVar>()
       queries |> Seq.iter (fun q -> vars.UnionWith(q.Vars))
 
-      let options = {Trace=1} : SqlCompiler.Options
+      let trace = 1
       let checkAssumptions (subst:ISubstitution) (assumptions: ITerm seq)=
         let apply (t:ITerm) = t.Apply subst
-        let sqlExpr = SqlCompiler.compile options this.NextId (assumptions |> Seq.map apply)
-        SqlCompiler.execQuery (conn, options, sqlExpr, subst, Seq.toList(vars.AsEnumerable()))
+        let sqlExpr = SqlCompiler.compile trace this.NextId (assumptions |> Seq.map apply)
+        SqlCompiler.execQuery (conn, trace, sqlExpr, subst, Seq.toList(vars.AsEnumerable()))
       substs |> SubstrateDispatcher.Solve(substrateTerms) |> Seq.collect (fun subst -> checkAssumptions subst queries)
 
     member this.Update terms =
@@ -101,13 +101,12 @@ type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list)
           failwith "nested substrateTerms in SubstrateUpdateTerm not supported"
         if query.Vars.Length > 0 then
           failwithf "Free variables in SubstrateUpdateTerm: %A"  query
-        let options = {Trace=1} : SqlCompiler.Options
-
+        let trace = 1
         let updates = sut.ColsMapping |> Seq.map (fun x ->
-          (x.Key, fst (SqlCompiler.compile options this.NextId [x.Value]))) |> List.ofSeq
-        let where = SqlCompiler.compile options this.NextId [query]      
+          (x.Key, fst (SqlCompiler.compile trace this.NextId [x.Value]))) |> List.ofSeq
+        let where = SqlCompiler.compile trace this.NextId [query]      
       
-        SqlCompiler.execUpdate (conn, options, where, updates)
+        SqlCompiler.execUpdate (conn, trace, where, updates)
        
       terms |> Seq.map update1 |> List.ofSeq |> List.exists(fun x -> x)
 
