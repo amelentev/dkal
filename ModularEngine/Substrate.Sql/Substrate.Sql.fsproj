@@ -39,7 +39,7 @@
     <Compile Include="ActivePatterns.fs" />
     <Compile Include="SqlConnector.fs" />
     <Compile Include="SqlCompiler.fs" />
-    <Compile Include="SqlSubstrateModifyTerm.fs" />
+    <Compile Include="SqlSubstrateTerms.fs" />
     <Compile Include="SqlSubstrate.fs" />
   </ItemGroup>
   <ItemGroup>
