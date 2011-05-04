@@ -34,9 +34,7 @@ if
 do
 	send to Me: asInfon(true)
 	forget clean()
-	apply {| "ct" | 1==1 | update siteAssignments.unnotified := siteUnnotified(10,10) |}
-	apply {| "ct" | record(10,10) == 20 | delete siteAssignments |}
-	apply {| "ct" | unnotified := false | insert siteAssignments |}
+	apply {|"ct"| 1==1  | siteAssignments.unnotified := true |}
 	uninstall (do learn clean())
 
 with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int, N: Int
@@ -57,4 +55,4 @@ with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Principal, PERSON: Princ
 			|})
 			->
 			Me said mayRead(PERSON, R)
-		apply {|"ct"| siteAssignments.thesite == SITEID && siteAssignments.trial == TRIAL | update siteAssignments.unnotified := false |}
+		apply {|"ct"| siteAssignments.thesite == SITEID && siteAssignments.trial == TRIAL | siteAssignments.unnotified := false |}
