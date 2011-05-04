@@ -8,7 +8,7 @@ open System.Text
 /// xpath - xpath expression with (optional) input variables encoded as "$VARNAME"
 /// vars - input variables
 /// outputVars - map from result nodes attribute names (or node name in case of "") to output variable
-type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: IDictionary<string, IVar>) =
+type XmlSubstrateQueryTerm(ns: string, xpath: string, vars: IVar list, outputVars: IDictionary<string, IVar>) =
 
   let mutable subst = Substitution.Id
 
@@ -24,7 +24,7 @@ type XmlSubstrateTerm(ns: string, xpath: string, vars: IVar list, outputVars: ID
 
   interface ISubstrateQueryTerm with
     
-    member x.Type = Type.Boolean
+    member x.Type = Type.SubstrateQuery
     member x.Vars = vars
     member x.Apply subst' =
       subst <- subst.ComposeWith subst'

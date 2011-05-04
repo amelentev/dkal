@@ -59,7 +59,7 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                         | App({Name=Primitives.Apply}, [t]) -> 
                           match t with
                             | :? ISubstrateUpdateTerm as su -> Some su
-                            | _ -> None
+                            | _ -> failwith "Expecting ISubstrateUpdateTerm in AsInfon"
                         | _ -> None
 
   // Infon patterns
@@ -70,7 +70,7 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                           | App({Name=Primitives.AsInfon}, [exp]) -> 
                             match exp with
                             | :? ISubstrateQueryTerm as exp -> Some exp
-                            | _ -> None
+                            | _ -> failwith "Expecting ISubstrateQueryTerm in AsInfon"
                           | _ -> None
   let (|AndInfon|_|) mt = match mt with
                           | App({Name=Primitives.And; RetType=Infon}, mts) -> Some mts

@@ -44,7 +44,7 @@ let varsFromQuery (query: string) =
 // ------------------------------------------------------------------------------------------------------
 // This is the type of the data produced by successful reductions of each 'start' symbol:
 
-%type < XmlSubstrateTerm > XmlSubstrateTerm
+%type < XmlSubstrateQueryTerm > XmlSubstrateTerm
 
 // ------------------------------------------------------------------------------------------------------
 // These are the rules of the grammar 
@@ -57,7 +57,7 @@ XmlSubstrateTerm:
       for (varName, att) in $3 do
         outputVars.[att] <- { Name = varName; Type = Context.Value.VariableType(varName) }
       let vars = varsFromQuery($1)
-      new XmlSubstrateTerm(Namespace, $1, vars, outputVars) }
+      new XmlSubstrateQueryTerm(Namespace, $1, vars, outputVars) }
 
 OutputVars:
   | OutputVar                               { [$1] }

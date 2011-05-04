@@ -12,6 +12,9 @@ module Type =
   let SubstrateUpdate = { new IType with 
                             member t.Name = "SubstrateUpdate"
                             member t.FullName = "Dkal.SubstrateUpdate" }
+  let SubstrateQuery = { new IType with 
+                            member t.Name = "SubstrateQuery"
+                            member t.FullName = "Dkal.SubstrateQuery" }
   let Action =  { new IType with 
                     member t.Name = "Action"
                     member t.FullName = "Dkal.Action" }
@@ -44,6 +47,7 @@ module Type =
     | "Dkal.Infon" -> Infon
     | "Dkal.Principal" -> Principal
     | "Dkal.SubstrateUpdate" -> SubstrateUpdate
+    | "Dkal.SubstrateQuery" -> SubstrateQuery
     | "Dkal.Condition" -> Condition
     | "Dkal.Action" -> Action
     | "Dkal.Rule" -> Rule

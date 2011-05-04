@@ -13,7 +13,7 @@ type TypedXmlPrettyPrinter() =
   interface ISubstratePrettyPrinter with
     member spp.PrintTerm t =
       match t with
-      | :? XmlSubstrateTerm as t ->
+      | :? XmlSubstrateQueryTerm as t ->
         PrettyPrinter.PrettyPrint <| spp.TokenizeTerm t
       | _ -> failwith "Expecting DummySubstrateTerm when printing SimpleSqlSyntax"
 
@@ -21,7 +21,7 @@ type TypedXmlPrettyPrinter() =
 
   member private spp.PrintVar (v: IVar) = v.Name + ":" + spp.PrintType v.Type
 
-  member private spp.TokenizeTerm (t: XmlSubstrateTerm) =
+  member private spp.TokenizeTerm (t: XmlSubstrateQueryTerm) =
     let outputVars = String.concat "," 
                       <| Seq.map (fun (kv: KeyValuePair<string,IVar>) -> 
                                     match kv.Key with

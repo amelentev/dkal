@@ -41,7 +41,7 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
     vars.Keys |> Seq.fold (fun subst attr ->
       bind subst vars.[attr] (getValue elem attr)) subst
 
-  let solve11 (query: XmlSubstrateTerm) (subst: ISubstitution) =
+  let solve11 (query: XmlSubstrateQueryTerm) (subst: ISubstitution) =
     let xpath = query.Vars |> List.fold (fun (s:string) (x:IVar) -> 
       let value = (subst.Apply x)
       s.Replace("$"+x.Name, quoteConstant value)) query.XPath
@@ -66,7 +66,7 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
     member xs.Namespaces = new HashSet<_>(namespaces)
 
     member xs.Solve queries substs =
-      let queries: XmlSubstrateTerm seq = queries |> Seq.cast
+      let queries: XmlSubstrateQueryTerm seq = queries |> Seq.cast
       let solve1Many substs query =
         substs |> Seq.collect (solve11 query)
       queries |> Seq.fold solve1Many substs

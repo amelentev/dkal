@@ -105,7 +105,7 @@ module Primitives =
     | EmptyInfon ->
       Some {Name = f; RetType = Type.Infon; ArgsType = []; Identity = None}
     | AsInfon ->
-      Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Boolean]; Identity = None}
+      Some {Name = f; RetType = Type.Infon; ArgsType = [Type.SubstrateQuery]; Identity = None}
     | Implies ->
       Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Infon]; Identity = None}
     | Said ->

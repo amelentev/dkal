@@ -34,7 +34,7 @@ let mutable Namespace: string = null
 // ------------------------------------------------------------------------------------------------------
 // This is the type of the data produced by successful reductions of each 'start' symbol:
 
-%type < XmlSubstrateTerm > XmlSubstrateTerm
+%type < XmlSubstrateQueryTerm > XmlSubstrateTerm
 
 // ------------------------------------------------------------------------------------------------------
 // These are the rules of the grammar 
@@ -46,7 +46,7 @@ XmlSubstrateTerm:
     { let outputVars = new Dictionary<string,IVar>() 
       for (var, att) in $3 do
         outputVars.[att] <- var
-      new XmlSubstrateTerm(Namespace, $1, $5, outputVars) }
+      new XmlSubstrateQueryTerm(Namespace, $1, $5, outputVars) }
 
 OutputVars:
   | OutputVar                               { [$1] }

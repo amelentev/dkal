@@ -117,7 +117,7 @@ module FSharp =
     member this.Body = body
     member this.Result = result
     member this.Namespace = ns
-    member this.Type = Type.Boolean
+    member this.Type = Type.SubstrateQuery
     member this.Vars = this.Body.Vars @ this.Result.Vars
     member this.Apply s = FunctionQueryTerm(ns, this.Body.Apply s :?> FunctionTerm, this.Result.Apply s :?> FunctionTerm) :> ITerm
     member this.Normalize() = FunctionQueryTerm(ns, this.Body.Normalize() :?> FunctionTerm, this.Result.Normalize() :?> FunctionTerm) :> ITerm
@@ -126,7 +126,7 @@ module FSharp =
       | :? FunctionQueryTerm as x when x.Namespace = this.Namespace -> this.Body.UnifyFrom s (x.Body) 
                                                                        |> Option.bind (fun s -> this.Result.UnifyFrom s (x.Result))
       | _ -> None
-    interface ISubstrateTerm with
+    interface ISubstrateQueryTerm with
       member this.Namespace = ns
     interface ITerm with
       member this.Type = this.Type

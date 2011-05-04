@@ -8,7 +8,7 @@ type DummySubstrateQueryTerm(query : ITerm, ns : string) =
   interface ISubstrateQueryTerm with
     member this.Namespace = ns
   interface ITerm with
-    member this.Type = query.Type
+    member this.Type = Type.SubstrateQuery
     member this.Vars = query.Vars
     member this.Apply s = DummySubstrateQueryTerm(query.Apply s, ns) :> ITerm
     member this.Normalize() = DummySubstrateQueryTerm(query.Normalize(), ns) :> ITerm
