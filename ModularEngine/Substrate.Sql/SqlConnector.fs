@@ -24,7 +24,7 @@ open System.Data.SqlClient
 open NLog
 
 type SqlConnector(connStr) =
-  let log = LogManager.GetLogger("Substrate.Sql.Connector")
+  let log = LogManager.GetLogger("Substrate.Sql")
   let conn = new SqlConnection(connStr)
   let check() =
     try
@@ -36,7 +36,7 @@ type SqlConnector(connStr) =
   do
     try
       conn.Open()
-    with e -> printfn "%O" e
+    with e -> log.ErrorException("Unable to open db", e)
       
   member this.Close () =
     conn.Close()

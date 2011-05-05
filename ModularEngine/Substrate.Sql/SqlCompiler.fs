@@ -25,7 +25,7 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 
 module SqlCompiler =
-  let log = LogManager.GetLogger("Substrate.Sql.Compiler")
+  let log = LogManager.GetLogger("Substrate.Sql")
   type Dict<'A,'B> = System.Collections.Generic.Dictionary<'A,'B>
   type Vec<'A> = System.Collections.Generic.List<'A>
   let dict() = new Dict<_,_>()

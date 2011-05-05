@@ -5,11 +5,13 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Router
 
+open NLog
+
 /// The LocalRouter provides a IRouter interface for several principals that
 /// run in different threads in the same physical computer. Communication is
 /// performed in memory by means of AST (with no serialization)
 type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
-  
+  let log = LogManager.GetLogger("Router.Local")
   do
     mailer.SetPrincipalInbox routingTable.Me (fun _ -> ())
 
@@ -38,8 +40,8 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
       ()
 
   member private sr.DoSend infon ppalName = 
-    printfn ">>>>>>\r\n>>>>>> SENT TO %O: %O\r\n>>>>>>" ppalName infon
+    log.Info("{0} >>>>>>>> SENT TO {1}: {2} >>>>>>", (sr:>IRouter).Me, ppalName, infon)
     mailer.SendMessage infon ppalName
-        
+
   member sr.AddMailerCallback (targetAmountOfMessages: int) (f: unit -> unit) =
     mailer.AddCallback targetAmountOfMessages f

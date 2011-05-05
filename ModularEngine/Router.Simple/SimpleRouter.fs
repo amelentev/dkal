@@ -5,12 +5,15 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Router
 
+open NLog
+
 /// The SimpleRouter provides a IRouter interface by means of web services.
 /// A RoutingTable is constructed by reading the XML from the given routingFile.
 /// A ConnectionsHandler instance is used to do the actual sending and receiving
 /// of messages. Infon MetaTerms are serialized and deserialized using the given
 /// IParser and IPrinter implementations.
 type SimpleRouter (routingTable: IRoutingTable, parser: IInfonParser, printer: IInfonPrettyPrinter) =
+  let log = LogManager.GetLogger("Router.Simple")
   
   /// This function is called every time a new message arrives. Initially it
   /// does nothing, it must be set by calling sr.Receive(...)
@@ -53,9 +56,6 @@ type SimpleRouter (routingTable: IRoutingTable, parser: IInfonParser, printer: I
       connectionsHandler.StopClients()
 
   member private sr.DoSend infon ppalName = 
-    printfn ">>>>>>\r\n>>>>>> SENT TO %O: %O\r\n>>>>>>" ppalName infon
+    log.Info("{0}: >>>>>>>>>>>> SENT TO {1}: {2} >>>>>>>", (sr:>IRouter).Me, ppalName, infon)
     let msg = printer.PrintTerm infon
     connectionsHandler.Send msg ppalName
-
-    
-    

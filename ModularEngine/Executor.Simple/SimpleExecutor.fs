@@ -2,6 +2,7 @@
 
 open System.Collections.Generic
 open System.Threading
+open NLog
 
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
@@ -13,6 +14,7 @@ open Microsoft.Research.Dkal.Substrate
 /// until the end of the iteration. If the set of changes is consistent, they
 /// all get applied and a new iteration starts.
 type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) = 
+  let log = LogManager.GetLogger("Executor.Simple")
   
   /// The inbox holds the messages that arrive from the router but still
   /// haven't been moved to Quarantine
@@ -103,11 +105,11 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
       lock inbox (fun () -> 
                   while inbox.Count > 0 do
                     let msg = inbox.Dequeue()
-                    printfn "<<<<<<\r\n<<<<<< GOT %O\r\n<<<<<<" msg
+                    log.Debug("{0}: ---- GOT {1} ---", router.Me, msg)
                     quarantine.Add msg)
 
   member private se.ExecuteRound() =
-    printfn "------------------------------------------------------------------------"
+    log.Debug("{0}: ------------- round start -------------------", router.Me)
     if stepbystep then
       System.Console.ReadLine() |> ignore
     

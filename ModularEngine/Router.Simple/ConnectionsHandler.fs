@@ -3,6 +3,7 @@
 open System.ServiceModel
 open System.Configuration
 open System.Collections.Generic
+open NLog
 
 open Microsoft.Research.Dkal.Router
 
@@ -10,6 +11,7 @@ open Microsoft.Research.Dkal.Router
 /// to every other principal that is known. It's also in charge of keeping a
 /// running IPrincipalService to receive message from the outside
 type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc) =
+  let log = LogManager.GetLogger("Router.Simple")
   
   /// Stores the IPrincipalService reference for each known principal
   let channels = new Dictionary<string, IPrincipalService>()
@@ -30,24 +32,23 @@ type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc) =
   member ch.StartServer() =
     // Establish server to listen for incoming connections
     host.Open()
-    host.Closing.Add (fun _ -> printfn "Incoming channel closing...")
-    System.Console.WriteLine("Principal service is up and running on the following addresses:")
+    host.Closing.Add (fun _ -> log.Info("Incoming channel closing..."))
+    log.Info("Principal service is up and running on the following addresses:")
     for ep in host.Description.Endpoints do
-      printfn "%A" ep.Address
-    printfn ""
+      log.Info("{0}", ep.Address)
 
   /// Initializes the client-side channels (and factories)
   member ch.StartClients() =
     // Create a channel (and factory) for each declared client in the config file
     channels.Clear(); factories.Clear()
     for ppal in rt.Principals do
-      printfn "Creating channel to communicate with %O" ppal
+      log.Info("Creating channel to communicate with {0}", ppal)
       match rt.PrincipalAddress(ppal) with 
       | :? ServiceAddress as sa ->
         let factory = new ChannelFactory<IPrincipalService>(new BasicHttpBinding(), new EndpointAddress(sa.Location))
         channels.[ppal] <- factory.CreateChannel()
         factories.[ppal] <- factory
-        factory.Closing.Add (fun _ -> printfn "Channel for %O closing..." ppal)
+        factory.Closing.Add (fun _ -> log.Info("Channel for {0} closing...", ppal))
       | _ -> failwith "Connections handler expects ServiceAddress"
     
   /// Stops the server-side host

@@ -7,11 +7,12 @@ open System.Xml
 open System.Xml.Linq
 open System.Xml.XPath
 open System.Linq
+open NLog
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 
 type XmlSubstrate(xmldoc: XDocument, namespaces: string list) = 
-  
+  let log = LogManager.GetLogger("Substrate.Xml")
   let quote s =
     s // XXX: full quote
 
@@ -44,7 +45,7 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
     let xpath = query.Vars |> List.fold (fun (s:string) (x:IVar) -> 
       let value = (subst.Apply x)
       s.Replace("$"+x.Name, quoteConstant value)) query.XPath
-    printfn "xpath: %A" xpath
+    log.Debug("xpath: {0}", xpath)
     let res = xmldoc.Root.XPathEvaluate(xpath) :?> IEnumerable<obj>
     seq {
       for elem in res do
