@@ -19,13 +19,10 @@ type RouterFactory() =
     | k -> failwith <| "Unrecognized router kind: " + k
 
 
-  static member ManyRouters (kind: string) (ppals: string list) =
-    match kind with 
-    | "local" -> 
-      let ret = new Dictionary<string, IRouter>()
-      let mailer = new LocalMailer()
-      for ppal in ppals do
-        let rt = new LocalRoutingTable(ppal, mailer)
-        ret.[ppal] <- new LocalRouter(rt, mailer)
-      ret
-    | k -> failwith <| "Unrecognized router kind: " + k
+  static member LocalRouters (ppals: string list) =
+    let ret = new Dictionary<string, LocalRouter>()
+    let mailer = new LocalMailer()
+    for ppal in ppals do
+      let rt = new LocalRoutingTable(ppal, mailer)
+      ret.[ppal] <- new LocalRouter(rt, mailer)
+    ret

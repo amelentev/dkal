@@ -1,7 +1,5 @@
 ﻿#I @".\bin\debug\"
 #r "Ast.dll"
-#r "Ast.Infon.dll"
-#r "Ast.Tree.dll"
 #r "Interfaces.dll"
 #r "Substrate.Xml.dll"
 #r "FSharp.PowerPack.dll"
@@ -14,8 +12,6 @@ open System.Linq
 open System.IO
 open System.Collections.Generic
 open Microsoft.Research.Dkal.Substrate.Xml
-open Microsoft.Research.Dkal.Ast.Tree
-open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
@@ -51,20 +47,20 @@ let var name typ = {Name=name; Type=typ} :> IVar
 
 let trialvar = var "TRIAL" Type.String
 let orgvar = var "ORG" Type.Principal
-let query1 = new XmlSubstrateTerm("xct", "/root/trials/*[@org='$ORG']", [orgvar], dict ["", trialvar])
+let query1 = new XmlSubstrateQueryTerm("xct", "/root/trials/*[@org='$ORG']", [orgvar], dict ["", trialvar])
 
 let subst1 = Substitution.Id.Extend(orgvar, Constant "org1")
 xmlsubstr.Solve [query1] [subst1] |> output [trialvar]
 
 let sitevar = var "SITE" Type.Principal
 let outputvars2: IDictionary<string, IVar> = dict ["", sitevar; "n1", var "N1" Type.Int32; "n2", var "N2" Type.Int32]
-let query2 = new XmlSubstrateTerm("xct", "/root/trials/$TRIAL/*[@unnotified='true']", [trialvar], outputvars2)
+let query2 = new XmlSubstrateQueryTerm("xct", "/root/trials/$TRIAL/*[@unnotified='true']", [trialvar], outputvars2)
 let subst2 = Substitution.Id.Extend(trialvar, Constant "trial1")
 xmlsubstr.Solve [query2] [subst2] |> output outputvars2.Values
 
 xmlsubstr.Solve [query1; query2] [subst1] |> output (Seq.append [trialvar] outputvars2.Values)
 
 let physvar = var "PHYS" Type.Principal
-let query3 = new XmlSubstrateTerm("xct", "/root/trials/$TRIAL/$SITE/*[1100<=@P1 and @P2<=1249]", [trialvar; sitevar], dict ["", physvar])
+let query3 = new XmlSubstrateQueryTerm("xct", "/root/trials/$TRIAL/$SITE/*[1100<=@P1 and @P2<=1249]", [trialvar; sitevar], dict ["", physvar])
 
 xmlsubstr.Solve [query1; query2; query3] [subst1] |> output (Seq.append [physvar] outputvars2.Values)

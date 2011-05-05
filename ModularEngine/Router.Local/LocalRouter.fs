@@ -41,3 +41,5 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
     printfn ">>>>>>\r\n>>>>>> SENT TO %O: %O\r\n>>>>>>" ppalName infon
     mailer.SendMessage infon ppalName
         
+  member sr.AddMailerCallback (targetAmountOfMessages: int) (f: unit -> unit) =
+    mailer.AddCallback targetAmountOfMessages f
