@@ -12,7 +12,7 @@ open Microsoft.Research.Dkal.Substrate
 /// processed to see if it has to be applied. All necessary changes are saved
 /// until the end of the iteration. If the set of changes is consistent, they
 /// all get applied and a new iteration starts.
-type SimpleExecutor(router: IRouter, engine: ILogicEngine) = 
+type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) = 
   
   /// The inbox holds the messages that arrive from the router but still
   /// haven't been moved to Quarantine
@@ -42,6 +42,12 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
   /// thread will read it and terminate
   let mutable finish: bool = false
 
+  do
+    router.Receive(fun msg -> 
+                      lock inbox (fun () ->
+                      inbox.Enqueue(msg)
+                      notEmpty.Set() |> ignore))
+
   interface IExecutor with
     
     member se.InstallRule (r: ITerm) =
@@ -56,10 +62,6 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
 
     member se.Start () = 
       // Start communications
-      router.Receive(fun msg -> 
-                      lock inbox (fun () ->
-                        inbox.Enqueue(msg)
-                        notEmpty.Set() |> ignore))
       router.Start()
 
       // Start engine
@@ -106,7 +108,8 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
 
   member private se.ExecuteRound() =
     printfn "------------------------------------------------------------------------"
-    System.Console.ReadLine() |> ignore
+    if stepbystep then
+      System.Console.ReadLine() |> ignore
     
     // To store the changes to be applied at the end of the round
     let actions = new HashSet<ITerm>()

@@ -1,0 +1,23 @@
+// common
+relation r(I: System.Int32)
+---p1---
+// principal p1 policy
+do
+	say to p2:
+		r(1)
+with X: System.Int32, Y: System.Int32
+	upon
+		p2 said r(X)
+	if
+		asInfon({|"basic"|Y:=X+1|})
+	do
+		say to p2:
+			r(Y)
+---p2---
+// principal p2 policy
+with X: System.Int32
+	upon
+		p1 said r(X)
+	do
+		say to p1:
+			r(X)
