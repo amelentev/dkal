@@ -42,6 +42,16 @@
     <Compile Include="FactoriesInitializer.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Substrate.Basic.Syntax.Simple\Ast.Substrate.Basic.Syntax.Simple.fsproj">
+      <Name>Ast.Substrate.Basic.Syntax.Simple</Name>
+      <Project>{a1197887-6f21-4d62-8983-9a47c2088053}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Basic.Syntax.Typed\Ast.Substrate.Basic.Syntax.Typed.fsproj">
+      <Name>Ast.Substrate.Basic.Syntax.Typed</Name>
+      <Project>{ee794861-066f-4a91-92b8-08e3ce8a6b9f}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast.Substrate.Sql.Syntax.Simple\Ast.Substrate.Sql.Syntax.Simple.fsproj">
       <Name>Ast.Substrate.Sql.Syntax.Simple</Name>
       <Project>{9c31b572-9dbc-49fd-86ec-33a448825420}</Project>
@@ -62,9 +72,19 @@
       <Project>{496e343b-fea0-4f1d-99f7-0cdc4850d99f}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Name>Globals</Name>
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Basic\Substrate.Basic.fsproj">
+      <Name>Substrate.Basic</Name>
+      <Project>{c18b8a2e-1a64-488c-a927-6ed5f5c7beea}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Substrate.Factories\Substrate.Factories.fsproj">

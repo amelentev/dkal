@@ -1,0 +1,142 @@
+﻿%{
+open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.Substrate.Basic
+
+open System.Collections.Generic
+
+let mutable ctx : IParsingContext option = None
+let mutable ns : string = null
+
+let primitiveApp (f: string, args: ITerm list) = 
+  match BasicPrimitives.SolveOverloadOperator f args.[0].Type with
+  | Some(f) -> 
+    App(f, args)
+  | None ->
+    failwithf "Unknown basic function %O for arguments %O" f args
+%}
+
+// ------------------------------------------------------------------------------------------------------
+// The start tokens become parser functions in the compiled code:
+
+%start SubstrateTerm
+
+// ------------------------------------------------------------------------------------------------------
+// These are the terminal tokens of the grammar along with the types of the data carried by each token:
+
+// Binary operators
+%token AND OR IMPLIES 
+%token EQ NEQ LT GT 
+%token PLUS MINUS TIMES DIV
+
+// Unary operators
+%token NOT
+
+// Delimiters
+%token LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT PIPE GETS
+
+// Literals
+%token TRUE FALSE
+%token <System.Int32> INT_LITERAL
+%token <System.Double> FLOAT_LITERAL
+%token <System.String> STRING_LITERAL
+
+// Identifiers
+%token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
+
+// EOF
+%token EOF
+
+// ------------------------------------------------------------------------------------------------------
+// This is the type of the data produced by successful reductions of each 'start' symbol:
+
+%type < ISubstrateTerm > SubstrateTerm
+
+// ------------------------------------------------------------------------------------------------------
+// Precedence of operators
+
+%left IMPLIES
+%left OR
+%left AND
+%left EQ NEQ LT LTE GT GTE 
+%left PLUS MINUS
+%left TIMES DIV
+
+// ------------------------------------------------------------------------------------------------------
+// These are the rules of the grammar 
+
+%%
+
+SubstrateTerm:
+  | Variable GETS Term EOF
+    { new BasicSubstrateTerm($1, $3) :> ISubstrateTerm }
+  | Literal GETS Term EOF
+    { new BasicSubstrateTerm($1, $3) :> ISubstrateTerm }
+
+Term:
+	| LOWER_IDENTIFIER LPAR Terms RPAR	    	    
+    { let concreteArgs: ITerm list = $3
+      if concreteArgs.Length > 0 then
+        // it is an overloaded operator
+        primitiveApp($1, concreteArgs)
+      else
+        failwithf "Unknown or malformed function application in %O(%O)" $1 concreteArgs }
+
+// Bool constructs
+  | Term AND Term
+    { primitiveApp(BasicPrimitives.And, [$1; $3])}
+	| Term OR Term
+    { primitiveApp(BasicPrimitives.Or, [$1; $3]) }
+	| NOT Term
+    { primitiveApp(BasicPrimitives.Not, [$2]) }
+	| Term EQ EQ Term		%prec EQ
+    { primitiveApp(BasicPrimitives.Eq, [$1; $4]) }
+	| Term NOT EQ Term		%prec EQ
+    { primitiveApp(BasicPrimitives.Neq, [$1; $4]) }
+	| Term LT Term
+    { primitiveApp(BasicPrimitives.Lt, [$1; $3]) }
+	| Term LT EQ Term		%prec EQ
+    { primitiveApp(BasicPrimitives.Lte, [$1; $4]) }
+	| Term GT Term
+    { primitiveApp(BasicPrimitives.Gt, [$1; $3]) }
+	| Term GT EQ Term		%prec EQ
+    { primitiveApp(BasicPrimitives.Gte, [$1; $4]) }
+
+// Arithmetic
+	| Term PLUS Term
+    { primitiveApp(BasicPrimitives.Plus, [$1; $3]) }
+	| Term MINUS Term
+    { primitiveApp(BasicPrimitives.Minus, [$1; $3]) }
+	| MINUS Term %prec TIMES
+    { primitiveApp(BasicPrimitives.Uminus, [$2]) } 
+	| Term TIMES Term
+    { primitiveApp(BasicPrimitives.Times, [$1; $3]) }
+	| Term DIV Term
+    { primitiveApp(BasicPrimitives.Divide, [$1; $3]) }
+
+// Constants, variables, misc
+	| Literal							      		{ $1 }
+	| Variable        							{ $1 }
+	| LPAR Term RPAR			      		{ $2 }
+
+Terms:
+	|									         	{ [] }
+	| Term								    	{ [$1] }
+	| Term COMMA Terms    			{ $1 :: $3 }
+
+Variable:
+  | UPPER_IDENTIFIER 
+    { if $1 = "Me" then
+        Const <| PrincipalConstant(ctx.Value.Me)
+      else
+        Var({ Name = $1; Type = ctx.Value.VariableType $1 }) }
+
+Literal:
+	| TRUE									    	{ Const(Constant(true)) }
+	| FALSE									    	{ Const(Constant(false)) }
+	| INT_LITERAL						  		{ Const(Constant($1)) }
+	| FLOAT_LITERAL								{ Const(Constant($1)) }
+	| STRING_LITERAL							{ Const(Constant($1)) }
+	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }
+

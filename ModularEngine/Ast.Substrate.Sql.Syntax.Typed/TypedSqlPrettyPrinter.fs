@@ -67,7 +67,7 @@ type TypedSqlPrettyPrinter() =
       let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "typed"
       let printedSubstrateTerm = pp.PrintTerm t
       [ TextToken <| "{| \"" + t.Namespace + "\" | " + printedSubstrateTerm + " |}" ]      
-    | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %A" mt
+    | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" mt
    
 
 

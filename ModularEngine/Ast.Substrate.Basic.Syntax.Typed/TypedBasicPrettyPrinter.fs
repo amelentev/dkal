@@ -1,36 +1,31 @@
-﻿namespace Microsoft.Research.Dkal.Ast.Infon.Syntax.Typed
+﻿namespace Microsoft.Research.Dkal.Ast.Substrate.Basic.Syntax.Typed
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
-open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Substrate
-open Microsoft.Research.Dkal.Substrate.Factories
+open Microsoft.Research.Dkal.Substrate.Basic
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
 
-/// The TypedPrettyPrinter prints AST elements into the typed concrete syntax,
+open System.Collections.Generic
+
+/// The TypedBasicPrettyPrinter prints substrate elements into the typed concrete syntax,
 /// which carries type annotations in every function application and every 
 /// variable
-type TypedPrettyPrinter() =
+type TypedBasicPrettyPrinter() =
 
-  interface IInfonPrettyPrinter with
-    member tpp.PrintType (t: IType) = t.FullName
+  interface ISubstratePrettyPrinter with
+    member tpp.PrintTerm t =
+      match t with
+      | :? BasicSubstrateTerm as t ->
+        PrettyPrinter.PrettyPrint <| 
+          [ ManyTokens <| tpp.TokenizeTerm t.Left;
+            TextToken <| " := ";
+            ManyTokens <| tpp.TokenizeTerm t.Right ]
+      | _ -> failwithf "Unexpected term when printing typed basic substrate syntax: %O" t
 
-    member tpp.PrintTerm mt =
-      PrettyPrinter.PrettyPrint <| tpp.TokenizeTerm mt
-
-    member tpp.PrintPolicy p =
-      PrettyPrinter.PrettyPrint <| tpp.TokenizePolicy p
-
-    member tpp.PrintSignature s =
-      PrettyPrinter.PrettyPrint <| []
-
-    member tpp.PrintAssembly a =
-      PrettyPrinter.PrettyPrint <| tpp.TokenizePolicy a.Policy
-
-  member private tpp.PrintType t = (tpp :> IPrettyPrinter).PrintType t
-  member private tpp.PrintTerm mt = (tpp :> IPrettyPrinter).PrintTerm mt
+  member private tpp.PrintTerm mt = (tpp :> ISubstratePrettyPrinter).PrintTerm mt
+  member private tpp.PrintType (t: IType) = t.FullName
 
   member private tpp.TokenizeTerm mt =
     match mt with
@@ -52,14 +47,7 @@ type TypedPrettyPrinter() =
     | PrincipalConstant(p) -> [TextToken(p)]
     | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
     | SubstrateConstant(o) -> [TextToken(o.ToString())]
-    | :? ISubstrateTerm as t -> 
-      let substrate = SubstrateMap.GetSubstrate t.Namespace
-      let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "typed"
-      let printedSubstrateTerm = pp.PrintTerm t
-      [ TextToken <| "{|\"" + t.Namespace + "\"|" + printedSubstrateTerm + "|}" ]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" mt
    
-  member private tpp.TokenizePolicy (p: Policy) =
-    List.collect (fun a -> tpp.TokenizeTerm a @ [ NewLineToken; NewLineToken ]) p.Rules
 
 

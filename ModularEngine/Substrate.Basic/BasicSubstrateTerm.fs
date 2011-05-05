@@ -8,7 +8,11 @@ open System.Collections.Generic
 type BasicSubstrateTerm(left: ITerm, right: ITerm) =
 
   member bst.Left = left
-  member bst.Rigth = right
+  member bst.Right = right
+
+  override bst.ToString() = 
+    "{| \"" + (bst :> ISubstrateTerm).Namespace + "\" | " 
+      + bst.Left.ToString() + " := " + bst.Right.ToString() + " |}"
 
   interface ISubstrateQueryTerm with
     member bst.Namespace = BasicPrimitives.BasicNamespace
@@ -27,7 +31,7 @@ type BasicSubstrateTerm(left: ITerm, right: ITerm) =
       match t with 
       | :? BasicSubstrateTerm as bst' -> 
         match bst.Left.UnifyFrom s bst'.Left with
-        | Some s' -> bst.Rigth.UnifyFrom s' bst.Rigth
+        | Some s' -> bst.Right.UnifyFrom s' bst.Right
         | _ -> None
       | _ -> None
 

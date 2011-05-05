@@ -82,5 +82,5 @@ type SimpleSqlPrettyPrinter() =
       let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "simple"
       let printedSubstrateTerm = pp.PrintTerm t
       [ TextToken <| "{| \"" + t.Namespace + "\" | " + printedSubstrateTerm + " |}" ]      
-    | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %A" mt
+    | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" mt
    
