@@ -77,6 +77,16 @@
       <Project>{11d0fcb0-d7c2-47a8-b25d-9703a48d6d8b}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Router.Local\Router.Local.fsproj">
+      <Name>Router.Local</Name>
+      <Project>{4ca780a8-fafc-4cd6-b616-7d4df8e5ced9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Router\Router.fsproj">
+      <Name>Router (Router\Router)</Name>
+      <Project>{605dcfaa-5dcf-4026-8628-4ef79d9a332a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.fsproj">
       <Name>Utils</Name>
       <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
