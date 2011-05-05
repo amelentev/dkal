@@ -21,15 +21,17 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.FSharp.Collections
 open System.Data
 open System.Data.SqlClient
+open NLog
 
 type SqlConnector(connStr) =
+  let log = LogManager.GetLogger("Substrate.Sql.Connector")
   let conn = new SqlConnection(connStr)
   let check() =
     try
       use comm = new SqlCommand("SELECT 1", conn)
       comm.ExecuteScalar() |> ignore
     with e ->
-      System.Console.WriteLine ("reopening database: " + e.Message)
+      log.Info("reopening database: {}", e)
       conn.Open()
   do
     try
@@ -52,10 +54,9 @@ type SqlConnector(connStr) =
   member this.GetCommand s =
     new SqlCommand(s, conn)
   
-  member this.ExecQuery (s:string, parms:seq<obj>, log) =
+  member this.ExecQuery (s:string, parms:seq<obj>) =
     check()
-    if log then
-      System.Console.WriteLine ("execQ: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
+    log.Debug("execQ: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
     let addParm (comm:SqlCommand) (idx:int) o =
       comm.Parameters.AddWithValue ("p__" + idx.ToString(), o) |> ignore
     seq {
@@ -65,10 +66,9 @@ type SqlConnector(connStr) =
       while reader.Read() do
         yield reader }
 
-  member this.ExecUpdate (s:string, parms:seq<obj>, log) =
+  member this.ExecUpdate (s:string, parms:seq<obj>) =
     check()
-    if log then
-      System.Console.WriteLine ("execU: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
+    log.Debug("execU: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
     let addParm (comm:SqlCommand) (idx:int) o =
       comm.Parameters.AddWithValue ("p__" + idx.ToString(), o) |> ignore
     use comm = new SqlCommand(s, conn)
@@ -89,5 +89,5 @@ type SqlConnector(connStr) =
       else
         Constant (rd.GetValue idx) :> ITerm
     with :? InvalidCastException as e ->
-      System.Console.WriteLine ("cannot convert parm #{0}, to {1}, value: '{2}'", idx, var.Type.Name, rd.GetValue idx)
+      log.Error("cannot convert parm #{0}, to {1}, value: '{2}'", idx, var.Type.Name, rd.GetValue idx)
       raise e

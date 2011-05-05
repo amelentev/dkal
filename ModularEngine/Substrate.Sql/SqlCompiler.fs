@@ -16,6 +16,7 @@ open System.IO
 open System.Text
 open System.Collections.Generic
 open System.Linq
+open NLog;
 open Microsoft.FSharp.Text
 
 open Microsoft.Research.Dkal.Ast
@@ -24,11 +25,11 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 
 module SqlCompiler =
+  let log = LogManager.GetLogger("Substrate.Sql.Compiler")
   type Dict<'A,'B> = System.Collections.Generic.Dictionary<'A,'B>
   type Vec<'A> = System.Collections.Generic.List<'A>
   let dict() = new Dict<_,_>()
   let vec() = new Vec<_>()
-  let log (msg:string) = System.Console.WriteLine msg
 
   type SqlOp =
     {
@@ -211,7 +212,7 @@ module SqlCompiler =
             if sqlOps.ContainsKey fn.Name then
               Expr.Op (sqlOps.[fn.Name], args)
             else
-              log("warning: unmapped operation '" + fn.Name + "'")
+              log.Warn("warning: unmapped operation {0}", fn)
               let op = {name=fn.Name; infix=(args.Length>1)} : SqlOp
               Expr.Op (op, args)
           | :? DummySubstrateQueryTerm as st ->
@@ -220,14 +221,11 @@ module SqlCompiler =
             res
           | _ as t -> failwithf "unknown term %A" t
 
-    if trace >= 1 then
-      log ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> s.ToString())))
+    log.Info ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> s.ToString())))
     let body = Seq.map (comp !nextScope) theTerms |> sqlMultiAnd
-    if trace >= 2 then
-      log ("  Compiled " + body.ToString())
+    log.Debug ("  Compiled {0}", body)
     let body, bindings = body |> simplify
-    if trace >= 3 then  
-      log ("  Simplified " + body.ToString() + " @ " + String.concat ", " (List.map (fun (v:Variable,e:Expr) -> v.ToString() + " -> " + e.ToString()) bindings))
+    log.Debug ("  Simplified {0} @ {1}", body, String.concat ", " (List.map (fun (v:Variable,e:Expr) -> v.ToString() + " -> " + e.ToString()) bindings))
     let rec boolenize = function
       | Expr.Op(op, exprs) when op.name="AND" ->
         let exprs1 = exprs |> List.map (function
@@ -242,8 +240,6 @@ module SqlCompiler =
         Expr.Op(op, exprs |> List.map boolenize)
       | t -> t
     let body1 = body |> boolenize
-    if trace >= 4 then  
-      log ("  Boolenized " + body1.ToString())
 
     body1, bindings
 
@@ -325,7 +321,7 @@ module SqlCompiler =
               resSubst.Add v
             | _ ->
               let expr = subst.Apply(v)
-              log ("expand " + v.ToString() + " into " + expr.ToString())
+              log.Debug("expand {0} into {1}", v, expr)
               expr.Vars.AsEnumerable() |> Seq.iter need
       List.iter need vars
       w.pr "1" // add something, so if there is no columns we still get the Boolean result
@@ -336,7 +332,7 @@ module SqlCompiler =
       let addToSubst rd (idx, subst:ISubstitution) (var : IVar) =
         let constVal = sql.ReadVar (rd, var, idx)
         (idx + 1, subst.Extend(var, constVal))
-      sql.ExecQuery (query, w.parms, trace >= 2) |>
+      sql.ExecQuery (query, w.parms) |>
         Seq.map (fun rd -> Seq.fold (addToSubst rd) (0, subst) resSubst |> snd)
 
   let execUpdate (sql:SqlConnector, trace, cc:CompiledQuery, update: list<string * Expr>) =
@@ -362,7 +358,7 @@ module SqlCompiler =
 
     let updateQuery = updateClause + setClause + w.fromClause + whereClause
     
-    sql.ExecUpdate (updateQuery, w.parms, trace >= 2) > 0
+    sql.ExecUpdate (updateQuery, w.parms) > 0
   
   let execDelete (sql:SqlConnector, trace, cc:CompiledQuery, delTable: string) =
     let deleteClause = "DELETE " + delTable
@@ -372,7 +368,7 @@ module SqlCompiler =
     let fromClause = w.fromClause
     let whereClause = w.get(" WHERE ")
     
-    sql.ExecUpdate (deleteClause + fromClause + whereClause, w.parms, trace >= 2) > 0
+    sql.ExecUpdate (deleteClause + fromClause + whereClause, w.parms) > 0
 
   let execInsert (sql:SqlConnector, trace, insTable: string, values: IDictionary<string, Expr>) =
     let columns = values.Keys |> List.ofSeq
@@ -383,4 +379,4 @@ module SqlCompiler =
       w.print values.[c]
     )
     let valuesClause = " VALUES (" + w.get("") + ")"
-    sql.ExecUpdate (insertClause + valuesClause, w.parms, trace >= 2) > 0
+    sql.ExecUpdate (insertClause + valuesClause, w.parms) > 0
