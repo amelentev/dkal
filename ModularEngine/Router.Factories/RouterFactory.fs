@@ -20,7 +20,7 @@ type RouterFactory() =
 
 
   static member LocalRouters (ppals: string list) =
-    let ret = new Dictionary<string, LocalRouter>()
+    let ret = new Dictionary<string, IRouter>()
     let mailer = new LocalMailer()
     for ppal in ppals do
       let rt = new LocalRoutingTable(ppal, mailer)
