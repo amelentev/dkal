@@ -40,6 +40,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BasicPrimitives.fs" />
+    <Compile Include="Builders.fs" />
+    <Compile Include="ActivePatterns.fs" />
     <Compile Include="BasicSubstrateTerm.fs" />
     <Compile Include="BasicSubstrate.fs" />
   </ItemGroup>

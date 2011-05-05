@@ -7,7 +7,6 @@ open System.Xml
 open System.Xml.Linq
 open System.Xml.XPath
 open System.Linq
-open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 

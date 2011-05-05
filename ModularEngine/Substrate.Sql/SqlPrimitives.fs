@@ -2,7 +2,6 @@
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Tree
-open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
 
 module SqlPrimitives =
@@ -11,7 +10,7 @@ module SqlPrimitives =
   [<Literal>] 
   let And = "and"
   [<Literal>] 
-  let Or = "Or"
+  let Or = "or"
   [<Literal>] 
   let Not = "not"
   [<Literal>] 

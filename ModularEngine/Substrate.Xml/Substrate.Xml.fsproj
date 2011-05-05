@@ -39,11 +39,6 @@
     <None Include="XmlDebugScript.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
-      <Name>Ast.Infon</Name>
-      <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
