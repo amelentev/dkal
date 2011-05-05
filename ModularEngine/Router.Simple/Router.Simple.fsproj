@@ -41,13 +41,18 @@
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="RoutingTable.fs" />
+    <Compile Include="SimpleRoutingTable.fs" />
     <Compile Include="IPrincipalService.fs" />
     <Compile Include="PrincipalService.fs" />
     <Compile Include="ConnectionsHandler.fs" />
     <Compile Include="SimpleRouter.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Router\Router.fsproj">
+      <Name>Router (Router\Router)</Name>
+      <Project>{605dcfaa-5dcf-4026-8628-4ef79d9a332a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />

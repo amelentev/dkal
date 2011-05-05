@@ -73,7 +73,10 @@ type BasicSubstrate() =
 
     member bs.AreConsistentUpdates _ = failwith "Basic substrate does not support updates"
 
-    member bs.RequiredVars (query: ISubstrateQueryTerm) = query.Vars // TODO
+    member bs.RequiredVars (query: ISubstrateQueryTerm) = 
+      match query with
+      | :? BasicSubstrateTerm as bst -> bst.Right.Vars
+      | _ -> failwithf "Basic substrate does not understand term %O" query
 
     member bs.Solve (queries: ISubstrateQueryTerm seq) (substs: ISubstitution seq) =
       let queries: BasicSubstrateTerm seq = queries |> Seq.cast

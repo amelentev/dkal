@@ -26,6 +26,11 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
   /// policies or were added as a consequence of install actions in other rules
   let rules = new HashSet<ITerm>()
   
+  /// Keeps the messages that were sent until a fixed-point is reached, no 
+  /// message is sent twice in the same epoch (from fixed-point a to fixed-point
+  /// b)
+  let sentMessages = new HashSet<ITerm * ITerm>()
+
   /// Used by the worker thread to wait for messages when there is no processing
   /// to be performed.
   let notEmpty = new AutoResetEvent(false)
@@ -86,8 +91,10 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
       // Execute a round
       let changing = se.ExecuteRound()
 
-      // If there were no changes wait for at least one new message to arrive
+      // If there were no changes clear the sent message set
+      // and wait for at least one new message to arrive
       if not(changing) then
+        sentMessages.Clear()
         notEmpty.WaitOne() |> ignore
 
       // Move messages (if any) to quarantine
@@ -142,8 +149,8 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
         | SeqAction(actions) -> se.ApplyActions actions
         | Learn(infon) -> engine.Learn infon
         | Forget(infon) -> engine.Forget infon
-        | Send(ppal, infon) -> router.Send infon ppal; false
-        | Say(ppal, infon) -> router.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
+        | Send(ppal, infon) -> se.Send infon ppal; false
+        | Say(ppal, infon) -> se.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
         | Install(rule) -> (se :> IExecutor).InstallRule rule
         | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
         | Apply(su) -> 
@@ -165,3 +172,11 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine) =
     | SeqCondition(conds) ->
       List.fold (fun substs cond -> se.SolveCondition cond substs) substs conds
     | _ -> failwithf "Unrecognized condition %O" condition
+
+  /// Sends the given message to the principal by invoking the IRouter 
+  /// implementation, unless the message has already been sent in this 
+  /// epoch
+  member private se.Send (message: ITerm) (ppal: ITerm) =
+    let needsSending = sentMessages.Add ((message, ppal))
+    if needsSending then
+      router.Send message ppal

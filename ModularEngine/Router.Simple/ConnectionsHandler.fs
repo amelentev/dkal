@@ -4,10 +4,12 @@ open System.ServiceModel
 open System.Configuration
 open System.Collections.Generic
 
+open Microsoft.Research.Dkal.Router
+
 /// A ConnectionHandler is responsible for creating and keeping connections
 /// to every other principal that is known. It's also in charge of keeping a
 /// running IPrincipalService to receive message from the outside
-type ConnectionsHandler(rt: RoutingTable, messageProcessingFunc) =
+type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc) =
   
   /// Stores the IPrincipalService reference for each known principal
   let channels = new Dictionary<string, IPrincipalService>()
@@ -18,7 +20,11 @@ type ConnectionsHandler(rt: RoutingTable, messageProcessingFunc) =
 
   /// Stores a ServiceHost that runs the PrincipalService to wait for incoming
   /// messages
-  let host = new ServiceHost(new PrincipalService(messageProcessingFunc), new System.Uri(rt.Address))
+  let host = 
+    match rt.MyAddress with
+    | :? ServiceAddress as sa ->
+      new ServiceHost(new PrincipalService(messageProcessingFunc), new System.Uri(sa.Location))
+    | _ -> failwith "Connections handler expects ServiceAddress"
 
   /// Initializes the server-side host
   member ch.StartServer() =
@@ -36,10 +42,13 @@ type ConnectionsHandler(rt: RoutingTable, messageProcessingFunc) =
     channels.Clear(); factories.Clear()
     for ppal in rt.Principals do
       printfn "Creating channel to communicate with %O" ppal
-      let factory = new ChannelFactory<IPrincipalService>(new BasicHttpBinding(), new EndpointAddress(rt.GetPrincipalAddress(ppal)))
-      channels.[ppal] <- factory.CreateChannel()
-      factories.[ppal] <- factory
-      factory.Closing.Add (fun _ -> printfn "Channel for %O closing..." ppal)
+      match rt.PrincipalAddress(ppal) with 
+      | :? ServiceAddress as sa ->
+        let factory = new ChannelFactory<IPrincipalService>(new BasicHttpBinding(), new EndpointAddress(sa.Location))
+        channels.[ppal] <- factory.CreateChannel()
+        factories.[ppal] <- factory
+        factory.Closing.Add (fun _ -> printfn "Channel for %O closing..." ppal)
+      | _ -> failwith "Connections handler expects ServiceAddress"
     
   /// Stops the server-side host
   member ch.StopServer() =

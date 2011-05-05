@@ -4,6 +4,7 @@ open System.IO
 
 open Microsoft.Research.Dkal.Factories
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Router.Factories
 open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
 

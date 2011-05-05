@@ -42,6 +42,11 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Router.Factories\Router.Factories.fsproj">
+      <Name>Router.Factories</Name>
+      <Project>{11d0fcb0-d7c2-47a8-b25d-9703a48d6d8b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.fsproj">
       <Name>Utils</Name>
       <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>

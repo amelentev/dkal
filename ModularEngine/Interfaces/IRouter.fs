@@ -7,6 +7,9 @@ type IRouter =
   /// Returns the current principal name
   abstract member Me: string
 
+  /// Returns the names of the known principals
+  abstract member Roster: string list
+
   /// Must be called to initialize the router
   abstract member Start: unit -> unit
 
