@@ -18,6 +18,9 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let RuleRule (c: ITerm, a: ITerm) = 
     App(Primitives.SolveFunction Primitives.Rule |> Option.get, [c; a])
 
+  let RuleOnceRule (c: ITerm, a: ITerm) = 
+    App(Primitives.SolveFunction Primitives.RuleOnce |> Option.get, [c; a])
+
   // Condition builders
   let SeqCondition (conds: ITerm list) = 
     App({ Name = Primitives.SeqCondition; 

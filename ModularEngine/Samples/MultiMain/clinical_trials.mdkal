@@ -1,0 +1,140 @@
+// common declarations
+type Principal = Dkal.Principal
+type Int = System.Int32
+type Bool = System.Boolean
+type Trial = Int
+type Record = Int
+
+relation siteParticipates(SITE: Principal, T: Trial)
+relation siteAllocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
+relation physParticipates(PHYS: Principal, T: Trial, SITE: Principal)
+relation physAllocatedPatients(PHYS: Principal, P1: Int, P2: Int, T: Trial, SITE: Principal)
+relation requestToRead(P: Principal, R: Record)
+relation mayRead(P: Principal, R: Record)
+relation keyForRecord(K: Int, R: Record)
+
+substrate xml("<records>
+                    <record id='101' patient='1005' trial='42' data='ala ma kota' />
+                    <record id='102' patient='1015' trial='42' data='kot ma ale' />
+                    <record id='103' patient='1016' trial='42' data='abecadlo' />
+                    <record id='104' patient='1100' trial='42' data='z pieca spadlo' />
+                </records>") 
+    namespaces "records"
+    
+substrate xml("<trials>
+                    <trial id='42' organizer='org1' name='highly classified trial' />
+                </trials>") 
+    namespaces "trials"
+
+---org1--------------------------
+// org1's policy
+
+substrate xml("<siteAssignments>
+                    <siteAssignment site='site1' trial='42' n1='1000' n2='1250' />
+                </siteAssignments>") 
+    namespaces "siteAssignments"
+
+with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int, N: Int
+    if
+        asInfon({| "trials" | "//trial[@organizer='$Me']/@id" | TRIAL |}) && 
+        asInfon({| "siteAssignments" | "//siteAssignment[@trial='$TRIAL']" | SITE <-> "site", N1 <-> "n1", N2 <-> "n2" |})
+    do
+        say to SITE:
+            siteParticipates(SITE, TRIAL)
+        say to SITE:
+            siteAllocatedPatients(SITE, N1, N2, TRIAL)
+        send to SITE:
+            SITE said mayRead(PERSON, R) &&
+            asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | N |}) &&
+            asInfon({| "basic" | N1 <= N && N <= N2 |})
+            ->
+            Me said mayRead(PERSON, R)    
+    
+---site1--------------------------
+// site1's policy
+
+substrate xml("<physAssignments>
+                    <physAssignment phys='phys1' trial='42' n1='1010' n2='1050' />
+                </physAssignments>") 
+    namespaces "physAssignments"
+
+with TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, N: Int, R: Record, ORG: Principal
+    upon 
+        ORG said siteParticipates(Me, TRIAL) 
+    upon
+        ORG said siteAllocatedPatients(Me, N1, N2, TRIAL) 
+    if
+        asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
+        asInfon({| "physAssignments" | "//physAssignment[@trial='$TRIAL']" | PHYS <-> "phys", P1 <-> "n1", P2 <-> "n2" |}) &&
+        asInfon({| "basic" | N1 <= P1 && P2 <= N2 |})
+    do
+        say to PHYS:
+            physParticipates(PHYS, TRIAL, Me)
+        say to PHYS:        
+            physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
+        send to PHYS:
+            asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | N |}) &&
+            asInfon({| "basic" | P1 <= N && N <= P2 |})
+            -> 
+            Me said mayRead(PHYS, R)
+        send to PHYS:
+            Me said mayRead(PHYS, R) &&
+            asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | N |}) &&
+            asInfon({| "basic" | P1 <= N && N <= P2 |}) &&
+            asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
+            ->
+            ORG said mayRead(PHYS, R)
+            
+---phys1--------------------------
+// phys1's policy
+
+substrate xml("<physPatients>
+                    <physPatient id='1015' needInfo='true' />
+                    <physPatient id='1016' needInfo='true' />
+                    <physPatient id='1100' needInfo='true' />
+                </physPatients>") 
+    namespaces "physPatients"
+
+with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int
+	upon
+		SITE said physParticipates(Me, TRIAL, SITE)
+    upon
+        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
+    if
+		asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | N |}) &&
+        asInfon({| "basic" | P1 <= N && N <= P2 |}) &&
+        asInfon({| "records" | "//record[@patient='$N' and @trial='$TRIAL']/@id" | R |}) &&
+        asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
+	do
+		say to keyMgr:
+			requestToRead(Me, R)
+        send to keyMgr:
+			ORG said mayRead(Me, R)
+        drop
+            SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
+            
+---keyMgr--------------------------
+// keyMgr's policy
+
+substrate xml("<keys>
+                    <key record='101' key='13' />
+                    <key record='102' key='1313' />
+                    <key record='103' key='131313' />
+                    <key record='104' key='13131313' />
+                </keys>")
+    namespaces "keys"
+
+with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
+	upon
+		PERSON said requestToRead(PERSON, R)
+    upon
+		ORG said mayRead(PERSON, R)
+	if
+        asInfon({| "records" | "//record[@id='$R']/@trial" | TRIAL |}) &&
+		asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
+		asInfon({| "keys" | "/keys/key[@record='$R']/@key" | K |})
+	do
+		say to PERSON:
+			keyForRecord(K, R)
+        drop 
+            PERSON said requestToRead(PERSON, R)

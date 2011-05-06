@@ -7,6 +7,7 @@ open Microsoft.Research.Dkal.Substrate.Xml
 open Microsoft.Research.Dkal.Substrate.Crypto
 
 open System.Xml.Linq
+open System.IO
 
 type SubstrateFactory() =
   
@@ -16,7 +17,7 @@ type SubstrateFactory() =
     | "sql", [cs; schema] -> new SqlSubstrate(cs, schema, namespaces) :> ISubstrate
     | "xml", [xml] -> 
       if xml.Contains "<" then
-        new XmlSubstrate(XDocument.Load(xml), namespaces) :> ISubstrate
+        new XmlSubstrate(XDocument.Parse(xml), namespaces) :> ISubstrate
       else
         new XmlSubstrate(xml, namespaces) :> ISubstrate
     | "crypto", [] -> CryptoSubstrate() :> ISubstrate

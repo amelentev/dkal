@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.Research.Dkal.SimpleRouter
 
+open NLog
 open System
 open System.IO
 open System.Diagnostics
@@ -18,6 +19,8 @@ open Microsoft.Research.Dkal.Utils.Exceptions
 
 module MultiMain =
 
+  let log = LogManager.GetLogger("MultiMain")
+
   let messagesLimitExceeded = new AutoResetEvent(false)
 
   let createExec(router: IRouter, assembly: Assembly) =
@@ -25,8 +28,8 @@ module MultiMain =
     let engine = LogicEngineFactory.Engine kind
     let executor = ExecutorFactory.Executor (kind, router, engine, false)
 
-    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid substrates
-      printfn "%s: Substrate declarations is fobidden" router.Me
+//    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid substrates
+//      printfn "%s: Substrate declarations are fobidden" router.Me
       
     for rule in assembly.Policy.Rules do
       executor.InstallRule rule |> ignore
@@ -59,10 +62,23 @@ module MultiMain =
     let routers = RouterFactory.LocalRouters (ppals |> List.unzip |> fst)        
     let assemblies = ppals |> List.map (fun x -> 
       let parser = ParserFactory.InfonParser("simple", routers.[fst x].Me)
-      (fst x, parser.ParseAssembly (commonPolicy + snd x))
+      try
+        (fst x, parser.ParseAssembly (commonPolicy + snd x))
+      with ParseException(msg, text, line, col) -> 
+        log.Error("Error while parsing in line {0}, column {1}: {2}\r\n {3}", line, col, msg, text)
+        Environment.Exit(1); failwith ""
     )
+    let fixedPointCounter = new CountdownEvent(assemblies.Length)
+    let checkGlobalFixedPoint _ = 
+      let reachedGlobalFixedPoint = try fixedPointCounter.Signal() with e -> true
+      if reachedGlobalFixedPoint then
+        messagesLimitExceeded.Set() |> ignore
     let executors = assemblies |> List.mapi (fun i x ->
       let exec = createExec(routers.[fst x], snd x)
+      exec.FixedPointCallback checkGlobalFixedPoint
+      exec.WakeUpCallback 
+        (fun _ -> 
+          fixedPointCounter.TryAddCount() |> ignore)
       if i = 0 then
         (routers.[fst x] :?> LocalRouter).AddMailerCallback msgsLimit 
           (fun _ -> messagesLimitExceeded.Set() |> ignore)
@@ -72,22 +88,23 @@ module MultiMain =
     let reachedTimeLimit = not <| messagesLimitExceeded.WaitOne(timeLimit) 
     executors |> List.iter (fun x -> x.Stop())
     if reachedTimeLimit then
-      printfn "Time limit exceeded at %O milliseconds" timeLimit
+      log.Info("Time limit exceeded at {0} milliseconds", timeLimit)
+    elif fixedPointCounter.IsSet then
+      log.Info("Fixed-point reached")
     else
-      printfn "Message limit exceeded at %O messages" msgsLimit 
+      log.Info("Message limit exceeded at {0} messages", msgsLimit)
     // Do a hard kill (in case the last round takes too long after stop was signaled)
     Thread.Sleep(500)
     Process.GetCurrentProcess().Kill()
 
   let args = System.Environment.GetCommandLineArgs() |> Seq.toList
-  try  
-    match args with
-    | [_; policyFile; timeLimit; msgsLimit] ->
-      if not (File.Exists (policyFile)) then
-        printfn "File not found: %O" policyFile
-      else
+  match args with
+  | [_; policyFile; timeLimit; msgsLimit] ->
+    if not (File.Exists (policyFile)) then
+      log.Fatal("File not found: {0}", policyFile)
+    else
+      try
         execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit))
-    | _ -> failwith "Wrong number of parameters; expecting policy file, time limit (ms), messages limit"
-  with 
-  | ParseException(msg, text, line, col) -> printfn "Error while parsing in line %O, column %O: %O\r\n %O" line col msg text
-  | e -> printfn "%O" e
+      with
+        e -> log.Error(e.Message)
+  | _ -> log.Error("Wrong number of parameters; expecting policy file, time limit (ms), messages limit")

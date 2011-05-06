@@ -11,6 +11,9 @@ open System.Text.RegularExpressions
 let mutable Context: IParsingContext option = None
 let mutable Namespace: string = null
 
+let replaceMeInQuery (query: string) = 
+  (new Regex(@"\$Me\b")).Replace(query, Context.Value.Me)
+
 let varsFromQuery (query: string) = 
   let ret = new HashSet<_>()
   let results = Regex.Matches(query, @"\$[A-Z]+([A-Z]|[a-z]|_|[0-9])*\b")
@@ -56,8 +59,9 @@ XmlSubstrateTerm:
     { let outputVars = new Dictionary<string,IVar>() 
       for (varName, att) in $3 do
         outputVars.[att] <- { Name = varName; Type = Context.Value.VariableType(varName) }
-      let vars = varsFromQuery($1)
-      new XmlSubstrateQueryTerm(Namespace, $1, vars, outputVars) }
+      let queryWithoutMeVariable = replaceMeInQuery($1)
+      let vars = varsFromQuery(queryWithoutMeVariable)
+      new XmlSubstrateQueryTerm(Namespace, queryWithoutMeVariable, vars, outputVars) }
 
 OutputVars:
   | OutputVar                               { [$1] }

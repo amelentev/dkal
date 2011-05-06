@@ -13,24 +13,24 @@ open Microsoft.Research.Dkal.Interfaces
 
 type XmlSubstrate(xmldoc: XDocument, namespaces: string list) = 
   let log = LogManager.GetLogger("Substrate.Xml")
-  let quote s =
-    s // XXX: full quote
-
-  let quoteConstant = function
-    | SubstrateConstant(s) -> quote( s.ToString() )
-    | _ as s -> quote( s.ToString() )
 
   let xn s = XName.Get s
 
-  let bind (subst: ISubstitution) (var: IVar) value =
-    let sc : ITerm = 
-      if var.Type=Type.Int32 then
-        Constant (System.Int32.Parse(value)) :> ITerm
-      else if var.Type=Type.Principal then
-        PrincipalConstant value :> ITerm
+  let bind (subst: ISubstitution option) (var: IVar) value =
+    match subst with
+    | None -> None
+    | Some subst ->
+      let sc : ITerm = 
+        if var.Type=Type.Int32 then
+          Constant (System.Int32.Parse(value)) :> ITerm
+        else if var.Type=Type.Principal then
+          PrincipalConstant value :> ITerm
+        else
+          Constant value :> ITerm
+      if subst.Contains var && subst.Apply var <> sc then
+        None
       else
-        Constant value :> ITerm
-    subst.Extend(var, sc)
+        Some <| subst.Extend(var, sc)
 
   let getValue (elem: XElement) attr =
     match attr with
@@ -39,22 +39,24 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
 
   let bindXE (subst: ISubstitution) (vars: IDictionary<string, IVar>) (elem: XElement) =
     vars.Keys |> Seq.fold (fun subst attr ->
-      bind subst vars.[attr] (getValue elem attr)) subst
+      bind subst vars.[attr] (getValue elem attr)) (Some subst)
 
   let solve11 (query: XmlSubstrateQueryTerm) (subst: ISubstitution) =
-    let xpath = query.Vars |> List.fold (fun (s:string) (x:IVar) -> 
-      let value = (subst.Apply x)
-      s.Replace("$"+x.Name, quoteConstant value)) query.XPath
+    let xpath = ((query :> ITerm).Apply subst :?> XmlSubstrateQueryTerm).XPath
     log.Debug("xpath: {0}", xpath)
     let res = xmldoc.Root.XPathEvaluate(xpath) :?> IEnumerable<obj>
     seq {
       for elem in res do
         match elem with
         | :? XElement as xe ->
-          yield bindXE subst query.OutputVars xe
+          match bindXE subst query.OutputVars xe with
+          | Some subst -> yield subst
+          | None -> ()
         | :? XAttribute as xa when query.OutputVars.Count=1 ->
           let var = query.OutputVars.Values.First()
-          yield bind subst var xa.Value
+          match bind (Some subst) var xa.Value with
+          | Some subst -> yield subst
+          | None -> ()
         | _ ->
           failwithf "unknown xpath result: %A" elem
     }

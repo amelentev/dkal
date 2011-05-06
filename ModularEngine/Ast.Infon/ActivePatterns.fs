@@ -15,6 +15,9 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|Rule|_|) mt = match mt with
                       | App({Name=Primitives.Rule}, [c; a]) -> Some (c, a)
                       | _ -> None
+  let (|RuleOnce|_|) mt = match mt with
+                          | App({Name=Primitives.RuleOnce}, [c; a]) -> Some (c, a)
+                          | _ -> None
 
   // Condition patterns
   let (|SeqCondition|_|) mt = match mt with

@@ -3,6 +3,7 @@
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Factories
 open Microsoft.Research.Dkal.Router
 
 open NLog
@@ -12,6 +13,8 @@ open NLog
 /// performed in memory by means of AST (with no serialization)
 type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
   let log = LogManager.GetLogger("Router.Local")
+  
+  let printer = PrettyPrinterFactory.InfonPrinter "simple"
   do
     mailer.SetPrincipalInbox routingTable.Me (fun _ -> ())
 
@@ -40,7 +43,7 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
       ()
 
   member private sr.DoSend infon ppalName = 
-    log.Info("{0} >>>>>>>> SENT TO {1}: {2} >>>>>>", (sr:>IRouter).Me, ppalName, infon)
+    log.Info(">> From {0} to {1}:\r\n{2}\r\n", (sr:>IRouter).Me, ppalName, printer.PrintTerm infon)
     mailer.SendMessage infon ppalName
 
   member sr.AddMailerCallback (targetAmountOfMessages: int) (f: unit -> unit) =

@@ -55,7 +55,7 @@ let primitiveApp (f: string, args: ITerm list) =
 %token WITH
 
 // Rules
-%token DO
+%token DO ONCE
 
 // Conditions
 %token UPON IF
@@ -236,6 +236,13 @@ Term:
       parser.ParseTerm exp :> ITerm, [] }
 
 Rule:
+  | DO ONCE Action
+    { let t, sm = $3
+      primitiveApp(Primitives.RuleOnce, [primitiveApp(Primitives.EmptyCondition, []); t]), sm }
+  | Condition DO ONCE Action
+    { let t1, sm1 = $1
+      let t2, sm2 = $4
+      primitiveApp(Primitives.RuleOnce, [t1; t2]), sm1 @ sm2 }
   | DO Action
     { let t, sm = $2
       primitiveApp(Primitives.Rule, [primitiveApp(Primitives.EmptyCondition, []); t]), sm }

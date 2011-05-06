@@ -65,6 +65,7 @@ rule tokenize = parse
 
 // Rules
 | "do"			  { DO }
+| "once"			{ ONCE }
 
 // Conditions
 | "upon"      { UPON }
@@ -91,7 +92,7 @@ rule tokenize = parse
                        STRING_LITERAL (stringBuf.ToString()) }
 
 // Substrate expressions
-| '{' '|' (whitespace|newline)* '"' ['a'-'z']+ '"' (whitespace|newline)* '|'       
+| '{' '|' (whitespace|newline)* '"' ['a'-'z''A'-'Z']+ '"' (whitespace|newline)* '|'       
     { let ns = lexeme lexbuf;
       let ns = ns.Substring(2, ns.Length-3).Trim();
       let ns = ns.Substring(1, ns.Length-2);
@@ -114,6 +115,8 @@ and comment = parse
 
 and string = parse
 | '"' { () }
+| '\r' '\n' { lexbuf.EndPos <- lexbuf.EndPos.NextLine; add '\r'; add '\n'; string lexbuf }
+| '\n' { lexbuf.EndPos <- lexbuf.EndPos.NextLine; add '\n'; string lexbuf }
 | '\\' 'n' { add '\n'; string lexbuf }
 | '\\' 'r' { add '\r'; string lexbuf }
 | '\\' 't' { add '\t'; string lexbuf }
@@ -132,5 +135,6 @@ and substrate = parse
               add "|".[0]; 
               add "}".[0]; 
               substrate lexbuf }
+| '\n'    { lexbuf.EndPos <- lexbuf.EndPos.NextLine; add (lexbuf.Lexeme.[0]); substrate lexbuf }
 | _ { add (lexbuf.Lexeme.[0]); substrate lexbuf }
 | eof { () }

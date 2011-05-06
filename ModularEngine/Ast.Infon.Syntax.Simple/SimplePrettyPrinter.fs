@@ -33,23 +33,40 @@ type SimplePrettyPrinter() =
 
   static member FindFunctionSymbol f = 
     match f with
-    | "and" -> "&&", true
-    | "implies" -> "->", true
-    | "said" -> "said", true
-    | f -> f, false
+    | "implies" -> "->", true, 1, true
+    | "said" -> "said", true, 2, false
+    | "and" -> "&&", true, 3, true
+    | f -> f, false, 4, false
 
-  member private spp.TokenizeTerm (mt: ITerm, ?withVars: bool) =
+  member private spp.TokenizeTerm (mt: ITerm, ?withVars: bool, ?precedence: int) =
     let withVars =  match withVars with
                     | None -> true
                     | Some b -> b
+    let precedence =  match precedence with
+                      | None -> -1
+                      | Some precedence -> precedence
     match mt with
     | App(f, mts) -> 
-      let fSymbol, infix = SimplePrettyPrinter.FindFunctionSymbol f.Name
-      let args = List.map spp.TokenizeTerm mts
+      let fSymbol, infix, prec, newLine = SimplePrettyPrinter.FindFunctionSymbol f.Name
+      let args = List.map (fun mt -> spp.TokenizeTerm(mt, withVars, prec)) mts
+      let beginNewLineTokens, endNewLineTokens = 
+        if newLine && prec < precedence then 
+          [UntabToken; NewLineToken], [TabToken; NewLineToken] 
+        elif newLine then
+          [TextToken " "], [NewLineToken]
+        else 
+          [TextToken " "], [TextToken " "]
+      let leftBracket, rightBracket = 
+        if prec < precedence && newLine then
+          [TextToken "("; TabToken; NewLineToken], [UntabToken; NewLineToken; TextToken ")"; NewLineToken]
+        elif prec < precedence then
+          [TextToken "("], [TextToken ")"]
+        else
+          [], []
       if infix then
-        [ TextToken "(" ]
-        @ List.reduce (fun t1 t2 -> t1 @ [TextToken <| " " + fSymbol + " "] @ t2) args
-        @ [ TextToken ")" ]
+        leftBracket
+        @ List.reduce (fun t1 t2 -> t1 @ beginNewLineTokens @ [TextToken <| fSymbol] @ endNewLineTokens @ t2) args
+        @ rightBracket
       elif fSymbol = Primitives.AsInfon then
         match mts with
         | [exp] -> 
@@ -59,7 +76,7 @@ type SimplePrettyPrinter() =
         | _ -> failwith "Incorrect arguments in AsInfon(...)"
       elif fSymbol = "emptyInfon" then
         [ TextToken <| "asInfon(true)" ]
-      elif fSymbol = Primitives.Rule then
+      elif fSymbol = Primitives.Rule || fSymbol = Primitives.RuleOnce then
         let beginVars, endVars =  
           if withVars then 
             spp.TokenizeVariableDeclaration (mt.Vars |> Seq.toList)
@@ -68,6 +85,7 @@ type SimplePrettyPrinter() =
         let mainTokens = 
           [ ManyTokens <| spp.TokenizeTerm(mts.[0], false)]
           @ [ TextToken <| "do" ]
+          @ (if fSymbol = Primitives.RuleOnce then [TextToken <| " once"] else [])
           @ [ TabToken; NewLineToken ]
           @ [ ManyTokens <| spp.TokenizeTerm(mts.[1], false)]
           @ [ UntabToken; NewLineToken ]

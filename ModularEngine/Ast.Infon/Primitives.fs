@@ -13,6 +13,8 @@ module Primitives =
   let EmptyRule = "emptyRule"
   [<Literal>] 
   let Rule = "rule"
+  [<Literal>] 
+  let RuleOnce = "ruleOnce"
 
   // Conditions
   [<Literal>] 
@@ -69,6 +71,8 @@ module Primitives =
     | EmptyRule -> 
       Some {Name = f; RetType = Type.Rule; ArgsType = []; Identity = None}
     | Rule -> 
+      Some {Name = f; RetType = Type.Rule; ArgsType = [Type.Condition; Type.Action]; Identity = None}
+    | RuleOnce -> 
       Some {Name = f; RetType = Type.Rule; ArgsType = [Type.Condition; Type.Action]; Identity = None}
 
     // Conditions

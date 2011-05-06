@@ -18,3 +18,11 @@ type IExecutor =
   /// Uninstalls the given rule ITerm on the executor. Returns true if the rule 
   /// was not present
   abstract member UninstallRule: ITerm -> bool
+
+  /// Registers a callback to be invoked whenever the executor reaches a local
+  /// fixed-point
+  abstract member FixedPointCallback: cb: (unit -> unit) -> unit
+
+  /// Registers a callback to be invoked whenever the executor wakes up after
+  /// a fixed-point
+  abstract member WakeUpCallback: cb: (unit -> unit) -> unit

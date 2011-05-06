@@ -57,6 +57,11 @@
     <Compile Include="TypedXmlPrettyPrinter.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Syntax.Parsing\Ast.Syntax.Parsing.fsproj">
+      <Name>Ast.Syntax.Parsing</Name>
+      <Project>{e8840d2a-aa70-46c8-a5f6-319503f7a8b1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.fsproj">
       <Name>Utils</Name>
       <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>

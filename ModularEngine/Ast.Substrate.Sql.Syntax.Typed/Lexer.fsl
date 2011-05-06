@@ -53,7 +53,7 @@ rule tokenize = parse
                        STRING_LITERAL (stringBuf.ToString()) }
 
 // Substrate expressions
-| '{' '|' (whitespace|newline)* '"' ['a'-'z']+ '"' (whitespace|newline)* '|'       
+| '{' '|' (whitespace|newline)* '"' ['a'-'z''A'-'Z']+ '"' (whitespace|newline)* '|'       
     { let ns = lexeme lexbuf;
       let ns = ns.Substring(2, ns.Length-3).Trim();
       let ns = ns.Substring(1, ns.Length-2);

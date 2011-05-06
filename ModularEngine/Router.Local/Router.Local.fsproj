@@ -62,6 +62,11 @@
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Factories\Factories.fsproj">
+      <Name>Factories (Factories\Factories)</Name>
+      <Project>{ffe9dac2-4f7a-44ba-a630-944e17cd4202}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>

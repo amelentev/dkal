@@ -48,6 +48,7 @@ and comment = parse
 
 and string = parse
 | '"' { () }
+| '\n'  { lexbuf.EndPos <- lexbuf.EndPos.NextLine; add '\n'; string lexbuf }
 | '\\' 'n' { add '\n'; string lexbuf }
 | '\\' 'r' { add '\r'; string lexbuf }
 | '\\' 't' { add '\t'; string lexbuf }

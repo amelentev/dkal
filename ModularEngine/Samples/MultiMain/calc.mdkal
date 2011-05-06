@@ -1,35 +1,40 @@
-// common
+// common declarations
 type Int = System.Int32
+
 relation sum(X: Int, Y: Int, Z: Int)
 relation needSum(X: Int, Y: Int)
----p1---
-// principal p1 policy
-do
-	learn needSum(1, 2)
-	learn needSum(11, 22)
-	learn needSum(111, 223)
-	learn needSum(1166, 2242)
+relation product(X: Int, Y: Int, Z: Int)
+relation needProduct(X: Int, Y: Int)
 
-with X: Int, Y: Int
+relation knowsMath(P: Dkal.Principal)
+
+---alice--------------------------
+// alice's policy
+do once
+	learn needSum(1, 2)
+	learn needProduct(11, 22)
+	learn knowsMath(bob)
+	
+with X: Int, Y: Int, P: Dkal.Principal
 	if
-		needSum(X, Y)
+		needSum(X, Y) && knowsMath(P)
 	do
-		say to p2:
+		say to P:
 			needSum(X, Y)
 		forget
 			needSum(X, Y)
 
-with X: Int, Y: Int, Z: Int, P: Dkal.Principal
-	upon
-		P said sum(X, Y, Z)
+with X: Int, Y: Int, P: Dkal.Principal
+	if
+		needProduct(X, Y) && knowsMath(P)
 	do
-		forget needSum(X, Y)
-		send to Me: sum(X, Y, Z)
-		drop
-			P said sum(X, Y, Z)
-
----p2---
-// principal p2 policy
+		say to P:
+			needProduct(X, Y)
+		forget
+			needProduct(X, Y)
+			
+---bob--------------------------
+// bob's policy
 with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 	upon
 		P said needSum(X, Y)
@@ -40,3 +45,14 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 			sum(X, Y, Z)
 		drop
 			P said needSum(X, Y)
+			
+with X: Int, Y: Int, Z: Int, P: Dkal.Principal
+	upon
+		P said needProduct(X, Y)
+	if
+		asInfon({|"basic"|Z:=X*Y|})
+	do
+		say to P:
+			product(X, Y, Z)
+		drop
+			P said needProduct(X, Y)			

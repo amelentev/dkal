@@ -14,6 +14,15 @@ type BasicSubstrateTerm(left: ITerm, right: ITerm) =
     "{| \"" + (bst :> ISubstrateTerm).Namespace + "\" | " 
       + bst.Left.ToString() + " := " + bst.Right.ToString() + " |}"
 
+  override bst.Equals(o: obj) = 
+    match o with
+    | :? BasicSubstrateTerm as bst' ->
+      (bst.Left, bst.Right).Equals((bst'.Left, bst'.Right))
+    | _ -> false
+
+  override bst.GetHashCode() =
+    (bst.Left, bst.Right).GetHashCode()
+
   interface ISubstrateQueryTerm with
     member bst.Namespace = BasicPrimitives.BasicNamespace
 

@@ -69,6 +69,8 @@ let primitiveApp (f: string, args: ITerm list) =
 %%
 
 SubstrateTerm:
+  | Term EOF
+    { new BasicSubstrateTerm(Const(Constant(true)), $1) :> ISubstrateTerm }
   | Variable GETS Term EOF
     { new BasicSubstrateTerm($1, $3) :> ISubstrateTerm }
   | Literal GETS Term EOF

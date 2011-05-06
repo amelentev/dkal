@@ -221,7 +221,7 @@ module SqlCompiler =
             res
           | _ as t -> failwithf "unknown term %A" t
 
-    log.Info ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> s.ToString())))
+    log.Debug ("Query " + String.concat ", " (theTerms |> Seq.map (fun s -> s.ToString())))
     let body = Seq.map (comp !nextScope) theTerms |> sqlMultiAnd
     log.Debug ("  Compiled {0}", body)
     let body, bindings = body |> simplify

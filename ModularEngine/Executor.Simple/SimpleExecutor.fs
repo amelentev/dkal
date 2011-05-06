@@ -44,6 +44,13 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
   /// thread will read it and terminate
   let mutable finish: bool = false
 
+  /// Callback to invoke whenever we reach a fixed-point
+  let mutable fixedPointCb: unit -> unit = fun _ -> ()
+
+  /// Callback to invoke whenever we wake up after a fixed-point
+  let mutable wakeUpCb: unit -> unit = fun _ -> ()
+
+
   do
     router.Receive(fun msg -> 
                       lock inbox (fun () ->
@@ -61,6 +68,12 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
       match r with
       | SeqRule(rs) -> List.fold (fun change rule -> (se :> IExecutor).UninstallRule rule || change) false rs
       | _ -> rules.Remove(r)
+
+    member se.FixedPointCallback (cb: unit -> unit) = 
+      fixedPointCb <- cb
+        
+    member se.WakeUpCallback (cb: unit -> unit) = 
+      wakeUpCb <- cb
 
     member se.Start () = 
       // Start communications
@@ -91,22 +104,28 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
       router.Stop()
 
   member private se.Work() =
-    while not finish do
-      // Execute a round
-      let changing = se.ExecuteRound()
+    try
+      while not finish do
+        // Execute a round
+        let changing = se.ExecuteRound()
 
-      // If there were no changes clear the sent message set
-      // and wait for at least one new message to arrive
-      if not(changing) then
-        sentMessages.Clear()
-        notEmpty.WaitOne() |> ignore
+        // If there were no changes clear the sent message set
+        // and wait for at least one new message to arrive
+        if not(changing) then
+          sentMessages.Clear()
+          fixedPointCb()
+          notEmpty.WaitOne() |> ignore
+          wakeUpCb()
 
-      // Move messages (if any) to quarantine
-      lock inbox (fun () -> 
-                  while inbox.Count > 0 do
-                    let msg = inbox.Dequeue()
-                    log.Debug("{0}: ---- GOT {1} ---", router.Me, msg)
-                    quarantine.Add msg)
+        // Move messages (if any) to quarantine
+        lock inbox (fun () -> 
+                    while inbox.Count > 0 do
+                      let msg = inbox.Dequeue()
+                      log.Debug("{0}: ---- GOT {1} ---", router.Me, msg)
+                      quarantine.Add msg)
+    with e -> 
+      log.Error("{0}: {1}", router.Me, e.Message)
+      fixedPointCb()
 
   member private se.ExecuteRound() =
     log.Debug("{0}: ------------- round start -------------------", router.Me)
@@ -119,12 +138,16 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
     let rec traverse rule = 
       match rule with
       | Rule(condition, action) ->
-          for subst in se.SolveCondition condition [Substitution.Id] do
-            actions.Add (action.Apply subst) |> ignore
+        for subst in se.SolveCondition condition [Substitution.Id] do
+          actions.Add (action.Apply subst) |> ignore
+      | RuleOnce(condition, action) ->
+        for subst in se.SolveCondition condition [Substitution.Id] do
+          actions.Add (action.Apply subst) |> ignore
+        actions.Add(UninstallAction(rule)) |> ignore
       | EmptyRule -> ()
       | SeqRule (rules) ->
         List.iter traverse rules
-      | _ -> failwith <| "Expecting rule when executing round"
+      | _ -> failwithf "Expecting rule when executing round, found %O" rule
 
     // Traverse rules
     for rule in rules do
@@ -146,16 +169,26 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
   /// Given a set list of action terms, each of the actions is applied.
   /// Returns true iff at least one of the actions produced a change.
   member private se.ApplyActions (actions: ITerm list) = 
-    let mutable changed = false
     let substrateUpdates = new HashSet<ISubstrateUpdateTerm>()
+    let messagesToSend = new HashSet<ITerm * ITerm>()
+    let mutable changed = false
+    
+    let rec allActions a = 
+      match a with
+      | SeqAction(actions) -> List.collect allActions actions
+      | _ -> [a]
+
+    let actions = List.collect allActions actions
+
     for action in actions do
       let changes = 
         match action with
-        | SeqAction(actions) -> se.ApplyActions actions
         | Learn(infon) -> engine.Learn infon
         | Forget(infon) -> engine.Forget infon
-        | Send(ppal, infon) -> se.Send infon ppal; false
-        | Say(ppal, infon) -> se.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
+        | Send(ppal, infon) -> 
+          messagesToSend.Add (infon, ppal) |> ignore; false
+        | Say(ppal, infon) -> 
+          messagesToSend.Add (SaidInfon(PrincipalConstant(router.Me), infon), ppal) |> ignore; false
         | Install(rule) -> (se :> IExecutor).InstallRule rule
         | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
         | Drop(i) -> quarantine.Remove i; false
@@ -163,8 +196,10 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
           substrateUpdates.Add su |> ignore; false
         | _ -> failwithf "Unrecognized action %O" action
       changed <- changed || changes        
+
     let changedFromSubstrateUpdates = SubstrateDispatcher.Update substrateUpdates
-    changed || changedFromSubstrateUpdates
+    let changedFromMessages = se.Send messagesToSend
+    changed || changedFromSubstrateUpdates || changedFromMessages
 
   /// Given a condition term and a list of substitutions, it returns a subset of
   /// substitutions that satisfy the condition, possibly specialized.
@@ -179,10 +214,14 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
       List.fold (fun substs cond -> se.SolveCondition cond substs) substs conds
     | _ -> failwithf "Unrecognized condition %O" condition
 
-  /// Sends the given message to the principal by invoking the IRouter 
-  /// implementation, unless the message has already been sent in this 
-  /// epoch
-  member private se.Send (message: ITerm) (ppal: ITerm) =
-    let needsSending = sentMessages.Add ((message, ppal))
-    if needsSending then
-      router.Send message ppal
+  /// Sends the given messages by invoking the IRouter implementation, unless the 
+  /// messages have already been sent in this epoch. Messages to the same destination
+  /// are grouped into one big message
+  member private se.Send (messages: HashSet<ITerm * ITerm>) =
+    let needSending = Seq.filter (fun m -> not <| sentMessages.Contains m) messages
+    let groupedByDestination = Seq.groupBy (fun (infon, ppal) -> ppal) needSending
+    for (ppal, msgs) in groupedByDestination do
+      let bigMsg = AndInfon([for (msg, ppal) in msgs -> msg])
+      router.Send bigMsg ppal
+    sentMessages.UnionWith needSending
+    (needSending |> Seq.toList).IsEmpty |> not
