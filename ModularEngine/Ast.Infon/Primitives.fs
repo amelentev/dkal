@@ -43,6 +43,8 @@ module Primitives =
   let Uninstall = "uninstall"
   [<Literal>] 
   let Apply = "apply"
+  [<Literal>] 
+  let Drop = "drop"
 
   // Infons
   [<Literal>] 
@@ -100,6 +102,8 @@ module Primitives =
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Rule]; Identity = None}
     | Apply -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.SubstrateUpdate]; Identity = None}
+    | Drop -> 
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
     
     // Infons
     | EmptyInfon ->

@@ -158,6 +158,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
         | Say(ppal, infon) -> se.Send (SaidInfon(PrincipalConstant(router.Me), infon)) ppal; false
         | Install(rule) -> (se :> IExecutor).InstallRule rule
         | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
+        | Drop(i) -> quarantine.Remove i; false
         | Apply(su) -> 
           substrateUpdates.Add su |> ignore; false
         | _ -> failwithf "Unrecognized action %O" action

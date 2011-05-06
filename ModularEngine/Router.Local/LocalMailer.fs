@@ -9,7 +9,7 @@ open Microsoft.Research.Dkal.Router
 
 type LocalMailer() = 
 
-  let mutable amountOfSentMessages: int = 0
+  let amountOfSentMessages: int ref = ref 0
 
   let callbacks = new Dictionary<int, List<(unit -> unit)>>()
 
@@ -32,7 +32,7 @@ type LocalMailer() =
     let found, inbox = principals.TryGetValue ppalName
     if found then
       inbox msg
-      let amount = Interlocked.Increment(ref amountOfSentMessages)
+      let amount = Interlocked.Increment(amountOfSentMessages)
       lm.ExecuteCallbacks amount
     else
       failwithf "Unknown principal %O" ppalName

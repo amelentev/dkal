@@ -61,6 +61,9 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                             | :? ISubstrateUpdateTerm as su -> Some su
                             | _ -> failwith "Expecting ISubstrateUpdateTerm in AsInfon"
                         | _ -> None
+  let (|Drop|_|) mt = match mt with
+                      | App({Name=Primitives.Drop}, [i]) -> Some i
+                      | _ -> None
 
   // Infon patterns
   let (|EmptyInfon|_|) mt = match mt with 

@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Diagnostics
 open System.Text
 open System.Threading
 open System.Text.RegularExpressions
@@ -16,6 +17,8 @@ open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
 
 module MultiMain =
+
+  let messagesLimitExceeded = new AutoResetEvent(false)
 
   let createExec(router: IRouter, assembly: Assembly) =
     let kind = "simple"
@@ -58,15 +61,23 @@ module MultiMain =
       let parser = ParserFactory.InfonParser("simple", routers.[fst x].Me)
       (fst x, parser.ParseAssembly (commonPolicy + snd x))
     )
-    let executors = assemblies |> List.map (fun x ->
+    let executors = assemblies |> List.mapi (fun i x ->
       let exec = createExec(routers.[fst x], snd x)
-      (routers.[fst x] :?> LocalRouter).AddMailerCallback msgsLimit (fun _ -> exec.Stop())
+      if i = 0 then
+        (routers.[fst x] :?> LocalRouter).AddMailerCallback msgsLimit 
+          (fun _ -> messagesLimitExceeded.Set() |> ignore)
       exec
     )
     executors |> List.iter (fun x -> x.Start())
-    Thread.Sleep(timeLimit) // TODO: what happens if msgsLimit was hit first???? we need to wake up
+    let reachedTimeLimit = not <| messagesLimitExceeded.WaitOne(timeLimit) 
     executors |> List.iter (fun x -> x.Stop())
-    ()
+    if reachedTimeLimit then
+      printfn "Time limit exceeded at %O milliseconds" timeLimit
+    else
+      printfn "Message limit exceeded at %O messages" msgsLimit 
+    // Do a hard kill (in case the last round takes too long after stop was signaled)
+    Thread.Sleep(500)
+    Process.GetCurrentProcess().Kill()
 
   let args = System.Environment.GetCommandLineArgs() |> Seq.toList
   try  

@@ -65,6 +65,9 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let ApplyAction (su: ITerm) = 
     App(Primitives.SolveFunction Primitives.Apply |> Option.get, [su])
 
+  let DropAction (i: ITerm) = 
+    App(Primitives.SolveFunction Primitives.Drop |> Option.get, [i])
+
   // Infon builders
   let EmptyInfon = 
     App(Primitives.SolveFunction Primitives.EmptyInfon |> Option.get, [])

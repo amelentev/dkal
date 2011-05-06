@@ -113,6 +113,11 @@ type SimplePrettyPrinter() =
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
           UntabToken; NewLineToken ]
+      elif fSymbol = Primitives.Drop then
+        [ TextToken <| "drop";
+          TabToken; NewLineToken;
+          ManyTokens <| spp.TokenizeTerm mts.[0];
+          UntabToken; NewLineToken ]
       elif fSymbol = Primitives.SeqAction || fSymbol = Primitives.SeqCondition then
         List.concat (List.map spp.TokenizeTerm mts)
       elif not infix && mts = [] then

@@ -61,7 +61,7 @@ let primitiveApp (f: string, args: ITerm list) =
 %token UPON IF
 
 // Actions
-%token SEND SAY TO LEARN FORGET INSTALL UNINSTALL APPLY
+%token SEND SAY TO LEARN FORGET INSTALL UNINSTALL APPLY DROP
 
 // Literals
 %token TRUE FALSE
@@ -286,6 +286,9 @@ Action:
 	| APPLY Term
     { let t, sm = $2
       primitiveApp(Primitives.Apply, [t]), sm }
+	| DROP Term
+    { let t, sm = $2
+      primitiveApp(Primitives.Drop, [t]), sm }
 	| Action Action
     { let t1, sm1 = $1
       let t2, sm2 = $2

@@ -23,6 +23,18 @@ type Quarantine() =
     | _ -> 
       msgs.Add(PrefixedInfon(prefix, msg)) |> ignore
 
+  /// Remove from quarantine (splitting Ands). The optional prefix
+  /// is used to split ands recursively inside quotations
+  member q.Remove (msg: ITerm, ?prefix: ITerm list) =
+    let prefix =  match prefix with
+                  | None -> []
+                  | Some prefix -> prefix
+    match msg.Normalize() with
+    | AndInfon(msgs) -> List.iter (fun msg -> q.Remove(msg, prefix)) msgs
+    | SaidInfon(ppal, msg) -> q.Remove(msg, prefix @ [ppal])
+    | _ -> 
+      msgs.Remove(PrefixedInfon(prefix, msg)) |> ignore
+
   /// Called at the end of each round to eliminate "old" messages
   member q.Prune () = 
     // TODO: implement some algorithm to remove unnecessary/old messages
