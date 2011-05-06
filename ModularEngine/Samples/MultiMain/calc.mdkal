@@ -1,0 +1,42 @@
+// common
+type Int = System.Int32
+relation sum(X: Int, Y: Int, Z: Int)
+relation needSum(X: Int, Y: Int)
+---p1---
+// principal p1 policy
+do
+	learn needSum(1, 2)
+	learn needSum(11, 22)
+	learn needSum(111, 223)
+	learn needSum(1166, 2242)
+
+with X: Int, Y: Int
+	if
+		needSum(X, Y)
+	do
+		say to p2:
+			needSum(X, Y)
+		forget
+			needSum(X, Y)
+
+with X: Int, Y: Int, Z: Int, P: Dkal.Principal
+	upon
+		P said sum(X, Y, Z)
+	do
+		forget needSum(X, Y)
+		send to Me: sum(X, Y, Z)
+		drop
+			P said sum(X, Y, Z)
+
+---p2---
+// principal p2 policy
+with X: Int, Y: Int, Z: Int, P: Dkal.Principal
+	upon
+		P said needSum(X, Y)
+	if
+		asInfon({|"basic"|Z:=X+Y|})
+	do
+		say to P:
+			sum(X, Y, Z)
+		drop
+			P said needSum(X, Y)
