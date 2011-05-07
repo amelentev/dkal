@@ -143,7 +143,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
       | RuleOnce(condition, action) ->
         for subst in se.SolveCondition condition [Substitution.Id] do
           actions.Add (action.Apply subst) |> ignore
-        actions.Add(UninstallAction(rule)) |> ignore
+          actions.Add(UninstallAction(rule)) |> ignore // XXX this is removing the rule several times (performance)
       | EmptyRule -> ()
       | SeqRule (rules) ->
         List.iter traverse rules
@@ -221,7 +221,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
     let needSending = Seq.filter (fun m -> not <| sentMessages.Contains m) messages
     let groupedByDestination = Seq.groupBy (fun (infon, ppal) -> ppal) needSending
     for (ppal, msgs) in groupedByDestination do
-      let bigMsg = AndInfon([for (msg, ppal) in msgs -> msg])
+      let bigMsg = AndInfon([for (msg, ppal) in msgs -> msg]).Normalize()
       router.Send bigMsg ppal
     sentMessages.UnionWith needSending
     (needSending |> Seq.toList).IsEmpty |> not

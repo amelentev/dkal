@@ -1,0 +1,66 @@
+// common declarations
+type Principal = Dkal.Principal
+type Int = System.Int32
+type String = System.String
+
+type Subject = String
+
+relation enrolledIn(STUDENT: Principal, SUBJECT: Subject)
+relation examContents(SUBJECT: Subject, CONTENTS: String)
+relation inChargeOf(SUBJECT: Subject, PROFESSOR: Principal)
+
+relation needsExamContents(PERSON: Principal, SUBJECT: Subject)
+relation asksForExamContents(PERSON: Principal, SUBJECT: Subject)
+
+---smith--------------------------
+// prof. smith's policy
+
+substrate xml("<exams>
+                    <exam subject='calculus' contents='what is the derivative of e^x?' />
+                    <exam subject='programming' contents='is quicksort better than mergesort?' />
+                </exams>") 
+    namespaces "exams"
+
+do once
+    learn inChargeOf("calculus", Me)
+    learn inChargeOf("programming", Me)
+    learn inChargeOf("programming", suresh)
+    
+with P: Principal, SUBJECT: Subject, CONTENTS: String
+    upon
+        P said asksForExamContents(P, SUBJECT)
+    if
+        inChargeOf(SUBJECT, P) &&
+        asInfon({| "exams" | "//exam[@subject='$SUBJECT']/@contents" | CONTENTS |}) 
+    do
+        say to P:
+            examContents(SUBJECT, CONTENTS)
+        drop
+            P said asksForExamContents(P, SUBJECT)
+            
+---suresh--------------------------
+// prof. suresh's policy
+
+do once
+    learn inChargeOf("programming", Me)
+    learn inChargeOf("programming", smith)
+    learn needsExamContents(Me, "programming")
+    
+with PROF: Principal, SUBJECT: Subject, CONTENTS: String
+    if 
+        needsExamContents(Me, SUBJECT) && 
+        inChargeOf(SUBJECT, PROF) &&
+        inChargeOf(SUBJECT, Me) &&
+        asInfon({| "basic" | PROF != Me |})
+    do once
+        say to PROF:
+            asksForExamContents(Me, SUBJECT)
+
+    upon
+        PROF said examContents(SUBJECT, CONTENTS)
+    if
+        needsExamContents(Me, SUBJECT)
+    do
+        forget
+            needsExamContents(Me, SUBJECT)
+            

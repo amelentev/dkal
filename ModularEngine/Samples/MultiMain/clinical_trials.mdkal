@@ -1,7 +1,6 @@
 // common declarations
 type Principal = Dkal.Principal
 type Int = System.Int32
-type Bool = System.Boolean
 type Trial = Int
 type Record = Int
 

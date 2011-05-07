@@ -43,6 +43,8 @@
     match t with
     | Substrate t' -> 
       t'.GetInterfaces() |> Seq.exists (fun i -> i.Name.StartsWith("IEquatable"))
+    | Principal -> 
+      true
     | _ -> false
 
   /// Returns true iff the given IType supports ordered comparisson in Basic substrate
