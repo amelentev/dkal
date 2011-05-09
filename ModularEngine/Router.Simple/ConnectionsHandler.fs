@@ -10,7 +10,7 @@ open Microsoft.Research.Dkal.Router
 /// A ConnectionHandler is responsible for creating and keeping connections
 /// to every other principal that is known. It's also in charge of keeping a
 /// running IPrincipalService to receive message from the outside
-type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc) =
+type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc: string -> string -> unit) as ch =
   let log = LogManager.GetLogger("Router.Simple")
   
   /// Stores the IPrincipalService reference for each known principal
@@ -25,7 +25,11 @@ type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc) =
   let host = 
     match rt.MyAddress with
     | :? ServiceAddress as sa ->
-      new ServiceHost(new PrincipalService(messageProcessingFunc), new System.Uri(sa.Location))
+      let wholeMessageProcessingFunc msg from fromAddress = 
+        if rt.AddPrincipal from {Location = fromAddress} then
+          ch.StartClient from
+        messageProcessingFunc msg from
+      new ServiceHost(new PrincipalService(wholeMessageProcessingFunc), new System.Uri(sa.Location))
     | _ -> failwith "Connections handler expects ServiceAddress"
 
   /// Initializes the server-side host
@@ -42,15 +46,19 @@ type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc) =
     // Create a channel (and factory) for each declared client in the config file
     channels.Clear(); factories.Clear()
     for ppal in rt.Principals do
-      log.Info("Creating channel to communicate with {0}", ppal)
-      match rt.PrincipalAddress(ppal) with 
-      | :? ServiceAddress as sa ->
-        let factory = new ChannelFactory<IPrincipalService>(new BasicHttpBinding(), new EndpointAddress(sa.Location))
-        channels.[ppal] <- factory.CreateChannel()
-        factories.[ppal] <- factory
-        factory.Closing.Add (fun _ -> log.Info("Channel for {0} closing...", ppal))
-      | _ -> failwith "Connections handler expects ServiceAddress"
-    
+      ch.StartClient ppal
+          
+  /// Initializes one client (and its factory)
+  member private ch.StartClient (ppal: string) =
+    log.Info("Creating channel to communicate with {0}", ppal)
+    match rt.PrincipalAddress(ppal) with 
+    | :? ServiceAddress as sa ->
+      let factory = new ChannelFactory<IPrincipalService>(new BasicHttpBinding(), new EndpointAddress(sa.Location))
+      channels.[ppal] <- factory.CreateChannel()
+      factories.[ppal] <- factory
+      factory.Closing.Add (fun _ -> log.Info("Channel for {0} closing...", ppal))
+    | _ -> failwith "Connections handler expects ServiceAddress"
+
   /// Stops the server-side host
   member ch.StopServer() =
     host.Close()
@@ -64,7 +72,8 @@ type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc) =
   /// Sends a message to the given principal by invoking the proper channel
   member ch.Send (msg: string) (ppal: string) =
     let found, channel = channels.TryGetValue ppal
+    let myAddress = (rt.MyAddress :?> ServiceAddress).Location
     if found then
-      channel.ReceiveMessage(msg)
+      channel.ReceiveMessage(msg, rt.Me, myAddress)
     else
       failwith <| "Unknown destination: " + ppal

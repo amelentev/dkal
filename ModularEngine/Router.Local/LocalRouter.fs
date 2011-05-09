@@ -16,7 +16,7 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
   
   let printer = PrettyPrinterFactory.InfonPrinter "simple"
   do
-    mailer.SetPrincipalInbox routingTable.Me (fun _ -> ())
+    mailer.SetPrincipalInbox routingTable.Me (fun _ _ -> ())
 
   interface IRouter with
     member sr.Me = routingTable.Me
@@ -44,7 +44,7 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
 
   member private sr.DoSend infon ppalName = 
     log.Info(">> From {0} to {1}:\r\n{2}\r\n", (sr:>IRouter).Me, ppalName, printer.PrintTerm infon)
-    mailer.SendMessage infon ppalName
+    mailer.SendMessage infon (Const(PrincipalConstant((sr:>IRouter).Me))) ppalName
 
   member sr.AddMailerCallback (targetAmountOfMessages: int) (f: unit -> unit) =
     mailer.AddCallback targetAmountOfMessages f

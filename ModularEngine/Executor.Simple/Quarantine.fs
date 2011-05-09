@@ -13,13 +13,17 @@ type Quarantine() =
 
   /// Move incoming messages to quarantine and split Ands. The optional prefix
   /// is used to split ands recursively inside quotations
-  member q.Add (msg: ITerm, ?prefix: ITerm list) =
+  member q.Add (msg: ITerm, from: ITerm) =
+    // TODO: use from information (check evidence?)
+    q.DoAdd msg
+
+  member private q.DoAdd (msg: ITerm, ?prefix: ITerm list) =
     let prefix =  match prefix with
                   | None -> []
                   | Some prefix -> prefix
     match msg.Normalize() with
-    | AndInfon(msgs) -> List.iter (fun msg -> q.Add(msg, prefix)) msgs
-    | SaidInfon(ppal, msg) -> q.Add(msg, prefix @ [ppal])
+    | AndInfon(msgs) -> List.iter (fun msg -> q.DoAdd(msg, prefix)) msgs
+    | SaidInfon(ppal, msg) -> q.DoAdd(msg, prefix @ [ppal])
     | _ -> 
       msgs.Add(PrefixedInfon(prefix, msg)) |> ignore
 

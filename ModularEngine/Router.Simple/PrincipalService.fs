@@ -9,5 +9,5 @@ open System.Runtime.Serialization
 [<ServiceBehavior(Name="Microsoft.Research.Dkal.SimpleRouter.PrincipalService",InstanceContextMode=InstanceContextMode.Single)>]
 type PrincipalService(messageProcessingFunc) =
   interface IPrincipalService with
-    member ps.ReceiveMessage (message) =
-      messageProcessingFunc message 
+    member ps.ReceiveMessage(message, from, fromAddress) =
+      messageProcessingFunc message from fromAddress

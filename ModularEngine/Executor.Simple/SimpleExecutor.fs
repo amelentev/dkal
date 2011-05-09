@@ -18,7 +18,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
   
   /// The inbox holds the messages that arrive from the router but still
   /// haven't been moved to Quarantine
-  let inbox = new Queue<ITerm>()
+  let inbox = new Queue<ITerm * ITerm>()
 
   /// The quarantine holds all incoming messages of relevance. We need to
   /// call quarantine.Prune() in order to remove old/unnecessary messages
@@ -52,9 +52,9 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
 
 
   do
-    router.Receive(fun msg -> 
+    router.Receive(fun msg from -> 
                       lock inbox (fun () ->
-                      inbox.Enqueue(msg)
+                      inbox.Enqueue((msg, from))
                       notEmpty.Set() |> ignore))
 
   interface IExecutor with
@@ -120,9 +120,9 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
         // Move messages (if any) to quarantine
         lock inbox (fun () -> 
                     while inbox.Count > 0 do
-                      let msg = inbox.Dequeue()
-                      log.Debug("{0}: ---- GOT {1} ---", router.Me, msg)
-                      quarantine.Add msg)
+                      let msg, from = inbox.Dequeue()
+                      log.Debug("{0}: ---- GOT FROM {1}: {2} ---", router.Me, from, msg)
+                      quarantine.Add(msg, from))
     with e -> 
       log.Error("{0}: {1}", router.Me, e.Message)
       fixedPointCb()

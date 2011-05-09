@@ -17,17 +17,19 @@ type SimpleRouter (routingTable: IRoutingTable, parser: IInfonParser, printer: I
   
   /// This function is called every time a new message arrives. Initially it
   /// does nothing, it must be set by calling sr.Receive(...)
-  let mutable elevateMessageFunction = fun _ -> ()
+  let mutable elevateMessageFunction = fun _ _ -> ()
 
   /// A ConnectionHandler instance to manage the incoming and outcoming channels
   let connectionsHandler = new ConnectionsHandler(routingTable, 
-                                                  fun msg -> 
+                                                  fun msg ppal -> 
                                                     let infon = 
                                                       try
                                                         parser.ParseInfon msg
                                                       with
                                                         e -> failwithf "%O" e
-                                                    elevateMessageFunction infon)
+                                                    let from = 
+                                                      Const(PrincipalConstant(ppal))
+                                                    elevateMessageFunction infon from)
 
   interface IRouter with
     member sr.Me = routingTable.Me

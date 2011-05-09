@@ -13,7 +13,7 @@ type LocalMailer() =
 
   let callbacks = new Dictionary<int, List<(unit -> unit)>>()
 
-  let principals = new Dictionary<string, ITerm -> unit>()
+  let principals = new Dictionary<string, ITerm -> ITerm -> unit>()
   
   member lm.AddCallback (targetAmountOfMessages: int) (f: unit -> unit) =
     let found, fs = callbacks.TryGetValue targetAmountOfMessages
@@ -22,16 +22,16 @@ type LocalMailer() =
     else
       callbacks.[targetAmountOfMessages] <- new List<_>([f])
 
-  member lm.SetPrincipalInbox (ppalName: string) (inbox: ITerm -> unit) =
+  member lm.SetPrincipalInbox (ppalName: string) (inbox: ITerm -> ITerm -> unit) =
     principals.[ppalName] <- inbox
 
   member lm.Principals =
     [ for principal in principals.Keys -> principal ]
 
-  member lm.SendMessage (msg: ITerm) (ppalName: string) =
+  member lm.SendMessage (msg: ITerm) (from: ITerm) (ppalName: string) =
     let found, inbox = principals.TryGetValue ppalName
     if found then
-      inbox msg
+      inbox msg from
       let amount = Interlocked.Increment(amountOfSentMessages)
       lm.ExecuteCallbacks amount
     else

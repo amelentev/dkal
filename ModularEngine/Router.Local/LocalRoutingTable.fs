@@ -22,6 +22,15 @@ type LocalRoutingTable(me: string, mailer: LocalMailer) =
     member rt.Principals =
       mailer.Principals
 
+    /// Returns true if the principal name is known to the RoutingTable
+    member rt.HasPrincipal (name: string) =
+      mailer.Principals |> List.exists (fun e -> e = name)
+
+    /// Adds the principal (with name and address) and returns true if the 
+    /// principal was not present before addition
+    member rt.AddPrincipal (name: string) (address: IPrincipalAddress) =
+      failwithf "Local routing table does not support adding principals dynamically"
+
     /// Gets the principal address from the RoutingTable
     member rt.PrincipalAddress (name: string) =
       { new IPrincipalAddress }

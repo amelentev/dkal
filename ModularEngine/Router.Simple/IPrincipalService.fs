@@ -13,4 +13,4 @@ type IPrincipalService =
   /// This operation is invoked by other principals when the want to leave us
   /// a message. 
   [<OperationContract>]
-  abstract member ReceiveMessage : message: string -> unit
+  abstract member ReceiveMessage : message: string * from: string * fromAddress: string -> unit
