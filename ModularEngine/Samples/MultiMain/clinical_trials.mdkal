@@ -1,5 +1,7 @@
 // common declarations
 type Principal = Dkal.Principal
+type Infon = Dkal.Infon
+type Evidence = Dkal.Evidence
 type Int = System.Int32
 type Trial = Int
 type Record = Int
@@ -33,21 +35,22 @@ substrate xml("<siteAssignments>
                 </siteAssignments>") 
     namespaces "siteAssignments"
 
-with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int, N: Int
+with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
     if
         asInfon({| "trials" | "//trial[@organizer='$Me']/@id" | TRIAL |}) && 
         asInfon({| "siteAssignments" | "//siteAssignment[@trial='$TRIAL']" | SITE <-> "site", N1 <-> "n1", N2 <-> "n2" |})
     do
-        send to SITE:
+        say with justification to SITE:
             siteParticipates(SITE, TRIAL)
-        send to SITE:
+        say with justification to SITE:
             siteAllocatedPatients(SITE, N1, N2, TRIAL)
-        send to SITE:
-            SITE said mayRead(PERSON, R) &&
-            asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | N |}) &&
-            asInfon({| "basic" | N1 <= N && N <= N2 |})
-            ->
-            Me said mayRead(PERSON, R)    
+        send with justification to SITE:
+            with PERSON: Principal, REC: Int, NUMBER: Int
+                (SITE said mayRead(PERSON, REC)) &&
+                asInfon({| "records" | "//record[@id='$REC' and @trial='$TRIAL']/@patient" | NUMBER |}) &&
+                asInfon({| "basic" | N1 <= NUMBER && NUMBER <= N2 |})
+                ->
+                Me said mayRead(PERSON, REC)    
     
 ---site1--------------------------
 // site1's policy
@@ -56,59 +59,72 @@ substrate xml("<physAssignments>
                     <physAssignment phys='phys1' trial='42' n1='1010' n2='1050' />
                 </physAssignments>") 
     namespaces "physAssignments"
-
-with TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, N: Int, R: Record, ORG: Principal
+    
+with X: Infon, E: Evidence
+    upon X [E]
+    do
+        learn X [E]
+ 
+ with X: Infon, TRIAL: Trial, REC: Int, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E1: Evidence, E2: Evidence, E3: Evidence
     upon 
-        ORG said siteParticipates(Me, TRIAL) 
-    upon
-        ORG said siteAllocatedPatients(Me, N1, N2, TRIAL) 
+        ORG said siteParticipates(Me, TRIAL) [E1]
+    upon 
+        ORG said siteAllocatedPatients(Me, N1, N2, TRIAL) [E2]
     if
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
         asInfon({| "physAssignments" | "//physAssignment[@trial='$TRIAL']" | PHYS <-> "phys", P1 <-> "n1", P2 <-> "n2" |}) &&
         asInfon({| "basic" | N1 <= P1 && P2 <= N2 |})
+    if
+        X -> ORG said mayRead(PHYS, R) [E3]
     do
-        send to PHYS:
+        say with justification to PHYS:
             physParticipates(PHYS, TRIAL, Me)
-        send to PHYS:        
+        say with justification to PHYS:        
             physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
+        send with justification to PHYS:
+            with NUMBER: Int, R: Record
+                asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | NUMBER |}) &&
+                asInfon({| "basic" | P1 <= NUMBER && NUMBER <= P2 |})
+                -> 
+                Me said mayRead(PHYS, R)
         send to PHYS:
-            asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | N |}) &&
-            asInfon({| "basic" | P1 <= N && N <= P2 |})
-            -> 
-            Me said mayRead(PHYS, R)
-        send to PHYS:
-            Me said mayRead(PHYS, R) &&
-            asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | N |}) &&
-            asInfon({| "basic" | P1 <= N && N <= P2 |}) &&
-            asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
-            ->
-            ORG said mayRead(PHYS, R)
+            X -> ORG said mayRead(PHYS, R) [E3]
             
 ---phys1--------------------------
 // phys1's policy
 
 substrate xml("<physPatients>
                     <physPatient id='1015' needInfo='true' />
-                    <physPatient id='1016' needInfo='true' />
                     <physPatient id='1100' needInfo='true' />
                 </physPatients>") 
     namespaces "physPatients"
 
-with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int
-	upon
-		SITE said physParticipates(Me, TRIAL, SITE)
-    upon
-        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
+with X: Infon, E: Evidence
+    upon X [E]
+    do
+        learn X [E]
+    
+with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence, E3: Dkal.Evidence, E4: Dkal.Evidence, PERSON: Principal, REC: Int
+	upon 
+		SITE said physParticipates(Me, TRIAL, SITE) [E1]
+    upon 
+        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [E2]
     if
 		asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | N |}) &&
         asInfon({| "basic" | P1 <= N && N <= P2 |}) &&
         asInfon({| "records" | "//record[@patient='$N' and @trial='$TRIAL']/@id" | R |}) &&
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
+    if 
+        X -> ORG said mayRead(Me, R) [E3]
+    if 
+        Y -> SITE said mayRead(Me, R) [E4]
 	do
-		send to keyMgr:
+		say with justification to keyMgr:
 			requestToRead(Me, R)
         send to keyMgr:
-			ORG said mayRead(Me, R)
+			X -> ORG said mayRead(Me, R) [E3]
+        send to keyMgr:
+			Y -> SITE said mayRead(Me, R) [E4]
         drop
             SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
             
@@ -123,17 +139,23 @@ substrate xml("<keys>
                 </keys>")
     namespaces "keys"
 
-with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
-	upon
-		PERSON said requestToRead(PERSON, R)
-    upon
-		PERSON said ORG said mayRead(PERSON, R)
+with X: Infon, E: Evidence
+    upon X [E]
+    do
+        learn X [E]
+    
+with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int, E1: Evidence, E2: Evidence
+	upon 
+		PERSON said requestToRead(PERSON, R) [E1]
 	if
         asInfon({| "records" | "//record[@id='$R']/@trial" | TRIAL |}) &&
-		asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
-		asInfon({| "keys" | "/keys/key[@record='$R']/@key" | K |})
+		asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
+    if
+		ORG said mayRead(PERSON, R) [E2]
+    if 
+        asInfon({| "keys" | "/keys/key[@record='$R']/@key" | K |})
 	do
-		send to PERSON:
+		say with justification to PERSON:
 			keyForRecord(K, R)
         drop 
             PERSON said requestToRead(PERSON, R)
