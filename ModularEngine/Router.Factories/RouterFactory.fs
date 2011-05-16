@@ -1,7 +1,7 @@
 ﻿namespace Microsoft.Research.Dkal.Router.Factories
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Factories
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
 open Microsoft.Research.Dkal.Router.Simple
 open Microsoft.Research.Dkal.Router.Local
 

@@ -43,9 +43,12 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|Send|_|) mt = match mt with
                       | App({Name=Primitives.Send}, [ppal; i]) -> Some (ppal, i)
                       | _ -> None
-  let (|Say|_|) mt =  match mt with
-                      | App({Name=Primitives.Say}, [ppal; i]) -> Some (ppal, i)
-                      | _ -> None
+  let (|JustifiedSend|_|) mt =  match mt with
+                                | App({Name=Primitives.JustifiedSend}, [ppal; i]) -> Some (ppal, i)
+                                | _ -> None
+  let (|JustifiedSay|_|) mt = match mt with
+                              | App({Name=Primitives.JustifiedSay}, [ppal; i]) -> Some (ppal, i)
+                              | _ -> None
   let (|Learn|_|) mt =  match mt with
                         | App({Name=Primitives.Learn}, [i]) -> Some i
                         | _ -> None
@@ -87,4 +90,34 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|SaidInfon|_|) mt = match mt with
                             | App({Name=Primitives.Said}, [ppal; mt']) -> Some (ppal, mt')
                             | _ -> None
+  let (|JustifiedInfon|_|) mt = match mt with
+                                | App({Name=Primitives.Justified}, [i; e]) -> Some (i, e)
+                                | _ -> None
+
+  // Evidence patterns
+  let (|EmptyEvidence|_|) mt =  match mt with
+                                | App({Name=Primitives.EvEmpty}, []) -> Some ()
+                                | _ -> None
+
+  let (|ConcretizationEvidence|_|) (mt: ITerm) =  match mt with
+                                                  | :? ExplicitSubstitutionTerm as t when (t :> ITerm).Type = Type.Evidence -> 
+                                                    Some (t.Term, t.Substitution)
+                                                  | _ -> 
+                                                    None
+  let (|SignatureEvidence|_|) mt =  match mt with
+                                    | App({Name=Primitives.EvSignature}, [p; i; s]) -> Some (p, i, s)
+                                    | _ -> None
+  let (|ModusPonensEvidence|_|) mt =  match mt with
+                                      | App({Name=Primitives.EvModusPonens}, [e1; e2]) -> Some (e1, e2)
+                                      | _ -> None
+  let (|AndEvidence|_|) mt =  match mt with
+                              | App({Name=Primitives.EvAnd}, evidences) -> Some evidences
+                              | _ -> None
+  let (|AsInfonEvidence|_|) mt =  match mt with
+                                  | App({Name=Primitives.EvAsInfon}, [sq]) -> 
+                                    match sq with
+                                    | :? ISubstrateQueryTerm as sq -> Some sq
+                                    | _ -> None
+                                  | _ -> None
+
 

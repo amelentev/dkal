@@ -21,6 +21,7 @@ type Application =
   { Function: Function; Args: ITerm list }
   interface ITerm with
     member f.Vars = new HashSet<_>(List.collect (fun (a: ITerm) -> a.Vars) f.Args) |> Seq.toList
+    member f.BoundVars = new HashSet<_>(List.collect (fun (a: ITerm) -> a.BoundVars) f.Args) |> Seq.toList
     member f.Type = f.Function.RetType
     member f.Apply s = 
       { Function = f.Function; Args = List.map (fun (a: ITerm) -> a.Apply s) f.Args } :> ITerm

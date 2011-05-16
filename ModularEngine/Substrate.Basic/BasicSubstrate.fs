@@ -57,13 +57,9 @@ type BasicSubstrate() =
 
   let solve11 (q: BasicSubstrateTerm) (s: ISubstitution) =
     let r = evalute s q.Right
-    match q.Left with
-    | :? IVar as var ->
-      [s.Extend(var, r)]
-    | :? IConst as c ->
-      if c.Equals(r) then [s]
-      else []
-    | _ -> failwithf "unknown left part: %A" q.Left
+    match q.Left.UnifyFrom s r with
+    | Some subst' -> [subst']
+    | None -> []
 
   interface ISubstrate with
 

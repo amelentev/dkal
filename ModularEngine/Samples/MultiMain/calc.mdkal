@@ -19,7 +19,7 @@ with X: Int, Y: Int, P: Dkal.Principal
 	if
 		needSum(X, Y) && knowsMath(P)
 	do
-		say to P:
+		send to P:
 			needSum(X, Y)
 		forget
 			needSum(X, Y)
@@ -28,7 +28,7 @@ with X: Int, Y: Int, P: Dkal.Principal
 	if
 		needProduct(X, Y) && knowsMath(P)
 	do
-		say to P:
+		send to P:
 			needProduct(X, Y)
 		forget
 			needProduct(X, Y)
@@ -41,7 +41,7 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 	if
 		asInfon({|"basic"|Z:=X+Y|})
 	do
-		say to P:
+		send to P:
 			sum(X, Y, Z)
 		drop
 			P said needSum(X, Y)
@@ -52,7 +52,7 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 	if
 		asInfon({|"basic"|Z:=X*Y|})
 	do
-		say to P:
+		send to P:
 			product(X, Y, Z)
 		drop
 			P said needProduct(X, Y)			

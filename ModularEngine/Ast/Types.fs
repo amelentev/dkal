@@ -24,7 +24,10 @@ module Type =
   let Rule = { new IType with 
                  member t.Name = "Rule" 
                  member t.FullName = "Dkal.Rule" }
-  
+  let Evidence = { new IType with 
+                    member t.Name = "Evidence" 
+                    member t.FullName = "Dkal.Evidence" }
+
   type Substrate(typ: System.Type) = 
     interface IType
       with 
@@ -51,5 +54,11 @@ module Type =
     | "Dkal.Condition" -> Condition
     | "Dkal.Action" -> Action
     | "Dkal.Rule" -> Rule
-    | fn -> Substrate(System.Type.GetType(fn)) :> IType
+    | "Dkal.Evidence" -> Evidence
+    | fn -> 
+      let t = System.Type.GetType(fn)
+      if t <> null then
+        Substrate(t) :> IType
+      else
+        failwithf "Unknown type: %O, check spelling and make sure to use fully qualified names (e.g., Dkal.Principal, System.Int32)" fn
 

@@ -43,6 +43,8 @@
     <Compile Include="Substitution.fs" />
     <Compile Include="Variable.fs" />
     <Compile Include="Constants.fs" />
+    <Compile Include="ForallTerm.fs" />
+    <Compile Include="ExplicitSubstitutionTerm.fs" />
     <Compile Include="ActivePatterns.fs" />
     <Compile Include="Builders.fs" />
   </ItemGroup>

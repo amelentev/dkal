@@ -42,14 +42,14 @@
     <Compile Include="RouterFactory.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Infon.Syntax.Factories\Ast.Infon.Syntax.Factories.fsproj">
+      <Name>Ast.Infon.Syntax.Factories</Name>
+      <Project>{fe86e32d-ac35-4f55-bcde-1fc4bbb22ab3}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
       <Name>Ast.Infon</Name>
       <Project>{98add1c5-2ca3-4b44-ac4d-5d25a90bde37}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Factories\Factories.fsproj">
-      <Name>Factories (Factories\Factories)</Name>
-      <Project>{ffe9dac2-4f7a-44ba-a630-944e17cd4202}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">

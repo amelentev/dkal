@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Research.Dkal.Factories
+﻿namespace Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Infon

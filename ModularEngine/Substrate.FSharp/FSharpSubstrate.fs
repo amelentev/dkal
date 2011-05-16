@@ -91,6 +91,9 @@ module FSharp =
       match (t:ITerm) with 
       | :? FunctionTerm as x -> 
         match (this,x) with
+        // XXX: when unifying from a substitution s, it needs to be applied to both operands.
+        // XXX: this must be done with care so that not to enter an infinite loop 
+        // XXX: check Ast.Tree and Ast to see how unifyFrom is solved there
         | Function f, Function g -> Some s
         | Var v, Var w -> Some s
         | Const c, Const d -> Some s
@@ -100,6 +103,7 @@ module FSharp =
     interface ITerm with
       member this.Type = this.Type
       member this.Vars = this.Vars
+      member this.BoundVars = []
       member this.Apply s = this.Apply s
       member this.Normalize() = this.Normalize()
       member this.UnifyFrom s t = this.UnifyFrom s t
@@ -131,6 +135,7 @@ module FSharp =
     interface ITerm with
       member this.Type = this.Type
       member this.Vars = this.Vars
+      member this.BoundVars = []
       member this.Apply s = this.Apply s
       member this.Normalize() = this.Normalize()
       member this.UnifyFrom s t = this.UnifyFrom s t

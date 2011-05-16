@@ -28,7 +28,7 @@ macro org(T: Trial) : Int
 with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
 	upon
 		(PERSON said requestToRead(PERSON, R)) &&
-		(ORG said mayRead(PERSON, R))
+		(PERSON said ORG said mayRead(PERSON, R))
 	if
 		asInfon({|"ct"|
 			ppalId(ORG) == org(TRIAL) &&
@@ -39,5 +39,6 @@ with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
 			"/keys/key[@record='$R']/@key" | K
 		|})
 	do
-		say to PERSON:
+		send to PERSON:
 			keyForRecord(K, R)
+            

@@ -7,12 +7,13 @@ open Microsoft.Research.Dkal.Interfaces
 type Constant(value: obj) = 
   interface IConst with
     member c.Vars = []
+    member c.BoundVars = []
     member c.Type = Type.Substrate(value.GetType()) :> IType
     member c.Apply s = c :> ITerm
     member c.Normalize () = c :> ITerm
     member c.UnifyFrom s t =
       match (c :> ITerm), t with
-      | c1, c2 when c1 = c2 -> Some s
+      | c1, c2 when c1 = c2.Apply(s) -> Some s
       | c1, (:? IVar as v2) -> (v2 :> ITerm).UnifyFrom s c1
       | _ -> None
     member c.Unify t = 

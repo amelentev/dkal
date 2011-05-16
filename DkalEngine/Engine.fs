@@ -311,6 +311,7 @@ type Engine =
     // construct a list of all the messages that should be sent, including the applied CommRule 
     let intendedMessages = 
       List.collect (fun (comm: Communication) -> 
+                        System.Console.WriteLine("{0}: {1}", this.Me, comm.ToPrettyString())
                         List.map (fun subst -> (comm, subst)) (this.Derive Map.empty comm.trigger tmpInfons).All) this.communications
 
     match this.options.Dispatcher with

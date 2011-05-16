@@ -1,10 +1,14 @@
-﻿namespace Microsoft.Research.Dkal.SimpleRouter
+﻿namespace Microsoft.Research.Dkal
 
 open System.IO
 
-open Microsoft.Research.Dkal.Factories
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
 open Microsoft.Research.Dkal.Router.Factories
+open Microsoft.Research.Dkal.LogicEngine.Factories
+open Microsoft.Research.Dkal.SignatureProvider.Factories
+open Microsoft.Research.Dkal.Executor.Factories
+open Microsoft.Research.Dkal.Infostrate.Factories
 open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
 
@@ -25,8 +29,10 @@ module Main =
 
         let router = RouterFactory.Router kind routingFile
         let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
-        let engine = LogicEngineFactory.Engine kind
-        let executor = ExecutorFactory.Executor (kind, router, engine)
+        let logicEngine = LogicEngineFactory.LogicEngine kind 
+        let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
+        let infostrate = InfostrateFactory.Infostrate kind
+        let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate)
 
         let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
         printfn "Principal %O running..." router.Me

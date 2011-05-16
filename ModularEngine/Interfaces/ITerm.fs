@@ -7,6 +7,7 @@ type IType =
 type ITerm =
   abstract member Type: IType
   abstract member Vars: IVar list
+  abstract member BoundVars: IVar list
   abstract member Apply: ISubstitution -> ITerm
   abstract member Normalize: unit -> ITerm
   abstract member UnifyFrom: ISubstitution -> ITerm -> ISubstitution option
@@ -24,5 +25,8 @@ and ISubstitution =
   abstract member Apply: IVar -> ITerm
   abstract member Extend: v: IVar * t: ITerm -> ISubstitution
   abstract member ComposeWith: ISubstitution -> ISubstitution
-  abstract member Contains: IVar -> bool
-
+  abstract member DomainContains: IVar -> bool
+  abstract member Domain: IVar list
+  abstract member RestrictTo: IVar list -> ISubstitution
+  abstract member Forget: IVar list -> ISubstitution
+  abstract member IsVariableRenaming: bool

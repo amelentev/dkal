@@ -38,7 +38,7 @@ with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Principal, PERSON: Princ
 			ppalId(SITE) == SITEID
 		|})
 	do
-		say to SITE:
+		send to SITE:
 			participates(SITE, TRIAL) && allocatedPatients(SITE, N1, N2, TRIAL)
 		send to SITE:
 			SITE said mayRead(PERSON, R) && asInfon({|"ct"|

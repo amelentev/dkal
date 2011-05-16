@@ -48,5 +48,6 @@ with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R:
 		|})
 	do
 		send to keyMgr:
-			(Me said requestToRead(Me, R)) &&
-			(ORG said mayRead(Me, R))
+			requestToRead(Me, R)
+        send to keyMgr:
+			ORG said mayRead(Me, R)

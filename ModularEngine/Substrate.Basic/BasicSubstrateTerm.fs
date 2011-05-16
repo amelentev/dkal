@@ -30,8 +30,14 @@ type BasicSubstrateTerm(left: ITerm, right: ITerm) =
 
     member bst.Vars = new HashSet<_>(left.Vars @ right.Vars) |> Seq.toList
 
+    member bst.BoundVars = []
+
     member bst.Apply (s: ISubstitution) =
-      new BasicSubstrateTerm(left.Apply s, right.Apply s) :> ITerm
+      let left =  match left.Apply s with
+                  | :? IVar as v -> v :> ITerm
+                  | :? IConst as c -> c :> ITerm
+                  | l -> failwithf "Can't apply substitution %O to %O because it yields non atomic left side" s bst
+      new BasicSubstrateTerm(left, right.Apply s) :> ITerm
 
     member bst.Normalize () = 
       new BasicSubstrateTerm(left.Normalize(), right.Normalize()) :> ITerm

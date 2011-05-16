@@ -302,7 +302,7 @@ module SqlCompiler =
       seq [subst]
     else
       let w = SqlWriter()
-      let bound, unbound = snd cc |> List.partition (fun (v, _) -> subst.Contains v)
+      let bound, unbound = snd cc |> List.partition (fun (v, _) -> subst.DomainContains v)
       let expr = bound |> List.fold (fun sofar (v, expr) -> sqlAnd sofar (sqlEq (expr, Expr.Var v))) (fst cc)
       w.print expr
       let whereClause = w.get(" WHERE ")

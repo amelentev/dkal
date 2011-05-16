@@ -2,29 +2,84 @@
 
 open Microsoft.Research.Dkal.Interfaces
 
-type Substitution(subst : IVar -> ITerm) = 
+open System.Collections.Generic
+
+type Substitution(subst : Dictionary<IVar, ITerm>) = 
     
   /// Returns a new Substitution that behaves like the identity
   static member Id = 
-    new Substitution(fun v -> (v :> ITerm)) :> ISubstitution
+    new Substitution(new Dictionary<_, _>()) :> ISubstitution
 
   interface ISubstitution with
       
     /// Returns a new Substitution that results from extending the current 
     /// Substitution so that it maps x to mt and leaves the rest unchanged
     member s.Extend (x: IVar, t: ITerm) = 
-      new Substitution(fun z -> if z = x then t else subst z) :> ISubstitution
+      if t = (x :> ITerm) then 
+        s :> ISubstitution
+      else
+        let newSubst = new Dictionary<_, _>(subst)
+        newSubst.[x] <- t
+        new Substitution(newSubst) :> ISubstitution
        
     /// Applies this Substitution to the given IVar
     member s.Apply (v: IVar) = 
-      subst v
+      let found, ret = subst.TryGetValue v
+      if found then ret else (v :> ITerm) 
       
     /// Returns a new Substitution that results from first applying s' and 
     /// then applying the current Substitution
     member s.ComposeWith (s': ISubstitution) =
-      new Substitution(fun z -> z.Apply(s').Apply(s)) :> ISubstitution
+      let newSubst = new Dictionary<_, _>(subst)
+      for v in s'.Domain do
+        newSubst.[v] <- v.Apply(s').Apply(s)
+      for v in (s :> ISubstitution).Domain do
+        if not <| s'.DomainContains v then
+          newSubst.[v] <- v.Apply(s)
+      new Substitution(newSubst) :> ISubstitution
 
     /// Returns true iff v is affected by this Substitution
-    member s.Contains (v: IVar) =
-      subst v <> (v :> ITerm)
+    member s.DomainContains (v: IVar) =
+      subst.ContainsKey v
 
+    /// Returns the vars affected by this Substitution
+    member s.Domain =
+      [ for kvp in subst -> kvp.Key ]
+
+    /// Returns a new Substitution that results from restricting the current 
+    /// one to only modify the variables given in the list
+    member s.RestrictTo (vars: IVar list) = 
+      let newSubst = new Dictionary<_, _>(subst)
+      for v in subst.Keys do
+        if not <| List.exists (fun v' -> v' = v) vars then
+          newSubst.Remove(v) |> ignore
+      new Substitution(newSubst) :> ISubstitution
+
+    /// Returns a new Substitution that results from forgetting the current
+    /// mapping to the variables given in the list
+    member s.Forget (vars: IVar list) = 
+      let relevantVars = new HashSet<_>((s :> ISubstitution).Domain)
+      relevantVars.ExceptWith vars
+      (s :> ISubstitution).RestrictTo (relevantVars |> Seq.toList)
+
+    /// Returns true if this substitution only renames variables
+    member s.IsVariableRenaming = 
+      List.forall 
+        (fun (t: ITerm) -> match t with :? IVar -> true | _ -> false) 
+        [for t in subst.Values -> t]
+
+  override s.Equals (s': obj) =
+    let s = (s :> ISubstitution)
+    match s' with
+    | :? ISubstitution as s' -> 
+      s.Domain.Equals(s'.Domain) &&
+        List.forall (fun v -> s.Apply(v).Equals(s'.Apply(v))) s.Domain
+    | _ -> false
+
+  override s.GetHashCode() =
+    let s = (s :> ISubstitution)
+    [ for v in s.Domain -> (v, s.Apply(v)) ].GetHashCode()
+
+  override s.ToString() = 
+    let s = (s :> ISubstitution)
+    "{" + (String.concat ", " [for v in s.Domain -> v.ToString() + " -> " + s.Apply(v).ToString()]) + "}"

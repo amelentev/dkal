@@ -12,19 +12,13 @@ open Microsoft.Research.Dkal.Ast.Syntax.Parsing
 /// type information, relation declarations, etc.
 type SimpleParser() = 
 
-  let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) (typ: IType option) =
-    let finalTerm = 
-      if typ.IsNone || typ.Value = t.Type then
-        if t.Type = Type.Infon then
-          let termWithSolvedMacros = AndInfon <| List.map AsInfon solvedMacros @ [t]
-          termWithSolvedMacros
-        elif solvedMacros.IsEmpty then
-          t
-        else
-          failwithf "Unresolved macros in %O" t
-      else
-        failwithf "Incorrect type, expecting %O, found: %O in %O" typ.Value.FullName t.Type.FullName t
-    finalTerm.Normalize()
+  let checkMacrosAndType (t: ITerm, solvedMacros: ISubstrateQueryTerm list) (typ: IType option) =
+    if not solvedMacros.IsEmpty then
+      failwithf "Unresolved macros in %O" t
+    elif typ.IsSome && typ.Value <> t.Type then
+      failwithf "Incorrect type, expecting %O, found: %O in %O" typ.Value.FullName t.Type.FullName t
+    else
+      t      
 
   interface IInfonParser with
     member sp.SetParsingContext (parsingContext: IParsingContext) = 
@@ -35,15 +29,15 @@ type SimpleParser() =
       
     member sp.ParseTerm s = 
       let t = GeneralParser.TryParse (Parser.Term Lexer.tokenize) s 
-      normalizeAndApplyMacros t None
+      checkMacrosAndType t None
       
     member sp.ParseInfon s = 
       let t = GeneralParser.TryParse (Parser.Term Lexer.tokenize) s 
-      normalizeAndApplyMacros t (Some Type.Infon)
+      checkMacrosAndType t (Some Type.Infon)
       
     member sp.ParseRule s = 
       let t = GeneralParser.TryParse (Parser.Term Lexer.tokenize) s 
-      normalizeAndApplyMacros t (Some Type.Rule)
+      checkMacrosAndType t (Some Type.Rule)
     
     member sp.ParsePolicy s = 
       GeneralParser.TryParse (Parser.Policy Lexer.tokenize) s 

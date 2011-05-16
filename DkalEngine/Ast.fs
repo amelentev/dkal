@@ -247,7 +247,7 @@ module Ast =
       match this with
       | App (f, args) -> match f.name, args with
                          | "asInfon", [t] -> "asInfon(" + t.ToPrettyString() + ")"
-                         | "justified", [t; _] -> t.ToPrettyString()
+                         | "justified", [t; e] -> "justified(" + t.ToPrettyString() + ", " + e.ToPrettyString() + ")"
                          | "and", [t1; t2] -> t1.ToPrettyString() + "\n" + t2.ToPrettyString()
                          | "follows", [t1; t2] -> "if\n" + indentLines (t1.ToPrettyString()) + "\nthen\n" + indentLines (t2.ToPrettyString())
                          | "said", [t1; t2] 
@@ -266,6 +266,8 @@ module Ast =
                             "(" + t1.ToPrettyString() + ") " + f.name + " (" + t2.ToPrettyString() + ")"
                          | "not", [t] -> 
                             "not(" + t.ToPrettyString() + ")"
+                         | "Ev.and", [e1; e2] -> f.name + "(" + e1.ToPrettyString() + ", " + e2.ToPrettyString() + ")"
+                         | "Ev.signedBy", [e1; e2; e3] -> f.name + "(" + e1.ToPrettyString() + ", " + e2.ToPrettyString() + ", " + e3.ToPrettyString() + ")"
                          | fn, ts when f.body = null -> 
                             let fParts = fn.Split([|"-*-";"*-";"-*"|], System.StringSplitOptions.None)
                             let fParts = Array.map (fun (s: string) -> s.Replace("-"," ")) fParts

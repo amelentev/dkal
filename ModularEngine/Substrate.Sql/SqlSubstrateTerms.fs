@@ -19,6 +19,7 @@ type ASqlSubstrateUpdateTerm(ns: string) =
     member x.Type = Type.SubstrateUpdate
     member x.Unify t = (x:>ITerm).UnifyFrom Substitution.Id t
     member x.Vars = x.Vars
+    member x.BoundVars = []
     member x.Apply s = x.Apply s
     member x.Normalize() = x.Normalize()
     member x.UnifyFrom s t = x.UnifyFrom s t
@@ -51,7 +52,7 @@ type SqlSubstrateDeleteTerm(ns: string, query: ITerm, table : string) =
   override this.Vars = query.Vars
   override this.Apply s = SqlSubstrateDeleteTerm(ns, query.Apply s, table) :> ITerm
   override this.Normalize() = SqlSubstrateDeleteTerm(ns, query.Normalize(), table) :> ITerm
-  override this.UnifyFrom s t = query.UnifyFrom s t
+  override this.UnifyFrom s t = query.UnifyFrom s t // TODO: unify in colsMapping
   override this.ToString() = 
     "{| \"" + ns + "\" | " + query.ToString() + " | delete "+table+"}"
   override this.Equals (o: obj) =
@@ -70,7 +71,7 @@ type SqlSubstrateInsertTerm(ns: string, table : string, values: IDictionary<stri
   override this.Vars = []
   override this.Apply s = SqlSubstrateInsertTerm(ns, table, ASqlSubstrateUpdateTerm.dictApply s values) :> ITerm
   override this.Normalize() = this :> ITerm
-  override this.UnifyFrom s t = None
+  override this.UnifyFrom s t = None // TODO: unify 
   override this.ToString() = 
     "{| \"" + ns + "\" | " + values.ToString() + " | insert "+table+"}"
   override this.Equals (o: obj) =

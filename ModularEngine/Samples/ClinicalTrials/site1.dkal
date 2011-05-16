@@ -45,7 +45,7 @@ with TRIAL: Trial, N1: Int, N2: Int, PID: Int, P1: Int, P2: Int, PHYS: Principal
 			&& ppalId(PHYS) == PID
 		|})
 	do
-		say to PHYS:
+		send to PHYS:
 			physParticipates(PHYS, TRIAL, Me) &&
 			physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
 		send to PHYS:

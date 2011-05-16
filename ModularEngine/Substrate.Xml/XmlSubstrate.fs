@@ -16,30 +16,27 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
 
   let xn s = XName.Get s
 
-  let bind (subst: ISubstitution option) (var: IVar) value =
+  let bind (subst: ISubstitution option) (output: ITerm) value =
     match subst with
     | None -> None
     | Some subst ->
       let sc : ITerm = 
-        if var.Type=Type.Int32 then
+        if output.Type=Type.Int32 then
           Constant (System.Int32.Parse(value)) :> ITerm
-        else if var.Type=Type.Principal then
+        else if output.Type=Type.Principal then
           PrincipalConstant value :> ITerm
         else
           Constant value :> ITerm
-      if subst.Contains var && subst.Apply var <> sc then
-        None
-      else
-        Some <| subst.Extend(var, sc)
+      output.UnifyFrom subst sc
 
   let getValue (elem: XElement) attr =
     match attr with
     | "" -> elem.Name.ToString()
     | _ -> elem.Attribute(xn attr).Value
 
-  let bindXE (subst: ISubstitution) (vars: IDictionary<string, IVar>) (elem: XElement) =
-    vars.Keys |> Seq.fold (fun subst attr ->
-      bind subst vars.[attr] (getValue elem attr)) (Some subst)
+  let bindXE (subst: ISubstitution) (output: IDictionary<string, ITerm>) (elem: XElement) =
+    output.Keys |> Seq.fold (fun subst attr ->
+      bind subst output.[attr] (getValue elem attr)) (Some subst)
 
   let solve11 (query: XmlSubstrateQueryTerm) (subst: ISubstitution) =
     let xpath = ((query :> ITerm).Apply subst :?> XmlSubstrateQueryTerm).XPath
@@ -49,12 +46,12 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
       for elem in res do
         match elem with
         | :? XElement as xe ->
-          match bindXE subst query.OutputVars xe with
+          match bindXE subst query.Output xe with
           | Some subst -> yield subst
           | None -> ()
-        | :? XAttribute as xa when query.OutputVars.Count=1 ->
-          let var = query.OutputVars.Values.First()
-          match bind (Some subst) var xa.Value with
+        | :? XAttribute as xa when query.Output.Count=1 ->
+          let output = query.Output.Values.First()
+          match bind (Some subst) output xa.Value with
           | Some subst -> yield subst
           | None -> ()
         | _ ->

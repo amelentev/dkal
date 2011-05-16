@@ -21,12 +21,18 @@ type TypedXmlPrettyPrinter() =
 
   member private spp.PrintVar (v: IVar) = v.Name + ":" + spp.PrintType v.Type
 
+  member private spp.PrintVarOrConst (t: ITerm) = 
+    match t with
+    | :? IVar as v -> spp.PrintVar v
+    | :? IConst as c -> c.ToString()
+    | _ -> failwithf "Expecting variable or constant when printing XML term %O" t
+
   member private spp.TokenizeTerm (t: XmlSubstrateQueryTerm) =
     let outputVars = String.concat "," 
-                      <| Seq.map (fun (kv: KeyValuePair<string,IVar>) -> 
+                      <| Seq.map (fun (kv: KeyValuePair<string,ITerm>) -> 
                                     match kv.Key with
-                                    | "" -> spp.PrintVar kv.Value
-                                    | att -> spp.PrintVar kv.Value + "<->\"" + att + "\"") t.OutputVars
+                                    | "" -> spp.PrintVarOrConst kv.Value
+                                    | att -> spp.PrintVarOrConst kv.Value + "<->\"" + att + "\"") t.Output
     let vars = String.concat "," 
                 <| List.map (fun (v: IVar) -> spp.PrintVar v) t.Vars
     [ TextToken <| "\"" + t.XPath + "\"|" + outputVars + "|" + vars ]

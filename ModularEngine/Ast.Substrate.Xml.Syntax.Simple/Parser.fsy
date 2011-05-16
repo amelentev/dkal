@@ -36,10 +36,13 @@ let varsFromQuery (query: string) =
 %token PIPE MAPS COMMA 
 
 // Literals
+%token TRUE FALSE
+%token <System.Int32> INT_LITERAL
+%token <System.Double> FLOAT_LITERAL
 %token <System.String> STRING_LITERAL
 
 // Identifiers
-%token <System.String> UPPER_IDENTIFIER
+%token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
 
 // EOF
 %token EOF
@@ -55,18 +58,33 @@ let varsFromQuery (query: string) =
 %%
 
 XmlSubstrateTerm:
-  | STRING_LITERAL PIPE OutputVars        
-    { let outputVars = new Dictionary<string,IVar>() 
-      for (varName, att) in $3 do
-        outputVars.[att] <- { Name = varName; Type = Context.Value.VariableType(varName) }
+  | STRING_LITERAL PIPE Outputs        
+    { let output = new Dictionary<string,ITerm>() 
+      for (term, att) in $3 do
+        output.[att] <- term
       let queryWithoutMeVariable = replaceMeInQuery($1)
       let vars = varsFromQuery(queryWithoutMeVariable)
-      new XmlSubstrateQueryTerm(Namespace, queryWithoutMeVariable, vars, outputVars) }
+      new XmlSubstrateQueryTerm(Namespace, queryWithoutMeVariable, vars, output) }
 
-OutputVars:
-  | OutputVar                               { [$1] }
-  | OutputVar COMMA OutputVars              { $1 :: $3 }
+Outputs:
+  | Output                                { [$1] }
+  | Output COMMA Outputs                  { $1 :: $3 }
 
-OutputVar:
-  | UPPER_IDENTIFIER MAPS STRING_LITERAL    { ($1, $3) }
-  | UPPER_IDENTIFIER                        { ($1, "") }
+Output:
+  | Term MAPS STRING_LITERAL    { ($1, $3) } 
+  | Term                        { ($1, "") }
+
+Term:
+  | Variable                    { Var($1) }
+  | Literal                     { $1 }
+
+Variable:
+  | UPPER_IDENTIFIER            { {Name=$1; Type=Context.Value.VariableType($1)} }
+
+Literal:
+	| TRUE									    	{ Const(Constant(true)) }
+	| FALSE									    	{ Const(Constant(false)) }
+	| INT_LITERAL						  		{ Const(Constant($1)) }
+	| FLOAT_LITERAL								{ Const(Constant($1)) }
+	| STRING_LITERAL							{ Const(Constant($1)) }
+	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }

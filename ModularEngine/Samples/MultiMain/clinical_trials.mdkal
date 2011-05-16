@@ -38,9 +38,9 @@ with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int,
         asInfon({| "trials" | "//trial[@organizer='$Me']/@id" | TRIAL |}) && 
         asInfon({| "siteAssignments" | "//siteAssignment[@trial='$TRIAL']" | SITE <-> "site", N1 <-> "n1", N2 <-> "n2" |})
     do
-        say to SITE:
+        send to SITE:
             siteParticipates(SITE, TRIAL)
-        say to SITE:
+        send to SITE:
             siteAllocatedPatients(SITE, N1, N2, TRIAL)
         send to SITE:
             SITE said mayRead(PERSON, R) &&
@@ -67,9 +67,9 @@ with TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, N: Int, 
         asInfon({| "physAssignments" | "//physAssignment[@trial='$TRIAL']" | PHYS <-> "phys", P1 <-> "n1", P2 <-> "n2" |}) &&
         asInfon({| "basic" | N1 <= P1 && P2 <= N2 |})
     do
-        say to PHYS:
+        send to PHYS:
             physParticipates(PHYS, TRIAL, Me)
-        say to PHYS:        
+        send to PHYS:        
             physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
         send to PHYS:
             asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | N |}) &&
@@ -105,7 +105,7 @@ with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R:
         asInfon({| "records" | "//record[@patient='$N' and @trial='$TRIAL']/@id" | R |}) &&
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
 	do
-		say to keyMgr:
+		send to keyMgr:
 			requestToRead(Me, R)
         send to keyMgr:
 			ORG said mayRead(Me, R)
@@ -127,13 +127,13 @@ with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
 	upon
 		PERSON said requestToRead(PERSON, R)
     upon
-		ORG said mayRead(PERSON, R)
+		PERSON said ORG said mayRead(PERSON, R)
 	if
         asInfon({| "records" | "//record[@id='$R']/@trial" | TRIAL |}) &&
 		asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
 		asInfon({| "keys" | "/keys/key[@record='$R']/@key" | K |})
 	do
-		say to PERSON:
+		send to PERSON:
 			keyForRecord(K, R)
         drop 
             PERSON said requestToRead(PERSON, R)

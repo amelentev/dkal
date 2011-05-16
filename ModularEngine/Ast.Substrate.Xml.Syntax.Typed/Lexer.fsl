@@ -32,12 +32,17 @@ rule tokenize = parse
 | ":"       { COLON }
 
 // Literals
+| "true"			{ TRUE } 
+| "false"			{ FALSE } 
+| ['-']?digit+									{ INT_LITERAL (Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit+('.'digit+)?(['e''E']digit+)?		{ FLOAT_LITERAL (Double.Parse(lexeme lexbuf)) }
 | '"'                { stringBuf.Length <- 0;
                        string lexbuf;
                        STRING_LITERAL (stringBuf.ToString()) }
 
 // Identifiers
-| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9''_''.']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
+| ['a'-'z']+ ['a'-'z''A'-'Z''0'-'9''.''_']* 		      { LOWER_IDENTIFIER (lexeme lexbuf) }
+| ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9''_''.''#']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }
 
 // EOF
 | eof   { EOF }

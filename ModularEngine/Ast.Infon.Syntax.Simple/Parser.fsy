@@ -16,6 +16,12 @@ let mutable ctxs = new Stack<IParsingContext>()
 
 let primitiveApp (f: string, args: ITerm list) = 
   App((Primitives.SolveFunction f).Value, args)
+
+let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
+  if t.Type = Type.Infon then
+    (AndInfon <| List.map AsInfon solvedMacros @ [t]).Normalize(), []
+  else 
+    t.Normalize(), solvedMacros
 %}
 
 // ------------------------------------------------------------------------------------------------------
@@ -30,10 +36,10 @@ let primitiveApp (f: string, args: ITerm list) =
 // ------------------------------------------------------------------------------------------------------
 // These are the terminal tokens of the grammar along with the types of the data carried by each token:
 
-// Binary operators
+// Binary infon operators
 %token AND IMPLIES 
 
-// Unary operators
+// Unary infon operators
 %token AS_INFON SAID
 
 // Delimiters
@@ -61,7 +67,10 @@ let primitiveApp (f: string, args: ITerm list) =
 %token UPON IF
 
 // Actions
-%token SEND SAY TO LEARN FORGET INSTALL UNINSTALL APPLY DROP
+%token SEND SAY JUSTIFICATION TO LEARN FORGET INSTALL UNINSTALL APPLY DROP
+
+// Evidence
+%token EV_AND
 
 // Literals
 %token TRUE FALSE
@@ -90,8 +99,10 @@ let primitiveApp (f: string, args: ITerm list) =
 // ------------------------------------------------------------------------------------------------------
 // Precedence of operators
 
-%right SEMICOLON
-%left SEND LEARN
+%left WITH
+%left UPON IF 
+%left SEND SAY LEARN FORGET INSTALL UNINSTALL APPLY DROP
+%right LSQ RSQ
 %left IMPLIES
 %right SAID
 %left AND
@@ -114,7 +125,7 @@ Signature:
 Policy:
 	|										        	{ {Rules = []} }
 	| Policy Term   							
-    { let rule, solvedMacros = $2
+    { let rule, solvedMacros = normalizeAndApplyMacros $2
       if not solvedMacros.IsEmpty then failwithf "Unsolved macros at rule %O" rule
       {$1 with Rules = $1.Rules @ [rule]} }
 
@@ -170,35 +181,41 @@ MacroDeclaration:
 
 VarsDeclaration:
   | WITH Args
-    { ctxs.Push <| new LocalParsingContext($2, ctxs.Peek())}
+    { ctxs.Push <| new LocalParsingContext($2, ctxs.Peek())
+      $2 }
 
 Term:
 // Variable declarations
-  | VarsDeclaration Rule                                    
+  | VarsDeclaration Term
     { ctxs.Pop() |> ignore
-      $2 }
+      let t, solvedMacros = normalizeAndApplyMacros $2
+      ForallMany($1, t), solvedMacros }
 
 // Infon constructs
 	| AS_INFON LPAR TRUE RPAR							  	            { primitiveApp(Primitives.EmptyInfon, []), [] }
 	| AS_INFON LPAR Term RPAR
-    { let t, solvedMacros = $3
+    { let t, solvedMacros = normalizeAndApplyMacros $3
       primitiveApp(Primitives.AsInfon, [t]), solvedMacros }
 	| Term IMPLIES Term
-    { let t1, sm1 = $1
-      let t2, sm2 = $3
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Implies, [t1; t2]), sm1 @ sm2 }
 	| Term SAID Term
-    { let t1, sm1 = $1
-      let t2, sm2 = $3
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Said, [t1; t2]), sm1 @ sm2 }
 	| Term AND Term
-    { let t1, sm1 = $1
-      let t2, sm2 = $3
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.And, [t1; t2]), sm1 @ sm2 }
+  | Term LSQ Term RSQ 
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
+      primitiveApp(Primitives.Justified, [t1; t2]), sm1 @ sm2 }
 
 // Relations and function/macro calls
 	| LOWER_IDENTIFIER LPAR Terms RPAR		
-    { let ts, sms = List.unzip $3
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
       if ctxs.Peek().HasMacro($1) then
         let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
         ret, (List.concat sms) @ [solvedMacro]
@@ -209,6 +226,12 @@ Term:
           App(func, ts), (List.concat sms)
         else
           failwithf "Undefined identifier: %O" $1 }
+
+// Evidence
+  | Term EV_AND Term
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
+      primitiveApp(Primitives.EvAnd, [t1; t2]), sm1 @ sm2 }
 
 // Constants, variables, misc
 	| Literal							      		{ $1, [] }
@@ -237,68 +260,72 @@ Term:
 
 Rule:
   | DO ONCE Action
-    { let t, sm = $3
+    { let t, sm = normalizeAndApplyMacros $3
       primitiveApp(Primitives.RuleOnce, [primitiveApp(Primitives.EmptyCondition, []); t]), sm }
   | Condition DO ONCE Action
-    { let t1, sm1 = $1
-      let t2, sm2 = $4
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $4
       primitiveApp(Primitives.RuleOnce, [t1; t2]), sm1 @ sm2 }
   | DO Action
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Rule, [primitiveApp(Primitives.EmptyCondition, []); t]), sm }
   | Condition DO Action
-    { let t1, sm1 = $1
-      let t2, sm2 = $3
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Rule, [t1; t2]), sm1 @ sm2 }
   | Rule Rule
-    { let t1, sm1 = $1
-      let t2, sm2 = $2
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $2
       primitiveApp(Primitives.SeqRule, [t1; t2]), sm1 @ sm2 }
 
 Condition:
   | Variable        							    { $1, [] }
   | UPON Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.WireCondition, [t]), sm }
   | IF Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.KnownCondition, [t]), sm }
   | Condition Condition
-    { let t1, sm1 = $1
-      let t2, sm2 = $2
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $2
       primitiveApp(Primitives.SeqCondition, [t1; t2]), sm1 @ sm2 }
 
 Action:
   | Variable        							      { $1, [] }
-  | SAY TO Term COLON Term
-    { let t1, sm1 = $3
-      let t2, sm2 = $5
-      primitiveApp(Primitives.Say, [t1; t2]), sm1 @ sm2 }
+  | SAY WITH JUSTIFICATION TO Term COLON Term
+    { let t1, sm1 = normalizeAndApplyMacros $5
+      let t2, sm2 = normalizeAndApplyMacros $7
+      primitiveApp(Primitives.JustifiedSay, [t1; t2]), sm1 @ sm2 }
+  | SEND WITH JUSTIFICATION TO Term COLON Term
+    { let t1, sm1 = normalizeAndApplyMacros $5
+      let t2, sm2 = normalizeAndApplyMacros $7
+      primitiveApp(Primitives.JustifiedSend, [t1; t2]), sm1 @ sm2 }
 	| SEND TO Term COLON Term
-    { let t1, sm1 = $3
-      let t2, sm2 = $5
+    { let t1, sm1 = normalizeAndApplyMacros $3
+      let t2, sm2 = normalizeAndApplyMacros $5
       primitiveApp(Primitives.Send, [t1; t2]), sm1 @ sm2 }
 	| LEARN Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Learn, [t]), sm }
 	| FORGET Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Forget, [t]), sm }
 	| INSTALL Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Install, [t]), sm }
 	| UNINSTALL Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Uninstall, [t]), sm }
 	| APPLY Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Apply, [t]), sm }
 	| DROP Term
-    { let t, sm = $2
+    { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Drop, [t]), sm }
 	| Action Action
-    { let t1, sm1 = $1
-      let t2, sm2 = $2
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $2
       primitiveApp(Primitives.SeqAction, [t1; t2]), sm1 @ sm2 }
 
 Terms:

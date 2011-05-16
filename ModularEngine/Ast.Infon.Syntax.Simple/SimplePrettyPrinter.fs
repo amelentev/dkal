@@ -111,8 +111,13 @@ type SimplePrettyPrinter() =
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
           UntabToken; NewLineToken ]
-      elif fSymbol = Primitives.Say then
-        [ TextToken <| "say to " + spp.PrintTerm mts.[0] + ":";
+      elif fSymbol = Primitives.JustifiedSend then
+        [ TextToken <| "send with justification to " + spp.PrintTerm mts.[0] + ":";
+          TabToken; NewLineToken;
+          ManyTokens <| spp.TokenizeTerm mts.[1];
+          UntabToken; NewLineToken ]
+      elif fSymbol = Primitives.JustifiedSay then
+        [ TextToken <| "say with justification to " + spp.PrintTerm mts.[0] + ":";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[1];
           UntabToken; NewLineToken ]
@@ -138,6 +143,16 @@ type SimplePrettyPrinter() =
           UntabToken; NewLineToken ]
       elif fSymbol = Primitives.SeqAction || fSymbol = Primitives.SeqCondition then
         List.concat (List.map spp.TokenizeTerm mts)
+      elif fSymbol = Primitives.Justified then
+        [ ManyTokens <| spp.TokenizeTerm mts.[0];
+          TextToken <| " [ "; 
+          ManyTokens <| spp.TokenizeTerm mts.[1]; 
+          TextToken <| " ]"]
+      elif fSymbol = Primitives.EvSignature then
+        [ TextToken <| "signed by ";
+          ManyTokens <| spp.TokenizeTerm mts.[0];
+          TextToken <| " ";
+          ManyTokens <| spp.TokenizeTerm mts.[2] ]
       elif not infix && mts = [] then
         [ TextToken <| fSymbol ]
       else
@@ -155,6 +170,18 @@ type SimplePrettyPrinter() =
       let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "simple"
       let printedSubstrateTerm = pp.PrintTerm t
       [ TextToken <| "{| \"" + t.Namespace + "\" | " + printedSubstrateTerm + " |}" ]
+    | :? ExplicitSubstitutionTerm as t ->
+      if t.Substitution.Domain.IsEmpty then 
+        [ ManyTokens <| spp.TokenizeTerm t.Term ]
+      else
+        [ TextToken <| "(";
+          ManyTokens <| spp.TokenizeTerm t.Term;
+          TextToken <| " " + t.Substitution.ToString() + ")" ]
+    | :? ForallTerm as ft ->
+      [ TextToken <| "with " + (String.concat ", " [for v in (ft :> ITerm).BoundVars -> v.Name + ": " + v.Type.FullName]);
+        TabToken; NewLineToken;
+        ManyTokens <| spp.TokenizeTerm ft.InnerTerm;
+        UntabToken; NewLineToken ]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" mt
    
   member private spp.TokenizeVariableDeclaration (vars: IVar list) =

@@ -57,6 +57,12 @@ type TypedPrettyPrinter() =
       let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "typed"
       let printedSubstrateTerm = pp.PrintTerm t
       [ TextToken <| "{|\"" + t.Namespace + "\"|" + printedSubstrateTerm + "|}" ]
+    | :? ExplicitSubstitutionTerm as t ->
+      [ TextToken <| "(";
+        ManyTokens <| tpp.TokenizeTerm t.Term;
+        TextToken <| " {";
+        TextToken <| String.concat ", " [for v in t.Substitution.Domain -> "(" + tpp.PrintTerm(v) + ") -> " + tpp.PrintTerm(t.Substitution.Apply(v))];
+        TextToken <| "})" ]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" mt
    
   member private tpp.TokenizePolicy (p: Policy) =

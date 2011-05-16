@@ -45,9 +45,34 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Infon.Syntax.Factories\Ast.Infon.Syntax.Factories.fsproj">
+      <Name>Ast.Infon.Syntax.Factories</Name>
+      <Project>{fe86e32d-ac35-4f55-bcde-1fc4bbb22ab3}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Executor.Factories\Executor.Factories.fsproj">
+      <Name>Executor.Factories</Name>
+      <Project>{1fe1b1da-1e1d-4c5e-88fa-37f023c28885}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Infostrate.Factories\Infostrate.Factories.fsproj">
+      <Name>Infostrate.Factories</Name>
+      <Project>{16750eb8-94df-444d-a506-5b59ee41b620}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.Factories\LogicEngine.Factories.fsproj">
+      <Name>LogicEngine.Factories</Name>
+      <Project>{ed07a55b-2b70-4232-8728-2f2b9e2b7d1b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Router.Factories\Router.Factories.fsproj">
       <Name>Router.Factories</Name>
       <Project>{11d0fcb0-d7c2-47a8-b25d-9703a48d6d8b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SignatureProvider.Factories\SignatureProvider.Factories.fsproj">
+      <Name>SignatureProvider.Factories</Name>
+      <Project>{c67be4a1-ed07-41ca-a9fa-afacd20490e2}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.fsproj">
@@ -75,11 +100,6 @@
     <ProjectReference Include="..\Factories.Initializer\Factories.Initializer.fsproj">
       <Name>Factories.Initializer</Name>
       <Project>{a7809ed2-ac1d-46cc-b594-b1422cfe0da7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Factories\Factories.fsproj">
-      <Name>Factories</Name>
-      <Project>{ffe9dac2-4f7a-44ba-a630-944e17cd4202}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">

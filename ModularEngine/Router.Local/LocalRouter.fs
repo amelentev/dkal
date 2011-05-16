@@ -3,7 +3,7 @@
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
-open Microsoft.Research.Dkal.Factories
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
 open Microsoft.Research.Dkal.Router
 
 open NLog
@@ -44,7 +44,7 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
 
   member private sr.DoSend infon ppalName = 
     log.Info(">> From {0} to {1}:\r\n{2}\r\n", (sr:>IRouter).Me, ppalName, printer.PrintTerm infon)
-    mailer.SendMessage infon (Const(PrincipalConstant((sr:>IRouter).Me))) ppalName
+    mailer.SendMessage infon (Principal((sr:>IRouter).Me)) ppalName
 
   member sr.AddMailerCallback (targetAmountOfMessages: int) (f: unit -> unit) =
     mailer.AddCallback targetAmountOfMessages f

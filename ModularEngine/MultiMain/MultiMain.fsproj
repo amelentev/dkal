@@ -24,7 +24,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\MultiMain.XML</DocumentationFile>
     <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>clinical_trials.mdkal 100000000 10000</StartArguments>
+    <StartArguments>justified_clinical_trials.mdkal 100000000 10000</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -45,6 +45,26 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Infon.Syntax.Factories\Ast.Infon.Syntax.Factories.fsproj">
+      <Name>Ast.Infon.Syntax.Factories</Name>
+      <Project>{fe86e32d-ac35-4f55-bcde-1fc4bbb22ab3}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Executor.Factories\Executor.Factories.fsproj">
+      <Name>Executor.Factories</Name>
+      <Project>{1fe1b1da-1e1d-4c5e-88fa-37f023c28885}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Infostrate.Factories\Infostrate.Factories.fsproj">
+      <Name>Infostrate.Factories</Name>
+      <Project>{16750eb8-94df-444d-a506-5b59ee41b620}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.Factories\LogicEngine.Factories.fsproj">
+      <Name>LogicEngine.Factories</Name>
+      <Project>{ed07a55b-2b70-4232-8728-2f2b9e2b7d1b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="NLog">
@@ -68,11 +88,6 @@
       <Project>{a7809ed2-ac1d-46cc-b594-b1422cfe0da7}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Factories\Factories.fsproj">
-      <Name>Factories (Factories\Factories)</Name>
-      <Project>{ffe9dac2-4f7a-44ba-a630-944e17cd4202}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
@@ -91,6 +106,11 @@
     <ProjectReference Include="..\Router\Router.fsproj">
       <Name>Router (Router\Router)</Name>
       <Project>{605dcfaa-5dcf-4026-8628-4ef79d9a332a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SignatureProvider.Factories\SignatureProvider.Factories.fsproj">
+      <Name>SignatureProvider.Factories</Name>
+      <Project>{c67be4a1-ed07-41ca-a9fa-afacd20490e2}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.fsproj">

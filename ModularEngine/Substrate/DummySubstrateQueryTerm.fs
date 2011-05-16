@@ -10,6 +10,7 @@ type DummySubstrateQueryTerm(query : ITerm, ns : string) =
   interface ITerm with
     member this.Type = Type.SubstrateQuery
     member this.Vars = query.Vars
+    member this.BoundVars = query.BoundVars
     member this.Apply s = DummySubstrateQueryTerm(query.Apply s, ns) :> ITerm
     member this.Normalize() = DummySubstrateQueryTerm(query.Normalize(), ns) :> ITerm
     member this.UnifyFrom s t = query.UnifyFrom s t

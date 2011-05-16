@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Research.Dkal.SimpleRouter
+﻿namespace Microsoft.Research.Dkal
 
 open NLog
 open System
@@ -9,9 +9,13 @@ open System.Threading
 open System.Text.RegularExpressions
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Factories
+open Microsoft.Research.Dkal.Infostrate.Factories
+open Microsoft.Research.Dkal.Executor.Factories
+open Microsoft.Research.Dkal.LogicEngine.Factories
+open Microsoft.Research.Dkal.SignatureProvider.Factories
 open Microsoft.Research.Dkal.Router.Factories
 open Microsoft.Research.Dkal.Router.Local
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Factories.Initializer
@@ -25,8 +29,10 @@ module MultiMain =
 
   let createExec(router: IRouter, assembly: Assembly) =
     let kind = "simple"
-    let engine = LogicEngineFactory.Engine kind
-    let executor = ExecutorFactory.Executor (kind, router, engine, false)
+    let infostrate = InfostrateFactory.Infostrate kind
+    let logicEngine = LogicEngineFactory.LogicEngine kind 
+    let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
+    let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, false)
 
 //    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid substrates
 //      printfn "%s: Substrate declarations are fobidden" router.Me

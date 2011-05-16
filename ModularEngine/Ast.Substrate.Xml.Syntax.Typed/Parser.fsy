@@ -23,10 +23,13 @@ let mutable Namespace: string = null
 %token PIPE MAPS COMMA COLON
 
 // Literals
+%token TRUE FALSE
+%token <System.Int32> INT_LITERAL
+%token <System.Double> FLOAT_LITERAL
 %token <System.String> STRING_LITERAL
 
 // Identifiers
-%token <System.String> UPPER_IDENTIFIER
+%token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
 
 // EOF
 %token EOF
@@ -42,19 +45,19 @@ let mutable Namespace: string = null
 %%
 
 XmlSubstrateTerm:
-  | STRING_LITERAL PIPE OutputVars PIPE Vars       
-    { let outputVars = new Dictionary<string,IVar>() 
-      for (var, att) in $3 do
-        outputVars.[att] <- var
-      new XmlSubstrateQueryTerm(Namespace, $1, $5, outputVars) }
+  | STRING_LITERAL PIPE Outputs PIPE Vars       
+    { let outputs = new Dictionary<string,ITerm>() 
+      for (term, att) in $3 do
+        outputs.[att] <- term
+      new XmlSubstrateQueryTerm(Namespace, $1, $5, outputs) }
 
-OutputVars:
-  | OutputVar                               { [$1] }
-  | OutputVar COMMA OutputVars              { $1 :: $3 }
+Outputs:
+  | Output                                { [$1] }
+  | Output COMMA Outputs                  { $1 :: $3 }
 
-OutputVar:
-  | Var MAPS STRING_LITERAL     { ($1, $3) }
-  | Var                         { ($1, "") }
+Output:
+  | Term MAPS STRING_LITERAL      { ($1, $3) }
+  | Term                          { ($1, "") }
 
 Vars:
   |                             { [] }
@@ -66,3 +69,15 @@ Var:
 
 Type:
 	| UPPER_IDENTIFIER				{ Type.FromFullName $1 }
+
+Term:
+  | Var                         { Var($1) }
+  | Literal                     { $1 }
+
+Literal:
+	| TRUE									    	{ Const(Constant(true)) }
+	| FALSE									    	{ Const(Constant(false)) }
+	| INT_LITERAL						  		{ Const(Constant($1)) }
+	| FLOAT_LITERAL								{ Const(Constant($1)) }
+	| STRING_LITERAL							{ Const(Constant($1)) }
+	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }

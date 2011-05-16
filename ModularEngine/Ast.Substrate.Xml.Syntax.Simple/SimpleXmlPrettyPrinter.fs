@@ -19,8 +19,8 @@ type SimpleXmlPrettyPrinter() =
 
   member private spp.TokenizeTerm (t: XmlSubstrateQueryTerm) =
     let outputVars = String.concat ", " 
-                      <| Seq.map (fun (kv: KeyValuePair<string,IVar>) -> 
+                      <| Seq.map (fun (kv: KeyValuePair<string,ITerm>) -> 
                                     match kv.Key with
-                                    | "" -> kv.Value.Name
-                                    | att -> kv.Value.Name + " <-> \"" + att + "\"") t.OutputVars
+                                    | "" -> kv.Value.ToString()
+                                    | att -> kv.Value.ToString() + " <-> \"" + att + "\"") t.Output
     [ TextToken <| "\"" + t.XPath + "\" | " + outputVars ]

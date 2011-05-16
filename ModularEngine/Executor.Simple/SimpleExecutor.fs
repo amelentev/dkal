@@ -13,7 +13,11 @@ open Microsoft.Research.Dkal.Substrate
 /// processed to see if it has to be applied. All necessary changes are saved
 /// until the end of the iteration. If the set of changes is consistent, they
 /// all get applied and a new iteration starts.
-type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) = 
+type SimpleExecutor(router: IRouter, 
+                    logicEngine: ILogicEngine, 
+                    signatureProvider: ISignatureProvider, 
+                    infostrate: IInfostrate, 
+                    stepbystep: bool) = 
   let log = LogManager.GetLogger("Executor.Simple")
   
   /// The inbox holds the messages that arrive from the router but still
@@ -22,7 +26,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
 
   /// The quarantine holds all incoming messages of relevance. We need to
   /// call quarantine.Prune() in order to remove old/unnecessary messages
-  let quarantine = new Quarantine()
+  let quarantine = new Quarantine(logicEngine)
 
   /// The rules set contains all the current rules that came from installed
   /// policies or were added as a consequence of install actions in other rules
@@ -52,6 +56,8 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
 
 
   do
+    logicEngine.SetInfostrate(infostrate)
+    logicEngine.SetSignatureProvider(signatureProvider)
     router.Receive(fun msg from -> 
                       lock inbox (fun () ->
                       inbox.Enqueue((msg, from))
@@ -79,8 +85,8 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
       // Start communications
       router.Start()
 
-      // Start engine
-      engine.Start()
+      // Start logic engine
+      logicEngine.Start()
 
       // Start worker thread
       finish <- false
@@ -98,7 +104,7 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
       | None -> ()
       
       // Stop engine
-      engine.Stop()
+      logicEngine.Stop()
 
       // Stop Communications
       router.Stop()
@@ -144,6 +150,8 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
         for subst in se.SolveCondition condition [Substitution.Id] do
           actions.Add (action.Apply subst) |> ignore
           actions.Add(UninstallAction(rule)) |> ignore // XXX this is removing the rule several times (performance)
+      | Forall(_, rule) -> 
+        traverse rule
       | EmptyRule -> ()
       | SeqRule (rules) ->
         List.iter traverse rules
@@ -183,12 +191,22 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
     for action in actions do
       let changes = 
         match action with
-        | Learn(infon) -> engine.Learn infon
-        | Forget(infon) -> engine.Forget infon
+        | Learn(infon) -> infostrate.Learn infon
+        | Forget(infon) -> infostrate.Forget infon
         | Send(ppal, infon) -> 
+          let infon = match infon with 
+                      | JustifiedInfon(infon, ev) -> JustifiedInfon(ForallMany(infon.Vars, infon), ev)
+                      | infon -> ForallMany(infon.Vars, infon)
           messagesToSend.Add (infon, ppal) |> ignore; false
-        | Say(ppal, infon) -> 
-          messagesToSend.Add (SaidInfon(PrincipalConstant(router.Me), infon), ppal) |> ignore; false
+        | JustifiedSend(ppal, infon) ->
+          let infon = ForallMany(infon.Vars, infon)
+          let evidence = SignatureEvidence(PrincipalConstant(router.Me), infon, Constant(signatureProvider.ConstructSignature infon router.Me))
+          messagesToSend.Add (JustifiedInfon(infon, evidence), ppal) |> ignore; false
+        | JustifiedSay(ppal, infon) ->
+          let infon = ForallMany(infon.Vars, infon)
+          let said = SaidInfon(PrincipalConstant(router.Me), infon)
+          let evidence = SignatureEvidence(PrincipalConstant(router.Me), said, Constant(signatureProvider.ConstructSignature said router.Me))
+          messagesToSend.Add (JustifiedInfon(said, evidence), ppal) |> ignore; false
         | Install(rule) -> (se :> IExecutor).InstallRule rule
         | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
         | Drop(i) -> quarantine.Remove i; false
@@ -201,15 +219,15 @@ type SimpleExecutor(router: IRouter, engine: ILogicEngine, stepbystep: bool) =
     let changedFromMessages = se.Send messagesToSend
     changed || changedFromSubstrateUpdates || changedFromMessages
 
-  /// Given a condition term and a list of substitutions, it returns a subset of
+  /// Given a condition term and a sequence of substitutions, it returns a subset of
   /// substitutions that satisfy the condition, possibly specialized.
-  member private se.SolveCondition (condition: ITerm) (substs: ISubstitution list) =
+  member private se.SolveCondition (condition: ITerm) (substs: ISubstitution seq) =
     match condition with
     | EmptyCondition -> substs
     | WireCondition(i) -> 
-      quarantine.Matches(i, substs)
+      quarantine.Matches i substs
     | KnownCondition(i) ->
-      engine.Derive(i, substs)
+      logicEngine.Derive i substs
     | SeqCondition(conds) ->
       List.fold (fun substs cond -> se.SolveCondition cond substs) substs conds
     | _ -> failwithf "Unrecognized condition %O" condition

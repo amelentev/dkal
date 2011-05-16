@@ -26,11 +26,11 @@ rule tokenize = parse
 | '/' '*'            { comment lexbuf }
 | '/' '/' [^ '\n']*  { tokenize lexbuf }
 
-// Binary operators
-| "&&"				{ AND }
-| "->"				{ IMPLIES }
+// Binary infon operators
+| "&&"				  { AND }
+| "->"				  { IMPLIES }
 
-// Unary operators
+// Unary infon operators
 | "asInfon"			{ AS_INFON }
 | "said"		  	{ SAID }
 
@@ -68,19 +68,23 @@ rule tokenize = parse
 | "once"			{ ONCE }
 
 // Conditions
-| "upon"      { UPON }
-| "if"        { IF }
+| "upon"        { UPON }
+| "if"          { IF }
 
 // Actions
-| "send"			  { SEND }
-| "say"			    { SAY }
-| "to"				  { TO }
-| "learn"			  { LEARN }
-| "forget"			{ FORGET }
-| "install"			{ INSTALL }
-| "uninstall"		{ UNINSTALL }
-| "apply"		    { APPLY }
-| "drop"		    { DROP }
+| "send"			        { SEND }
+| "say"			          { SAY }
+| "justification"     { JUSTIFICATION }
+| "to"				        { TO }
+| "learn"			        { LEARN }
+| "forget"			      { FORGET }
+| "install"			      { INSTALL }
+| "uninstall"		      { UNINSTALL }
+| "apply"		          { APPLY }
+| "drop"		          { DROP }
+
+// Evidence
+| "and"               { EV_AND }
 
 // Literals
 | "true"			{ TRUE } 

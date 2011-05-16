@@ -50,8 +50,11 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let SendAction (ppal: ITerm, i: ITerm) = 
     App(Primitives.SolveFunction Primitives.Send |> Option.get, [ppal; i])
     
-  let SayAction (ppal: ITerm, i: ITerm) = 
-    App(Primitives.SolveFunction Primitives.Say |> Option.get, [ppal; i])
+  let JustifiedSendAction (ppal: ITerm, i: ITerm) = 
+    App(Primitives.SolveFunction Primitives.JustifiedSend |> Option.get, [ppal; i])
+
+  let JustifiedSayAction (ppal: ITerm, i: ITerm) = 
+    App(Primitives.SolveFunction Primitives.JustifiedSay |> Option.get, [ppal; i])
 
   let LearnAction (i: ITerm) = 
     App(Primitives.SolveFunction Primitives.Learn |> Option.get, [i])
@@ -90,10 +93,31 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let SaidInfon (ppal: ITerm, i: ITerm) = 
     App(Primitives.SolveFunction Primitives.Said |> Option.get, [ppal; i])
   
+  let JustifiedInfon (i: ITerm, e: ITerm) =
+    App(Primitives.SolveFunction Primitives.Justified |> Option.get, [i; e])
+
   let PrefixedInfon (ppals: ITerm list, i: ITerm) =
     List.foldBack (fun ppal i -> SaidInfon(ppal, i)) ppals i
 
+  // Evidence builders
+  let EmptyEvidence =
+    App(Primitives.SolveFunction Primitives.EvEmpty |> Option.get, [])
 
+  let SignatureEvidence (p: ITerm, i: ITerm, s: ITerm) =
+    ExplicitSubstitutionTerm(App(Primitives.SolveFunction Primitives.EvSignature |> Option.get, [p; i; s])) :> ITerm
+
+  let ModusPonensEvidence (e1: ITerm, e2: ITerm) =
+    App(Primitives.SolveFunction Primitives.EvModusPonens |> Option.get, [e1; e2])
+
+  let AndEvidence (evidences: ITerm list) =
+    App({ Name = Primitives.EvAnd; 
+          RetType = Type.Evidence; 
+          ArgsType = List.replicate evidences.Length Type.Evidence;
+          Identity = (Primitives.SolveFunction Primitives.EvAnd).Value.Identity }, evidences)
+
+  let AsInfonEvidence (sq: ISubstrateQueryTerm) =
+    App(Primitives.SolveFunction Primitives.EvAsInfon |> Option.get, [sq])
+    
 //  // Sequence builders
 //  let Nil (t: Type) =
 //    App({ Name = "nil";

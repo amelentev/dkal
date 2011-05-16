@@ -11,6 +11,7 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
   let (|Action|_|) t = if t = Type.Action then Some () else None
   let (|Condition|_|) t = if t = Type.Condition then Some () else None
   let (|Rule|_|) t = if t = Type.Rule then Some () else None
+  let (|Evidence|_|) t = if t = Type.Evidence then Some () else None
   let (|Substrate|_|) (t: IType) =  match t with
                                     | :? Type.Substrate as t -> Some t.Type
                                     | _ -> None
@@ -59,3 +60,8 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                             | _ -> None
                           | _ -> None
                         | _ -> None
+
+  // Quantifiers
+  let (|Forall|_|) (mt: ITerm) =  match mt with
+                                  | :? ForallTerm as fit -> Some (fit.Var, fit.Term)
+                                  | _ -> None

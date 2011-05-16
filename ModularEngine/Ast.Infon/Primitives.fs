@@ -34,7 +34,9 @@ module Primitives =
   [<Literal>] 
   let Send = "send"
   [<Literal>] 
-  let Say = "say"
+  let JustifiedSay = "justifiedSay"
+  [<Literal>] 
+  let JustifiedSend = "justifiedSend"
   [<Literal>] 
   let Learn = "learn"
   [<Literal>] 
@@ -59,6 +61,20 @@ module Primitives =
   let Said = "said"
   [<Literal>] 
   let And = "and"
+  [<Literal>] 
+  let Justified = "justified"
+
+  // Evidence
+  [<Literal>] 
+  let EvEmpty = "evEmpty"
+  [<Literal>] 
+  let EvSignature = "evSignature"
+  [<Literal>] 
+  let EvModusPonens = "evModusPonens"
+  [<Literal>] 
+  let EvAnd = "evAnd"
+  [<Literal>] 
+  let EvAsInfon = "evAsInfon"
 
   /// Given a primitive function name it returns a Fuction, if anyone matches;
   /// None otherwise
@@ -94,7 +110,9 @@ module Primitives =
       Some {Name = f; RetType = Type.Action; ArgsType = []; Identity = None}
     | Send -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
-    | Say -> 
+    | JustifiedSend -> 
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
+    | JustifiedSay -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
     | Learn -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
@@ -121,7 +139,23 @@ module Primitives =
     | And ->
       Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Infon]; 
             Identity = Some <| ({Function=(SolveFunction EmptyInfon).Value; Args=[]} :> ITerm) }
+    | Justified ->
+      Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Evidence]; Identity = None}
 
+    // Evidence
+    | EvEmpty ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = []; Identity = None}
+    | EvSignature ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Principal; Type.Infon; Type.Int32]; Identity = None}
+    | EvModusPonens ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Evidence; Type.Evidence]; Identity = None}
+    | EvAnd ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Evidence; Type.Evidence]; 
+            Identity = Some <| ({Function=(SolveFunction EvEmpty).Value; Args=[]} :> ITerm) }
+    | EvAsInfon ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.SubstrateQuery]; Identity = None}
+
+    // Otherwise, not found
     | _ -> 
       None
 
