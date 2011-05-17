@@ -1,8 +1,9 @@
-substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
+substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
 	namespaces "ct"
 
 type Int = System.Int32
-type Bool = System.Boolean
+type Boolean = System.Boolean
+type String = System.String
 type Trial = Int
 type Record = Int
 type Principal = Dkal.Principal
@@ -11,31 +12,34 @@ relation participates(SITE: Principal, T: Trial)
 relation allocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
 relation mayRead(P: Principal, R: Record)
 
-macro org(T: Trial) : Int
-{|"ct"| T==trials.id && Ret==trials.cro |}
+macro org(T: Trial) : String
+    {| "ct" | T == trials.id && 
+                Ret == trials.organizer |}
 
-macro siteUnnotified(S: Int, T: Trial) : Bool
-{|"ct"| Ret==siteAssignments.unnotified && siteAssignments.thesite == S && siteAssignments.trial == T |}
+macro siteUnnotified(S: Principal, T: Trial) : Boolean
+    {| "ct" | siteAssignments.site == ppalName(S) && 
+                siteAssignments.trial == T && 
+                Ret == siteAssignments.unnotified |}
 
-macro sitePatients(S: Int, T: Trial, N1: Int, N2: Int) : Bool
-{|"ct"| siteAssignments.thesite == S && siteAssignments.trial == T && siteAssignments.n1 == N1 && siteAssignments.n2 == N2 && Ret==true |}
-
-macro ppalId(P: Principal) : Int
-{|"ct"| Ret == dkal_principals.id && dkal_principals.name == ppalName(P)|}
+macro sitePatients(S: Principal, T: Trial, N1: Int, N2: Int) : Boolean
+    {| "ct" | siteAssignments.site == ppalName(S) && 
+                siteAssignments.trial == T && 
+                siteAssignments.n1 == N1 && 
+                siteAssignments.n2 == N2 && 
+                Ret == true |}
 
 macro record (N: Int, T:Trial): Record
-{|"ct"| Ret == records.id && records.patient == N && records.trial == T |}
+    {| "ct" | Ret == records.id && records.patient == N && records.trial == T |}
 
 do once
-	apply {|"ct"| true | update siteAssignments.unnotified := true |}
+	apply {| "ct" | true | update siteAssignments.unnotified := true |}
 
-with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int, N: Int
+with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int, N: Int
 	if
 		asInfon({|"ct"|
-			ppalId(Me) == org(TRIAL) &&
-			siteUnnotified(SITEID, TRIAL) &&
-			sitePatients(SITEID, TRIAL, N1, N2) &&
-			ppalId(SITE) == SITEID
+			ppalName(Me) == org(TRIAL) &&
+			siteUnnotified(SITE, TRIAL) &&
+			sitePatients(SITE, TRIAL, N1, N2)
 		|})
 	do
 		send to SITE:
@@ -47,4 +51,4 @@ with TRIAL: Trial, SITEID: Int, N1: Int, N2: Int, SITE: Principal, PERSON: Princ
 			|})
 			->
 			Me said mayRead(PERSON, R)
-		apply {|"ct"| siteAssignments.thesite == SITEID && siteAssignments.trial == TRIAL | update siteAssignments.unnotified := false |}
+		apply {|"ct"| siteAssignments.site == ppalName(SITE) && siteAssignments.trial == TRIAL | update siteAssignments.unnotified := false |}

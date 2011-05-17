@@ -1,11 +1,12 @@
-substrate sql("Server=localhost,1136;Database=edkaldemo;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
+substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
 	namespaces "ct"
 
 type Int = System.Int32
-type Bool = System.Boolean
+type Boolean = System.Boolean
+type String = System.String
 type Trial = Int
-type Principal = Dkal.Principal
 type Record = Int
+type Principal = Dkal.Principal
 
 relation physParticipates(PHYS: Principal, T: Trial, SITE: Principal)
 relation physAllocatedPatients(PHYS: Principal, P1: Int, P2: Int, T: Trial, SITE: Principal)
@@ -13,17 +14,18 @@ relation requestToRead(P: Principal, R: Record)
 relation mayRead(P: Principal, R: Record)
 relation keyForRecord(K: Int, R: Record)
 
-macro needInfo(N: Int) : Bool
-{|"ct"| physPatients.id == N && Ret == physPatients.needInfo |}
+macro needInfo(N: Int) : Boolean
+    {| "ct" | physPatients.id == N && 
+                Ret == physPatients.needInfo |}
 
 macro record (N: Int, T:Trial): Record
-{|"ct"| Ret == records.id && records.patient == N && records.trial == T |}
+    {| "ct" | records.patient == N && 
+                records.trial == T &&
+                Ret == records.id |}
 
-macro ppalId(P: Principal) : Int
-{|"ct"| Ret == dkal_principals.id && dkal_principals.name == ppalName(P)|}
-
-macro orgId(T: Trial) : Int
-{|"ct"| T==trials.id && Ret==trials.cro |}
+macro org(T: Trial) : String
+    {| "ct" | T == trials.id && 
+                Ret == trials.organizer |}
 
 with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int
 	upon SITE said physParticipates(Me, TRIAL, SITE)
@@ -43,7 +45,7 @@ with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R:
 		asInfon({|"ct"|
 			P1 <= N && N <= P2 &&
 			needInfo(N) &&
-			ppalId(ORG) == orgId(TRIAL) &&
+			ppalName(ORG) == org(TRIAL) &&
 			R == record(N, TRIAL)
 		|})
 	do
