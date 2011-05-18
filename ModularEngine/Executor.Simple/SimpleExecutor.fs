@@ -1,4 +1,15 @@
-﻿namespace Microsoft.Research.Dkal.Executor.Simple
+﻿// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+namespace Microsoft.Research.Dkal.Executor.Simple
 
 open System.Collections.Generic
 open System.Threading
@@ -133,7 +144,7 @@ type SimpleExecutor(router: IRouter,
                       log.Debug("{0}: ---- GOT FROM {1}: {2} ---", router.Me, from, msg)
                       quarantine.Add(msg, from))
     with e -> 
-      log.Error("{0}: {1}", router.Me, e.Message)
+      log.ErrorException("Error at principal " + router.Me, e)
       fixedPointCb()
 
   member private se.ExecuteRound() =

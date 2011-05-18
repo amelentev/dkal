@@ -39,7 +39,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DummySubstrate.fs" />
     <Compile Include="SubstrateDispatcher.fs" />
     <Compile Include="DummySubstrateQueryTerm.fs" />
   </ItemGroup>

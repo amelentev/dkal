@@ -1,6 +1,18 @@
-﻿namespace Microsoft.Research.Dkal
+﻿// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+namespace Microsoft.Research.Dkal
 
 open System.IO
+open NLog
 
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
@@ -14,15 +26,19 @@ open Microsoft.Research.Dkal.Utils.Exceptions
 
 module Main =
 
+  let log = LogManager.GetLogger("Main")
+
   let args = System.Environment.GetCommandLineArgs() |> Seq.toList
   try  
     match args with
-    | [_; routingFile; policyFile; kind] ->
+    | [_; routingFile; policyFile] ->
+
+      let kind = "simple"
 
       if not (File.Exists (routingFile)) then
-        printfn "File not found: %O" routingFile
+        log.Error("File not found: {0}", routingFile)
       elif not (File.Exists (policyFile)) then
-        printfn "File not found: %O" policyFile
+        log.Error("File not found: {0}", policyFile)
       else
         // Populate factories
         FactoriesInitializer.Init()
@@ -35,20 +51,19 @@ module Main =
         let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate)
 
         let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
-        printfn "Principal %O running..." router.Me
-        printfn "------------------------------------------------------------------------"
-        printfn "%O" <| printer.PrintPolicy assembly.Policy
-        printfn "------------------------------------------------------------------------"
+        log.Info("Principal {0} running...", router.Me)
+        log.Debug("------------------------------------------------------------------------")
+        log.Debug(printer.PrintPolicy assembly.Policy)
+        log.Debug("------------------------------------------------------------------------")
         for rule in assembly.Policy.Rules do
           executor.InstallRule rule |> ignore
         executor.Start()
 
-    | _ -> failwith "Wrong number of parameters"
+    | _ -> log.Error("Wrong number of parameters, expecting: routing file, policy file")
   with 
-  | ParseException(msg, text, line, col) -> printfn "Error while parsing in line %O, column %O: %O\r\n %O" line col msg text
-  | e -> printfn "%O" e
-
-
-
-
+  | ParseException(msg, text, line, col) -> 
+    log.Error("Error while parsing in line {0}, column {1}: {2}\r\n {3}", line, col, msg, text)
+  | e -> 
+    log.ErrorException("Something went wrong", e)
+    
 

@@ -39,6 +39,7 @@
     <FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="TypedXmlPrettyPrinter.fs" />
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
@@ -54,7 +55,6 @@
       <Link>Lexer.fs</Link>
     </Compile>
     <Compile Include="TypedXmlParser.fs" />
-    <Compile Include="TypedXmlPrettyPrinter.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast.Syntax.Parsing\Ast.Syntax.Parsing.fsproj">

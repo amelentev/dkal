@@ -1,4 +1,15 @@
-﻿namespace Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple
+﻿// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+namespace Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Globals
@@ -34,8 +45,8 @@ type SimplePrettyPrinter() =
   static member FindFunctionSymbol f = 
     match f with
     | "implies" -> "->", true, 1, true
-    | "said" -> "said", true, 2, false
-    | "and" -> "&&", true, 3, true
+    | "and" -> "&&", true, 2, true
+    | "said" -> "said", true, 3, false
     | f -> f, false, 4, false
 
   member private spp.TokenizeTerm (mt: ITerm, ?withVars: bool, ?precedence: int) =

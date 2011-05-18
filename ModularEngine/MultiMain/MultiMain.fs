@@ -1,4 +1,15 @@
-﻿namespace Microsoft.Research.Dkal
+﻿// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+
+namespace Microsoft.Research.Dkal
 
 open NLog
 open System
@@ -115,5 +126,5 @@ module MultiMain =
       try
         execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit))
       with
-        e -> log.Error(e.Message)
+        e -> log.ErrorException("Something went wrong", e)
   | _ -> log.Error("Wrong number of parameters; expecting policy file, time limit (ms), messages limit")

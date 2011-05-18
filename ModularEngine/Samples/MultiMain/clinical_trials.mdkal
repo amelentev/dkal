@@ -46,7 +46,7 @@ with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
             siteAllocatedPatients(SITE, N1, N2, TRIAL)
         send with justification to SITE:
             with PERSON: Principal, REC: Int, NUMBER: Int
-                (SITE said mayRead(PERSON, REC)) &&
+                SITE said mayRead(PERSON, REC) &&
                 asInfon({| "records" | "//record[@id='$REC' and @trial='$TRIAL']/@patient" | NUMBER |}) &&
                 asInfon({| "basic" | N1 <= NUMBER && NUMBER <= N2 |})
                 ->
