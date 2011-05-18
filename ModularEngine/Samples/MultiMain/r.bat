@@ -1,1 +1,1 @@
-..\..\MultiMain\bin\Debug\MultiMain.exe %1 100000 100000
+..\..\MultiMain\bin\Debug\MultiMain.exe %1 10000 100

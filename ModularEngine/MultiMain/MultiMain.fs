@@ -127,4 +127,4 @@ module MultiMain =
         execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit))
       with
         e -> log.ErrorException("Something went wrong", e)
-  | _ -> log.Error("Wrong number of parameters; expecting policy file, time limit (ms), messages limit")
+  | _ -> log.Error("Wrong number of parameters; expecting multi-policy file, time limit (ms), messages limit")
