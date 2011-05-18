@@ -33,6 +33,9 @@ rule tokenize = parse
 | "}"				{ RBRACE }
 | ","				{ COMMA }
 
+// Variable declarations
+| "with"			{ WITH }
+
 // Types
 | ":"			  	{ COLON }
 | "*"			  	{ TIMES }

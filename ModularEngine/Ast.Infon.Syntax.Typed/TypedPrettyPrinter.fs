@@ -63,6 +63,10 @@ type TypedPrettyPrinter() =
         TextToken <| " {";
         TextToken <| String.concat ", " [for v in t.Substitution.Domain -> "(" + tpp.PrintTerm(v) + ") -> " + tpp.PrintTerm(t.Substitution.Apply(v))];
         TextToken <| "})" ]
+    | :? ForallTerm as ft ->
+      [ TextToken <| "with " + (String.concat ", " [for v in (ft :> ITerm).BoundVars -> v.Name + ": " + v.Type.FullName]) + " (";
+        ManyTokens <| tpp.TokenizeTerm ft.InnerTerm;
+        TextToken <| ")" ]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" mt
    
   member private tpp.TokenizePolicy (p: Policy) =

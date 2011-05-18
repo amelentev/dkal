@@ -46,5 +46,4 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
     log.Info(">> From {0} to {1}:\r\n{2}\r\n", (sr:>IRouter).Me, ppalName, printer.PrintTerm infon)
     mailer.SendMessage infon (Principal((sr:>IRouter).Me)) ppalName
 
-  member sr.AddMailerCallback (targetAmountOfMessages: int) (f: unit -> unit) =
-    mailer.AddCallback targetAmountOfMessages f
+  member sr.LocalMailer = mailer

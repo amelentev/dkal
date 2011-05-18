@@ -23,8 +23,8 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\Main.XML</DocumentationFile>
-    <StartWorkingDirectory>S:\ModularEngine\Samples\tests\</StartWorkingDirectory>
-    <StartArguments>Single.rt basic.pcy simple</StartArguments>
+    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Samples\ClinicalTrials\</StartWorkingDirectory>
+    <StartArguments>keyMgr.rt keyMgr.dkal simple</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>

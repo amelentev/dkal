@@ -2,16 +2,38 @@
 type Principal = Dkal.Principal
 type Int = System.Int32
 type String = System.String
+type Boolean = System.Boolean
 
 type Subject = String
 
-relation enrolledIn(STUDENT: Principal, SUBJECT: Subject)
-relation examContents(SUBJECT: Subject, CONTENTS: String)
-relation inChargeOf(SUBJECT: Subject, PROFESSOR: Principal)
-
 relation needsExamContents(PERSON: Principal, SUBJECT: Subject)
 relation asksForExamContents(PERSON: Principal, SUBJECT: Subject)
+relation examContents(SUBJECT: Subject, CONTENTS: String)
 
+substrate xml("<subjects>
+                    <subject name='calculus'>
+                        <professor name='smith' />
+                    </subject>
+                    <subject name='programming' >
+                        <professor name='smith' />
+                        <professor name='suresh' />
+                        <student name='david' />
+                    </subject>
+                </subjects>") 
+    namespaces "subjects"
+
+macro isProfessor(PROFESSOR: Principal) : Boolean
+    {| "subjects" | "//professor/@name" | PROFESSOR |}
+
+macro isSubject(SUBJECT: Subject) : Boolean
+    {| "subjects" | "//subject/@name" | SUBJECT |}
+    
+macro inChargeOf(SUBJECT: Subject, PROFESSOR: Principal) : Boolean
+    {| "subjects" | "//subject[@name='$SUBJECT']/professor[@name='$PROFESSOR']" | Ret |}
+    
+macro enlistedIn(SUBJECT: Subject, STUDENT: Principal) : Boolean
+    {| "subjects" | "//subject[@name='$SUBJECT']/student[@name='$STUDENT']" | Ret |}
+    
 ---smith--------------------------
 // prof. smith's policy
 
@@ -21,19 +43,14 @@ substrate xml("<exams>
                 </exams>") 
     namespaces "exams"
 
-do once
-    learn inChargeOf("calculus", Me)
-    learn inChargeOf("programming", Me)
-    learn inChargeOf("programming", suresh)
-    
 with P: Principal, SUBJECT: Subject, CONTENTS: String
     upon
         P said asksForExamContents(P, SUBJECT)
     if
-        inChargeOf(SUBJECT, P) &&
+        asInfon(inChargeOf(SUBJECT, P)) &&
         asInfon({| "exams" | "//exam[@subject='$SUBJECT']/@contents" | CONTENTS |}) 
     do
-        say to P:
+        send to P:
             examContents(SUBJECT, CONTENTS)
         drop
             P said asksForExamContents(P, SUBJECT)
@@ -42,25 +59,32 @@ with P: Principal, SUBJECT: Subject, CONTENTS: String
 // prof. suresh's policy
 
 do once
-    learn inChargeOf("programming", Me)
-    learn inChargeOf("programming", smith)
     learn needsExamContents(Me, "programming")
     
 with PROF: Principal, SUBJECT: Subject, CONTENTS: String
     if 
         needsExamContents(Me, SUBJECT) && 
-        inChargeOf(SUBJECT, PROF) &&
-        inChargeOf(SUBJECT, Me) &&
+        asInfon(isProfessor(PROF)) &&
+        asInfon(inChargeOf(SUBJECT, PROF)) &&
+        asInfon(inChargeOf(SUBJECT, Me)) &&
         asInfon({| "basic" | PROF != Me |})
-    do once
-        say to PROF:
-            asksForExamContents(Me, SUBJECT)
-
-    upon
-        PROF said examContents(SUBJECT, CONTENTS)
-    if
-        needsExamContents(Me, SUBJECT)
     do
+        send to PROF:
+            asksForExamContents(Me, SUBJECT)
         forget
             needsExamContents(Me, SUBJECT)
+            
+---david--------------------------
+// david's policy
+
+with PROF: Principal, SUBJECT: Subject
+    if 
+        asInfon(isSubject(SUBJECT)) &&
+        asInfon(enlistedIn(SUBJECT, Me)) &&
+        asInfon(isProfessor(PROF)) &&
+        asInfon(inChargeOf(SUBJECT, PROF))
+    do
+        send to PROF:
+            asksForExamContents(Me, SUBJECT)
+
             

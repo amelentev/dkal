@@ -3,30 +3,25 @@
 open Microsoft.Research.Dkal.Interfaces
 
 module Type = 
-  let Infon = { new IType with 
-                  member t.Name = "Infon" 
-                  member t.FullName = "Dkal.Infon" }
-  let Principal = { new IType with 
-                      member t.Name = "Principal" 
-                      member t.FullName = "Dkal.Principal" }
-  let SubstrateUpdate = { new IType with 
-                            member t.Name = "SubstrateUpdate"
-                            member t.FullName = "Dkal.SubstrateUpdate" }
-  let SubstrateQuery = { new IType with 
-                            member t.Name = "SubstrateQuery"
-                            member t.FullName = "Dkal.SubstrateQuery" }
-  let Action =  { new IType with 
-                    member t.Name = "Action"
-                    member t.FullName = "Dkal.Action" }
-  let Condition = { new IType with 
-                      member t.Name = "Condition" 
-                      member t.FullName = "Dkal.Condition" }
-  let Rule = { new IType with 
-                 member t.Name = "Rule" 
-                 member t.FullName = "Dkal.Rule" }
-  let Evidence = { new IType with 
-                    member t.Name = "Evidence" 
-                    member t.FullName = "Dkal.Evidence" }
+
+  type private BasicType(fullName: string, name: string) = 
+    interface IType with
+      member bt.FullName = fullName
+      member bt.Name = name
+    override bt.GetHashCode() = (bt :> IType).FullName.GetHashCode()
+    override bt.Equals (o: obj) = 
+      match o with
+      | :? BasicType as bt' -> (bt :> IType).FullName.Equals((bt' :> IType).FullName)
+      | _ -> false
+
+  let Infon = new BasicType("Dkal.Infon", "Infon") :> IType
+  let Principal = new BasicType("Dkal.Principal", "Principal") :> IType
+  let SubstrateUpdate = new BasicType("Dkal.SubstrateUpdate", "SubstrateUpdate") :> IType
+  let SubstrateQuery = new BasicType("Dkal.SubstrateQuery", "SubstrateQuery") :> IType
+  let Action = new BasicType("Dkal.Action", "Action") :> IType
+  let Condition = new BasicType("Dkal.Condition", "Condition") :> IType
+  let Rule = new BasicType("Dkal.Rule", "Rule") :> IType
+  let Evidence = new BasicType("Dkal.Evidence", "Evidence") :> IType
 
   type Substrate(typ: System.Type) = 
     interface IType

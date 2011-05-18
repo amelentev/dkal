@@ -60,6 +60,8 @@ type SimpleExecutor(router: IRouter,
     logicEngine.SetSignatureProvider(signatureProvider)
     router.Receive(fun msg from -> 
                       lock inbox (fun () ->
+                      if inbox.Count = 0 then 
+                        wakeUpCb()
                       inbox.Enqueue((msg, from))
                       notEmpty.Set() |> ignore))
 
@@ -67,11 +69,13 @@ type SimpleExecutor(router: IRouter,
     
     member se.InstallRule (r: ITerm) =
       match r with
+      | Forall(_, r) -> (se :> IExecutor).InstallRule r
       | SeqRule(rs) -> List.fold (fun change rule -> (se :> IExecutor).InstallRule rule || change) false rs
       | _ -> rules.Add(r)
 
     member se.UninstallRule (r: ITerm) =
       match r with
+      | Forall(_, r) -> (se :> IExecutor).UninstallRule r
       | SeqRule(rs) -> List.fold (fun change rule -> (se :> IExecutor).UninstallRule rule || change) false rs
       | _ -> rules.Remove(r)
 
@@ -121,7 +125,6 @@ type SimpleExecutor(router: IRouter,
           sentMessages.Clear()
           fixedPointCb()
           notEmpty.WaitOne() |> ignore
-          wakeUpCb()
 
         // Move messages (if any) to quarantine
         lock inbox (fun () -> 
@@ -150,8 +153,6 @@ type SimpleExecutor(router: IRouter,
         for subst in se.SolveCondition condition [Substitution.Id] do
           actions.Add (action.Apply subst) |> ignore
           actions.Add(UninstallAction(rule)) |> ignore // XXX this is removing the rule several times (performance)
-      | Forall(_, rule) -> 
-        traverse rule
       | EmptyRule -> ()
       | SeqRule (rules) ->
         List.iter traverse rules

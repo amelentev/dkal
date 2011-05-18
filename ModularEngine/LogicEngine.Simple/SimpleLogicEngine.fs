@@ -221,7 +221,13 @@ type SimpleLogicEngine() =
         | Some s -> seq [(s, conds, pr.Apply s)]
         | None -> seq []
     match inf with
-    | Forall(v, i) ->
+    | :? ForallTerm as ft ->
+      let i, pr = 
+        if subst.DomainContains ft.Var then
+          let newFt, s' = ft.ChangeVarName subst 
+          (newFt :?> ForallTerm).Term, pr.Apply s'
+        else
+          ft.Term, pr
       se.TryDeriveJustification (subst, conds) pr (goal, i)
     | ImpliesInfon(i1, i2) ->
       let v = se.FreshVar Type.Evidence

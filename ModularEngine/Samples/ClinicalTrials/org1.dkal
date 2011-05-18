@@ -1,4 +1,4 @@
-substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
+substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
 	namespaces "ct"
 
 type Int = System.Int32
@@ -7,6 +7,8 @@ type String = System.String
 type Trial = Int
 type Record = Int
 type Principal = Dkal.Principal
+type Infon = Dkal.Infon
+type Evidence = Dkal.Evidence
 
 relation participates(SITE: Principal, T: Trial)
 relation allocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
@@ -34,7 +36,7 @@ macro record (N: Int, T:Trial): Record
 do once
 	apply {| "ct" | true | update siteAssignments.unnotified := true |}
 
-with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int, N: Int
+with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
 	if
 		asInfon({|"ct"|
 			ppalName(Me) == org(TRIAL) &&
@@ -42,13 +44,16 @@ with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal, PERSON: Principal, R: Int,
 			sitePatients(SITE, TRIAL, N1, N2)
 		|})
 	do
-		send to SITE:
-			participates(SITE, TRIAL) && allocatedPatients(SITE, N1, N2, TRIAL)
-		send to SITE:
-			SITE said mayRead(PERSON, R) && asInfon({|"ct"|
-				N1 <= N && N <= N2
-				&& R == record(N, TRIAL)
-			|})
-			->
-			Me said mayRead(PERSON, R)
+		say with justification to SITE:
+			participates(SITE, TRIAL) 
+        say with justification to SITE:
+            allocatedPatients(SITE, N1, N2, TRIAL)
+		send with justification to SITE:
+			with PERSON: Principal, R: Int, N: Int
+                (SITE said mayRead(PERSON, R)) && asInfon({|"ct"|
+                    N1 <= N && N <= N2
+                    && R == record(N, TRIAL)
+                |})
+                ->
+                Me said mayRead(PERSON, R)
 		apply {|"ct"| siteAssignments.site == ppalName(SITE) && siteAssignments.trial == TRIAL | update siteAssignments.unnotified := false |}

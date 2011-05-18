@@ -65,7 +65,7 @@ with X: Infon, E: Evidence
     do
         learn X [E]
  
- with X: Infon, TRIAL: Trial, REC: Int, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E1: Evidence, E2: Evidence, E3: Evidence
+ with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E1: Evidence, E2: Evidence, E3: Evidence
     upon 
         ORG said siteParticipates(Me, TRIAL) [E1]
     upon 
@@ -104,15 +104,15 @@ with X: Infon, E: Evidence
     do
         learn X [E]
     
-with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence, E3: Dkal.Evidence, E4: Dkal.Evidence, PERSON: Principal, REC: Int
+with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence, E3: Dkal.Evidence, E4: Dkal.Evidence, PERSON: Principal, REC: Int
 	upon 
 		SITE said physParticipates(Me, TRIAL, SITE) [E1]
     upon 
         SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [E2]
     if
-		asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | N |}) &&
-        asInfon({| "basic" | P1 <= N && N <= P2 |}) &&
-        asInfon({| "records" | "//record[@patient='$N' and @trial='$TRIAL']/@id" | R |}) &&
+		asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | NUMBER |}) &&
+        asInfon({| "basic" | P1 <= NUMBER && NUMBER <= P2 |}) &&
+        asInfon({| "records" | "//record[@patient='$NUMBER' and @trial='$TRIAL']/@id" | R |}) &&
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
     if 
         X -> ORG said mayRead(Me, R) [E3]
@@ -157,5 +157,3 @@ with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int,
 	do
 		say with justification to PERSON:
 			keyForRecord(K, R)
-        drop 
-            PERSON said requestToRead(PERSON, R)

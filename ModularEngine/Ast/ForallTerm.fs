@@ -15,6 +15,11 @@ type ForallTerm =
     remainingVars.ExceptWith s.Domain
     let innerSubst = ft.InnerTerm.Apply s
     List.fold (fun t v -> {Var = v; Term = t} :> ITerm) innerSubst (Seq.toList remainingVars)
+  
+  member ft.ChangeVarName (s: ISubstitution) =
+    let v, s' = ForallTerm.FreshVar ft.Var ([for v in s.Domain do yield! (s.Apply v).Vars] @ s.Domain @ ft.Term.Vars)
+    { Var = v; Term = ft.Term.Apply s' } :> ITerm, s'
+
 //    
 //    if s.DomainContains ft.Var then
 //      ft.Term.Apply s

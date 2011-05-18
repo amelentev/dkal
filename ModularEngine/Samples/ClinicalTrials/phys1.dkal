@@ -1,4 +1,4 @@
-substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
+substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
 	namespaces "ct"
 
 type Int = System.Int32
@@ -7,6 +7,8 @@ type String = System.String
 type Trial = Int
 type Record = Int
 type Principal = Dkal.Principal
+type Infon = Dkal.Infon
+type Evidence = Dkal.Evidence
 
 relation physParticipates(PHYS: Principal, T: Trial, SITE: Principal)
 relation physAllocatedPatients(PHYS: Principal, P1: Int, P2: Int, T: Trial, SITE: Principal)
@@ -27,29 +29,35 @@ macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
                 Ret == trials.organizer |}
 
-with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int
-	upon SITE said physParticipates(Me, TRIAL, SITE)
-	do learn physParticipates(Me, TRIAL, SITE)
+with X: Infon, E: Evidence
+    upon X [E]
+    do
+        learn X [E]
 
-	upon SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
-	do learn physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
-
-with K: Int, R: Int
-	upon keyMgr said keyForRecord(K, R)
-	do learn keyForRecord(K, R)
-
-with SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int
-	if
-		physParticipates(Me, TRIAL, SITE) &&
-		physAllocatedPatients(Me, P1, P2, TRIAL, SITE) &&
+with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence, E3: Dkal.Evidence, E4: Dkal.Evidence,
+	upon 
+		SITE said physParticipates(Me, TRIAL, SITE) [E1]
+    upon 
+        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [E2]
+    if
 		asInfon({|"ct"|
 			P1 <= N && N <= P2 &&
 			needInfo(N) &&
 			ppalName(ORG) == org(TRIAL) &&
 			R == record(N, TRIAL)
 		|})
+    if 
+        X -> ORG said mayRead(Me, R) [E3]
+    if 
+        Y -> SITE said mayRead(Me, R) [E4]
 	do
-		send to keyMgr:
+		say with justification to keyMgr:
 			requestToRead(Me, R)
         send to keyMgr:
-			ORG said mayRead(Me, R)
+			X -> ORG said mayRead(Me, R) [E3]
+        send to keyMgr:
+			Y -> SITE said mayRead(Me, R) [E4]
+        drop
+            SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
+            
+            

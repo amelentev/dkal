@@ -31,7 +31,7 @@ type SqlConnector(connStr) =
       use comm = new SqlCommand("SELECT 1", conn)
       comm.ExecuteScalar() |> ignore
     with e ->
-      log.Info("reopening database: {}", e)
+      log.Info("reopening database: {0}", e)
       conn.Open()
   do
     try
@@ -46,11 +46,6 @@ type SqlConnector(connStr) =
     let comm = new SqlCommand(s, conn)
     comm.ExecuteNonQuery()
   
-  member this.ExecReader s =
-    check()
-    let comm = new SqlCommand(s, conn)
-    comm.ExecuteReader()
-  
   member this.GetCommand s =
     new SqlCommand(s, conn)
   
@@ -64,7 +59,8 @@ type SqlConnector(connStr) =
       do Seq.iteri (addParm comm) parms
       use reader = comm.ExecuteReader()
       while reader.Read() do
-        yield reader }
+        yield reader
+      reader.Close() }
 
   member this.ExecUpdate (s:string, parms:seq<obj>) =
     check()

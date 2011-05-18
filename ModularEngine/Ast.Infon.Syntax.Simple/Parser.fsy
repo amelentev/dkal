@@ -195,7 +195,10 @@ Term:
 	| AS_INFON LPAR TRUE RPAR							  	            { primitiveApp(Primitives.EmptyInfon, []), [] }
 	| AS_INFON LPAR Term RPAR
     { let t, solvedMacros = normalizeAndApplyMacros $3
-      primitiveApp(Primitives.AsInfon, [t]), solvedMacros }
+      if t.Type = Type.Boolean then
+        primitiveApp(Primitives.EmptyInfon, []), solvedMacros
+      else
+        primitiveApp(Primitives.AsInfon, [t]), solvedMacros }
 	| Term IMPLIES Term
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3

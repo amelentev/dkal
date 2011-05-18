@@ -44,7 +44,10 @@ type XmlSubstrateQueryTerm(ns: string, xpath: string, vars: IVar list, output: I
     member x.Apply subst =
       let quote (t: ITerm) = 
         match t with
-        | :? IConst as c -> c.ToString()
+        | :? IConst as c -> 
+          match c.Type with 
+          | Substrate(s) when s = typeof<string> -> c.Value.ToString()
+          | _ -> c.ToString()
         | :? IVar as v -> "$" + v.Name
         | _ -> failwithf "Can't apply substitution %O in XML query term, it would yield a non-atomic term %O" subst t
       let xpath = x.Vars |> List.fold (fun (s:string) (v:IVar) -> 

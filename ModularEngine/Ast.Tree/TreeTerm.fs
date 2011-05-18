@@ -89,8 +89,8 @@ type Application =
   override f.Equals (o: obj) =
     match o with
     | :? Application as f' ->
-      f.Function = f'.Function && f.Args = f'.Args
+      f.Function.Name = f'.Function.Name && f.Args = f'.Args
     | _ -> 
       false
   override f.GetHashCode() =
-    (f.Function, f.Args).GetHashCode()
+    (f.Function.Name, f.Args).GetHashCode()

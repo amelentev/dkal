@@ -1,0 +1,35 @@
+// common
+type Int = System.Int32
+
+relation r(I: Int)
+
+---ping-----------------------------
+// principal ping policy
+do once
+	send to pong:
+		r(1)
+        
+with X: Int, Y: Int
+	upon
+		pong said r(X)
+	if
+		asInfon({|"basic"|Y:=X*2|})
+	do
+		send to pong:
+			r(Y)
+        drop
+            pong said r(X)
+
+---pong-----------------------------
+// principal pong policy
+with X: Int, Y: Int
+	upon
+		ping said r(X)
+	if
+		asInfon({|"basic"|X < 100000|}) &&
+		asInfon({|"basic"|Y:=X*2|})
+	do
+		send to ping:
+			r(Y)
+        drop 
+            ping said r(X)

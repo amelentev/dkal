@@ -2,6 +2,7 @@
 
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Router
 
@@ -31,6 +32,8 @@ type SimpleRouter (routingTable: IRoutingTable, parser: IInfonParser, printer: I
                                                       Const(PrincipalConstant(ppal))
                                                     elevateMessageFunction infon from)
 
+  let debugPrinter = PrettyPrinterFactory.InfonPrinter "simple"
+
   interface IRouter with
     member sr.Me = routingTable.Me
     
@@ -58,6 +61,6 @@ type SimpleRouter (routingTable: IRoutingTable, parser: IInfonParser, printer: I
       connectionsHandler.StopClients()
 
   member private sr.DoSend infon ppalName = 
-    log.Info("{0}: >>>>>>>>>>>> SENT TO {1}: {2} >>>>>>>", (sr:>IRouter).Me, ppalName, infon)
+    log.Info(">> From {0} to {1}:\r\n{2}\r\n", (sr:>IRouter).Me, ppalName, debugPrinter.PrintTerm infon)
     let msg = printer.PrintTerm infon
     connectionsHandler.Send msg ppalName

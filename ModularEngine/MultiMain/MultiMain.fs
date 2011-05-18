@@ -75,18 +75,21 @@ module MultiMain =
         Environment.Exit(1); failwith ""
     )
     let fixedPointCounter = new CountdownEvent(assemblies.Length)
-    let checkGlobalFixedPoint _ = 
-      let reachedGlobalFixedPoint = try fixedPointCounter.Signal() with e -> true
-      if reachedGlobalFixedPoint then
-        messagesLimitExceeded.Set() |> ignore
     let executors = assemblies |> List.mapi (fun i x ->
       let exec = createExec(routers.[fst x], snd x)
-      exec.FixedPointCallback checkGlobalFixedPoint
+      exec.FixedPointCallback 
+        (fun _ ->
+          let reachedGlobalFixedPoint = try fixedPointCounter.Signal() with e -> true
+          log.Trace("{0} went to sleep (reached global fixed-point = {1} -- counter = {2})", fst x, reachedGlobalFixedPoint, fixedPointCounter.CurrentCount)
+          if reachedGlobalFixedPoint then
+            messagesLimitExceeded.Set() |> ignore)
       exec.WakeUpCallback 
         (fun _ -> 
-          fixedPointCounter.TryAddCount() |> ignore)
+          let success = fixedPointCounter.TryAddCount()
+          log.Trace("{0} woke up (success = {1} -- counter = {2})", fst x, success, fixedPointCounter.CurrentCount))
       if i = 0 then
-        (routers.[fst x] :?> LocalRouter).AddMailerCallback msgsLimit 
+        let localMailer = (routers.[fst x] :?> LocalRouter).LocalMailer
+        localMailer.AddCallback msgsLimit 
           (fun _ -> messagesLimitExceeded.Set() |> ignore)
       exec
     )

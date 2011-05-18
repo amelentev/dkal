@@ -13,7 +13,11 @@ type DummySubstrateQueryTerm(query : ITerm, ns : string) =
     member this.BoundVars = query.BoundVars
     member this.Apply s = DummySubstrateQueryTerm(query.Apply s, ns) :> ITerm
     member this.Normalize() = DummySubstrateQueryTerm(query.Normalize(), ns) :> ITerm
-    member this.UnifyFrom s t = query.UnifyFrom s t
+    member this.UnifyFrom s t = 
+      match t with
+      | :? DummySubstrateQueryTerm as t' when (t' :> ISubstrateTerm).Namespace = ns ->
+        query.UnifyFrom s t'.Query
+      | _ -> None
     member this.Unify t = query.Unify t
   override this.ToString() = 
     "{| \"" + ns + "\" | " + query.ToString() + " |}"

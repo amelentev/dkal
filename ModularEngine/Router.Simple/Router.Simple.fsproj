@@ -48,6 +48,11 @@
     <Compile Include="SimpleRouter.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ast.Infon.Syntax.Factories\Ast.Infon.Syntax.Factories.fsproj">
+      <Name>Ast.Infon.Syntax.Factories</Name>
+      <Project>{fe86e32d-ac35-4f55-bcde-1fc4bbb22ab3}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Router\Router.fsproj">
       <Name>Router (Router\Router)</Name>
       <Project>{605dcfaa-5dcf-4026-8628-4ef79d9a332a}</Project>

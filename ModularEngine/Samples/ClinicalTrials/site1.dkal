@@ -1,4 +1,4 @@
-substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;", "schema.dbml")
+substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
 	namespaces "ct"
 
 type Int = System.Int32
@@ -7,6 +7,8 @@ type String = System.String
 type Trial = Int
 type Record = Int
 type Principal = Dkal.Principal
+type Infon = Dkal.Infon
+type Evidence = Dkal.Evidence
 
 relation participates(SITE: Principal, T: Trial)
 relation allocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
@@ -36,38 +38,37 @@ macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
                 Ret == trials.organizer |}
 
-
-with TRIAL: Trial, N1: Int, N2: Int, ORG: Principal
-	upon ORG said participates(Me, TRIAL) && allocatedPatients(Me, N1, N2, TRIAL) 
-	if asInfon({|"ct"| org(TRIAL) == ppalName(ORG) |})
-	do learn participates(Me, TRIAL) && allocatedPatients(Me, N1, N2, TRIAL)
-
-with TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, N: Int, R: Record, ORG: Principal
-	if
-		participates(Me, TRIAL) && 
-		allocatedPatients(Me, N1, N2, TRIAL) &&
+with X: Infon, E: Evidence
+    upon X [E]
+    do
+        learn X [E]
+                
+with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E1: Evidence, E2: Evidence, E3: Evidence
+    upon 
+        ORG said participates(Me, TRIAL) [E1]
+    upon
+        ORG said allocatedPatients(Me, N1, N2, TRIAL) [E2]
+	if 
+        asInfon({|"ct"| org(TRIAL) == ppalName(ORG) |}) &&
 		asInfon({|"ct"|
 			physUnnotified(PHYS, TRIAL) && physPatients(PHYS, TRIAL, P1, P2)
 			&& N1 <= P1 && P2 <= N2 
 		|})
-	do
-		send to PHYS:
-			physParticipates(PHYS, TRIAL, Me) &&
+    if
+        X -> ORG said mayRead(PHYS, R) [E3]
+    do
+		say with justification to PHYS:
+			physParticipates(PHYS, TRIAL, Me)
+        say with justification to PHYS:
 			physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
+		send with justification to PHYS:
+			with NUMBER: Int, R: Record
+                asInfon({|"ct"|
+                    P1 <= NUMBER && NUMBER <= P2 
+                    && R == record(NUMBER,TRIAL)
+                |})
+                ->
+                Me said mayRead(PHYS, R)
 		send to PHYS:
-			asInfon({|"ct"|
-				P1 <= N && N <= P2 
-				&& R == record(N,TRIAL)
-			|})
-			->
-			Me said mayRead(PHYS, R)
-		send to PHYS:
-			Me said mayRead(PHYS, R)
-			&& asInfon({|"ct"|
-				P1 <= N && N <= P2 
-				&& R == record(N,TRIAL)
-				&& ppalName(ORG) == org(TRIAL)
-			|})
-			->
-			ORG said mayRead(PHYS, R)
+            X -> ORG said mayRead(PHYS, R) [E3]
             
