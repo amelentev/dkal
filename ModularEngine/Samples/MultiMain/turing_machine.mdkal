@@ -1,0 +1,94 @@
+---turingMachine--------------------------
+// a deterministic Turing Machine
+
+type Symbol = System.String
+type State = System.Int32
+type Position = System.Int32
+type Direction = System.String
+
+// tape contents
+relation tape(P: Position, Sy: Symbol)
+
+// position
+relation currentPosition(P: Position)
+
+// state
+relation currentState(S: State)
+relation nonFinalState(S: State)
+
+// program
+relation transition(S1: State, Sy1: Symbol, S2: State, Sy2: Symbol, D: Direction)
+
+// for output
+relation step(P1 : Position, P2: Position, S1: State, S2: State, Sy1: Symbol, Sy2: Symbol)
+
+do once
+    // initial state and position
+    learn currentState(0)
+    learn currentPosition(0)
+    
+    // initial tape
+    learn tape(0, "0")
+    learn tape(1, "0")
+    learn tape(2, "0")
+    learn tape(3, "")
+    
+    // non-final states
+    learn nonFinalState(0)
+
+    // program
+    learn transition(0, "0", 0, "1", "right")
+    learn transition(0, "", 1, "", "right")
+    
+// general rule to move left
+with S1: State, S2: State, Sy1: Symbol, Sy2: Symbol, P1: Position, P2: Position
+    if
+        currentState(S1) &&
+        nonFinalState(S1) &&
+        currentPosition(P1) &&
+        tape(P1, Sy1) &&
+        transition(S1, Sy1, S2, Sy2, "left")
+    if
+        asInfon({| "basic" | P2 := P1 - 1 |})
+    do
+        forget
+            currentState(S1)
+        forget
+            currentPosition(P1)
+        forget
+            tape(P1, Sy1)
+        learn
+            currentState(S2)
+        learn
+            currentPosition(P2)
+        learn
+            tape(P1, Sy2)
+        send to Me:
+            step(P1, P2, S1, S2, Sy1, Sy2)
+        
+// general rule to move right
+with S1: State, S2: State, Sy1: Symbol, Sy2: Symbol, P1: Position, P2: Position
+    if
+        currentState(S1) &&
+        nonFinalState(S1) &&
+        currentPosition(P1) &&
+        tape(P1, Sy1) &&
+        transition(S1, Sy1, S2, Sy2, "right")
+    if
+        asInfon({| "basic" | P2 := P1 + 1 |})
+    do
+        forget
+            currentState(S1)
+        forget
+            currentPosition(P1)
+        forget
+            tape(P1, Sy1)
+        learn
+            currentState(S2)
+        learn
+            currentPosition(P2)
+        learn
+            tape(P1, Sy2)
+        send to Me:
+            step(P1, P2, S1, S2, Sy1, Sy2)
+        
