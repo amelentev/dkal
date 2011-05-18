@@ -19,12 +19,20 @@ open Microsoft.Research.Dkal.Substrate.Crypto
 
 open System.Xml.Linq
 open System.IO
+open NLog
 
+/// The SubstrateFactory provides a factory to construct different substrates.
+/// A substrate kind, arguments and namespaces must be provided
 type SubstrateFactory() =
   
+  static let log = LogManager.GetLogger("Substrate.Factories")
+
   static member Substrate (kind: string) (args: string list) (namespaces: string list) = 
     match kind, args with
-    | "basic", [] -> new BasicSubstrate() :> ISubstrate
+    | "basic", [] -> 
+      if not namespaces.IsEmpty then
+        log.Warn("Attempt to construct basic substrate with associated namespaces {0}. Namespaces will be ignored.", namespaces)
+      new BasicSubstrate() :> ISubstrate
     | "sql", [cs; schema] -> new SqlSubstrate(cs, schema, namespaces) :> ISubstrate
     | "xml", [xml] -> 
       if xml.Contains "<" then

@@ -24,13 +24,13 @@ type Substitution(subst : Dictionary<IVar, ITerm>) =
   interface ISubstitution with
       
     /// Returns a new Substitution that results from extending the current 
-    /// Substitution so that it maps x to mt and leaves the rest unchanged
-    member s.Extend (x: IVar, t: ITerm) = 
-      if t = (x :> ITerm) then 
+    /// Substitution so that it maps v to t and leaves the rest unchanged
+    member s.Extend (v: IVar, t: ITerm) = 
+      if t = (v :> ITerm) then 
         s :> ISubstitution
       else
         let newSubst = new Dictionary<_, _>(subst)
-        newSubst.[x] <- t
+        newSubst.[v] <- t
         new Substitution(newSubst) :> ISubstitution
        
     /// Applies this Substitution to the given IVar
@@ -73,7 +73,7 @@ type Substitution(subst : Dictionary<IVar, ITerm>) =
       relevantVars.ExceptWith vars
       (s :> ISubstitution).RestrictTo (relevantVars |> Seq.toList)
 
-    /// Returns true if this substitution only renames variables
+    /// Returns true if this Substitution only renames variables
     member s.IsVariableRenaming = 
       List.forall 
         (fun (t: ITerm) -> match t with :? IVar -> true | _ -> false) 

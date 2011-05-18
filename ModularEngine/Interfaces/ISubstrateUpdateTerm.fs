@@ -11,6 +11,9 @@
 
 namespace Microsoft.Research.Dkal.Interfaces
 
+/// ISubstrateUpdateTerm implementations are substrate terms that perform
+/// updates (addition, modification, removal, changing parameters etc.) 
+/// on a substrate. They are used in "apply" acctions
 type ISubstrateUpdateTerm =
   inherit ISubstrateTerm
   

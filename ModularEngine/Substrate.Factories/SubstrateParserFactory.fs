@@ -16,13 +16,27 @@ open Microsoft.Research.Dkal.Substrate.Sql
 
 open System.Collections.Generic
 
+/// The SubstrateParserFactory is used to construct parsers for different 
+/// types of substrates. In order to have dependency injection, parsers are
+/// registered at run-time (see Factories.Initializer project)
 type SubstrateParserFactory() =
   
+  /// For each substrate type and syntax kind it contains the type of the 
+  /// substrate parser that needs to be used
   static let parsers = new Dictionary<System.Type * string, System.Type>()
 
+  /// Given a substrate type (type implementing ISubstrate), a syntax kind
+  /// (e.g., "simple", "typed") and a parser type (type implementing ISubstrateParser)
+  /// it stores this information to be used when a request to construct a 
+  /// parser arrives
   static member RegisterParser (substrateType: System.Type) (kind: string) (parserType: System.Type) =
     parsers.[(substrateType, kind)] <- parserType
 
+  /// Given a substrate, a syntax kind and a parsing context it attempts to
+  /// find a registered substrate parser that matches. If successful, it 
+  /// returns such a ISubstrateParser implementation, on which the substrate,
+  /// the namespace and the parsing context have been set using the appropiate
+  /// setters
   static member SubstrateParser (s: ISubstrate) (kind: string) (ns: string) (context: IParsingContext option) = 
     if parsers.ContainsKey (s.GetType(), kind) then
       let spt = parsers.[(s.GetType(), kind)]

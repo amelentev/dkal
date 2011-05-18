@@ -11,6 +11,8 @@
 
 namespace Microsoft.Research.Dkal.Interfaces
 
+/// ISubstrateQueryTerm implementations are substrate terms that perform
+/// queries on a substrate. They are used in asInfon constructs
 type ISubstrateQueryTerm =
   inherit ISubstrateTerm
   

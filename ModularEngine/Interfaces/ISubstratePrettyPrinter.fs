@@ -11,6 +11,8 @@
 
 namespace Microsoft.Research.Dkal.Interfaces
 
+/// ISubstratePrettyPrinter provides an interface to print substrate AST elements
 type ISubstratePrettyPrinter =
 
+  /// Returns a string representation for the given ISubstrateTerm
   abstract PrintTerm: ISubstrateTerm -> string
