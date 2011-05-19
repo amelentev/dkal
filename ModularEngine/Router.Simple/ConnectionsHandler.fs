@@ -48,9 +48,9 @@ type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc: string -> stri
     // Establish server to listen for incoming connections
     host.Open()
     host.Closing.Add (fun _ -> log.Info("Incoming channel closing..."))
-    log.Info("Principal service is up and running on the following addresses:")
+    log.Debug("Principal service is up and running on the following addresses:")
     for ep in host.Description.Endpoints do
-      log.Info("{0}", ep.Address)
+      log.Debug("{0}", ep.Address)
 
   /// Initializes the client-side channels (and factories)
   member ch.StartClients() =
@@ -61,13 +61,13 @@ type ConnectionsHandler(rt: IRoutingTable, messageProcessingFunc: string -> stri
           
   /// Initializes one client (and its factory)
   member private ch.StartClient (ppal: string) =
-    log.Info("Creating channel to communicate with {0}", ppal)
+    log.Debug("Creating channel to communicate with {0}", ppal)
     match rt.PrincipalAddress(ppal) with 
     | :? ServiceAddress as sa ->
       let factory = new ChannelFactory<IPrincipalService>(new BasicHttpBinding(), new EndpointAddress(sa.Location))
       channels.[ppal] <- factory.CreateChannel()
       factories.[ppal] <- factory
-      factory.Closing.Add (fun _ -> log.Info("Channel for {0} closing...", ppal))
+      factory.Closing.Add (fun _ -> log.Debug("Channel for {0} closing...", ppal))
     | _ -> failwith "Connections handler expects ServiceAddress"
 
   /// Stops the server-side host

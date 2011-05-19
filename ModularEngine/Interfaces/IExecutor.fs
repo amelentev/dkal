@@ -30,6 +30,8 @@ type IExecutor =
   /// was not present
   abstract member UninstallRule: ITerm -> bool
 
+  // ----- Callbacks ----- 
+
   /// Registers a callback to be invoked whenever the executor reaches a local
   /// fixed-point
   abstract member FixedPointCallback: cb: (unit -> unit) -> unit
@@ -37,3 +39,12 @@ type IExecutor =
   /// Registers a callback to be invoked whenever the executor wakes up after
   /// a fixed-point
   abstract member WakeUpCallback: cb: (unit -> unit) -> unit
+
+  /// Registers a callback to be invoked whenever an action is about to be executed
+  abstract member ActionCallback: cb: (ITerm -> unit) -> unit
+
+  /// Registers a callback to be invoked whenever a message is received
+  abstract member ReceiveCallback: cb: (ITerm -> ITerm -> unit) -> unit
+
+  /// Registers a callback to be invoked whenever an execution round is about to start
+  abstract member RoundStartCallback: cb: (unit -> unit) -> unit

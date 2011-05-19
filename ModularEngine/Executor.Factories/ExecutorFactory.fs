@@ -22,14 +22,9 @@ type ExecutorFactory() =
                           router: IRouter, 
                           logicEngine: ILogicEngine, 
                           signatureProvider: ISignatureProvider, 
-                          infostrate: IInfostrate, 
-                          ?stepbystep: bool) = 
-    let stepbystep = 
-      match stepbystep with
-      | Some v -> v
-      | _ -> true
+                          infostrate: IInfostrate) = 
     match kind with
-    | "simple" -> new SimpleExecutor(router, logicEngine, signatureProvider, infostrate, stepbystep) :> IExecutor
+    | "simple" -> new SimpleExecutor(router, logicEngine, signatureProvider, infostrate) :> IExecutor
     | k -> failwith <| "Unrecognized executor kind: " + k
 
 

@@ -36,11 +36,17 @@ type SimpleLogicEngine() =
     member se.Start () = ()
     member se.Stop () = ()
 
-    member se.SetInfostrate (infostrate: IInfostrate) =
+    member se.set_Infostrate (infostrate: IInfostrate) =
       _infostrate <- Some infostrate
 
-    member se.SetSignatureProvider (signatureProvider: ISignatureProvider) =
+    member se.get_Infostrate () =
+      _infostrate.Value
+
+    member se.set_SignatureProvider (signatureProvider: ISignatureProvider) =
       _signatureProvider <- Some signatureProvider
+
+    member se.get_SignatureProvider () =
+      _signatureProvider.Value
 
     /// Obtain a list of Substitution with accompanying side conditions (AsInfon
     /// MetaTerms). Then return only those Substitutions that satisfy all their 

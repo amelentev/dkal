@@ -31,7 +31,7 @@ module Main =
   let args = System.Environment.GetCommandLineArgs() |> Seq.toList
   try  
     match args with
-    | [_; routingFile; policyFile] ->
+    | [_; routingFile; policyFile; step] ->
 
       let kind = "simple"
 
@@ -50,6 +50,12 @@ module Main =
         let infostrate = InfostrateFactory.Infostrate kind
         let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate)
 
+        // suscribe callbacks to executor
+        if step = "step" then
+          executor.RoundStartCallback (fun _ -> System.Console.ReadKey() |> ignore)
+        elif step <> "noStep" then
+          failwithf "Step parameter must be one of 'step' or 'noStep', found %O" step
+
         let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
         log.Info("Principal {0} running...", router.Me)
         log.Debug("------------------------------------------------------------------------")
@@ -59,7 +65,7 @@ module Main =
           executor.InstallRule rule |> ignore
         executor.Start()
 
-    | _ -> log.Error("Wrong number of parameters, expecting: routing file, policy file")
+    | _ -> log.Error("Wrong number of parameters, expecting: routing file, policy file, step\r\nWhere step must be one of 'step' or 'noStep'")
   with 
   | ParseException(msg, text, line, col) -> 
     log.Error("Error while parsing in line {0}, column {1}: {2}\r\n {3}", line, col, msg, text)

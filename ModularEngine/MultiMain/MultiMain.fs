@@ -43,7 +43,7 @@ module MultiMain =
     let infostrate = InfostrateFactory.Infostrate kind
     let logicEngine = LogicEngineFactory.LogicEngine kind 
     let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
-    let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, false)
+    let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate)
 
 //    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid substrates
 //      printfn "%s: Substrate declarations are fobidden" router.Me

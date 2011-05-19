@@ -36,8 +36,8 @@ type ILogicEngine =
   /// suceed it returns None
   abstract member CheckJustification: evidence: ITerm -> ITerm option
 
-  /// Sets the knowledge source for the logic engine
-  abstract member SetInfostrate: IInfostrate -> unit
+  /// The knowledge source for the logic engine
+  abstract member Infostrate: IInfostrate with set, get
 
-  /// Sets the signature checking implementation for this logic engine
-  abstract member SetSignatureProvider: ISignatureProvider -> unit
+  /// The signature checking implementation for this logic engine
+  abstract member SignatureProvider: ISignatureProvider with set, get

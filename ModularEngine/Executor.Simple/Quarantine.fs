@@ -9,6 +9,8 @@
 //
 // *********************************************************
 
+// TODO: implement a IFilter interface and move quarantine code to a SimpleFilter implementation
+
 namespace Microsoft.Research.Dkal.Executor.Simple
 
 open System.Collections.Generic

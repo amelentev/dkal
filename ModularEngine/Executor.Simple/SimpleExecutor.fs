@@ -27,8 +27,7 @@ open Microsoft.Research.Dkal.Substrate
 type SimpleExecutor(router: IRouter, 
                     logicEngine: ILogicEngine, 
                     signatureProvider: ISignatureProvider, 
-                    infostrate: IInfostrate, 
-                    stepbystep: bool) = 
+                    infostrate: IInfostrate) = 
   let log = LogManager.GetLogger("Executor.Simple")
   
   /// The inbox holds the messages that arrive from the router but still
@@ -59,16 +58,26 @@ type SimpleExecutor(router: IRouter,
   /// thread will read it and terminate
   let mutable finish: bool = false
 
+  // ---- Callbacks ----
+
   /// Callback to invoke whenever we reach a fixed-point
   let mutable fixedPointCb: unit -> unit = fun _ -> ()
 
   /// Callback to invoke whenever we wake up after a fixed-point
   let mutable wakeUpCb: unit -> unit = fun _ -> ()
 
+  /// Callback to invoke whenever an action is about to be executed
+  let mutable actionCb: ITerm -> unit = fun _ -> ()
+
+  /// Callback to invoke whenever a message is received
+  let mutable receiveCb: ITerm -> ITerm -> unit = fun _ _ -> ()
+
+  /// Callback to invoke whenever an execution round is about to start
+  let mutable roundStartCb: unit -> unit = fun _ -> ()
 
   do
-    logicEngine.SetInfostrate(infostrate)
-    logicEngine.SetSignatureProvider(signatureProvider)
+    logicEngine.Infostrate <- infostrate
+    logicEngine.SignatureProvider <- signatureProvider
     router.Receive(fun msg from -> 
                       lock inbox (fun () ->
                       if inbox.Count = 0 then 
@@ -77,6 +86,7 @@ type SimpleExecutor(router: IRouter,
                           wakeUpCb()
                         | _ -> ()
                       inbox.Enqueue((msg, from))
+                      receiveCb msg from
                       notEmpty.Set() |> ignore))
 
   interface IExecutor with
@@ -98,6 +108,15 @@ type SimpleExecutor(router: IRouter,
         
     member se.WakeUpCallback (cb: unit -> unit) = 
       wakeUpCb <- cb
+
+    member se.ActionCallback (cb: ITerm -> unit) =
+      actionCb <- cb
+
+    member se.ReceiveCallback (cb: ITerm -> ITerm -> unit) = 
+      receiveCb <- cb
+
+    member se.RoundStartCallback (cb: unit -> unit) =
+      roundStartCb <- cb
 
     member se.Start () = 
       // Start communications
@@ -152,8 +171,7 @@ type SimpleExecutor(router: IRouter,
 
   member private se.ExecuteRound() =
     log.Debug("{0}: ------------- round start -------------------", router.Me)
-    if stepbystep then
-      System.Console.ReadLine() |> ignore
+    roundStartCb()
     
     // To store the changes to be applied at the end of the round
     let actions = new HashSet<ITerm>()
@@ -204,6 +222,7 @@ type SimpleExecutor(router: IRouter,
     let actions = List.collect allActions actions
 
     for action in actions do
+      actionCb(action)
       let changes = 
         match action with
         | Learn(infon) -> infostrate.Learn infon
