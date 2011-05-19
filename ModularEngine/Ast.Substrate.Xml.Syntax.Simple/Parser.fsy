@@ -69,13 +69,17 @@ let varsFromQuery (query: string) =
 %%
 
 XmlSubstrateTerm:
-  | STRING_LITERAL PIPE Outputs        
+  | STRING_LITERAL RightSide EOF    
     { let output = new Dictionary<string,ITerm>() 
-      for (term, att) in $3 do
+      for (term, att) in $2 do
         output.[att] <- term
       let queryWithoutMeVariable = replaceMeInQuery($1)
       let vars = varsFromQuery(queryWithoutMeVariable)
       new XmlSubstrateQueryTerm(Namespace, queryWithoutMeVariable, vars, output) }
+
+RightSide:
+  |                                       { [(Var(Context.Value.FreshVar (Type.String)), "")] }
+  | PIPE Outputs                          { $2 }
 
 Outputs:
   | Output                                { [$1] }

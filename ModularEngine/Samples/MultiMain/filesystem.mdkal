@@ -1,0 +1,36 @@
+// common declarations
+type File = System.String
+type User = Dkal.Principal
+type Operation = System.String
+
+relation allowed(F: File, U: User, O: Operation)
+relation ask(F: File, U: User, O: Operation)
+
+---john--------------------------
+// john's policy
+do once
+    send to filesystem: ask("readme.txt", Me, "read")
+    send to filesystem: ask("readme.txt", Me, "write")
+    send to filesystem: ask("secret_file.txt", Me, "read")
+    send to filesystem: ask("holidays.jpg", Me, "write")
+				
+---filesystem--------------------------
+// filesystem's policy
+
+substrate xml("<permissions>
+                    <permission user='john' file='readme.txt' read='true' write='false' execute='false' />
+                    <permission user='john' file='holidays.jpg' read='true' write='true' execute='false' />
+                </permissions>") 
+    namespaces "permissions"
+
+with U: User, F: File, O: Operation
+	upon
+		U said ask(F, U, O)
+	if
+		asInfon({| "permissions" | "//permission[@user='$U' and @file='$F' and @$O='true']" |})
+	do
+		send to U:
+			allowed(F, U, O)
+		drop
+			U said ask(F, U, O)
+			

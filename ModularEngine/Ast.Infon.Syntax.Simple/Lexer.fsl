@@ -58,6 +58,10 @@ rule tokenize = parse
 | ","				{ COMMA }
 | "."				{ DOT }
 
+// Wildcards
+| "_"                 { WILDCARD }
+| "Me"                { ME }
+
 // Substrate declarations
 | "substrate"		  { SUBSTRATE } 
 | "namespaces"		{ NAMESPACES } 
@@ -80,6 +84,7 @@ rule tokenize = parse
 
 // Conditions
 | "upon"        { UPON }
+| "from"        { FROM }
 | "if"          { IF }
 
 // Actions

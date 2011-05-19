@@ -36,9 +36,9 @@ do once
     // non-final states
     learn nonFinalState(0)
 
-    // program
+    // program (must be deterministic)
     learn transition(0, "0", 0, "1", "right")
-    learn transition(0, "", 1, "", "right")
+    learn transition(0, "", 1, "end", "right")
     
 // general rule to move left
 with S1: State, S2: State, Sy1: Symbol, Sy2: Symbol, P1: Position, P2: Position

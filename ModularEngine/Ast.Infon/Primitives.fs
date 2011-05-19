@@ -109,7 +109,7 @@ module Primitives =
     | EmptyCondition -> 
       Some {Name = f; RetType = Type.Condition; ArgsType = []; Identity = None}
     | WireCondition -> 
-      Some {Name = f; RetType = Type.Condition; ArgsType = [Type.Infon]; Identity = None}
+      Some {Name = f; RetType = Type.Condition; ArgsType = [Type.Infon; Type.Principal]; Identity = None}
     | KnownCondition -> 
       Some {Name = f; RetType = Type.Condition; ArgsType = [Type.Infon]; Identity = None}
 

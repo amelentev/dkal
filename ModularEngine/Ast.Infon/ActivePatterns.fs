@@ -38,7 +38,7 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                                 | App({Name=Primitives.EmptyCondition}, []) -> Some ()
                                 | _ -> None
   let (|WireCondition|_|) mt =  match mt with
-                                | App({Name=Primitives.WireCondition}, [i]) -> Some i
+                                | App({Name=Primitives.WireCondition}, [i; p]) -> Some (i, p)
                                 | _ -> None
   let (|KnownCondition|_|) mt = match mt with
                                 | App({Name=Primitives.KnownCondition}, [i]) -> Some i

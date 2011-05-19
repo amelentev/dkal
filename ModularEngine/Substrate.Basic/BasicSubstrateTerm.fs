@@ -16,7 +16,11 @@ open Microsoft.Research.Dkal.Ast
 
 open System.Collections.Generic
 
-type BasicSubstrateTerm(left: ITerm, right: ITerm) =
+type BasicSubstrateTerm(left: ITerm, right: ITerm) as bst =
+
+  do 
+    if left.Type <> right.Type then
+      failwithf "Error while constructing basic substrate term. Left type %O does not match right type %O at %O" left.Type right.Type bst
 
   member bst.Left = left
   member bst.Right = right

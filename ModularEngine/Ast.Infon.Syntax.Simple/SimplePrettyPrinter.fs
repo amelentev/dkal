@@ -114,6 +114,8 @@ type SimplePrettyPrinter() =
         [ TextToken <| "upon";
           TabToken; NewLineToken;
           ManyTokens <| spp.TokenizeTerm mts.[0];
+          TextToken <| " from ";
+          ManyTokens <| spp.TokenizeTerm mts.[1];
           UntabToken; NewLineToken ]
       elif fSymbol = Primitives.EmptyAction || fSymbol = Primitives.EmptyCondition then
         []

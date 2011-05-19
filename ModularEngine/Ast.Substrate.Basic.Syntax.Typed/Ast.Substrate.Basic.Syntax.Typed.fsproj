@@ -78,6 +78,11 @@
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Name>Globals</Name>
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
@@ -86,6 +91,11 @@
     <ProjectReference Include="..\Substrate.Basic\Substrate.Basic.fsproj">
       <Name>Substrate.Basic</Name>
       <Project>{c18b8a2e-1a64-488c-a927-6ed5f5c7beea}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Factories\Substrate.Factories.fsproj">
+      <Name>Substrate.Factories</Name>
+      <Project>{82b5dc81-f8ea-4d29-b717-77b4a623d6f4}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.fsproj">

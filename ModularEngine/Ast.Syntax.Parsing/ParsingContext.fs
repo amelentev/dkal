@@ -32,12 +32,6 @@ namespace Microsoft.Research.Dkal.Ast.Syntax.Parsing
     /// Holds fresh variable ids that are used when solving macros
     let mutable freshVarId = 1
 
-    /// Returns a fresh Variable of the given type
-    member private c.FreshVar (t: IType) =
-      freshVarId <- freshVarId + 1
-      { Name = "Tmp" + freshVarId.ToString(); 
-        Type = t }
-
     interface IParsingContext with
 
       member c.Me = me
@@ -82,7 +76,12 @@ namespace Microsoft.Research.Dkal.Ast.Syntax.Parsing
         let mutable accumSolvedMacros = []
         for concreteArg, arg in List.zip concreteArgs args do
           subst <- subst.Extend ({Name = arg.Name; Type = concreteArg.Type}, concreteArg)
-        let newRet = Var(c.FreshVar retTyp)
+        let newRet = Var((c :> IParsingContext).FreshVar retTyp)
         subst <- subst.Extend ({Name = "Ret"; Type = retTyp}, newRet)
         newRet, (body :> ITerm).Apply subst :?> ISubstrateQueryTerm
 
+      /// Returns a fresh Variable of the given type
+      member c.FreshVar (t: IType) =
+        freshVarId <- freshVarId + 1
+        { Name = "Tmp" + freshVarId.ToString(); 
+          Type = t } :> IVar

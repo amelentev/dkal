@@ -17,6 +17,7 @@ open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Syntax.Parsing
 open Microsoft.Research.Dkal.Substrate.Factories
+open Microsoft.Research.Dkal.Substrate.Basic
 
 open System
 open System.Collections.Generic
@@ -56,6 +57,9 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 // Delimiters
 %token EQ LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT
 
+// Wildcards
+%token WILDCARD ME
+
 // Substrate declarations
 %token SUBSTRATE NAMESPACES
 
@@ -75,7 +79,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token DO ONCE
 
 // Conditions
-%token UPON IF
+%token UPON FROM IF
 
 // Actions
 %token SEND SAY JUSTIFICATION TO LEARN FORGET INSTALL UNINSTALL APPLY DROP
@@ -135,7 +139,7 @@ Signature:
 
 Policy:
 	|										        	{ {Rules = []} }
-	| Policy Term   							
+	| Policy Rule   							
     { let rule, solvedMacros = normalizeAndApplyMacros $2
       if not solvedMacros.IsEmpty then failwithf "Unsolved macros at rule %O" rule
       {$1 with Rules = $1.Rules @ [rule]} }
@@ -151,14 +155,6 @@ SubstrateDeclaration:
 TypeDeclaration:
 	| TYPE UPPER_IDENTIFIER EQ Type				
     { ctxs.Peek().AddTypeRename($2, $4) }
-
-Cols:
-	|										        	{ [] }
-	| Col								      		{ [$1] }
-	| Col COMMA Cols							{ $1 :: $3 }
-
-Col:
-	| LOWER_IDENTIFIER COLON Type				{ ($1, $3) }
 
 RelationDeclaration:
 	| RELATION LOWER_IDENTIFIER LPAR Args RPAR		
@@ -196,38 +192,43 @@ VarsDeclaration:
       $2 }
 
 Term:
-// Variable declarations
-  | VarsDeclaration Term
-    { ctxs.Pop() |> ignore
-      let t, solvedMacros = normalizeAndApplyMacros $2
-      ForallMany($1, t), solvedMacros }
+| Infon                               { $1 }
+| Principal                           { $1 }
+| SubstrateTerm                       { $1 }
+| Action                              { $1 }
+| Condition                           { $1 }
+| Rule                                { $1 }
+| Evidence                            { $1 }
+| Substrate                           { $1 }
 
-// Infon constructs
+Infon:
+  | Variable        							    { $1, [] }
+  | WILDCARD                          { Var(ctxs.Peek().FreshVar(Type.Infon)), [] }
+	| LPAR Infon RPAR					    	    { $2 }
 	| AS_INFON LPAR TRUE RPAR							  	            { primitiveApp(Primitives.EmptyInfon, []), [] }
-	| AS_INFON LPAR Term RPAR
+	| AS_INFON LPAR SubstrateTerm RPAR
     { let t, solvedMacros = normalizeAndApplyMacros $3
       if t.Type = Type.Boolean then
-        primitiveApp(Primitives.EmptyInfon, []), solvedMacros
+        let bq = BasicSubstrateTerm(Constant(true), t) :> ISubstrateQueryTerm
+        primitiveApp(Primitives.AsInfon, [bq]), solvedMacros
       else
         primitiveApp(Primitives.AsInfon, [t]), solvedMacros }
-	| Term IMPLIES Term
+	| Infon IMPLIES Infon
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Implies, [t1; t2]), sm1 @ sm2 }
-	| Term SAID Term
+	| Principal SAID Infon
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Said, [t1; t2]), sm1 @ sm2 }
-	| Term AND Term
+	| Infon AND Infon
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.And, [t1; t2]), sm1 @ sm2 }
-  | Term LSQ Term RSQ 
+  | Infon LSQ Evidence RSQ 
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Justified, [t1; t2]), sm1 @ sm2 }
-
-// Relations and function/macro calls
 	| LOWER_IDENTIFIER LPAR Terms RPAR		
     { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
       if ctxs.Peek().HasMacro($1) then
@@ -240,39 +241,117 @@ Term:
           App(func, ts), (List.concat sms)
         else
           failwithf "Undefined identifier: %O" $1 }
+  | VarsDeclaration Infon
+    { ctxs.Pop() |> ignore
+      let t, solvedMacros = normalizeAndApplyMacros $2
+      ForallMany($1, t), solvedMacros }
+         
+Principal:
+  | Variable        						{ $1, [] }
+  | WILDCARD                    { Var(ctxs.Peek().FreshVar(Type.Principal)), [] }
+	| LPAR Principal RPAR					{ $2 }
+	| ME                          { Const(PrincipalConstant(ctxs.Peek().Me)), [] }
+  | LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)), [] }
+	| LOWER_IDENTIFIER LPAR Terms RPAR		
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
+      if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
+        ret, (List.concat sms) @ [solvedMacro]
+      else
+        failwithf "Undefined identifier: %O" $1 }
 
-// Evidence
-  | Term EV_AND Term
-    { let t1, sm1 = normalizeAndApplyMacros $1
-      let t2, sm2 = normalizeAndApplyMacros $3
-      primitiveApp(Primitives.EvAnd, [t1; t2]), sm1 @ sm2 }
-
-// Constants, variables, misc
-	| Literal							      		{ $1, [] }
-	| Variable        							{ $1, [] }
-	| LPAR Term RPAR					    	{ $2 }
-
-// Sequences
-//	| LSQ RSQ										                  	{ SimpleApp("nil", []) }
-//	| Term COLON COLON Term		%prec TIMES		        { SimpleApp("cons", [$1; $4]) }
-
-// Rules
-  | Rule                    { $1 }
-
-// Conditions
-  | Condition               { $1 }
-
-// Actions
-	| Action									{ $1 }
-
-// Substrate expression
+SubstrateTerm:
+  | Variable        							    { $1, [] }
+	| LPAR SubstrateTerm RPAR					  { $2 }
   | SUBSTRATE_EXPRESSION    
     { let ns, exp = $1
       let substrate = SubstrateMap.GetSubstrate ns
       let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns (Some <| ctxs.Peek())
       parser.ParseTerm exp :> ITerm, [] }
+	| LOWER_IDENTIFIER LPAR Terms RPAR		
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
+      if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
+        ret, (List.concat sms) @ [solvedMacro]
+      else
+        failwithf "Undefined identifier: %O" $1 }
+
+Action:
+  | Variable        							      { $1, [] }
+  | WILDCARD                            { Var(ctxs.Peek().FreshVar(Type.Action)), [] }
+	| LPAR Action RPAR					          { $2 }
+  | SAY WITH JUSTIFICATION TO Principal COLON Infon
+    { let t1, sm1 = normalizeAndApplyMacros $5
+      let t2, sm2 = normalizeAndApplyMacros $7
+      primitiveApp(Primitives.JustifiedSay, [t1; t2]), sm1 @ sm2 }
+  | SEND WITH JUSTIFICATION TO Principal COLON Infon
+    { let t1, sm1 = normalizeAndApplyMacros $5
+      let t2, sm2 = normalizeAndApplyMacros $7
+      primitiveApp(Primitives.JustifiedSend, [t1; t2]), sm1 @ sm2 }
+	| SEND TO Principal COLON Infon
+    { let t1, sm1 = normalizeAndApplyMacros $3
+      let t2, sm2 = normalizeAndApplyMacros $5
+      primitiveApp(Primitives.Send, [t1; t2]), sm1 @ sm2 }
+	| LEARN Infon
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Learn, [t]), sm }
+	| FORGET Infon
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Forget, [t]), sm }
+	| INSTALL Rule
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Install, [t]), sm }
+	| UNINSTALL Rule
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Uninstall, [t]), sm }
+	| APPLY SubstrateTerm
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Apply, [t]), sm }
+	| DROP Infon
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Drop, [t]), sm }
+	| Action Action
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.SeqAction, [t1; t2]), sm1 @ sm2 }
+	| LOWER_IDENTIFIER LPAR Terms RPAR		
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
+      if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
+        ret, (List.concat sms) @ [solvedMacro]
+      else
+        failwithf "Undefined identifier: %O" $1 }
+
+Condition:
+  | Variable        							    { $1, [] }
+  | WILDCARD                          { Var(ctxs.Peek().FreshVar(Type.Condition)), [] }
+	| LPAR Condition RPAR					      { $2 }
+  | UPON Infon 
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.WireCondition, [t; Var(ctxs.Peek().FreshVar(Type.Principal))]), sm }
+  | UPON Infon FROM Principal
+    { let t1, sm1 = normalizeAndApplyMacros $2
+      let t2, sm2 = normalizeAndApplyMacros $4
+      primitiveApp(Primitives.WireCondition, [t1; t2]), sm1 @ sm2 }
+  | IF Infon
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.KnownCondition, [t]), sm }
+  | Condition Condition
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.SeqCondition, [t1; t2]), sm1 @ sm2 }
+	| LOWER_IDENTIFIER LPAR Terms RPAR		
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
+      if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
+        ret, (List.concat sms) @ [solvedMacro]
+      else
+        failwithf "Undefined identifier: %O" $1 }
 
 Rule:
+  | Variable        							    { $1, [] }
+  | WILDCARD                          { Var(ctxs.Peek().FreshVar(Type.Rule)), [] }
+	| LPAR Rule RPAR					          { $2 }
   | DO ONCE Action
     { let t, sm = normalizeAndApplyMacros $3
       primitiveApp(Primitives.RuleOnce, [primitiveApp(Primitives.EmptyCondition, []); t]), sm }
@@ -291,56 +370,45 @@ Rule:
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $2
       primitiveApp(Primitives.SeqRule, [t1; t2]), sm1 @ sm2 }
-
-Condition:
+	| LOWER_IDENTIFIER LPAR Terms RPAR		
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
+      if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
+        ret, (List.concat sms) @ [solvedMacro]
+      else
+        failwithf "Undefined identifier: %O" $1 }
+  | VarsDeclaration Rule
+    { ctxs.Pop() |> ignore
+      let t, solvedMacros = normalizeAndApplyMacros $2
+      ForallMany($1, t), solvedMacros }
+          
+Evidence:
   | Variable        							    { $1, [] }
-  | UPON Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.WireCondition, [t]), sm }
-  | IF Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.KnownCondition, [t]), sm }
-  | Condition Condition
+  | WILDCARD                          { Var(ctxs.Peek().FreshVar(Type.Evidence)), [] }
+	| LPAR Evidence RPAR					    	{ $2 }
+  | Evidence EV_AND Evidence
     { let t1, sm1 = normalizeAndApplyMacros $1
-      let t2, sm2 = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.SeqCondition, [t1; t2]), sm1 @ sm2 }
+      let t2, sm2 = normalizeAndApplyMacros $3
+      primitiveApp(Primitives.EvAnd, [t1; t2]), sm1 @ sm2 }
+	| LOWER_IDENTIFIER LPAR Terms RPAR		
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
+      if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
+        ret, (List.concat sms) @ [solvedMacro]
+      else
+        failwithf "Undefined identifier: %O" $1 }
 
-Action:
-  | Variable        							      { $1, [] }
-  | SAY WITH JUSTIFICATION TO Term COLON Term
-    { let t1, sm1 = normalizeAndApplyMacros $5
-      let t2, sm2 = normalizeAndApplyMacros $7
-      primitiveApp(Primitives.JustifiedSay, [t1; t2]), sm1 @ sm2 }
-  | SEND WITH JUSTIFICATION TO Term COLON Term
-    { let t1, sm1 = normalizeAndApplyMacros $5
-      let t2, sm2 = normalizeAndApplyMacros $7
-      primitiveApp(Primitives.JustifiedSend, [t1; t2]), sm1 @ sm2 }
-	| SEND TO Term COLON Term
-    { let t1, sm1 = normalizeAndApplyMacros $3
-      let t2, sm2 = normalizeAndApplyMacros $5
-      primitiveApp(Primitives.Send, [t1; t2]), sm1 @ sm2 }
-	| LEARN Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.Learn, [t]), sm }
-	| FORGET Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.Forget, [t]), sm }
-	| INSTALL Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.Install, [t]), sm }
-	| UNINSTALL Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.Uninstall, [t]), sm }
-	| APPLY Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.Apply, [t]), sm }
-	| DROP Term
-    { let t, sm = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.Drop, [t]), sm }
-	| Action Action
-    { let t1, sm1 = normalizeAndApplyMacros $1
-      let t2, sm2 = normalizeAndApplyMacros $2
-      primitiveApp(Primitives.SeqAction, [t1; t2]), sm1 @ sm2 }
+Substrate:
+	| Variable        							{ $1, [] }
+	| LPAR Substrate RPAR					  { $2 }
+	| Literal							      		{ $1, [] }
+	| LOWER_IDENTIFIER LPAR Terms RPAR		
+    { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
+      if ctxs.Peek().HasMacro($1) then
+        let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
+        ret, (List.concat sms) @ [solvedMacro]
+      else
+        failwithf "Undefined identifier: %O" $1 }
 
 Terms:
 	|											              { [] }
@@ -349,15 +417,7 @@ Terms:
 
 Variable:
   | UPPER_IDENTIFIER 
-    { if $1 = "Me" then
-        Const <| PrincipalConstant(ctxs.Peek().Me)
-      else
-        Var({ Name = $1; Type = ctxs.Peek().VariableType $1 }) }
-
-Literals:
-	|									          		{ [] }
-	| Literal							      		{ [$1] }
-	| Literal COMMA Literals				{ $1 :: $3 }
+    { Var({ Name = $1; Type = ctxs.Peek().VariableType $1 }) }
 
 Literal:
 	| TRUE									    	{ Const(Constant(true)) }
@@ -365,7 +425,6 @@ Literal:
 	| INT_LITERAL						  		{ Const(Constant($1)) }
 	| FLOAT_LITERAL								{ Const(Constant($1)) }
 	| STRING_LITERAL							{ Const(Constant($1)) }
-	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }
 
 StringLiterals:
 	|										                    	{ [] }

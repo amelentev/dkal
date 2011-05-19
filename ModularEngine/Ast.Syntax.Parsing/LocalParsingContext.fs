@@ -62,3 +62,6 @@ namespace Microsoft.Research.Dkal.Ast.Syntax.Parsing
 
       member lpc.ApplyMacro(macroName: string, concreteArgs: ITerm list) =
         parent.ApplyMacro(macroName, concreteArgs)
+
+      member lpc.FreshVar(typ: IType) = 
+        parent.FreshVar(typ)

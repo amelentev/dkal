@@ -38,24 +38,19 @@ macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
                 Ret == trials.organizer |}
 
-with X: Infon, E: Evidence
-    upon X [E]
-    do
-        learn X [E]
-                
-with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E1: Evidence, E2: Evidence, E3: Evidence
+with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E: Evidence
     upon 
-        ORG said participates(Me, TRIAL) [E1]
+        ORG said participates(Me, TRIAL) [_]
     upon
-        ORG said allocatedPatients(Me, N1, N2, TRIAL) [E2]
+        ORG said allocatedPatients(Me, N1, N2, TRIAL) [_]
 	if 
         asInfon({|"ct"| org(TRIAL) == ppalName(ORG) |}) &&
 		asInfon({|"ct"|
 			physUnnotified(PHYS, TRIAL) && physPatients(PHYS, TRIAL, P1, P2)
 			&& N1 <= P1 && P2 <= N2 
 		|})
-    if
-        X -> ORG said mayRead(PHYS, R) [E3]
+    upon
+        X -> ORG said mayRead(PHYS, R) [E]
     do
 		say with justification to PHYS:
 			physParticipates(PHYS, TRIAL, Me)
@@ -70,5 +65,5 @@ with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal
                 ->
                 Me said mayRead(PHYS, R)
 		send to PHYS:
-            X -> ORG said mayRead(PHYS, R) [E3]
+            X -> ORG said mayRead(PHYS, R) [E]
             

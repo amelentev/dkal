@@ -72,7 +72,10 @@ type SimpleExecutor(router: IRouter,
     router.Receive(fun msg from -> 
                       lock inbox (fun () ->
                       if inbox.Count = 0 then 
-                        wakeUpCb()
+                        match from with
+                        | PrincipalConstant(p) when p <> router.Me -> 
+                          wakeUpCb()
+                        | _ -> ()
                       inbox.Enqueue((msg, from))
                       notEmpty.Set() |> ignore))
 
@@ -236,8 +239,8 @@ type SimpleExecutor(router: IRouter,
   member private se.SolveCondition (condition: ITerm) (substs: ISubstitution seq) =
     match condition with
     | EmptyCondition -> substs
-    | WireCondition(i) -> 
-      quarantine.Matches i substs
+    | WireCondition(i, p) -> 
+      quarantine.Matches i p substs
     | KnownCondition(i) ->
       logicEngine.Derive i substs
     | SeqCondition(conds) ->

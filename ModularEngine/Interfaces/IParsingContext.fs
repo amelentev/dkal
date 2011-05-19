@@ -51,3 +51,6 @@ type IParsingContext =
   /// and sqt is the macro body with the concrete arguments (which should be 
   /// incorporated as an asInfon(sqt) somewhere before or after t is used)
   abstract ApplyMacro: macroName: string * concreteArgs: ITerm list -> ITerm * ISubstrateQueryTerm
+
+  /// Given a type it returns a fresh variable of that type
+  abstract FreshVar: IType -> IVar

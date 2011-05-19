@@ -42,8 +42,8 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let EmptyCondition = 
     App(Primitives.SolveFunction Primitives.EmptyCondition |> Option.get, [])
 
-  let WireCondition (i: ITerm) = 
-    App(Primitives.SolveFunction Primitives.WireCondition |> Option.get, [i])
+  let WireCondition (i: ITerm, p: ITerm) = 
+    App(Primitives.SolveFunction Primitives.WireCondition |> Option.get, [i; p])
 
   let KnownCondition (i: ITerm) = 
     App(Primitives.SolveFunction Primitives.KnownCondition |> Option.get, [i])

@@ -48,6 +48,8 @@ module Microsoft.Research.Dkal.Substrate.Basic.BasicPrimitives
   let Times = "times"
   [<Literal>] 
   let Divide = "divide"
+  [<Literal>] 
+  let AsBoolean = "asBoolean"
 
   /// Returns true iff the given IType supports equality in Basic substrate
   let private HasEquality (t: IType) =
@@ -99,6 +101,8 @@ module Microsoft.Research.Dkal.Substrate.Basic.BasicPrimitives
   /// it looks the type information to see if there is a match.
   let SolveOverloadOperator (f: string) (t: IType) =
     match f with
+    | AsBoolean when t = Type.SubstrateQuery ->
+      Some {Name = f; ArgsType = [t]; RetType = Type.Boolean; Identity = None}
     | And when t = Type.Boolean -> 
       Some {Name = f; ArgsType = [t;t]; RetType = t; 
             Identity = Some True}

@@ -29,3 +29,5 @@ module Microsoft.Research.Dkal.Substrate.Basic.Builders
           ArgsType = List.replicate bools.Length Type.Boolean;
           Identity = Some False }, bools)
      
+  let AsBoolean (query: ISubstrateQueryTerm) = 
+    App(BasicPrimitives.SolveOverloadOperator BasicPrimitives.AsBoolean Type.SubstrateQuery |> Option.get, [query])

@@ -30,11 +30,11 @@ with X: Infon, E: Evidence
     do
         learn X [E]                
                 
-with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int, E1: Evidence, E2: Evidence
+with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
 	upon 
-		PERSON said requestToRead(PERSON, R) [E1]
+		PERSON said requestToRead(PERSON, R) [_]
     if
-		ORG said mayRead(PERSON, R) [E2]
+		ORG said mayRead(PERSON, R) [_]
 	if
 		asInfon({|"ct"|
 			ppalName(ORG) == org(TRIAL) &&

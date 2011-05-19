@@ -25,6 +25,8 @@ type SimpleInfostrate() =
 
   interface IInfostrate with
 
+    // TODO: throw exception if trying to forget something more concrete than we know
+
     /// Split the infon into conjunctions and learn these recursively
     member si.Learn (infon: ITerm) = 
       match infon.Normalize() with

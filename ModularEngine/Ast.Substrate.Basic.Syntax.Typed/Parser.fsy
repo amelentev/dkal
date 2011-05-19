@@ -11,10 +11,12 @@
 // *********************************************************
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Substrate.Basic
+open Microsoft.Research.Dkal.Substrate.Factories
 
 open System
 open System.Collections.Generic
@@ -42,6 +44,9 @@ let mutable ns: string = null
 %token <System.Int32> INT_LITERAL
 %token <System.Double> FLOAT_LITERAL
 %token <System.String> STRING_LITERAL
+
+// Substrate expressions
+%token <System.String * System.String> SUBSTRATE_EXPRESSION
 
 // Identifiers
 %token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
@@ -74,6 +79,11 @@ ITerm:
 	| Literal														                        { $1 }
 	| Variable                                                  { $1 }
 	| LPAR ITerm RPAR										                    		{ $2 }
+  | SUBSTRATE_EXPRESSION    
+    { let ns, exp = $1
+      let substrate = SubstrateMap.GetSubstrate ns
+      let parser = SubstrateParserFactory.SubstrateParser substrate "typed" ns None
+      parser.ParseTerm exp :> ITerm }
 
 ITerms:
 	|										          	{ [] }

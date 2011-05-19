@@ -23,3 +23,9 @@ module Microsoft.Research.Dkal.Substrate.Basic.ActivePatterns
   let (|OrBool|_|) mt = match mt with
                         | App({Name=BasicPrimitives.Or; RetType=Substrate(b)}, mts) when b = typeof<bool> -> Some mts
                         | _ -> None
+  let (|AsBoolean|_|) mt =  match mt with 
+                            | App({Name=BasicPrimitives.AsBoolean}, [exp]) -> 
+                              match exp with
+                              | :? ISubstrateQueryTerm as exp -> Some exp
+                              | _ -> failwith "Expecting ISubstrateQueryTerm in AsBoolean"
+                            | _ -> None

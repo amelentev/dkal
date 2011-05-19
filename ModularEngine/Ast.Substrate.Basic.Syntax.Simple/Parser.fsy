@@ -11,8 +11,10 @@
 // *********************************************************
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.Substrate.Factories
 open Microsoft.Research.Dkal.Substrate.Basic
 
 open System.Collections.Generic
@@ -53,6 +55,9 @@ let primitiveApp (f: string, args: ITerm list) =
 %token <System.Double> FLOAT_LITERAL
 %token <System.String> STRING_LITERAL
 
+// Substrate expressions
+%token <System.String * System.String> SUBSTRATE_EXPRESSION
+
 // Identifiers
 %token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
 
@@ -63,6 +68,7 @@ let primitiveApp (f: string, args: ITerm list) =
 // This is the type of the data produced by successful reductions of each 'start' symbol:
 
 %type < ISubstrateTerm > SubstrateTerm
+%type < ITerm > Term
 
 // ------------------------------------------------------------------------------------------------------
 // Precedence of operators
@@ -81,7 +87,10 @@ let primitiveApp (f: string, args: ITerm list) =
 
 SubstrateTerm:
   | Term EOF
-    { new BasicSubstrateTerm(Const(Constant(true)), $1) :> ISubstrateTerm }
+    { if $1.Type = Type.Boolean then
+        new BasicSubstrateTerm(Const(Constant(true)), $1) :> ISubstrateTerm 
+      else
+        failwithf "Expecting boolean term on basic substrate, found %O" $1 }
   | Variable GETS Term EOF
     { new BasicSubstrateTerm($1, $3) :> ISubstrateTerm }
   | Literal GETS Term EOF
@@ -132,6 +141,13 @@ Term:
 	| Literal							      		{ $1 }
 	| Variable        							{ $1 }
 	| LPAR Term RPAR			      		{ $2 }
+
+// Substrate expressions
+  | SUBSTRATE_EXPRESSION    
+    { let ns, exp = $1
+      let substrate = SubstrateMap.GetSubstrate ns
+      let parser = SubstrateParserFactory.SubstrateParser substrate "simple" ns ctx
+      parser.ParseTerm exp :> ITerm }
 
 Terms:
 	|									         	{ [] }

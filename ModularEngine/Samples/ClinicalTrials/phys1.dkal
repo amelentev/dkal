@@ -29,16 +29,11 @@ macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
                 Ret == trials.organizer |}
 
-with X: Infon, E: Evidence
-    upon X [E]
-    do
-        learn X [E]
-
-with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence, E3: Dkal.Evidence, E4: Dkal.Evidence,
+with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence
 	upon 
-		SITE said physParticipates(Me, TRIAL, SITE) [E1]
+		SITE said physParticipates(Me, TRIAL, SITE) [_]
     upon 
-        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [E2]
+        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [_]
     if
 		asInfon({|"ct"|
 			P1 <= N && N <= P2 &&
@@ -46,17 +41,17 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int
 			ppalName(ORG) == org(TRIAL) &&
 			R == record(N, TRIAL)
 		|})
-    if 
-        X -> ORG said mayRead(Me, R) [E3]
-    if 
-        Y -> SITE said mayRead(Me, R) [E4]
+    upon
+        X -> ORG said mayRead(Me, R) [E1]
+    upon
+        Y -> SITE said mayRead(Me, R) [E2]
 	do
 		say with justification to keyMgr:
 			requestToRead(Me, R)
         send to keyMgr:
-			X -> ORG said mayRead(Me, R) [E3]
+			X -> ORG said mayRead(Me, R) [E1]
         send to keyMgr:
-			Y -> SITE said mayRead(Me, R) [E4]
+			Y -> SITE said mayRead(Me, R) [E2]
         drop
             SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
             

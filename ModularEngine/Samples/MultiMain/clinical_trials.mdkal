@@ -60,22 +60,17 @@ substrate xml("<physAssignments>
                 </physAssignments>") 
     namespaces "physAssignments"
     
-with X: Infon, E: Evidence
-    upon X [E]
-    do
-        learn X [E]
- 
- with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E1: Evidence, E2: Evidence, E3: Evidence
+with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E: Evidence
     upon 
-        ORG said siteParticipates(Me, TRIAL) [E1]
+        ORG said siteParticipates(Me, TRIAL) [_]
     upon 
-        ORG said siteAllocatedPatients(Me, N1, N2, TRIAL) [E2]
+        ORG said siteAllocatedPatients(Me, N1, N2, TRIAL) [_]
     if
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
         asInfon({| "physAssignments" | "//physAssignment[@trial='$TRIAL']" | PHYS <-> "phys", P1 <-> "n1", P2 <-> "n2" |}) &&
         asInfon({| "basic" | N1 <= P1 && P2 <= N2 |})
-    if
-        X -> ORG said mayRead(PHYS, R) [E3]
+    upon
+        X -> ORG said mayRead(PHYS, R) [E]
     do
         say with justification to PHYS:
             physParticipates(PHYS, TRIAL, Me)
@@ -88,7 +83,7 @@ with X: Infon, E: Evidence
                 -> 
                 Me said mayRead(PHYS, R)
         send to PHYS:
-            X -> ORG said mayRead(PHYS, R) [E3]
+            X -> ORG said mayRead(PHYS, R) [E]
             
 ---phys1--------------------------
 // phys1's policy
@@ -99,32 +94,27 @@ substrate xml("<physPatients>
                 </physPatients>") 
     namespaces "physPatients"
 
-with X: Infon, E: Evidence
-    upon X [E]
-    do
-        learn X [E]
-    
-with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence, E3: Dkal.Evidence, E4: Dkal.Evidence, PERSON: Principal, REC: Int
+with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence
 	upon 
-		SITE said physParticipates(Me, TRIAL, SITE) [E1]
+		SITE said physParticipates(Me, TRIAL, SITE) [_]
     upon 
-        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [E2]
+        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [_]
     if
 		asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | NUMBER |}) &&
         asInfon({| "basic" | P1 <= NUMBER && NUMBER <= P2 |}) &&
         asInfon({| "records" | "//record[@patient='$NUMBER' and @trial='$TRIAL']/@id" | R |}) &&
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
-    if 
-        X -> ORG said mayRead(Me, R) [E3]
-    if 
-        Y -> SITE said mayRead(Me, R) [E4]
+    upon 
+        X -> ORG said mayRead(Me, R) [E1]
+    upon
+        Y -> SITE said mayRead(Me, R) [E2]
 	do
 		say with justification to keyMgr:
 			requestToRead(Me, R)
         send to keyMgr:
-			X -> ORG said mayRead(Me, R) [E3]
+			X -> ORG said mayRead(Me, R) [E1]
         send to keyMgr:
-			Y -> SITE said mayRead(Me, R) [E4]
+			Y -> SITE said mayRead(Me, R) [E2]
         drop
             SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
             
@@ -144,14 +134,14 @@ with X: Infon, E: Evidence
     do
         learn X [E]
     
-with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int, E1: Evidence, E2: Evidence
+with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
 	upon 
-		PERSON said requestToRead(PERSON, R) [E1]
+		PERSON said requestToRead(PERSON, R) [_]
 	if
         asInfon({| "records" | "//record[@id='$R']/@trial" | TRIAL |}) &&
 		asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
     if
-		ORG said mayRead(PERSON, R) [E2]
+		ORG said mayRead(PERSON, R) [_]
     if 
         asInfon({| "keys" | "/keys/key[@record='$R']/@key" | K |})
 	do

@@ -21,9 +21,10 @@ open Microsoft.Research.Dkal.Ast
 /// and/or become too old, and/or irrelevant
 type Quarantine(logicEngine: ILogicEngine) =
   
-  /// Keeps the infons that are stored as keys. The values are the (possibly
-  /// not present) justifications for those infons
-  let msgs = new Dictionary<ITerm, ITerm option>()
+  /// Keeps the infons that are stored as keys. The values are (s, e) where
+  /// s is the message sender and e is the message evidence (possibly not
+  /// present) 
+  let msgs = new Dictionary<ITerm, ITerm * ITerm option>()
 
   /// Fresh variable id
   let mutable freshVarId = 0
@@ -38,17 +39,17 @@ type Quarantine(logicEngine: ILogicEngine) =
         match infon.Unify infon' with
         | Some subst -> 
           if subst.IsVariableRenaming then
-            q.DoAdd(infon, Some ev)
+            q.DoAdd(infon, from, Some ev)
           else
             failwithf "(Well-formed) evidence in justified message does not match the message contents.\r\nEvidence:\r\n%O\r\nJustifies:\r\n%O\r\nBut received:\r\n%O" ev infon' infon
         | None -> failwithf "(Well-formed) evidence in justified message does not match the message contents.\r\nEvidence:\r\n%O\r\nJustifies:\r\n%O\r\nBut received:\r\n%O" ev infon' infon
       | _ -> failwithf "Fake evidence found on %O" msg
     | AndInfon(msgs) ->
       List.iter (fun (msg: ITerm) -> q.Add(msg, from)) msgs
-    | _ -> q.DoAdd(SaidInfon(from, msg), None)
+    | _ -> q.DoAdd(SaidInfon(from, msg), from, None)
 
   /// Split ands recursively inside the message (even inside prefixes)
-  member private q.DoAdd (msg: ITerm, evidence: ITerm option, ?prefix: ITerm list) =
+  member private q.DoAdd (msg: ITerm, from: ITerm, evidence: ITerm option, ?prefix: ITerm list) =
     let prefix =  match prefix with
                   | None -> []
                   | Some prefix -> prefix
@@ -56,13 +57,13 @@ type Quarantine(logicEngine: ILogicEngine) =
     | AndInfon(msgs) -> 
       match evidence with 
       | None -> 
-        List.iter (fun msg -> q.DoAdd(msg, None, prefix)) msgs
+        List.iter (fun msg -> q.DoAdd(msg, from, None, prefix)) msgs
       | Some(AndEvidence(evidences)) when msgs.Length = evidences.Length ->
-        List.iter2 (fun msg ev -> q.DoAdd(msg, Some ev, prefix)) msgs evidences
+        List.iter2 (fun msg ev -> q.DoAdd(msg, from, Some ev, prefix)) msgs evidences
       | _ -> failwithf "Mailformed conjunction evidence on %O" msg
-    | SaidInfon(ppal, msg) -> q.DoAdd(msg, evidence, prefix @ [ppal])
+    | SaidInfon(ppal, msg) -> q.DoAdd(msg, from, evidence, prefix @ [ppal])
     | _ -> 
-      msgs.[PrefixedInfon(prefix, msg)] <- evidence
+      msgs.[PrefixedInfon(prefix, msg)] <- (from, evidence)
 
   /// Remove from quarantine (splitting Ands). The optional prefix
   /// is used to split ands recursively inside quotations
@@ -86,13 +87,13 @@ type Quarantine(logicEngine: ILogicEngine) =
 
   /// Match a wire condition (infon) to messages in quarantine. It returns a 
   /// subset of (possibly specialized) substitutions. 
-  member q.Matches (infon: ITerm) (substs: ISubstitution seq) =
-    q.DoMatches(infon, None, substs, [])
+  member q.Matches (infon: ITerm) (from: ITerm) (substs: ISubstitution seq) =
+    q.DoMatches(infon, from, None, substs, [])
   
   /// Performs the actual matching. The proofPattern is used to match only 
   /// justified infons that have a proof matching the pattern. The prefix 
   /// is used to match recursively inside quotations
-  member private q.DoMatches (infon: ITerm, proofPattern: ITerm option, substs: ISubstitution seq, prefix: ITerm list) =
+  member private q.DoMatches (infon: ITerm, from: ITerm, proofPattern: ITerm option, substs: ISubstitution seq, prefix: ITerm list) =
     match infon.Normalize() with
     | EmptyInfon -> substs
     | AsInfon(_) -> failwith "Trying to match asInfon(...) on wire"
@@ -103,32 +104,36 @@ type Quarantine(logicEngine: ILogicEngine) =
         match proofPattern.Unify (AndEvidence(vars)) with
         | Some subst' -> 
           let substs = seq { for subst in substs -> subst.ComposeWith subst' }
-          List.fold2 (fun substs infon var -> q.DoMatches(infon, Some var, substs, prefix)) substs infons vars
+          List.fold2 (fun substs infon var -> q.DoMatches(infon, from, Some var, substs, prefix)) substs infons vars
         | None -> seq []
       | None -> 
-        List.fold (fun substs infon -> q.DoMatches(infon, proofPattern, substs, prefix)) substs infons
+        List.fold (fun substs infon -> q.DoMatches(infon, from, proofPattern, substs, prefix)) substs infons
     | SaidInfon(ppal, infon) ->
-      q.DoMatches(infon, proofPattern, substs, prefix @ [ppal])
+      q.DoMatches(infon, from, proofPattern, substs, prefix @ [ppal])
     | JustifiedInfon(infon, ev) ->
       match proofPattern with 
-      | None -> q.DoMatches(infon, Some ev, substs, prefix)
+      | None -> q.DoMatches(infon, from, Some ev, substs, prefix)
       | Some p -> failwith "Trying to match nested justifications on wire"
     | infon -> 
       seq { for subst in substs do
-              let substInfon = (PrefixedInfon(prefix,infon)).Apply subst
+              let infon = PrefixedInfon(prefix,infon)
               for kvp in msgs do
-                match substInfon.UnifyFrom subst (kvp.Key.Apply subst) with
+                match kvp.Key.UnifyFrom subst infon with
                 | None -> ()
                 | Some subst -> 
-                  match proofPattern with
-                  | None -> yield subst 
-                  | Some proofPattern ->
-                    match kvp.Value with
-                    | None -> ()
-                    | Some proof -> 
-                      match proofPattern.UnifyFrom subst proof with
+                  let (sender, ev) = kvp.Value
+                  match sender.UnifyFrom subst from with
+                  | None -> ()
+                  | Some subst -> 
+                    match proofPattern with
+                    | None -> yield subst 
+                    | Some proofPattern ->
+                      match ev with
                       | None -> ()
-                      | Some subst -> yield subst }
+                      | Some proof -> 
+                        match proofPattern.UnifyFrom subst proof with
+                        | None -> ()
+                        | Some subst -> yield subst }
 
   member private q.FreshVar (t: IType) =
     let ret = {Name = "Var#" + freshVarId.ToString(); Type = t}

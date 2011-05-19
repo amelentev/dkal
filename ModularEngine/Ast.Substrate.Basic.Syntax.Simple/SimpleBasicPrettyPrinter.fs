@@ -12,10 +12,12 @@
 namespace Microsoft.Research.Dkal.Ast.Substrate.Basic.Syntax.Simple
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Utils.PrettyPrinting
 open Microsoft.Research.Dkal.Substrate.Basic
+open Microsoft.Research.Dkal.Substrate.Factories
 
 open System.Collections.Generic
 
@@ -72,5 +74,10 @@ type SimpleBasicPrettyPrinter() =
     | PrincipalConstant(p) -> [TextToken(p)]
     | SubstrateConstant(o) when o.GetType() = typeof<string> -> [TextToken("\"" + o.ToString() + "\"")]
     | SubstrateConstant(o) -> [TextToken(o.ToString())]
+    | :? ISubstrateTerm as t -> 
+      let substrate = SubstrateMap.GetSubstrate t.Namespace
+      let pp = SubstratePrettyPrinterFactory.SubstratePrettyPrinter substrate "simple"
+      let printedSubstrateTerm = pp.PrintTerm t
+      [ TextToken <| "{| \"" + t.Namespace + "\" | " + printedSubstrateTerm + " |}" ]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" t
    

@@ -23,16 +23,17 @@ substrate xml("<subjects>
     namespaces "subjects"
 
 macro isProfessor(PROFESSOR: Principal) : Boolean
-    {| "subjects" | "//professor/@name" | PROFESSOR |}
+    {| "basic" | Ret := asBoolean({| "subjects" | "//professor/@name" | PROFESSOR |}) |}
+//    {| "subjects" | "//professor/@name" | PROFESSOR |}
 
 macro isSubject(SUBJECT: Subject) : Boolean
-    {| "subjects" | "//subject/@name" | SUBJECT |}
+    {| "basic" | Ret := asBoolean({| "subjects" | "//subject/@name" | SUBJECT |}) |}
     
 macro inChargeOf(SUBJECT: Subject, PROFESSOR: Principal) : Boolean
-    {| "subjects" | "//subject[@name='$SUBJECT']/professor[@name='$PROFESSOR']" | Ret |}
+    {| "basic" | Ret := asBoolean({| "subjects" | "//subject[@name='$SUBJECT']/professor[@name='$PROFESSOR']" |}) |}
     
 macro enlistedIn(SUBJECT: Subject, STUDENT: Principal) : Boolean
-    {| "subjects" | "//subject[@name='$SUBJECT']/student[@name='$STUDENT']" | Ret |}
+    {| "basic" | Ret := asBoolean({| "subjects" | "//subject[@name='$SUBJECT']/student[@name='$STUDENT']" |}) |}
     
 ---smith--------------------------
 // prof. smith's policy

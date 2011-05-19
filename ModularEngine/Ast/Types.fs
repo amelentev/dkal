@@ -24,6 +24,7 @@ module Type =
       match o with
       | :? BasicType as bt' -> (bt :> IType).FullName.Equals((bt' :> IType).FullName)
       | _ -> false
+    override bt.ToString() = (bt :> IType).FullName
 
   let Infon = new BasicType("Dkal.Infon", "Infon") :> IType
   let Principal = new BasicType("Dkal.Principal", "Principal") :> IType
@@ -44,6 +45,7 @@ module Type =
                            | :? Substrate as t' -> typ.Equals(t'.Type)
                            | _ -> false
     override s.GetHashCode() = typ.GetHashCode()
+    override s.ToString() = (s :> IType).FullName
 
   // type shortcuts
   let Boolean = Substrate(typeof<bool>) :> IType

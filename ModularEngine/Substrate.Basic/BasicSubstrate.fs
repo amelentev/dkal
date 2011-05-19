@@ -14,6 +14,7 @@ namespace Microsoft.Research.Dkal.Substrate.Basic
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.Substrate
 
 open System.Collections.Generic
 
@@ -56,21 +57,45 @@ type BasicSubstrate() =
       box ((a:?>int)*(b:?>int))
     | _ -> failwithf "unknown function %A on args %A" f args
 
-  let rec evalute (s: ISubstitution) (expr: ITerm) =
-    let eval = evalute s
+  let rec evaluate (substs: ISubstitution list) (expr: ITerm) =
     match expr with
-      | :? IVar as v -> eval (s.Apply(v))
-      | :? IConst as c -> c
+      | :? IVar as v -> 
+        [ for subst in substs do 
+            if subst.DomainContains v then
+              yield! evaluate [subst] (subst.Apply(v))
+            else
+              failwithf "Found free variable %O when solving basic substrate term" v ]
+      | :? IConst as c -> [ for subst in substs -> (c, subst) ]
+      | AsBoolean(query) ->
+        [ for subst in substs do
+            let substs' = SubstrateDispatcher.Solve [query] [subst]
+            if Seq.isEmpty substs' then
+              yield (Constant(false) :> IConst, subst) 
+            else
+              for subst' in substs' do
+                yield (Constant(true) :> IConst, subst') ]
       | App(f, args) ->
-        let args = args |> List.map eval |> List.map (fun x -> x.Value)
-        Constant (evalf f args) :> IConst
+        [ for subst in substs do
+            let initialArgsLists = new HashSet<_>()
+            initialArgsLists.Add [] |> ignore
+            let cArgsLists, substs = List.fold (fun (cArgsLists, substs) arg -> 
+                                                  let cArgs', substs' = List.unzip <| evaluate substs arg
+                                                  let cArgsLists' = new HashSet<_>()
+                                                  for cArgsList in cArgsLists do
+                                                    for cArg' in cArgs' do
+                                                      cArgsLists'.Add(cArgsList @ [cArg']) |> ignore
+                                                  cArgsLists', substs') (initialArgsLists, [subst]) args
+            for cArgsList in cArgsLists do
+              yield Constant(evalf f (List.map (fun (c : IConst) -> c.Value) cArgsList)) :> IConst, subst]
       | _ as t -> failwithf "unknown term %A" t
 
-  let solve11 (q: BasicSubstrateTerm) (s: ISubstitution) =
-    let r = evalute s q.Right
-    match q.Left.UnifyFrom s r with
-    | Some subst' -> [subst']
-    | None -> []
+  let solve1Many (substs: ISubstitution list) (q: BasicSubstrateTerm)  =
+    let substs =     
+      [ for r, subst in evaluate substs q.Right do
+          match q.Left.UnifyFrom subst r with
+          | Some subst' -> yield subst'
+          | None -> () ]
+    substs
 
   interface ISubstrate with
 
@@ -86,7 +111,8 @@ type BasicSubstrate() =
       | _ -> failwithf "Basic substrate does not understand term %O" query
 
     member bs.Solve (queries: ISubstrateQueryTerm seq) (substs: ISubstitution seq) =
-      let queries: BasicSubstrateTerm seq = queries |> Seq.cast
-      let solve1Many substs (query: BasicSubstrateTerm) =
-        substs |> Seq.collect (solve11 query)
-      queries |> Seq.fold solve1Many substs
+      let queries: BasicSubstrateTerm list = queries |> Seq.cast |> Seq.toList
+//      let solve1Many substs (query: BasicSubstrateTerm) =
+//        substs |> Seq.collect (solve11 query)
+      let substs = List.fold solve1Many (Seq.toList substs) queries
+      seq substs
