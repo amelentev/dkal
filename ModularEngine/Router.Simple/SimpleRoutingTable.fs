@@ -38,11 +38,11 @@ type SimpleRoutingTable(me: string, address: string) =
 
     /// Returns the list of principal names that I know
     member rt.Principals =
-      [ for kv in principalAddresses -> kv.Key ]
+      [ for kv in principalAddresses -> kv.Key ] @ [ me ]
 
     /// Returns true if the principal name is known to the RoutingTable
     member rt.HasPrincipal (name: string) =
-      principalAddresses.ContainsKey name
+      principalAddresses.ContainsKey name || name = me
 
     /// Adds the principal (with name and address) and returns true if the 
     /// principal was not present before addition
@@ -59,6 +59,8 @@ type SimpleRoutingTable(me: string, address: string) =
       let found, endpointAddress = principalAddresses.TryGetValue name
       if found then
         endpointAddress :> IPrincipalAddress
+      elif name = me then
+        { Location = address } :> IPrincipalAddress
       else
         failwithf "Principal not known: %O" name
 
