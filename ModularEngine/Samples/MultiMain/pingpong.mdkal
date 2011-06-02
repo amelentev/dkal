@@ -1,35 +1,52 @@
+/// This example models a two principals that send numbers to each other.
+/// Every time they multiply the message by a factor of 2 until they break
+/// the limit of 100000 and stop.
+
 // common
 type Int = System.Int32
 
+// an infon relation to hold the number that is passed around
 relation r(I: Int)
 
 ---ping-----------------------------
 // principal ping policy
+
+// start the chain reaction
 do once
 	send to pong:
 		r(1)
         
+// reply to pong's messages
 with X: Int, Y: Int
-	upon
+    upon
+        // whenever pong sends me a message
 		pong said r(X)
 	if
+        // multiply the number by 2
 		asInfon({|"basic"|Y:=X*2|})
 	do
-		send to pong:
+        // send that bigger number back to pong
+        send to pong:
 			r(Y)
+        // drop the original message
         drop
             pong said r(X)
 
 ---pong-----------------------------
 // principal pong policy
+
+// reply to ping's messages
 with X: Int, Y: Int
 	upon
 		ping said r(X)
 	if
+        // check that the number is less than 100000 and if so multiply it by 2
 		asInfon({|"basic"|X < 100000|}) &&
 		asInfon({|"basic"|Y:=X*2|})
 	do
+        // send that bigger number back to pong
 		send to ping:
 			r(Y)
+        // drop the original message
         drop 
             ping said r(X)

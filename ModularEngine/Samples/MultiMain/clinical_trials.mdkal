@@ -1,4 +1,13 @@
+/// Based on the Clinical Trials example from the Evidential Authorization 
+/// paper (see http://goo.gl/m5jD0). There are 4 principals: 
+///   - org1 is a clinical trial organizer
+///   - site1 is a site hired by org1 to execute the trial
+///   - phys1 is a physician working at site1
+///   - keyMgr keeps the keys for all the patient records involved in the trial
+
 // common declarations
+
+// type renames
 type Principal = Dkal.Principal
 type Infon = Dkal.Infon
 type Evidence = Dkal.Evidence
@@ -6,14 +15,29 @@ type Int = System.Int32
 type Trial = Int
 type Record = Int
 
+// SITE participates executing trial T
 relation siteParticipates(SITE: Principal, T: Trial)
+
+// SITE has allocated patients with numbers [N1,...,N2] in trial T
 relation siteAllocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
+
+// PHYS is a physicial working on trial T at SITE
 relation physParticipates(PHYS: Principal, T: Trial, SITE: Principal)
-relation physAllocatedPatients(PHYS: Principal, P1: Int, P2: Int, T: Trial, SITE: Principal)
+
+// PHYS has allocated patients with numbers [N1,...,N2] in trial T at SITE
+relation physAllocatedPatients(PHYS: Principal, N1: Int, N2: Int, T: Trial, SITE: Principal)
+
+// P is requesting to read record R
 relation requestToRead(P: Principal, R: Record)
+
+// P is allowed to read record R
 relation mayRead(P: Principal, R: Record)
+
+// K is the key to unlock/decrypt record R
 relation keyForRecord(K: Int, R: Record)
 
+// substrate available to all principals that holds patient records. 
+// the data field is "encrypted" and can only be unlocked with the proper key.
 substrate xml("<records>
                     <record id='101' patient='1005' trial='42' data='ala ma kota' />
                     <record id='102' patient='1015' trial='42' data='kot ma ale' />
@@ -22,6 +46,7 @@ substrate xml("<records>
                 </records>") 
     namespaces "records"
     
+// substrate available to all principals that holds trials information
 substrate xml("<trials>
                     <trial id='42' organizer='org1' name='highly classified trial' />
                 </trials>") 
@@ -30,20 +55,29 @@ substrate xml("<trials>
 ---org1--------------------------
 // org1's policy
 
+// substrate that indicates which sites are executing the trials organized by org1
 substrate xml("<siteAssignments>
                     <siteAssignment site='site1' trial='42' n1='1000' n2='1250' />
                 </siteAssignments>") 
     namespaces "siteAssignments"
 
+// rule to trigger for each site executing a trial organized by org1
 with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
     if
+        // org1 is the organizer of TRIAL
         asInfon({| "trials" | "//trial[@organizer='$Me']/@id" | TRIAL |}) && 
+        // SITE is executing TRIAL with patients in range [N1,...,N2]
         asInfon({| "siteAssignments" | "//siteAssignment[@trial='$TRIAL']" | SITE <-> "site", N1 <-> "n1", N2 <-> "n2" |})
     do
+        // inform SITE that it participates in TRIAL
         say with justification to SITE:
             siteParticipates(SITE, TRIAL)
+        // inform SITE that it has patients [N1,...,N2] assigned for TRIAL
         say with justification to SITE:
             siteAllocatedPatients(SITE, N1, N2, TRIAL)
+        // delegation of authority: tell SITE that whenever it grants access 
+        // to someone to read a record, if this record corresponds to a patient
+        // in [N1,...,N2], then it can act as if org1 granted access
         send with justification to SITE:
             with PERSON: Principal, REC: Int, NUMBER: Int
                 SITE said mayRead(PERSON, REC) &&
@@ -55,72 +89,102 @@ with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
 ---site1--------------------------
 // site1's policy
 
+// substrate that indicates which physicians work in which trials at site1
 substrate xml("<physAssignments>
                     <physAssignment phys='phys1' trial='42' n1='1010' n2='1050' />
                 </physAssignments>") 
     namespaces "physAssignments"
     
+// rule to trigger for each physician working on a trial at site1
 with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E: Evidence
     upon 
+        // some organized ORG says that site1 is executing TRIAL
         ORG said siteParticipates(Me, TRIAL) [_]
     upon 
+        // ORG says that site1 has patients [N1,...,N2] in TRIAL
         ORG said siteAllocatedPatients(Me, N1, N2, TRIAL) [_]
     if
+        // check that ORG is effectively the organizer of TRIAL
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
+        // PHYS is a physician working at TRIAL in site1 on patients [P1,...,P2]
         asInfon({| "physAssignments" | "//physAssignment[@trial='$TRIAL']" | PHYS <-> "phys", P1 <-> "n1", P2 <-> "n2" |}) &&
+        // check that [P1,...,P2] is a subset of [N1,...,N2]
         asInfon({| "basic" | N1 <= P1 && P2 <= N2 |})
     upon
+        // ORG gave us permission to delegate his authority on granting access 
+        // to records, provided that X holds
         X -> ORG said mayRead(PHYS, R) [E]
     do
+        // inform PHYS that he/she participates in TRIAL
         say with justification to PHYS:
             physParticipates(PHYS, TRIAL, Me)
+        // inform PHYS that his/her patients for TRIAL are [P1,...,P2]
         say with justification to PHYS:        
             physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
+        // delegation of authority: tell PHYS that whenever he/she needs to
+        // read a record, if this record corresponds to a patient in [P1,...,P2]
+        // then site1 granted access
         send with justification to PHYS:
             with NUMBER: Int, R: Record
                 asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | NUMBER |}) &&
                 asInfon({| "basic" | P1 <= NUMBER && NUMBER <= P2 |})
                 -> 
                 Me said mayRead(PHYS, R)
+        // forward the delegation of authority that site1 got from ORG
         send to PHYS:
             X -> ORG said mayRead(PHYS, R) [E]
             
 ---phys1--------------------------
 // phys1's policy
 
+// substrate to keep track of which patients phys1 wants to read their records
 substrate xml("<physPatients>
                     <physPatient id='1015' needInfo='true' />
                     <physPatient id='1100' needInfo='true' />
                 </physPatients>") 
     namespaces "physPatients"
 
+// rule to trigger for each record that phys1 wants to read
 with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence
 	upon 
+        // SITE said that phys1 participates in TRIAL at SITE
 		SITE said physParticipates(Me, TRIAL, SITE) [_]
     upon 
+        // SITE said that phys1 has patients [P1,...,P2] in TRIAL at SITE
         SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [_]
     if
+        // phys1 wants to read the record for patient NUMBER
 		asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | NUMBER |}) &&
+        // and this NUMBER is in his allowed range [P1,...,P2]
         asInfon({| "basic" | P1 <= NUMBER && NUMBER <= P2 |}) &&
+        // the record for patient NUMBER is R
         asInfon({| "records" | "//record[@patient='$NUMBER' and @trial='$TRIAL']/@id" | R |}) &&
+        // ORG is the organizer of TRIAL
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
     upon 
+        // ORG is delegating access to R under conditions X
         X -> ORG said mayRead(Me, R) [E1]
     upon
+        // SITE is delegating access to R under conditions Y
         Y -> SITE said mayRead(Me, R) [E2]
 	do
+        // ask keyMgr for the key of R
 		say with justification to keyMgr:
 			requestToRead(Me, R)
+        // send keyMgr the delegation of access by ORG
         send to keyMgr:
 			X -> ORG said mayRead(Me, R) [E1]
+        // send keyMgr the delegation of access by SITE
         send to keyMgr:
 			Y -> SITE said mayRead(Me, R) [E2]
+        // drop the message, in order to keep the rule from firing several times
         drop
             SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
             
 ---keyMgr--------------------------
 // keyMgr's policy
 
+// substrate to store the keys for each record
 substrate xml("<keys>
                     <key record='101' key='13' />
                     <key record='102' key='1313' />
@@ -129,21 +193,32 @@ substrate xml("<keys>
                 </keys>")
     namespaces "keys"
 
+// rule to learn every justified infon that arrives from communication
 with X: Infon, E: Evidence
     upon X [E]
     do
         learn X [E]
-    
+
+// rule to serve key requests        
 with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
 	upon 
+        // PERSON is requesting the key for R
 		PERSON said requestToRead(PERSON, R) [_]
 	if
+        // R is a record for TRIAL
         asInfon({| "records" | "//record[@id='$R']/@trial" | TRIAL |}) &&
+        // ORG is the organizer of TRIAL
 		asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
     if
+        // ORG has granted PERSON with access to R
 		ORG said mayRead(PERSON, R) [_]
     if 
+        // K is the key for R
         asInfon({| "keys" | "/keys/key[@record='$R']/@key" | K |})
 	do
+        // send K to PERSON
 		say with justification to PERSON:
 			keyForRecord(K, R)
+        // drop the request, to prevent the rule from firing several times
+        drop 
+            PERSON said requestToRead(PERSON, R)

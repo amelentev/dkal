@@ -1,13 +1,21 @@
+/// This example models a very simple filesystem that serves file requests and
+/// grants access depending on the permissions defined on XML.
+
 // common declarations
 type File = System.String
 type User = Dkal.Principal
 type Operation = System.String
 
+// user U is allowed to perform operation O on file F
 relation allowed(F: File, U: User, O: Operation)
+
+// user U is requesting to perform operation O on file F
 relation ask(F: File, U: User, O: Operation)
 
 ---john--------------------------
 // john's policy
+
+// john tries to perform a bunch of operations over various files
 do once
     send to filesystem: ask("readme.txt", Me, "read")
     send to filesystem: ask("readme.txt", Me, "write")
@@ -17,20 +25,27 @@ do once
 ---filesystem--------------------------
 // filesystem's policy
 
+// permissions are defined on an XML document
 substrate xml("<permissions>
                     <permission user='john' file='readme.txt' read='true' write='false' execute='false' />
                     <permission user='john' file='holidays.jpg' read='true' write='true' execute='false' />
                 </permissions>") 
     namespaces "permissions"
 
+// serve requests
 with U: User, F: File, O: Operation
 	upon
-		U said ask(F, U, O)
+        // U requests to perform an operation O over a file F 
+        U said ask(F, U, O)
 	if
+        // we check if it has permission to do so
 		asInfon({| "permissions" | "//permission[@user='$U' and @file='$F' and @$O='true']" |})
 	do
+
+        // we tell U that he can proceed to perform the requested operation 
 		send to U:
 			allowed(F, U, O)
-		drop
+
+        // we drop the request to avoid serving it several times
+        drop
 			U said ask(F, U, O)
-			

@@ -1,3 +1,5 @@
+/// This example models a single principal that runs a Turing Machine
+
 ---turingMachine--------------------------
 // a deterministic Turing Machine
 
@@ -19,7 +21,7 @@ relation nonFinalState(S: State)
 // program
 relation transition(S1: State, Sy1: Symbol, S2: State, Sy2: Symbol, D: Direction)
 
-// for output
+// to model output
 relation step(P1 : Position, P2: Position, S1: State, S2: State, Sy1: Symbol, Sy2: Symbol)
 
 do once
@@ -91,4 +93,3 @@ with S1: State, S2: State, Sy1: Symbol, Sy2: Symbol, P1: Position, P2: Position
             tape(P1, Sy2)
         send to Me:
             step(P1, P2, S1, S2, Sy1, Sy2)
-        

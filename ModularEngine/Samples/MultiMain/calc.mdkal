@@ -1,20 +1,34 @@
+/// This example models 2 principals: Alice needs to perform arithmetic 
+/// calculations and Bob helps her.
+
 // common declarations
 type Int = System.Int32
 
+// Z is the sum of X and Y
 relation sum(X: Int, Y: Int, Z: Int)
+
+// The sum of X and Y is needed
 relation needSum(X: Int, Y: Int)
+
+// Z is the product of X and Y
 relation product(X: Int, Y: Int, Z: Int)
+
+// The product of X and Y is needed
 relation needProduct(X: Int, Y: Int)
 
+// P knows how to perform arithmetic calculations
 relation knowsMath(P: Dkal.Principal)
 
 ---alice--------------------------
 // alice's policy
+
+// basic knowledge about needed arithmetic calculations and who knows math
 do once
 	learn needSum(1, 2)
 	learn needProduct(11, 22)
 	learn knowsMath(bob)
-	
+
+// general rule to solve sums
 with X: Int, Y: Int, P: Dkal.Principal
 	if
 		needSum(X, Y) && knowsMath(P)
@@ -24,6 +38,7 @@ with X: Int, Y: Int, P: Dkal.Principal
 		forget
 			needSum(X, Y)
 
+// general rule to solve products
 with X: Int, Y: Int, P: Dkal.Principal
 	if
 		needProduct(X, Y) && knowsMath(P)
@@ -32,9 +47,11 @@ with X: Int, Y: Int, P: Dkal.Principal
 			needProduct(X, Y)
 		forget
 			needProduct(X, Y)
-			
+
 ---bob--------------------------
 // bob's policy
+
+// general rule to help someone asking for sums
 with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 	upon
 		P said needSum(X, Y)
@@ -46,6 +63,7 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 		drop
 			P said needSum(X, Y)
 			
+// general rule to help someone asking for products
 with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 	upon
 		P said needProduct(X, Y)
@@ -55,4 +73,4 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
 		send to P:
 			product(X, Y, Z)
 		drop
-			P said needProduct(X, Y)			
+			P said needProduct(X, Y)

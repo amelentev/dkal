@@ -1,3 +1,7 @@
+/// This example models a very small university with 2 professors and a student.
+/// The professors share exam contents with each other. The student tries to do
+/// the same, but he is denied access.
+
 // common declarations
 type Principal = Dkal.Principal
 type Int = System.Int32
@@ -6,10 +10,17 @@ type Boolean = System.Boolean
 
 type Subject = String
 
+// PERSON has the need to get the contents of the exam for SUBJECT
 relation needsExamContents(PERSON: Principal, SUBJECT: Subject)
+
+// PERSON is asking for the contents of the exam for SUBJECT
 relation asksForExamContents(PERSON: Principal, SUBJECT: Subject)
+
+// the contents of the exam for SUBJECT are CONTENTS
 relation examContents(SUBJECT: Subject, CONTENTS: String)
 
+// a substrate known to all the principals, contains basic information on
+// each subject: assigned professors and enrolled students 
 substrate xml("<subjects>
                     <subject name='calculus'>
                         <professor name='smith' />
@@ -22,17 +33,20 @@ substrate xml("<subjects>
                 </subjects>") 
     namespaces "subjects"
 
+// PROFESSOR works at the university
 macro isProfessor(PROFESSOR: Principal) : Boolean
     {| "basic" | Ret := asBoolean({| "subjects" | "//professor/@name" | PROFESSOR |}) |}
-//    {| "subjects" | "//professor/@name" | PROFESSOR |}
 
+// SUBJECT is lectured at the university
 macro isSubject(SUBJECT: Subject) : Boolean
     {| "basic" | Ret := asBoolean({| "subjects" | "//subject/@name" | SUBJECT |}) |}
     
-macro inChargeOf(SUBJECT: Subject, PROFESSOR: Principal) : Boolean
+// PROFESSOR gives lectures in SUBJECT
+macro givesLectures(PROFESSOR: Principal, SUBJECT: Subject) : Boolean
     {| "basic" | Ret := asBoolean({| "subjects" | "//subject[@name='$SUBJECT']/professor[@name='$PROFESSOR']" |}) |}
     
-macro enlistedIn(SUBJECT: Subject, STUDENT: Principal) : Boolean
+// STUDENT is enrolled in SUBJECT
+macro enrolledIn(STUDENT: Principal, SUBJECT: Subject) : Boolean
     {| "basic" | Ret := asBoolean({| "subjects" | "//subject[@name='$SUBJECT']/student[@name='$STUDENT']" |}) |}
     
 ---smith--------------------------
@@ -48,7 +62,7 @@ with P: Principal, SUBJECT: Subject, CONTENTS: String
     upon
         P said asksForExamContents(P, SUBJECT)
     if
-        asInfon(inChargeOf(SUBJECT, P)) &&
+        asInfon(givesLectures(P, SUBJECT)) &&
         asInfon({| "exams" | "//exam[@subject='$SUBJECT']/@contents" | CONTENTS |}) 
     do
         send to P:
@@ -66,8 +80,8 @@ with PROF: Principal, SUBJECT: Subject, CONTENTS: String
     if 
         needsExamContents(Me, SUBJECT) && 
         asInfon(isProfessor(PROF)) &&
-        asInfon(inChargeOf(SUBJECT, PROF)) &&
-        asInfon(inChargeOf(SUBJECT, Me)) &&
+        asInfon(givesLectures(PROF, SUBJECT)) &&
+        asInfon(givesLectures(Me, SUBJECT)) &&
         asInfon({| "basic" | PROF != Me |})
     do
         send to PROF:
@@ -81,11 +95,9 @@ with PROF: Principal, SUBJECT: Subject, CONTENTS: String
 with PROF: Principal, SUBJECT: Subject
     if 
         asInfon(isSubject(SUBJECT)) &&
-        asInfon(enlistedIn(SUBJECT, Me)) &&
+        asInfon(enrolledIn(Me, SUBJECT)) &&
         asInfon(isProfessor(PROF)) &&
-        asInfon(inChargeOf(SUBJECT, PROF))
+        asInfon(givesLectures(PROF, SUBJECT))
     do
         send to PROF:
             asksForExamContents(Me, SUBJECT)
-
-            
