@@ -1,0 +1,14 @@
+/// Hello world example
+
+relation helloWorldFrom(P: Dkal.Principal)
+
+---p1-----------------------------
+do once
+	send to p2: helloWorldFrom(Me)
+
+---p2-----------------------------
+with P: Dkal.Principal
+    upon 
+        P said helloWorldFrom(P)
+    do
+        send to P: helloWorldFrom(Me)
