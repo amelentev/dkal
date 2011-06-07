@@ -24,6 +24,7 @@ using Microsoft.Research.Dkal.Factories.Initializer;
 using Microsoft.Research.Dkal.Executor.Factories;
 using Microsoft.Research.Dkal.Infostrate.Factories;
 using Microsoft.Research.Dkal.LogicEngine.Factories;
+using Microsoft.Research.Dkal.MailBox.Factories;
 using Microsoft.Research.Dkal.Router.Factories;
 using Microsoft.Research.Dkal.SignatureProvider.Factories;
 using Microsoft.Research.Dkal.Utils.Exceptions;
@@ -67,7 +68,8 @@ namespace Microsoft.Research.Dkal.GuiMain
                 var logicEngine = LogicEngineFactory.LogicEngine(kind);
                 var signatureProvider = SignatureProviderFactory.SignatureProvider(kind);
                 var infostrate = InfostrateFactory.Infostrate(kind);
-                var executor = ExecutorFactory.Executor(kind, router, logicEngine, signatureProvider, infostrate);
+                var mailbox = MailBoxFactory.MailBox(kind, logicEngine);
+                var executor = ExecutorFactory.Executor(kind, router, logicEngine, signatureProvider, infostrate, mailbox);
 
                 Assembly assembly;
                 try {

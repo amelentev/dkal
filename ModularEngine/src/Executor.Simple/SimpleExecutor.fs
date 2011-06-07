@@ -27,16 +27,13 @@ open Microsoft.Research.Dkal.Substrate
 type SimpleExecutor(router: IRouter, 
                     logicEngine: ILogicEngine, 
                     signatureProvider: ISignatureProvider, 
-                    infostrate: IInfostrate) = 
+                    infostrate: IInfostrate,
+                    mailbox: IMailBox) = 
   let log = LogManager.GetLogger("Executor.Simple")
   
   /// The inbox holds the messages that arrive from the router but still
-  /// haven't been moved to Quarantine
+  /// haven't been moved to the mailbox
   let inbox = new Queue<ITerm * ITerm>()
-
-  /// The quarantine holds all incoming messages of relevance. We need to
-  /// call quarantine.Prune() in order to remove old/unnecessary messages
-  let quarantine = new Quarantine(logicEngine)
 
   /// The rules set contains all the current rules that came from installed
   /// policies or were added as a consequence of install actions in other rules
@@ -159,12 +156,12 @@ type SimpleExecutor(router: IRouter,
           fixedPointCb()
           notEmpty.WaitOne() |> ignore
 
-        // Move messages (if any) to quarantine
+        // Move messages (if any) to mailbox
         lock inbox (fun () -> 
                     while inbox.Count > 0 do
                       let msg, from = inbox.Dequeue()
                       log.Debug("{0}: ---- GOT FROM {1}: {2} ---", router.Me, from, msg)
-                      quarantine.Add(msg, from))
+                      mailbox.Add msg from)
     with e -> 
       log.ErrorException("Error at principal " + router.Me, e)
       fixedPointCb()
@@ -201,8 +198,8 @@ type SimpleExecutor(router: IRouter,
                   else
                     failwith <| "Found inconsistent set of actions"
 
-    // Prune messages from quarantine
-    quarantine.Prune()
+    // Prune messages from mail box
+    mailbox.Prune()
 
     // Return true if some change was computed
     changed
@@ -243,7 +240,7 @@ type SimpleExecutor(router: IRouter,
           messagesToSend.Add (JustifiedInfon(said, evidence), ppal) |> ignore; false
         | Install(rule) -> (se :> IExecutor).InstallRule rule
         | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
-        | Drop(i) -> quarantine.Remove i; false
+        | Drop(i) -> mailbox.Remove i; false
         | Apply(su) -> 
           substrateUpdates.Add su |> ignore; false
         | _ -> failwithf "Unrecognized action %O" action
@@ -259,7 +256,7 @@ type SimpleExecutor(router: IRouter,
     match condition with
     | EmptyCondition -> substs
     | WireCondition(i, p) -> 
-      quarantine.Matches i p substs
+      mailbox.Matches i p substs
     | KnownCondition(i) ->
       logicEngine.Derive i substs
     | SeqCondition(conds) ->

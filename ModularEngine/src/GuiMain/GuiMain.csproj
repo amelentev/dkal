@@ -218,6 +218,10 @@
       <Project>{ED07A55B-2B70-4232-8728-2F2B9E2B7D1B}</Project>
       <Name>LogicEngine.Factories</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MailBox.Factories\MailBox.Factories.fsproj">
+      <Project>{A8CAEA59-211E-4AB2-BC29-FB887C56190C}</Project>
+      <Name>MailBox.Factories</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Router.Factories\Router.Factories.fsproj">
       <Project>{11D0FCB0-D7C2-47A8-B25D-9703A48D6D8B}</Project>
       <Name>Router.Factories</Name>

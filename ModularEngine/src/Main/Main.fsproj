@@ -89,6 +89,11 @@
       <Project>{ed07a55b-2b70-4232-8728-2f2b9e2b7d1b}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\MailBox.Factories\MailBox.Factories.fsproj">
+      <Name>MailBox.Factories</Name>
+      <Project>{a8caea59-211e-4ab2-bc29-fb887c56190c}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Router.Factories\Router.Factories.fsproj">
       <Name>Router.Factories</Name>
       <Project>{11d0fcb0-d7c2-47a8-b25d-9703a48d6d8b}</Project>

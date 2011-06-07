@@ -23,6 +23,7 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Infostrate.Factories
 open Microsoft.Research.Dkal.Executor.Factories
 open Microsoft.Research.Dkal.LogicEngine.Factories
+open Microsoft.Research.Dkal.MailBox.Factories
 open Microsoft.Research.Dkal.SignatureProvider.Factories
 open Microsoft.Research.Dkal.Router.Factories
 open Microsoft.Research.Dkal.Router.Local
@@ -43,7 +44,8 @@ module MultiMain =
     let infostrate = InfostrateFactory.Infostrate kind
     let logicEngine = LogicEngineFactory.LogicEngine kind 
     let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
-    let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate)
+    let mailbox = MailBoxFactory.MailBox kind logicEngine
+    let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
 
 //    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid substrates
 //      printfn "%s: Substrate declarations are fobidden" router.Me

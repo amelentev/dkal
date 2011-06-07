@@ -18,6 +18,7 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Factories
 open Microsoft.Research.Dkal.Router.Factories
 open Microsoft.Research.Dkal.LogicEngine.Factories
+open Microsoft.Research.Dkal.MailBox.Factories
 open Microsoft.Research.Dkal.SignatureProvider.Factories
 open Microsoft.Research.Dkal.Executor.Factories
 open Microsoft.Research.Dkal.Infostrate.Factories
@@ -48,7 +49,8 @@ module Main =
         let logicEngine = LogicEngineFactory.LogicEngine kind 
         let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
         let infostrate = InfostrateFactory.Infostrate kind
-        let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate)
+        let mailbox = MailBoxFactory.MailBox kind logicEngine
+        let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
 
         // suscribe callbacks to executor
         if step = "step" then

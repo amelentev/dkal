@@ -70,6 +70,7 @@
     <Compile Include="ISubstrateQueryTerm.fs" />
     <Compile Include="ISubstrate.fs" />
     <Compile Include="IInfostrate.fs" />
+    <Compile Include="IMailBox.fs" />
     <Compile Include="IRouter.fs" />
     <Compile Include="ISignatureProvider.fs" />
     <Compile Include="ILogicEngine.fs" />

@@ -9,17 +9,17 @@
 //
 // *********************************************************
 
-namespace Microsoft.Research.Dkal.LogicEngine.Factories
+namespace Microsoft.Research.Dkal.MailBox.Factories
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.LogicEngine.Simple
+open Microsoft.Research.Dkal.MailBox.Simple
 
-/// The LogicEngineFactory provides a factory to construct different logic engines.
-/// A logic engine kind must be provided.
-type LogicEngineFactory() =
-  static member LogicEngine (kind: string) = 
+/// The MailBoxFactory provides a factory to construct different mailboxes.
+/// A mailbox kind and a logic engine to check for proof correctness must be provided.
+type MailBoxFactory() =
+  static member MailBox (kind: string) (logicEngine: ILogicEngine) = 
     match kind with
-    | "simple" -> new SimpleLogicEngine() :> ILogicEngine
-    | k -> failwith <| "Unrecognized logic engine kind: " + k
+    | "simple" -> new SimpleMailBox(logicEngine) :> IMailBox
+    | k -> failwith <| "Unrecognized mailbox kind: " + k
 
 
