@@ -1,1 +1,1 @@
-..\..\src\MultiMain\bin\Debug\MultiMain.exe %1 10000 100
+DkalMulti %1 10000 100
