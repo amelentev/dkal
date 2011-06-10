@@ -145,6 +145,7 @@ namespace Microsoft.Research.Dkal.Documentation
             public TypeData ReturnType;
             public TypeData[] Parameters;
             public string Description;
+            public bool IsStatic = false;
         }
 
         class PropertyData
@@ -200,6 +201,8 @@ namespace Microsoft.Research.Dkal.Documentation
                                     md.Description = PrepareString(mDoc["summary"].InnerText);
                                 else
                                     md.Description = "";
+                                if (m.IsStatic) 
+                                    md.IsStatic = true;
                             }
                         }
 
@@ -252,60 +255,73 @@ namespace Microsoft.Research.Dkal.Documentation
             foreach (AssemblyData a in data.Values)
             {
                 TextWriter output = new StreamWriter(outputDir + @"\" + a.Name + ".txt");
-                output.WriteLine("! {{{{{0}}}}} Module", a.Name);
+                output.WriteLine("! {{anchor:top}} {{{{{0}}}}} Module", a.Name);
                 output.WriteLine("----");
                 index.WriteLine("** [{0}|{0} Module]", a.Name);
 
-                foreach (MyTypeData t in a.Types)
+                if (a.Types.Count > 0) 
                 {
-                    output.WriteLine("!! {{anchor:{0}}} {{{{{0}}}}} Type", t.Name);
-                    if (t.BaseType.Name != "Object")
-                        output.WriteLine("*Base type*: {0}", OutputType(t.BaseType));
-                    output.WriteLine(t.Description);
-
-                    if (t.Interfaces.Length > 0)
+                    output.WriteLine("This module defines the following types:");
+                    foreach (MyTypeData t in a.Types)
                     {
-                        output.WriteLine();
-                        output.WriteLine("!!! Implemented Interfaces");
-                        foreach (TypeData it in t.Interfaces)
-                        {
-                            output.WriteLine("* {0}", OutputType(it));
-                        }
-                    }
-
-                    if (t.Methods.Count > 0)
-                    {
-                        output.WriteLine();
-                        output.WriteLine("!!! Methods");
-                        output.WriteLine("|| Return type || Method name || Method parameters || Description ||");
-
-                        foreach (MethodData m in t.Methods)
-                        {
-                            string parameters = "";
-                            foreach (TypeData parameter in m.Parameters)
-                            {
-                                if (parameters.Length > 0)
-                                    parameters += ", ";
-                                parameters += OutputType(parameter);
-                            }
-                            output.WriteLine("| {0} | {{{{{1}}}}} | {2} | {3} |", OutputType(m.ReturnType), m.Name, parameters, m.Description);
-                        }
-                    }
-
-                    if (t.Properties.Count > 0)
-                    {
-                        output.WriteLine();
-                        output.WriteLine("!!! Properties");
-                        output.WriteLine("|| Return type || Property name || Description ||");
-
-                        foreach (PropertyData p in t.Properties)
-                        {
-                            output.WriteLine("| {0} | {{{{{1}}}}} | {2} |", OutputType(p.ReturnType), p.Name, p.Description);
-                        }
+                        output.WriteLine("* {0}", OutputType(t));
                     }
                     output.WriteLine("----");
-                }
 
+                    foreach (MyTypeData t in a.Types)
+                    {
+                        output.WriteLine("!! {{anchor:{0}}} {{{{{0}}}}} Type", t.Name);
+                        if (t.BaseType.Name != "Object")
+                            output.WriteLine("*Base type*: {0}", OutputType(t.BaseType));
+                        output.WriteLine(t.Description);
+
+                        if (t.Interfaces.Length > 0)
+                        {
+                            output.WriteLine();
+                            output.WriteLine("!!! Implemented Interfaces");
+                            foreach (TypeData it in t.Interfaces)
+                            {
+                                output.WriteLine("* {0}", OutputType(it));
+                            }
+                        }
+
+                        if (t.Methods.Count > 0)
+                        {
+                            output.WriteLine();
+                            output.WriteLine("!!! Methods");
+                            output.WriteLine("|| Modifiers || Return type || Method name || Method parameters || Description ||");
+
+                            foreach (MethodData m in t.Methods)
+                            {
+                                string modifiers = "";
+                                if (m.IsStatic)
+                                    modifiers += "{{static}}";
+                                string parameters = "";
+                                foreach (TypeData parameter in m.Parameters)
+                                {
+                                    if (parameters.Length > 0)
+                                        parameters += ", ";
+                                    parameters += OutputType(parameter);
+                                }
+                                output.WriteLine("| {0} | {1} | {{{{{2}}}}} | {3} | {4} |", modifiers, OutputType(m.ReturnType), m.Name, parameters, m.Description);
+                            }
+                        }
+
+                        if (t.Properties.Count > 0)
+                        {
+                            output.WriteLine();
+                            output.WriteLine("!!! Properties");
+                            output.WriteLine("|| Return type || Property name || Description ||");
+
+                            foreach (PropertyData p in t.Properties)
+                            {
+                                output.WriteLine("| {0} | {{{{{1}}}}} | {2} |", OutputType(p.ReturnType), p.Name, p.Description);
+                            }
+                        }
+                        output.WriteLine(">{{[Back to top|#top]}}>", a.Name);
+                        output.WriteLine("----");
+                    }
+                }
                 output.WriteLine(">{{Automatically generated on {0}}}>", DateTime.Now);
                 output.Close();
             }
