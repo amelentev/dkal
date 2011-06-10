@@ -17,8 +17,8 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Ast.Infon
 
-/// Provides functionality to check if a set of action Metaterms is consistent
-/// or not. A set of action MetaTerms is consistent when all the actions in the
+/// Provides functionality to check if a set of action ITerms is consistent
+/// or not. A set of action ITerms is consistent when all the actions in the
 /// set can be applied safely in any order without changing the overall result
 type ConsistencyChecker() =
 

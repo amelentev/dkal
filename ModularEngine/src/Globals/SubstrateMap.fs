@@ -15,13 +15,17 @@ open Microsoft.Research.Dkal.Interfaces
 
 open System.Collections.Generic
 
+/// Keep a global substrate map that indicates which substrate is serving
+/// which namespaces. This is used by the SubstrateDispatcher
 module SubstrateMap =
   let private substrates = new Dictionary<string, ISubstrate>()
 
+  /// Suscribe a substrate to the SubstrateMap
   let AddSubstrate (s: ISubstrate) =
     for ns in s.Namespaces do
       substrates.[ns] <- s
 
+  /// Obtain the substrate that serves the given namespace
   let GetSubstrate (ns: string) = 
     let found, substrate = substrates.TryGetValue ns
     if found then

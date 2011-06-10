@@ -9,6 +9,8 @@
 //
 // *********************************************************
 
+/// Defines the public interface on how to pattern match AST elements defined
+/// for the SqlSubstrate
 [<AutoOpen>]
 module Microsoft.Research.Dkal.Substrate.Sql.ActivePatterns
 
@@ -16,13 +18,15 @@ module Microsoft.Research.Dkal.Substrate.Sql.ActivePatterns
   open Microsoft.Research.Dkal.Ast.Tree
   open Microsoft.Research.Dkal.Ast
 
-  // Bool patterns
+  /// Matches a conjunction
   let (|AndBool|_|) mt =  match mt with
                           | App({Name=SqlPrimitives.And; RetType=Substrate(b)}, mts) when b = typeof<bool> -> Some mts
                           | _ -> None
+  /// Matches a disjunction
   let (|OrBool|_|) mt = match mt with
                         | App({Name=SqlPrimitives.Or; RetType=Substrate(b)}, mts) when b = typeof<bool> -> Some mts
                         | _ -> None
+  /// Matches an asBoolean construct (used to nest queries)
   let (|AsBoolean|_|) mt =  match mt with 
                             | App({Name=SqlPrimitives.AsBoolean}, [exp]) -> 
                               match exp with
@@ -30,7 +34,7 @@ module Microsoft.Research.Dkal.Substrate.Sql.ActivePatterns
                               | _ -> failwith "Expecting ISubstrateQueryTerm in AsBoolean"
                             | _ -> None
 
-  // Table patterns
+  /// Matches a table.column term
   let (|Column|_|) mt = match mt with
                         | App({Name=fn}, []) when fn.Contains(".") ->
                           let i = fn.IndexOf('.')

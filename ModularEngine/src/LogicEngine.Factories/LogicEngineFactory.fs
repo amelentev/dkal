@@ -15,8 +15,9 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.LogicEngine.Simple
 
 /// The LogicEngineFactory provides a factory to construct different logic engines.
-/// A logic engine kind must be provided.
 type LogicEngineFactory() =
+
+  /// Construct a LogicEngine. A logic engine kind must be provided.
   static member LogicEngine (kind: string) = 
     match kind with
     | "simple" -> new SimpleLogicEngine() :> ILogicEngine

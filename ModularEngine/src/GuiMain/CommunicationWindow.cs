@@ -27,6 +27,9 @@ using Microsoft.Research.Dkal.Utils.Exceptions;
 namespace Microsoft.Research.Dkal.GuiMain
 {
 
+    /// <summary>
+    /// The Form used as GUI
+    /// </summary>
     public partial class CommunicationWindow : Form
     {
         IExecutor executor;
@@ -38,6 +41,10 @@ namespace Microsoft.Research.Dkal.GuiMain
 
         AutoResetEvent step = new AutoResetEvent(false);
 
+        /// <summary>
+        /// Constructs a CommunicationWindow to run a principal with the given
+        /// policy, using the provided executor, router, engine, etc.
+        /// </summary>
         public CommunicationWindow(string policyFile, IExecutor executor, IRouter router, 
                                     ILogicEngine logicEngine, IInfonPrettyPrinter prettyPrinter, IInfonParser parser)
         {
@@ -112,6 +119,10 @@ namespace Microsoft.Research.Dkal.GuiMain
             RestorePosition();
         }
 
+        /// <summary>
+        /// Called upon closing, we save the position of the window on the 
+        /// registry
+        /// </summary>
         protected override void OnClosing(CancelEventArgs e)
         {
             step.Set();
@@ -150,12 +161,18 @@ namespace Microsoft.Research.Dkal.GuiMain
         }
 
 
+        /// <summary>
+        /// Called when the Form is loaded to print a message
+        /// </summary>
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
             InitialMessage(policyFile);
         }
 
+        /// <summary>
+        /// Set the position of the window to the given values
+        /// </summary>
         public void SetPosition(int x, int y, int w, int h)
         {
             if (w > 50)
@@ -168,6 +185,9 @@ namespace Microsoft.Research.Dkal.GuiMain
                 this.Top = y;
         }
 
+        /// <summary>
+        /// Write to the main textbox, replacing markup by actual formatting
+        /// </summary>
         public void Say(string msg)
         {
             int i = 0;
@@ -317,17 +337,28 @@ namespace Microsoft.Research.Dkal.GuiMain
 
     delegate void DoAction();
 
+    /// <summary>
+    /// Used to save the output of the internal processes (DKAL engine) on a 
+    /// textbox
+    /// </summary>
     public class LogSink : System.IO.StringWriter
     {
         const int SizeLimit = 10000;
         int pos = 0;
         RichTextBox log;
 
+        /// <summary>
+        /// Construct a LogSink that uses the given textbox as output
+        /// </summary>
         public LogSink(RichTextBox l)
         {
             log = l;
         }
 
+        /// <summary>
+        /// Print out on the textbox, keeping only SizeLimit bytes on screen and
+        /// deleting the old ones
+        /// </summary>
         public void Update()
         {
             DoAction upd = null;
@@ -360,18 +391,27 @@ namespace Microsoft.Research.Dkal.GuiMain
             }
         }
 
+        /// <summary>
+        /// Write to the log and update the screen
+        /// </summary>
         public override void Write(char value)
         {
             base.Write(value);
             this.Update();
         }
 
+        /// <summary>
+        /// Write to the log and update the screen
+        /// </summary>
         public override void Write(char[] buffer, int index, int count)
         {
             base.Write(buffer, index, count);
             this.Update();
         }
 
+        /// <summary>
+        /// Write to the log and update the screen
+        /// </summary>
         public override void Write(string value)
         {
             base.Write(value);

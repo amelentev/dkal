@@ -20,19 +20,22 @@ open System.Collections.Generic
 /// Dispatch queries to substrate across substrate implementations
 type SubstrateDispatcher() =
 
-  /// queries : list of ISubstrateTerm queries
-  /// substs  : seq of substitutions to check
-  /// return  : seq of resolved substitutions (more specialized than substs)
+  /// Solve the given queries, invoking the necessary substrates, considering all 
+  /// possible substitutions. Return more specialized substitutions (if successful)
   static member Solve (queries: ISubstrateQueryTerm seq) (substs: ISubstitution seq) =
     queries
       |> Seq.groupBy (fun q -> q.Namespace)
       |> Seq.fold (fun res (ns, qs) -> (SubstrateMap.GetSubstrate ns).Solve qs res) substs
 
+  /// Returns true if the given updates can be consistently applied among 
+  /// different substrates. It delegates the problem to each substrate
   static member AreConsistentUpdates (updates: ISubstrateUpdateTerm seq) = 
     updates
       |> Seq.groupBy (fun q -> q.Namespace) 
       |> Seq.fold (fun res (ns, updates) -> res && (SubstrateMap.GetSubstrate ns).AreConsistentUpdates updates) true
 
+  /// Applies all the given updates by delegating them to each responsible
+  /// substrate. Returns true if at least one change was produced
   static member Update (updates: ISubstrateUpdateTerm seq) = 
     updates
       |> Seq.groupBy (fun q -> q.Namespace) 

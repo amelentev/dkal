@@ -18,6 +18,8 @@ open Microsoft.Research.Dkal.Substrate
 
 open NLog
 
+/// A basic signature provider that does NOT use cryptographic functions. It
+/// computes a hash over the ITerm and the name of the signing principal.
 type SimpleSignatureProvider() =
 
   let log = LogManager.GetLogger("SignatureProvider.Simple")

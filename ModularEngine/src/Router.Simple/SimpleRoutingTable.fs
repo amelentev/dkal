@@ -17,6 +17,9 @@ open System.IO
 
 open Microsoft.Research.Dkal.Router
 
+/// An IPrincipalAddress implementation that uses strings to hold the address
+/// of the principal service. The string contains the URL of the listening
+/// side of the web-service running the principal service
 type ServiceAddress = 
   { Location: string } 
   with interface IPrincipalAddress 

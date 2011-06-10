@@ -44,7 +44,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\MultiMain.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
     <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Samples\MultiMain\</StartWorkingDirectory>
     <StartArguments>university.mdkal 100000000 10000</StartArguments>
     <PlatformTarget>AnyCPU</PlatformTarget>

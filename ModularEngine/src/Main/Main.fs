@@ -25,11 +25,12 @@ open Microsoft.Research.Dkal.Infostrate.Factories
 open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
 
+/// Console front-end for a single principal
 module Main =
 
-  let log = LogManager.GetLogger("Main")
+  let private log = LogManager.GetLogger("Main")
 
-  let args = System.Environment.GetCommandLineArgs() |> Seq.toList
+  let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
   try  
     match args with
     | [_; routingFile; policyFile; step] ->

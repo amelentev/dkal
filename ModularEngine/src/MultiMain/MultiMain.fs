@@ -33,13 +33,14 @@ open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
 
+/// Console front-end for many principals
 module MultiMain =
 
-  let log = LogManager.GetLogger("MultiMain")
+  let private log = LogManager.GetLogger("MultiMain")
 
-  let messagesLimitExceeded = new AutoResetEvent(false)
+  let private messagesLimitExceeded = new AutoResetEvent(false)
 
-  let createExec(router: IRouter, assembly: Assembly) =
+  let private createExec(router: IRouter, assembly: Assembly) =
     let kind = "simple"
     let infostrate = InfostrateFactory.Infostrate kind
     let logicEngine = LogicEngineFactory.LogicEngine kind 
@@ -54,7 +55,7 @@ module MultiMain =
       executor.InstallRule rule |> ignore
     executor
 
-  let rec splitPolicies (s : string) =
+  let rec private splitPolicies (s : string) =
     let mutable i = 0
     while s.[i]='-' do
       i <- i + 1
@@ -71,7 +72,7 @@ module MultiMain =
     else
       (ppalName.ToString(), s.Substring(0, j)) :: splitPolicies(s.Substring(j))
 
-  let execute (policy: string, timeLimit: int, msgsLimit: int) =
+  let private execute (policy: string, timeLimit: int, msgsLimit: int) =
     // Populate factories
     FactoriesInitializer.Init()
 
@@ -119,7 +120,7 @@ module MultiMain =
     Thread.Sleep(500)
     Process.GetCurrentProcess().Kill()
 
-  let args = System.Environment.GetCommandLineArgs() |> Seq.toList
+  let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
   match args with
   | [_; policyFile; timeLimit; msgsLimit] ->
     if not (File.Exists (policyFile)) then

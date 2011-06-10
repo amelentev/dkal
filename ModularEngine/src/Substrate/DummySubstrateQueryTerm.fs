@@ -14,8 +14,15 @@ namespace Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 
+/// A DummySubstrateQueryTerm wraps an ITerm and adds a namespace. All the ITerm
+/// operations are delegated to the wrapped ITerm. This construction is useful to
+/// implement substrate query terms using the same infrastructure used for infon
+/// AST elements (such as Ast.Tree Application nodes).
 type DummySubstrateQueryTerm(query : ITerm, ns : string) =
+  
+  /// The wrapped ITerm containing the actual query
   member this.Query = query
+
   interface ISubstrateQueryTerm with
     member this.Namespace = ns
   interface ITerm with

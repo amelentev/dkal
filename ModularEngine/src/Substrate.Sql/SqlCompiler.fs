@@ -24,6 +24,8 @@ open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 
+/// The SqlCompiler has functionality to transform SQL query terms into real
+/// SQL queries that can be executed on a SqlConnector.
 module SqlCompiler =
   let log = LogManager.GetLogger("Substrate.Sql")
   type Dict<'A,'B> = System.Collections.Generic.Dictionary<'A,'B>
@@ -31,6 +33,7 @@ module SqlCompiler =
   let dict() = new Dict<_,_>()
   let vec() = new Vec<_>()
 
+  /// Type to represent a SQL operator
   type SqlOp =
     {
       name : string
@@ -45,16 +48,24 @@ module SqlCompiler =
   let addPrefixSqlOp dkalName sqlName =
     sqlOps.Add (dkalName, { name = sqlName; infix = false })
   
+  /// Type to represent a SQL table. The scope is used to distinguish between
+  /// tables that are in a nested query and its results therefore need to be 
+  /// treated independently
   type TableId =
     {
       scope : int
       name : string
     }
     
+  /// Type to represent SQL expressions.
   type Expr =
+    /// Table access
     | Column of TableId * string
+    /// Variable
     | Var of Variable
+    /// Constant
     | Const of IConst
+    /// Operation 
     | Op of SqlOp * list<Expr>
     
     member this.Map f =
@@ -116,6 +127,9 @@ module SqlCompiler =
     member this.Subst (dict:Dict<_,_>) =
       this.Map (function Expr.Var v when dict.ContainsKey v.Name -> Some (dict.[v.Name]) | _ -> None)
 
+  /// A CompiledQuery is a SQL Expr that contains a query, and a list of 
+  /// assignment that indicates which values (Expr) have to be associated
+  /// with which variables (Var)
   type CompiledQuery = Expr * list<Variable*Expr>
 
   let init() =
@@ -194,6 +208,9 @@ module SqlCompiler =
         
     loop !eqs
   
+  /// Compile a sequence of SQL queries to a single compiled query. Each 
+  /// nested query gets assigned a fresh scope so that table names don't 
+  /// interact.
   let compile trace nextId (theTerms:ITerm seq) =
     let nextScope = ref 0
     let rec comp currentScope (term:ITerm) = 
@@ -243,6 +260,7 @@ module SqlCompiler =
 
     body1, bindings
 
+  /// A SqlWriter prints SQL Expr elements into SQL syntax using a StringBuilder
   type SqlWriter(tables: IDictionary<TableId, string>, parms: Vec<obj>, sb : StringBuilder) =
     member x.tables = tables
     member x.parms = parms
@@ -297,6 +315,9 @@ module SqlCompiler =
       | _ as t -> failwithf "impossible %A" t
     new() = SqlWriter(tables = dict(), parms = vec(), sb = StringBuilder())
   
+  /// Given an initial ISubstitution and a compiled SQL query, this gets executed
+  /// on a SqlConnector and the results are returned by means of a (lazy) sequence
+  /// of ISubstitutions which are specializations of the given one
   let execQuery (sql:SqlConnector, trace, cc:CompiledQuery, subst:ISubstitution, vars:list<IVar>) =    
     if cc = (sqlTrue, []) then
       seq [subst]
@@ -335,11 +356,15 @@ module SqlCompiler =
       sql.ExecQuery (query, w.parms) |>
         Seq.map (fun rd -> Seq.fold (addToSubst rd) (0, subst) resSubst |> snd)
 
+  /// Execute the given update (list of table.columns and the value to assign 
+  /// to each) using the CompiledQuery to decide on which rows to perform the
+  /// update. Returns true if at least one row was modified
   let execUpdate (sql:SqlConnector, trace, cc:CompiledQuery, update: list<string * Expr>) =
     let updateTables = update |> List.map (fun x -> (fst x).Split('.').[0] ) |> Set.ofList
     if updateTables.Count > 1 then
       failwith "update on multiple tables not supported yet" 
-      // TODO: if there are several tables to update we shoud duplicate the query for each table and update it per one. update on several tables is not supported in many dbs
+      // TODO: if there are several tables to update we shoud duplicate the query for each 
+      // table and update it per one. update on several tables is not supported in many dbs
 
     let updateClause = "UPDATE " + updateTables.First()
 
@@ -360,6 +385,8 @@ module SqlCompiler =
     
     sql.ExecUpdate (updateQuery, w.parms) > 0
   
+  /// Delete the rows given by the CompiledQuery on the given table, return
+  /// true if at least one row was deleted.
   let execDelete (sql:SqlConnector, trace, cc:CompiledQuery, delTable: string) =
     let deleteClause = "DELETE " + delTable
     let w = SqlWriter()
@@ -370,6 +397,8 @@ module SqlCompiler =
     
     sql.ExecUpdate (deleteClause + fromClause + whereClause, w.parms) > 0
 
+  /// Insert a row on the given table using the mapping of columns to values 
+  /// to populate it. Return true if the row was successfully added
   let execInsert (sql:SqlConnector, trace, insTable: string, values: IDictionary<string, Expr>) =
     let columns = values.Keys |> List.ofSeq
     let insertClause = "INSERT INTO " + insTable + "(" + (values.Keys |> String.concat ", ") + ")"

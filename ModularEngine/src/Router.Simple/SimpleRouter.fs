@@ -22,7 +22,7 @@ open NLog
 /// The SimpleRouter provides a IRouter interface by means of web services.
 /// A RoutingTable is constructed by reading the XML from the given routingFile.
 /// A ConnectionsHandler instance is used to do the actual sending and receiving
-/// of messages. Infon MetaTerms are serialized and deserialized using the given
+/// of messages. Infon ITerms are serialized and deserialized using the given
 /// IParser and IPrinter implementations.
 type SimpleRouter (routingTable: IRoutingTable, parser: IInfonParser, printer: IInfonPrettyPrinter) =
   let log = LogManager.GetLogger("Router.Simple")

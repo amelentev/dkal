@@ -9,11 +9,14 @@
 //
 // *********************************************************
 
+/// Defines the public interface on how to pattern match AST elements defined
+/// in the Ast.Tree module
 [<AutoOpen>]
 module Microsoft.Research.Dkal.Ast.Tree.ActivePatterns
 
   open Microsoft.Research.Dkal.Interfaces
   
+  /// Active pattern to recognize function application AST elements
   let (|App|_|) (t: ITerm) =  match t with
                               | :? Application as a -> Some (a.Function, a.Args)
                               | _ -> None

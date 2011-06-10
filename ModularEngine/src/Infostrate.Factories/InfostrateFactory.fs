@@ -15,8 +15,9 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Infostrate.Simple
 
 /// The InfostrateFactory provides a factory to construct different infostrates.
-/// An infostrate kind must be provided. 
 type InfostrateFactory() =
+
+  /// Construct an Infostrate. An infostrate kind must be provided. 
   static member Infostrate (kind: string) = 
     match kind with
     | "simple" -> new SimpleInfostrate() :> IInfostrate

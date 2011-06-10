@@ -15,9 +15,10 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Executor.Simple
 
 /// The ExecutorFactory provides a factory to construct different executors.
-/// An executor kind, a router, a logic engine, an evidence engine, an
-/// infostrate and a mailbox must all be provided. 
 type ExecutorFactory() =
+  
+  /// Construct an Executor. An executor kind, a router, a logic engine, 
+  /// an evidence engine, an infostrate and a mailbox must all be provided. 
   static member Executor (kind: string, 
                           router: IRouter, 
                           logicEngine: ILogicEngine, 

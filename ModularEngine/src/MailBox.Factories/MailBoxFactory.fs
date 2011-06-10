@@ -15,8 +15,10 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.MailBox.Simple
 
 /// The MailBoxFactory provides a factory to construct different mailboxes.
-/// A mailbox kind and a logic engine to check for proof correctness must be provided.
 type MailBoxFactory() =
+  
+  /// Construct a MailBox. A mailbox kind and a logic engine to check for 
+  /// proof correctness must be provided.
   static member MailBox (kind: string) (logicEngine: ILogicEngine) = 
     match kind with
     | "simple" -> new SimpleMailBox(logicEngine) :> IMailBox

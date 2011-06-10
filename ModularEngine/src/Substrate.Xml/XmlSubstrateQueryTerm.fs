@@ -17,14 +17,18 @@ open Microsoft.Research.Dkal.Ast
 open System.Collections.Generic
 open System.Text
 
-/// xpath - xpath expression with (optional) input variables encoded as "$VARNAME"
-/// vars - input variables
-/// output - map from result nodes attribute names (or node name in case of "") to output term 
-/// (if it is a variable it gets instantiated)
+/// An XPath expression used to query XmlSubstrates
 type XmlSubstrateQueryTerm(ns: string, xpath: string, vars: IVar list, output: IDictionary<string, ITerm>) =
 
+  /// XPath expression with (optional) input variables encoded as "$VARNAME"
   member x.XPath = xpath
+
+  /// Input variables used in the XPath expression
   member x.Vars = vars
+
+  /// Map from result nodes attribute names (or node name in case of "") to 
+  /// output ITerms. If the output term is a variable it gets instantiated; 
+  /// if it is a constant it is compared
   member x.Output = output
 
   override x.Equals (o: obj) =

@@ -1,6 +1,9 @@
 ﻿namespace Microsoft.Research.Dkal.GuiMain
 {
-  partial class CommunicationWindow
+    /// <summary>
+    /// The Form used as GUI
+    /// </summary>
+    partial class CommunicationWindow
   {
     /// <summary>
     /// Required designer variable.

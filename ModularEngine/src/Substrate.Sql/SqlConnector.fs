@@ -23,6 +23,9 @@ open System.Data
 open System.Data.SqlClient
 open NLog
 
+/// Keeps a connection with a SQL database given by a connection string
+/// parameter upon construction. The SqlConnector can be used to execute
+/// queries or other commands over the SQL database.
 type SqlConnector(connStr) =
   let log = LogManager.GetLogger("Substrate.Sql")
   let conn = new SqlConnection(connStr)
@@ -38,17 +41,11 @@ type SqlConnector(connStr) =
       conn.Open()
     with e -> log.ErrorException("Unable to open db", e)
       
+  /// Closes the connection to the SQL database
   member this.Close () =
     conn.Close()
 
-  member this.ExecNonQuery s =
-    check()
-    let comm = new SqlCommand(s, conn)
-    comm.ExecuteNonQuery()
-  
-  member this.GetCommand s =
-    new SqlCommand(s, conn)
-  
+  /// Executes the given query and returs a (lazy) sequence of results
   member this.ExecQuery (s:string, parms:seq<obj>) =
     check()
     log.Debug("execQ: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
@@ -62,6 +59,8 @@ type SqlConnector(connStr) =
         yield reader
       reader.Close() }
 
+  /// Executes the given command and discards the results (useful for non-query
+  /// commands such as updates)
   member this.ExecUpdate (s:string, parms:seq<obj>) =
     check()
     log.Debug("execU: {0} ::: {1}", s, parms |> Seq.mapi (fun i (o:obj) -> "@" + i.ToString() + ": " + o.ToString()) |> String.concat ", ")
@@ -71,6 +70,8 @@ type SqlConnector(connStr) =
     do Seq.iteri (addParm comm) parms
     comm.ExecuteNonQuery()
 
+  /// Returns an ITerm by parsing the DbDataReader depending on the type of 
+  /// the given variable
   member this.ReadVar (rd:Common.DbDataReader, var: IVar, idx:int) : ITerm =
     try
       if var.Type = Type.Boolean then

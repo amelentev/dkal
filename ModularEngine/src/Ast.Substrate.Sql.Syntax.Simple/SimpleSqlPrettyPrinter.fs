@@ -50,7 +50,7 @@ type SimpleSqlPrettyPrinter() =
 
   member private spp.PrintTerm mt = (spp :> ISubstratePrettyPrinter).PrintTerm mt
 
-  static member FindFunctionSymbol f = 
+  static member private FindFunctionSymbol f = 
     match f with
     | "and" -> "&&", true
     | "or" -> "||", true

@@ -22,6 +22,8 @@ open NLog
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 
+/// An XML Substrate is an abstraction of an XML document that can be queried
+/// by means of XPath expressions encoded in XmlSubstrateQueryTerms
 type XmlSubstrate(xmldoc: XDocument, namespaces: string list) = 
   let log = LogManager.GetLogger("Substrate.Xml")
 

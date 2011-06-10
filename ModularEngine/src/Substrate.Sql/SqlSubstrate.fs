@@ -25,6 +25,8 @@ open System.Linq
 open System.Collections.Generic
 open System.Xml
 
+/// A SqlSubstrate is an abstraction of a SQL database that can be used to 
+/// issue queries, and perform updates (such as rows insertions/deletions).
 type SqlSubstrate(connStr : string, schemaFile: string, namespaces: string list) = 
   let mutable nextId = 0
   let conn = SqlConnector(connStr)

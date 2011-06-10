@@ -18,17 +18,13 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Interfaces
 
-// A substrate the wraps a mapping from function names to (curried) F# functions.
-//
-// This substrate is not intended to be used directly. The purpose of this
-// substrate is to serve as a basis for the implementation of specialized
-// substrates via initialization of an instance of an FSharpSubstrate with a
-// concrete mapping from function names to corresponding F# implementations.
-
+/// A substrate the wraps a mapping from function names to (curried) F# functions.
+/// This substrate is not intended to be used directly. The purpose of this
+/// substrate is to serve as a basis for the implementation of specialized
+/// substrates via initialization of an instance of an FSharpSubstrate with a
+/// concrete mapping from function names to corresponding F# implementations.
+/// Example for usage: Substrate.Crypto
 // TODO: support uncurried functions and do typechecking
-
-// Example for usage: Substrate.Crypto
-
 module FSharp =
 
   /// Extracts the argument types of a curried fsharp function
@@ -53,10 +49,15 @@ module FSharp =
   let internal invoke (mi:System.Reflection.MethodInfo) f o =  mi.Invoke(f,[|o|])
   let internal apply f o = invoke (getMethodInfo f) f o
 
+  /// A function application AST element
   type Function = { Name:string; ReturnType:System.Type; Args:list<FunctionTerm> }
+  /// A type to keep AST elements of the F# Substrate
   and FunctionTerm = 
+  /// Function application AST element for the F# Substrate (uses Function type)
   | Function of Function
+  /// Variable AST element for the F# Substrate
   | Var of IVar
+  /// Constant AST element for the F# Substrate
   | Const of Constant
     with
     member this.Type =
@@ -172,7 +173,8 @@ module FSharp =
   | _ -> failwith "toConstElem: Term is not a Constant" 
 
 
-  /// FSharpSubstrate
+  /// FSharpSubstrate that takes FunctionQueryTerms and solves them by means
+  /// of applying the functions to their arguments
   type FSharpSubstrate(ns:string list) =
 
     let functions = new Dictionary<string,obj>()
@@ -197,7 +199,7 @@ module FSharp =
       if not <| namespaces.Contains(query.Namespace) then 
         failwith "The namespace of the query is not within scope of the substrate"
       let a = query.Apply subst :?> FunctionQueryTerm
-      if not a.Body.isGround then failwith "simpleSolve: Insufficient istantiated function call. Substitution did not result in ground function body"
+      if not a.Body.isGround then failwith "simpleSolve: Insufficient instantiated function call. Substitution did not result in ground function body"
 
       // FIXME do typechecking
       let rec compute (t:FunctionTerm) =

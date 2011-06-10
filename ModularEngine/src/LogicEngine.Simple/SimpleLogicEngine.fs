@@ -49,7 +49,7 @@ type SimpleLogicEngine() =
       _signatureProvider.Value
 
     /// Obtain a list of Substitution with accompanying side conditions (AsInfon
-    /// MetaTerms). Then return only those Substitutions that satisfy all their 
+    /// ITerms). Then return only those Substitutions that satisfy all their 
     /// side conditions.
     member se.Derive (target: ITerm) (substs: ISubstitution seq) = 
       seq { for subst in substs do      
@@ -116,8 +116,8 @@ type SimpleLogicEngine() =
     | SaidInfon (PrincipalConstant(p), _) -> principal = p
     | _ -> false
   
-  /// Given a prefix (list of principal MetaTerms) a current Substitution with 
-  /// side conditions (AsInfo MetaTerms) and a target infon MetaTerm to derive
+  /// Given a prefix (list of principal ITerms) a current Substitution with 
+  /// side conditions (AsInfo ITerms) and a target infon ITerm to derive
   /// this method will recursively derive the target infon depending on its
   /// structure.
   member private se.DoDerive (pref: ITerm list) ((subst, conds): ISubstitution * ISubstrateQueryTerm seq) (infon: ITerm) = 
@@ -150,7 +150,7 @@ type SimpleLogicEngine() =
       se.DoDeriveJustification inf (subst, conds) |> Seq.collect unifyEv
     | templ ->
       // For every other case we call se.InfonsWithPrefix(..) which will give us a list of
-      // substitutions, each of which will have a list of infon MetaTerms (preconditions) that 
+      // substitutions, each of which will have a list of infon ITerms (preconditions) that 
       // need to be  satisfied in order for that substitution to be returned. This is were the 
       // backwards chaining happens, since we recursively check all the preconditions one by one 
       // (with checkOne)
@@ -163,12 +163,12 @@ type SimpleLogicEngine() =
         |> Seq.map (fun (s, ps) -> ((s, conds), ps))
         |> Seq.collect checkOne
 
-  /// Given a current Substitution, a prefix (list of principal MetaTerms) and 
-  /// a template infon MetaTerm to derive this method will return a list of 
+  /// Given a current Substitution, a prefix (list of principal ITerms) and 
+  /// a template infon ITerm to derive this method will return a list of 
   /// Substitutions that satisfy the given template, each of which will have a
-  /// list of preconditions (infon MetaTerms) that need to be verified in order
+  /// list of preconditions (infon ITerms) that need to be verified in order
   /// for that Substitution to be a real solution
-  member se.InfonsWithPrefix (subst: ISubstitution) (pref: ITerm list) (template: ITerm) =
+  member private se.InfonsWithPrefix (subst: ISubstitution) (pref: ITerm list) (template: ITerm) =
     let res = ref []
     let rec stripPrefix subst prefixUnif preconds suff = 
       let immediate = function
@@ -206,7 +206,7 @@ type SimpleLogicEngine() =
     List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, k)) (_infostrate.Value.Knowledge |> Seq.toList)
     !res
 
-  member se.DoDeriveJustification (infon: ITerm) ((subst, conds): ISubstitution * ISubstrateQueryTerm seq) =
+  member private se.DoDeriveJustification (infon: ITerm) ((subst, conds): ISubstitution * ISubstrateQueryTerm seq) =
     let straight goal =
       let aux infon = 
         match infon with

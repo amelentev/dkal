@@ -31,6 +31,10 @@ using Microsoft.Research.Dkal.Utils.Exceptions;
 
 namespace Microsoft.Research.Dkal.GuiMain
 {
+
+    /// <summary>
+    /// GUI front-end for a single principal
+    /// </summary>
     static class MainClass
     {
 

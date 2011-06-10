@@ -15,6 +15,8 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast
 
+/// Defines the primitive functions used to construct Application elements
+/// in the SqlSubstrate builders
 module SqlPrimitives =
 
   // Literals

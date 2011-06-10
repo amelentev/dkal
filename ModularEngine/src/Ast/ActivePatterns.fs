@@ -9,35 +9,53 @@
 //
 // *********************************************************
 
+/// Defines the public interface on how to pattern match AST elements defined
+/// in the Ast module
 [<AutoOpen>]
 module Microsoft.Research.Dkal.Ast.ActivePatterns
 
   open Microsoft.Research.Dkal.Interfaces
 
-  // Type patterns
+  /// Active pattern to match the infon type
   let (|Infon|_|) t = if t = Type.Infon then Some () else None
+
+  /// Active pattern to match the principal type
   let (|Principal|_|) t = if t = Type.Principal then Some () else None
+
+  /// Active pattern to match the substrate update type
   let (|SubstrateUpdate|_|) t = if t = Type.SubstrateUpdate then Some () else None
+
+  /// Active pattern to match the substrate query type
   let (|SubstrateQuery|_|) t = if t = Type.SubstrateQuery then Some () else None
+
+  /// Active pattern to match the action type
   let (|Action|_|) t = if t = Type.Action then Some () else None
+
+  /// Active pattern to match the condition type
   let (|Condition|_|) t = if t = Type.Condition then Some () else None
+
+  /// Active pattern to match the rule type
   let (|Rule|_|) t = if t = Type.Rule then Some () else None
+
+  /// Active pattern to match the evidence type
   let (|Evidence|_|) t = if t = Type.Evidence then Some () else None
+
+  /// Active pattern to match the substrate (.NET elements) type
   let (|Substrate|_|) (t: IType) =  match t with
                                     | :? Type.Substrate as t -> Some t.Type
                                     | _ -> None
 
-  // Variables
+  /// Active pattern to match variables
   let (|Var|_|) (t: ITerm) =  match t with
                               | :? Variable as v -> Some v
                               | _ -> None
 
-  // Constants                            
+  /// Active pattern to match constants
   let (|Const|_|) (t: ITerm) =  match t with
                                 | :? IConst as c -> Some c
                                 | _ -> None
 
-  // Literal patterns
+  /// Active pattern to match .NET type elements (integers, strings, etc.)
   let (|SubstrateConstant|_|) mt =  match mt with
                                     | Const(c) ->
                                       match c with
@@ -47,12 +65,16 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                                         | _ -> None
                                       | _ -> None
                                     | _ -> None
+
+  /// Active pattern to match principal constants
   let (|PrincipalConstant|_|) mt =  match mt with
                                     | Const(c) -> 
                                       match c with
                                       | :? PrincipalConstant as p -> Some p.Name
                                       | _ -> None
                                     | _ -> None
+
+  /// Active pattern to match true boolean literal
   let (|True|_|) mt = match mt with
                       | Const(c) -> 
                         match c with
@@ -62,6 +84,8 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                           | _ -> None
                         | _ -> None
                       | _ -> None
+
+  /// Active pattern to match false boolean literal
   let (|False|_|) mt =  match mt with
                         | Const(c) -> 
                           match c with
@@ -72,7 +96,7 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
                           | _ -> None
                         | _ -> None
 
-  // Quantifiers
+  /// Active pattern to match forall quantified terms
   let (|Forall|_|) (mt: ITerm) =  match mt with
                                   | :? ForallTerm as fit -> Some (fit.Var, fit.Term)
                                   | _ -> None

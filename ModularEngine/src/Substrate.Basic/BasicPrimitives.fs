@@ -9,6 +9,8 @@
 //
 // *********************************************************
 
+/// Defines the primitive functions used to construct Application elements
+/// in the BasicSubstrate builders
 module Microsoft.Research.Dkal.Substrate.Basic.BasicPrimitives
 
   open Microsoft.Research.Dkal.Interfaces

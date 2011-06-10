@@ -17,9 +17,11 @@ open Microsoft.Research.Dkal.Ast.Syntax.Parsing
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Typed
 
-/// The ParserFactory provides a factory to construct different parsers. A 
-/// parser kind must be provided.
+/// The ParserFactory provides a factory to construct different parsers. 
 type ParserFactory() =
+  
+  /// Constructs an InfonParser. A parser kind and the name of the current 
+  /// principal must both be provided.
   static member InfonParser (kind: string, me: string) = 
     match kind with
     | "simple" -> 

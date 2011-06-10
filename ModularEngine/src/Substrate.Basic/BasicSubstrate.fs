@@ -18,6 +18,8 @@ open Microsoft.Research.Dkal.Substrate
 
 open System.Collections.Generic
 
+/// The BasicSubstrate is a calculator substrate that does not handle data. It 
+/// can solve basic arithmetic computations. E.g., {| "basic" | Y := X + 10 |}
 type BasicSubstrate() =
 
   let evalf (f:Function) (args:list<obj>) =

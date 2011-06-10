@@ -14,14 +14,20 @@ namespace Microsoft.Research.Dkal.Utils.PrettyPrinting
   /// Pretty printing tokens are fed to the PrettyPrinter in order to produce
   /// a string representation
   type PrettyPrintToken = 
+  /// Increments the level of indentation and continues
   | TabToken 
+  /// Decrements the level of indentation and continues
   | UntabToken 
+  /// Adds a line break and continues
   | NewLineToken 
+  /// Produces the given text and continues
   | TextToken of string 
+  /// Produces the text given by the nested tokens and continues
   | ManyTokens of List<PrettyPrintToken>
 
   /// The PrettyPrinter provides functionality to print a list of PrettyPrintTokens
   type PrettyPrinter() =
+    /// Transform the tokens into their string representation
     static member PrettyPrint ps = 
       let rec doPrettyPrint ps i = 
         match ps, i with

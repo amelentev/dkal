@@ -18,9 +18,10 @@ open Microsoft.Research.Dkal.Router.Local
 
 open System.Collections.Generic
 
-/// The RouterFactory provides a factory to construct different routers. Router
-/// kind and routingFile must be provided.
+/// The RouterFactory provides a factory to construct different routers. 
 type RouterFactory() =
+
+  /// Construct a Router. Router kind and routingFile must be provided.
   static member Router (kind: string) (routingFile: string) = 
     match kind with
     | "simple" -> 
@@ -29,7 +30,9 @@ type RouterFactory() =
       new SimpleRouter(routingTable, parser, printer) :> IRouter
     | k -> failwith <| "Unrecognized router kind: " + k
 
-
+  /// Construct routers for each of the principals in the list. All the 
+  /// routers are going to used a central LocalMailer to communicate. This
+  /// is used in the DkalMulti front end
   static member LocalRouters (ppals: string list) =
     let ret = new Dictionary<string, IRouter>()
     let mailer = new LocalMailer()

@@ -44,8 +44,8 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Main.XML</DocumentationFile>
-    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Samples\ClinicalTrials\</StartWorkingDirectory>
+    <DocumentationFile>bin\Debug\Dkal.XML</DocumentationFile>
+    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\samples\ClinicalTrials\</StartWorkingDirectory>
     <StartArguments>keyMgr.rt keyMgr.dkal simple</StartArguments>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>

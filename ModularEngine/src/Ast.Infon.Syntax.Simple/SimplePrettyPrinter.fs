@@ -42,7 +42,7 @@ type SimplePrettyPrinter() =
   member private spp.PrintType t = (spp :> IPrettyPrinter).PrintType t
   member private spp.PrintTerm mt = (spp :> IPrettyPrinter).PrintTerm mt
 
-  static member FindFunctionSymbol f = 
+  static member private FindFunctionSymbol f = 
     match f with
     | "implies" -> "->", true, 1, true
     | "and" -> "&&", true, 2, true

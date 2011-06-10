@@ -17,8 +17,10 @@ open Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Typed
 
 /// The PrettyPrinterFactory provides a factory to construct different pretty
-/// printers. A pretty printer kind must be provided.
+/// printers. 
 type PrettyPrinterFactory() =
+
+  /// Constructs an InfonPrinter. A pretty printer kind must be provided
   static member InfonPrinter (kind: string) = 
     match kind with
     | "simple" -> SimplePrettyPrinter() :> IInfonPrettyPrinter

@@ -15,31 +15,32 @@ open Microsoft.Research.Dkal.Interfaces
 
 open System.Collections.Generic
 
+/// Represents a universally quantified AST term
 type ForallTerm =
-  { Var: IVar; Term: ITerm }
+  { 
+    /// The quantified variable
+    Var: IVar; 
+    /// The quantified (inmediate) inner term
+    Term: ITerm 
+  }
 
+  /// Returns the quantifier-free formula inside of this ForallTerm
   member ft.InnerTerm = 
     match ft.Term with :? ForallTerm as ft' -> ft'.InnerTerm | _ -> ft.Term
 
+  /// Instantiates the quantifiers using the given substitution over 
+  /// the bound variables
   member ft.Instantiate (s: ISubstitution) = 
     let remainingVars = new HashSet<_>((ft :> ITerm).BoundVars)
     remainingVars.ExceptWith s.Domain
     let innerSubst = ft.InnerTerm.Apply s
     List.fold (fun t v -> {Var = v; Term = t} :> ITerm) innerSubst (Seq.toList remainingVars)
   
+  /// Changes the variable name to be different to any variable appearing in the 
+  /// given substitution
   member ft.ChangeVarName (s: ISubstitution) =
     let v, s' = ForallTerm.FreshVar ft.Var ([for v in s.Domain do yield! (s.Apply v).Vars] @ s.Domain @ ft.Term.Vars)
     { Var = v; Term = ft.Term.Apply s' } :> ITerm, s'
-
-//    
-//    if s.DomainContains ft.Var then
-//      ft.Term.Apply s
-//    else
-//      match ft.InnerTerm with
-//      | :? ForallTerm as ft' -> 
-//        { Var = ft.Var; Term = ft'.Instantiate s } :> ITerm
-//      | _ ->
-//        { Var = ft.Var; Term = ft.Term.Apply s } :> ITerm
 
   interface ITerm with
     member fit.BoundVars = new HashSet<_>(fit.Var :: fit.Term.BoundVars) |> Seq.toList

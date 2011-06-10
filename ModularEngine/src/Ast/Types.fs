@@ -13,6 +13,7 @@ namespace Microsoft.Research.Dkal.Ast
 
 open Microsoft.Research.Dkal.Interfaces
 
+/// Defines the basic IType implementations for DKAL types
 module Type = 
 
   type private BasicType(fullName: string, name: string) = 
@@ -26,20 +27,37 @@ module Type =
       | _ -> false
     override bt.ToString() = (bt :> IType).FullName
 
+  /// Type for infons
   let Infon = new BasicType("Dkal.Infon", "Infon") :> IType
+
+  /// Type for principals
   let Principal = new BasicType("Dkal.Principal", "Principal") :> IType
+
+  /// Type for substrate update terms
   let SubstrateUpdate = new BasicType("Dkal.SubstrateUpdate", "SubstrateUpdate") :> IType
+
+  /// Type for substrate query terms
   let SubstrateQuery = new BasicType("Dkal.SubstrateQuery", "SubstrateQuery") :> IType
+
+  /// Type for actions used in policy rules
   let Action = new BasicType("Dkal.Action", "Action") :> IType
+
+  /// Type for conditions used in policy rules
   let Condition = new BasicType("Dkal.Condition", "Condition") :> IType
+
+  /// Type for policy rules 
   let Rule = new BasicType("Dkal.Rule", "Rule") :> IType
+
+  /// Type for evidence (a.k.a. justification, or proof)
   let Evidence = new BasicType("Dkal.Evidence", "Evidence") :> IType
 
+  /// Defines an IType implementation to use .NET types as DKAL types
   type Substrate(typ: System.Type) = 
     interface IType
       with 
         member t.FullName = typ.FullName
         member t.Name = typ.Name
+    /// The .NET type wrapped by this Substrate type
     member s.Type = typ
     override s.Equals t' = match t' with
                            | :? Substrate as t' -> typ.Equals(t'.Type)

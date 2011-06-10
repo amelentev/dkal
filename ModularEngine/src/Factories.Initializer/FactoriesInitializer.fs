@@ -23,8 +23,12 @@ open Microsoft.Research.Dkal.Substrate.Basic
 open Microsoft.Research.Dkal.Ast.Substrate.Basic.Syntax.Simple
 open Microsoft.Research.Dkal.Ast.Substrate.Basic.Syntax.Typed
 
+/// Initializes the substrate factories by suscribing all known implementations
+/// of substrate parsers and pretty printers. It also adds the basic substrate
+/// to the SubstrateMap in order to make it always available
 type FactoriesInitializer() =
   
+  /// Initialize the substrate factories. Must be called when the front-end starts
   static member Init() =
     // Set basic substrate in Substrate map
     SubstrateMap.AddSubstrate <| new BasicSubstrate()

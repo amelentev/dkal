@@ -11,7 +11,7 @@
 
 namespace Microsoft.Research.Dkal.Interfaces
 
-// Provides an interface for a repository of incoming infon ITerms
+/// Provides an interface for a repository of incoming infon ITerms
 type IMailBox =
   
   /// Adds the given infon ITerm to the mailbox

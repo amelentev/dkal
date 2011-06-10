@@ -11,7 +11,7 @@
 
 namespace Microsoft.Research.Dkal.Interfaces
 
-// Provides an interface for a repository of knowledge in the form of infon ITerms
+/// Provides an interface for a repository of knowledge in the form of infon ITerms
 type IInfostrate =
   
   /// Adds the given infon ITerm to the infostrate

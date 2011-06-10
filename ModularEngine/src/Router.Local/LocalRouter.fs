@@ -57,4 +57,5 @@ type LocalRouter (routingTable: IRoutingTable, mailer: LocalMailer) =
     log.Info(">> From {0} to {1}:\r\n{2}\r\n", (sr:>IRouter).Me, ppalName, printer.PrintTerm infon)
     mailer.SendMessage infon (Principal((sr:>IRouter).Me)) ppalName
 
+  /// Returns the LocalMailer on which this LocalRouter is suscribed
   member sr.LocalMailer = mailer

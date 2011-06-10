@@ -15,6 +15,7 @@ open Microsoft.Research.Dkal.Interfaces
 
 open System.Collections.Generic
 
+/// Implementation of the ISubstitution interface using a Dictionary
 type Substitution(subst : Dictionary<IVar, ITerm>) = 
     
   /// Returns a new Substitution that behaves like the identity

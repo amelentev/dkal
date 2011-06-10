@@ -15,13 +15,22 @@ open Microsoft.Research.Dkal.Interfaces
 
 open System.Collections.Generic
 
+/// Represents an AST term that carries an explicit substitution. Whenever a
+/// substitution is applied on an ExplicitSubstitutionTerm, instead of modifying
+/// the contained term, the given substitution is composed with the explictly
+/// carried substitution. This is particularly useful to prevent fragile terms
+/// from being corrupted when substitutions are applied on them (e.g., digital
+/// signatures on evidence terms)
 type ExplicitSubstitutionTerm(t: ITerm, subst: ISubstitution) =
   let s = subst.RestrictTo t.BoundVars
 
   new(t: ITerm) = new ExplicitSubstitutionTerm(t, Substitution.Id)
 
+  /// The contained term on which substituions are not going to be applied 
+  /// directly
   member et.Term = t
 
+  /// The susbstitution that's being explicitly carried
   member et.Substitution = s
 
   override et.Equals(et': obj) = 

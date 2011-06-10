@@ -16,8 +16,12 @@ namespace Microsoft.Research.Dkal.Ast.Syntax.Parsing
   open Microsoft.Research.Dkal.Interfaces
   open Microsoft.Research.Dkal.Utils.Exceptions
 
+  /// A general parser provides a unified interface to parse and throw parsing
+  /// exceptions
   type GeneralParser() =
 
+    /// Attempt to use the given target parser on the string either producing 
+    /// a successful output, or raising a ParseException
     static member TryParse (target: LexBuffer<char> -> 'b) (s: string) = 
       let lexbuf = LexBuffer<char>.FromString(s)
       try

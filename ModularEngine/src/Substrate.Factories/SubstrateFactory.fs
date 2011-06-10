@@ -22,11 +22,12 @@ open System.IO
 open NLog
 
 /// The SubstrateFactory provides a factory to construct different substrates.
-/// A substrate kind, arguments and namespaces must be provided
 type SubstrateFactory() =
   
   static let log = LogManager.GetLogger("Substrate.Factories")
 
+  /// Construct a Substrate. A substrate kind, substrate arguments (such as 
+  /// connection string, in the case of SQL) and namespaces must be provided
   static member Substrate (kind: string) (args: string list) (namespaces: string list) = 
     match kind, args with
     | "basic", [] -> 

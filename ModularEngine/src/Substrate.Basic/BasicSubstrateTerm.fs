@@ -16,13 +16,22 @@ open Microsoft.Research.Dkal.Ast
 
 open System.Collections.Generic
 
+/// A BasicSubstrateTerm is a query term for the BasicSubstrate. It has a left
+/// side term, which can only be a variable (used for output) or a constant 
+/// (used for comparison), and a right side term which can be a complex 
+/// expression.
 type BasicSubstrateTerm(left: ITerm, right: ITerm) as bst =
 
   do 
     if left.Type <> right.Type then
       failwithf "Error while constructing basic substrate term. Left type %O does not match right type %O at %O" left.Type right.Type bst
 
+  /// The left side of the BasicSubstrateTerm. It can contain a variable (for 
+  /// output) or a constant (for comparison)
   member bst.Left = left
+
+  /// The right side of the BasicSubstrateTerm. It can contain a complex 
+  /// expression
   member bst.Right = right
 
   override bst.ToString() = 

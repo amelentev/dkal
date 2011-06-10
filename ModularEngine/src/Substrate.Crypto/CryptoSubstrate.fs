@@ -13,11 +13,15 @@ namespace Microsoft.Research.Dkal.Substrate
 
 open Microsoft.Research.Dkal.Substrate.FSharp
 
-// TODO 
+/// This module is UNDER CONSTRUCTION. It will provide crypto functionality
+/// by means of using the FSharpSubstrate as backend
+// TODO:
 // * actually add cryptographic functionallity
 // * add more arithmetic functions
 module Crypto =
 
+  /// Construct a dummy CryptoSubstrate with functionality to perform basic
+  /// arithmetic operations
   let CryptoSubstrate() = 
     let x = new FSharpSubstrate(["Crypto,SimpleIntArithmetic"])
     do x.Add "plus" (fun (x:int) (y:int) -> x + y)
