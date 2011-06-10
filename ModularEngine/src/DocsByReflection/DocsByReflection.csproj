@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B8873F51-9F40-4CA8-BCF8-88A2AD97823C}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>JimBlackler.DocsByReflection</RootNamespace>
+    <AssemblyName>DocsByReflection</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\DocsByReflection.XML</DocumentationFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DocsByReflection.cs" />
+    <Compile Include="DocsByReflectionException.cs" />
+    <Compile Include="Main.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="License\COPYING">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="License\COPYING.LESSSER">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="License\READ.ME">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ast.Infon.Syntax.Factories\Ast.Infon.Syntax.Factories.fsproj">
+      <Project>{FE86E32D-AC35-4F55-BCDE-1FC4BBB22AB3}</Project>
+      <Name>Ast.Infon.Syntax.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Infon.Syntax.Simple\Ast.Infon.Syntax.Simple.fsproj">
+      <Project>{7CB6DDAD-0BBB-4826-A260-6F968B9DCCF7}</Project>
+      <Name>Ast.Infon.Syntax.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Infon.Syntax.Typed\Ast.Infon.Syntax.Typed.fsproj">
+      <Project>{D10A6E81-4DF6-4F74-8140-7D5D0293F005}</Project>
+      <Name>Ast.Infon.Syntax.Typed</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
+      <Project>{98ADD1C5-2CA3-4B44-AC4D-5D25A90BDE37}</Project>
+      <Name>Ast.Infon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Basic.Syntax.Simple\Ast.Substrate.Basic.Syntax.Simple.fsproj">
+      <Project>{A1197887-6F21-4D62-8983-9A47C2088053}</Project>
+      <Name>Ast.Substrate.Basic.Syntax.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Basic.Syntax.Typed\Ast.Substrate.Basic.Syntax.Typed.fsproj">
+      <Project>{EE794861-066F-4A91-92B8-08E3CE8A6B9F}</Project>
+      <Name>Ast.Substrate.Basic.Syntax.Typed</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Sql.Syntax.Simple\Ast.Substrate.Sql.Syntax.Simple.fsproj">
+      <Project>{9C31B572-9DBC-49FD-86EC-33A448825420}</Project>
+      <Name>Ast.Substrate.Sql.Syntax.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Sql.Syntax.Typed\Ast.Substrate.Sql.Syntax.Typed.fsproj">
+      <Project>{40A3407D-5AE5-4C09-A6F4-B1ED260215AF}</Project>
+      <Name>Ast.Substrate.Sql.Syntax.Typed</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Xml.Syntax.Simple\Ast.Substrate.Xml.Syntax.Simple.fsproj">
+      <Project>{338D7A88-4612-41E9-9107-BAD8984A5CB5}</Project>
+      <Name>Ast.Substrate.Xml.Syntax.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Xml.Syntax.Typed\Ast.Substrate.Xml.Syntax.Typed.fsproj">
+      <Project>{496E343B-FEA0-4F1D-99F7-0CDC4850D99F}</Project>
+      <Name>Ast.Substrate.Xml.Syntax.Typed</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Syntax.Parsing\Ast.Syntax.Parsing.fsproj">
+      <Project>{E8840D2A-AA70-46C8-A5F6-319503F7A8B1}</Project>
+      <Name>Ast.Syntax.Parsing</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast.Tree\Ast.Tree.fsproj">
+      <Project>{5B90F678-20F2-453F-B9A6-3344F1EDEF85}</Project>
+      <Name>Ast.Tree</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Project>{3B621DD5-CEFD-4B21-865B-B1A3E3A318DD}</Project>
+      <Name>Ast %28Ast\Ast%29</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Executor.Factories\Executor.Factories.fsproj">
+      <Project>{1FE1B1DA-1E1D-4C5E-88FA-37F023C28885}</Project>
+      <Name>Executor.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Executor.Simple\Executor.Simple.fsproj">
+      <Project>{D417438A-74AA-4A41-8023-189916E3D2BD}</Project>
+      <Name>Executor.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Factories.Initializer\Factories.Initializer.fsproj">
+      <Project>{A7809ED2-AC1D-46CC-B594-B1422CFE0DA7}</Project>
+      <Name>Factories.Initializer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Project>{74223397-052C-4F45-B703-DDF5BCED536B}</Project>
+      <Name>Globals</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GuiMain\GuiMain.csproj">
+      <Project>{51CF7567-FA7E-4D4A-B252-9379F51E96D8}</Project>
+      <Name>GuiMain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Infostrate.Factories\Infostrate.Factories.fsproj">
+      <Project>{16750EB8-94DF-444D-A506-5B59EE41B620}</Project>
+      <Name>Infostrate.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Infostrate.Simple\Infostrate.Simple.fsproj">
+      <Project>{6C2DE9FD-B01C-4665-A5CC-4E75AC1CE2FC}</Project>
+      <Name>Infostrate.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
+      <Project>{FDDB2EFE-2E4B-4007-909B-DFCE3552FC68}</Project>
+      <Name>Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.Factories\LogicEngine.Factories.fsproj">
+      <Project>{ED07A55B-2B70-4232-8728-2F2B9E2B7D1B}</Project>
+      <Name>LogicEngine.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.Simple\LogicEngine.Simple.fsproj">
+      <Project>{1EA3B178-B4DE-4AC9-9F1C-02FA83F565E4}</Project>
+      <Name>LogicEngine.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MailBox.Factories\MailBox.Factories.fsproj">
+      <Project>{A8CAEA59-211E-4AB2-BC29-FB887C56190C}</Project>
+      <Name>MailBox.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MailBox.Simple\MailBox.Simple.fsproj">
+      <Project>{9B146E72-A07B-41A4-8C93-388431C3172E}</Project>
+      <Name>MailBox.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Main\Main.fsproj">
+      <Project>{E33580FB-E651-4B24-851D-689F6875284E}</Project>
+      <Name>Main</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MultiMain\MultiMain.fsproj">
+      <Project>{F3A60F45-AED0-4C4D-A346-C5FA55F80A30}</Project>
+      <Name>MultiMain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Router.Factories\Router.Factories.fsproj">
+      <Project>{11D0FCB0-D7C2-47A8-B25D-9703A48D6D8B}</Project>
+      <Name>Router.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Router.Local\Router.Local.fsproj">
+      <Project>{4CA780A8-FAFC-4CD6-B616-7D4DF8E5CED9}</Project>
+      <Name>Router.Local</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Router.Simple\Router.Simple.fsproj">
+      <Project>{62C15AD9-06F2-4C97-A319-1AC3A5059B0E}</Project>
+      <Name>Router.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Router\Router.fsproj">
+      <Project>{605DCFAA-5DCF-4026-8628-4EF79D9A332A}</Project>
+      <Name>Router %28Router\Router%29</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SignatureProvider.Factories\SignatureProvider.Factories.fsproj">
+      <Project>{C67BE4A1-ED07-41CA-A9FA-AFACD20490E2}</Project>
+      <Name>SignatureProvider.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SignatureProvider.Simple\SignatureProvider.Simple.fsproj">
+      <Project>{ACCAFB07-795A-4A8A-AC12-7A5393AA0349}</Project>
+      <Name>SignatureProvider.Simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Basic\Substrate.Basic.fsproj">
+      <Project>{C18B8A2E-1A64-488C-A927-6ED5F5C7BEEA}</Project>
+      <Name>Substrate.Basic</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Crypto\Substrate.Crypto.fsproj">
+      <Project>{D0F09E66-4145-4EFA-B2BC-758E59B1940A}</Project>
+      <Name>Substrate.Crypto</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Factories\Substrate.Factories.fsproj">
+      <Project>{82B5DC81-F8EA-4D29-B717-77B4A623D6F4}</Project>
+      <Name>Substrate.Factories</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.FSharp\Substrate.FSharp.fsproj">
+      <Project>{82BA007C-B7FC-41D1-B7A8-19BFA5BB7F68}</Project>
+      <Name>Substrate.FSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Sql\Substrate.Sql.fsproj">
+      <Project>{65B27D4B-16FB-441A-8FD7-2B01ABE789EF}</Project>
+      <Name>Substrate.Sql</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Xml\Substrate.Xml.fsproj">
+      <Project>{66DB220D-6608-45F4-874A-860F1ACAEAB9}</Project>
+      <Name>Substrate.Xml</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate\Substrate.fsproj">
+      <Project>{49E0E6C4-6C69-4C95-A1D5-AA3F5C8A8554}</Project>
+      <Name>Substrate %28Substrate\Substrate%29</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.fsproj">
+      <Project>{556267F3-7084-42F5-AFE8-7F29F482E5B1}</Project>
+      <Name>Utils</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
