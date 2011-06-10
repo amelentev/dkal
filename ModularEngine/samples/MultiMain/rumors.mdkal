@@ -1,0 +1,40 @@
+/// This example models rumors among principals
+
+relation isTheNextBigStar(P: Dkal.Principal)
+
+---alice-----------------------------
+// alice starts a rumor about her being the next big star
+do once
+    send to bob: isTheNextBigStar(Me)
+    send to chuck: isTheNextBigStar(Me)
+
+---bob-----------------------------
+// bob tells any rumors about next big stars to his friend chuck
+with P: Dkal.Principal
+    upon 
+        P said isTheNextBigStar(P)
+    do
+        send to chuck: isTheNextBigStar(P)
+
+---chuck-----------------------------
+// chuck is a good journalist and he needs two different sources
+// before he accepts something as valid
+with P: Dkal.Principal, Q: Dkal.Principal, R: Dkal.Principal
+    upon 
+        Q said isTheNextBigStar(P)
+    upon
+        R said isTheNextBigStar(P)
+    if
+        asInfon({| "basic" | Q != R |})
+    do
+        learn isTheNextBigStar(P)
+
+// if chuck knows about a coming big star it will publish it
+with P: Dkal.Principal
+    if
+        isTheNextBigStar(P)
+    do
+        send to press: isTheNextBigStar(P)
+        
+---press-----------------------------
+// press is a principal with no policy
