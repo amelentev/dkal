@@ -1,5 +1,5 @@
-/// This example models 2 principals: Alice needs to perform arithmetic 
-/// calculations and Bob helps her.
+/// Interactive calculations
+/// Alice performs arithmetic calculations with the help of Bob.
 
 // common declarations
 type Int = System.Int32
