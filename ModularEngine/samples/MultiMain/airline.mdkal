@@ -1,0 +1,137 @@
+/// Airline check-in
+/// The Cautious Airline (ca) requests that travellers present a passport issuance
+/// certificate together with their passport. John is about to travel with ca, and
+/// therefore requests his Passport Agency (pa1) to give him a certificate. This
+/// certificate is forwarded to ca so that they can emit John's boarding pass.
+
+// common declarations
+
+// type renames
+type Principal = Dkal.Principal
+type Infon = Dkal.Infon
+type Evidence = Dkal.Evidence
+type Int = System.Int32
+type Passport = Int
+type Flight = Int
+type Seat = Int
+
+// P needs an issuance certificate for his passport
+relation passportCertificateNeeded(P: Principal)
+
+// P has passport number N
+relation issuedPassport(P: Principal, N: Passport)
+
+// P requests check-in on flight F
+relation checkinNeeded(P: Principal, F: Flight)
+
+// P has boarding pass with seat S assigned on flight F
+relation boardingPass(P: Principal, F: Flight, S: Seat)
+
+---john--------------------------
+// john's policy
+
+// substrate that indicates itineraries for john
+substrate xml("<itineraries>
+                    <itinerary flight='984' to='SEA' from='EZE' airline='ca' />
+                </itineraries>") 
+    namespaces "itineraries"
+
+// to keep track that john does not have issuance certificate or boarding passes
+relation noCertificate()
+relation noBoardingPass(AIRLINE: Principal, F: Flight)
+
+do once
+    learn noCertificate()
+
+with AIRLINE: Principal, F: Flight
+    if
+        asInfon({| "itineraries" | "//itinerary" | AIRLINE <-> "airline", F <-> "flight" |})
+    do once
+        learn noBoardingPass(AIRLINE, F)
+    
+// whenever john is about to travel using cautious airline (ca), if he does not
+// have an issuance certificate for his passport, he first gets one from his 
+// issuing passport agency (pa1)
+if
+    asInfon({| "itineraries" | "//itinerary[@airline='ca']/@flight" |}) && 
+    noCertificate()
+do
+    say with justification to pa1:
+        passportCertificateNeeded(Me)
+    forget
+        noCertificate()
+            
+// once john has his issuance certificate from the passport agency, then he can
+// proceed to perform checkin, by forwarding his certificate to the cautious 
+// airline
+with F: Flight, N: Passport, E: Evidence
+    if
+        asInfon({| "itineraries" | "//itinerary[@airline='ca']/@flight" | F |}) &&
+        noBoardingPass(ca, F)
+    upon
+        pa1 said issuedPassport(Me, N) [E]
+    do
+        say with justification to ca:
+            checkinNeeded(Me, F)
+        send to ca:
+            pa1 said issuedPassport(Me, N) [E]
+        forget
+            noBoardingPass(ca, F)
+    
+---pa1--------------------------
+// passport agency 1's policy
+
+// substrate that indicates passports issued by this agency
+substrate xml("<passports>
+                    <passport number='948823' name='john' />
+                    <passport number='924875' name='jane' />
+                </passports>") 
+    namespaces "passports"
+    
+// if a principal asks a passport certificate, and pa1 has it store, it will 
+// honor the request
+with P: Principal, N: Passport
+    upon 
+        P said passportCertificateNeeded(P) [_]
+    if
+        asInfon({| "passports" | "//passport[@name='$P']/@number" | N |})
+    do
+        say with justification to P:
+            issuedPassport(P, N)
+            
+---ca--------------------------
+// cautious airline's policy
+
+// substrate to keep track of trusted passport agencies
+substrate xml("<agencies>
+                    <agency name='pa1' />
+                    <agency name='pa23' />
+                </agencies>") 
+    namespaces "agencies"
+
+// substrate to keep track of flights
+substrate xml("<flights>
+                    <flight number='984'>
+                        <passenger name='john' seat='34' />
+                        <passenger name='carl' seat='20' />
+                    </flight>
+                </flights>") 
+    namespaces "flights"
+    
+with P: Principal, F: Flight, S: Seat, PA: Principal, N: Passport
+    upon 
+        P said checkinNeeded(P, F) [_]
+    upon
+        PA said issuedPassport(P, N) [_]
+    if
+        asInfon({| "agencies" | "//agency[@name='$PA']" |})
+    if
+        asInfon({| "flights" | "//flight[@number='$F']/passenger[@name='$P']/@seat" | S |})
+    do
+        say with justification to P:
+            boardingPass(P, F, S)
+        drop
+            P said checkinNeeded(P, F)
+    
+    
+    
