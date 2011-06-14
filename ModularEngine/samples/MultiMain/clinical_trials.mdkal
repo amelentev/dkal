@@ -146,15 +146,15 @@ substrate xml("<physPatients>
 
 // rule to trigger for each record that phys1 wants to read
 with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence
-	upon 
+    upon 
         // SITE said that phys1 participates in TRIAL at SITE
-		SITE said physParticipates(Me, TRIAL, SITE) [_]
+        SITE said physParticipates(Me, TRIAL, SITE) [_]
     upon 
         // SITE said that phys1 has patients [P1,...,P2] in TRIAL at SITE
         SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [_]
     if
         // phys1 wants to read the record for patient NUMBER
-		asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | NUMBER |}) &&
+        asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | NUMBER |}) &&
         // and this NUMBER is in his allowed range [P1,...,P2]
         asInfon({| "basic" | P1 <= NUMBER && NUMBER <= P2 |}) &&
         // the record for patient NUMBER is R
@@ -167,16 +167,16 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER
     upon
         // SITE is delegating access to R under conditions Y
         Y -> SITE said mayRead(Me, R) [E2]
-	do
+    do
         // ask keyMgr for the key of R
-		say with justification to keyMgr:
-			requestToRead(Me, R)
+        say with justification to keyMgr:
+            requestToRead(Me, R)
         // send keyMgr the delegation of access by ORG
         send to keyMgr:
-			X -> ORG said mayRead(Me, R) [E1]
+            X -> ORG said mayRead(Me, R) [E1]
         // send keyMgr the delegation of access by SITE
         send to keyMgr:
-			Y -> SITE said mayRead(Me, R) [E2]
+            Y -> SITE said mayRead(Me, R) [E2]
         // drop the message, in order to keep the rule from firing several times
         drop
             SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
@@ -201,24 +201,24 @@ with X: Infon, E: Evidence
 
 // rule to serve key requests        
 with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
-	upon 
+    upon 
         // PERSON is requesting the key for R
-		PERSON said requestToRead(PERSON, R) [_]
-	if
+        PERSON said requestToRead(PERSON, R) [_]
+    if
         // R is a record for TRIAL
         asInfon({| "records" | "//record[@id='$R']/@trial" | TRIAL |}) &&
         // ORG is the organizer of TRIAL
-		asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
+        asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
     if
         // ORG has granted PERSON with access to R
-		ORG said mayRead(PERSON, R) [_]
+        ORG said mayRead(PERSON, R) [_]
     if 
         // K is the key for R
         asInfon({| "keys" | "/keys/key[@record='$R']/@key" | K |})
-	do
+    do
         // send K to PERSON
-		say with justification to PERSON:
-			keyForRecord(K, R)
+        say with justification to PERSON:
+            keyForRecord(K, R)
         // drop the request, to prevent the rule from firing several times
         drop 
             PERSON said requestToRead(PERSON, R)

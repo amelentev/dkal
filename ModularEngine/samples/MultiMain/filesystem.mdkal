@@ -21,7 +21,7 @@ do once
     send to filesystem: ask("readme.txt", Me, "write")
     send to filesystem: ask("secret_file.txt", Me, "read")
     send to filesystem: ask("holidays.jpg", Me, "write")
-				
+                
 ---filesystem--------------------------
 // filesystem's policy
 
@@ -34,18 +34,18 @@ substrate xml("<permissions>
 
 // serve requests
 with U: User, F: File, O: Operation
-	upon
+    upon
         // U requests to perform an operation O over a file F 
         U said ask(F, U, O)
-	if
+    if
         // we check if it has permission to do so
-		asInfon({| "permissions" | "//permission[@user='$U' and @file='$F' and @$O='true']" |})
-	do
+        asInfon({| "permissions" | "//permission[@user='$U' and @file='$F' and @$O='true']" |})
+    do
 
         // we tell U that he can proceed to perform the requested operation 
-		send to U:
-			allowed(F, U, O)
+        send to U:
+            allowed(F, U, O)
 
         // we drop the request to avoid serving it several times
         drop
-			U said ask(F, U, O)
+            U said ask(F, U, O)

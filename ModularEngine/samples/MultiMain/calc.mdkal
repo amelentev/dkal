@@ -24,53 +24,53 @@ relation knowsMath(P: Dkal.Principal)
 
 // basic knowledge about needed arithmetic calculations and who knows math
 do once
-	learn needSum(1, 2)
-	learn needProduct(11, 22)
-	learn knowsMath(bob)
+    learn needSum(1, 2)
+    learn needProduct(11, 22)
+    learn knowsMath(bob)
 
 // general rule to solve sums
 with X: Int, Y: Int, P: Dkal.Principal
-	if
-		needSum(X, Y) && knowsMath(P)
-	do
-		send to P:
-			needSum(X, Y)
-		forget
-			needSum(X, Y)
+    if
+        needSum(X, Y) && knowsMath(P)
+    do
+        send to P:
+            needSum(X, Y)
+        forget
+            needSum(X, Y)
 
 // general rule to solve products
 with X: Int, Y: Int, P: Dkal.Principal
-	if
-		needProduct(X, Y) && knowsMath(P)
-	do
-		send to P:
-			needProduct(X, Y)
-		forget
-			needProduct(X, Y)
+    if
+        needProduct(X, Y) && knowsMath(P)
+    do
+        send to P:
+            needProduct(X, Y)
+        forget
+            needProduct(X, Y)
 
 ---bob--------------------------
 // bob's policy
 
 // general rule to help someone asking for sums
 with X: Int, Y: Int, Z: Int, P: Dkal.Principal
-	upon
-		P said needSum(X, Y)
-	if
-		asInfon({|"basic"|Z:=X+Y|})
-	do
-		send to P:
-			sum(X, Y, Z)
-		drop
-			P said needSum(X, Y)
-			
+    upon
+        P said needSum(X, Y)
+    if
+        asInfon({|"basic"|Z:=X+Y|})
+    do
+        send to P:
+            sum(X, Y, Z)
+        drop
+            P said needSum(X, Y)
+            
 // general rule to help someone asking for products
 with X: Int, Y: Int, Z: Int, P: Dkal.Principal
-	upon
-		P said needProduct(X, Y)
-	if
-		asInfon({|"basic"|Z:=X*Y|})
-	do
-		send to P:
-			product(X, Y, Z)
-		drop
-			P said needProduct(X, Y)
+    upon
+        P said needProduct(X, Y)
+    if
+        asInfon({|"basic"|Z:=X*Y|})
+    do
+        send to P:
+            product(X, Y, Z)
+        drop
+            P said needProduct(X, Y)
