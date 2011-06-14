@@ -284,6 +284,16 @@ namespace Microsoft.Research.Dkal.GuiMain
 
         }
 
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("For more info about DKAL please visit http://dkal.codeplex.com", "DKAL v" + Application.ProductVersion);
+        }
+
         private void button1_Click_1(object sender, EventArgs e)
         {
             try
