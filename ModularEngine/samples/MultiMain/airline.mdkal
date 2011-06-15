@@ -1,8 +1,8 @@
 /// Airline check-in
-/// The Cautious Airline (ca) requests that travellers present a passport issuance
-/// certificate together with their passport. John is about to travel with ca, and
-/// therefore requests his Passport Agency (pa1) to give him a certificate. This
-/// certificate is forwarded to ca so that they can emit John's boarding pass.
+/// The Cautious Airline (ca) requests that travellers present a passport-issuance
+/// certificate on checkin. John is about to travel with ca, and therefore requests 
+/// his Passport Agency (pa1) to give him a certificate. This certificate is forwarded 
+/// to ca so that they can issue John's boarding pass.
 
 // common declarations
 
@@ -50,10 +50,10 @@ with AIRLINE: Principal, F: Flight
         learn noBoardingPass(AIRLINE, F)
     
 // whenever john is about to travel using cautious airline (ca), if he does not
-// have an issuance certificate for his passport, he first gets one from his 
-// issuing passport agency (pa1)
+// have an passport-issuance certificate, he first gets one from his issuing 
+// passport agency (pa1)
 if
-    asInfon({| "itineraries" | "//itinerary[@airline='ca']/@flight" |}) && 
+    asInfon({| "itineraries" | "//itinerary[@airline='ca']" |}) && 
     noCertificate()
 do
     say with justification to pa1:
