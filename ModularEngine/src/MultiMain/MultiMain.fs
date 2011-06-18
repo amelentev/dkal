@@ -35,7 +35,9 @@ open Microsoft.Research.Dkal.Utils.Exceptions
 
 /// Console front-end for many principals
 module MultiMain =
-
+  
+  // TODO: change log format to match RiSE4fun.com standards
+  // (it is used in Code Contracts, for instance)
   let private log = LogManager.GetLogger("MultiMain")
 
   let private messagesLimitExceeded = new AutoResetEvent(false)
@@ -48,7 +50,7 @@ module MultiMain =
     let mailbox = MailBoxFactory.MailBox kind logicEngine
     let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
 
-//    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid substrates
+//    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid SQL substrate
 //      printfn "%s: Substrate declarations are fobidden" router.Me
       
     for rule in assembly.Policy.Rules do
