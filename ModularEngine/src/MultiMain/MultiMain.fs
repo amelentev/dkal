@@ -32,10 +32,13 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
+open Microsoft.Research.Dkal.Utils.ErrorCodes
 
 /// Console front-end for many principals
 module MultiMain =
-
+  
+  // TODO: change log format to match RiSE4fun.com standards
+  // (it is used in Code Contracts, for instance)
   let private log = LogManager.GetLogger("MultiMain")
 
   let private messagesLimitExceeded = new AutoResetEvent(false)
@@ -48,7 +51,7 @@ module MultiMain =
     let mailbox = MailBoxFactory.MailBox kind logicEngine
     let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
 
-//    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid substrates
+//    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid SQL substrate
 //      printfn "%s: Substrate declarations are fobidden" router.Me
       
     for rule in assembly.Policy.Rules do
@@ -85,7 +88,7 @@ module MultiMain =
       try
         (fst x, parser.ParseAssembly (commonPolicy + snd x))
       with ParseException(msg, text, line, col) -> 
-        log.Error("Error while parsing in line {0}, column {1}: {2}\r\n {3}", line, col, msg, text)
+        log.Error("{0}.dkal({1},{2}): error {3}: {4}", fst x, line, col, errorParsing, msg)
         Environment.Exit(1); failwith ""
     )
     let fixedPointCounter = new CountdownEvent(assemblies.Length)
@@ -130,4 +133,4 @@ module MultiMain =
         execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit))
       with
         e -> log.ErrorException("Something went wrong", e)
-  | _ -> log.Error("Wrong number of parameters; expecting multi-policy file, time limit (ms), messages limit")
+  | _ -> log.Fatal("Wrong number of parameters; expecting multi-policy file, time limit (ms), messages limit")

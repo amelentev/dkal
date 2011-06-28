@@ -24,6 +24,7 @@ open Microsoft.Research.Dkal.Executor.Factories
 open Microsoft.Research.Dkal.Infostrate.Factories
 open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
+open Microsoft.Research.Dkal.Utils.ErrorCodes
 
 /// Console front-end for a single principal
 module Main =
@@ -31,48 +32,45 @@ module Main =
   let private log = LogManager.GetLogger("Main")
 
   let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
-  try  
-    match args with
-    | [_; routingFile; policyFile; step] ->
+  match args with
+  | [_; routingFile; policyFile; step] ->
+      try  
+          let kind = "simple"
 
-      let kind = "simple"
+          if not (File.Exists (routingFile)) then
+            log.Fatal("File not found: {0}", routingFile)
+          elif not (File.Exists (policyFile)) then
+            log.Fatal("File not found: {0}", policyFile)
+          else
+            // Populate factories
+            FactoriesInitializer.Init()
 
-      if not (File.Exists (routingFile)) then
-        log.Error("File not found: {0}", routingFile)
-      elif not (File.Exists (policyFile)) then
-        log.Error("File not found: {0}", policyFile)
-      else
-        // Populate factories
-        FactoriesInitializer.Init()
+            let router = RouterFactory.Router kind routingFile
+            let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
+            let logicEngine = LogicEngineFactory.LogicEngine kind 
+            let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
+            let infostrate = InfostrateFactory.Infostrate kind
+            let mailbox = MailBoxFactory.MailBox kind logicEngine
+            let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
 
-        let router = RouterFactory.Router kind routingFile
-        let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
-        let logicEngine = LogicEngineFactory.LogicEngine kind 
-        let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
-        let infostrate = InfostrateFactory.Infostrate kind
-        let mailbox = MailBoxFactory.MailBox kind logicEngine
-        let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
+            // suscribe callbacks to executor
+            if step = "step" then
+              executor.RoundStartCallback (fun _ -> System.Console.ReadKey() |> ignore)
+            elif step <> "noStep" then
+              failwithf "Step parameter must be one of 'step' or 'noStep', found %O" step
 
-        // suscribe callbacks to executor
-        if step = "step" then
-          executor.RoundStartCallback (fun _ -> System.Console.ReadKey() |> ignore)
-        elif step <> "noStep" then
-          failwithf "Step parameter must be one of 'step' or 'noStep', found %O" step
-
-        let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
-        log.Info("Principal {0} running...", router.Me)
-        log.Debug("------------------------------------------------------------------------")
-        log.Debug(printer.PrintPolicy assembly.Policy)
-        log.Debug("------------------------------------------------------------------------")
-        for rule in assembly.Policy.Rules do
-          executor.InstallRule rule |> ignore
-        executor.Start()
-
-    | _ -> log.Error("Wrong number of parameters, expecting: routing file, policy file, step\r\nWhere step must be one of 'step' or 'noStep'")
-  with 
-  | ParseException(msg, text, line, col) -> 
-    log.Error("Error while parsing in line {0}, column {1}: {2}\r\n {3}", line, col, msg, text)
-  | e -> 
-    log.ErrorException("Something went wrong", e)
-    
+            let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
+            log.Info("Principal {0} running...", router.Me)
+            log.Debug("------------------------------------------------------------------------")
+            log.Debug(printer.PrintPolicy assembly.Policy)
+            log.Debug("------------------------------------------------------------------------")
+            for rule in assembly.Policy.Rules do
+              executor.InstallRule rule |> ignore
+            executor.Start()
+      with 
+      | ParseException(msg, text, line, col) -> 
+        log.Error("{0}({1},{2}): error {3}: {4}", policyFile, line, col, errorParsing, msg)
+      | e -> 
+        log.ErrorException("Something went wrong", e)
+    | _ -> log.Fatal("Wrong number of parameters, expecting: routing file, policy file, step\r\nWhere step must be one of 'step' or 'noStep'")
 

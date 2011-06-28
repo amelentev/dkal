@@ -158,7 +158,14 @@ type SimpleExecutor(router: IRouter,
 
         // Move messages (if any) to mailbox
         lock inbox (fun () -> 
-                    while inbox.Count > 0 do
+                    while inbox.Count > 0 do 
+                      // TODO instead of moving all messages, add a parameter and 
+                      // move only so many at a given round: 
+                      // 0 -> no messages are ever used
+                      // 1 -> one message at a time
+                      // 2 -> up to two messages at a time
+                      // ...
+                      // all -> all pending messages considered together (current implementation)
                       let msg, from = inbox.Dequeue()
                       log.Debug("{0}: ---- GOT FROM {1}: {2} ---", router.Me, from, msg)
                       mailbox.Add msg from)
