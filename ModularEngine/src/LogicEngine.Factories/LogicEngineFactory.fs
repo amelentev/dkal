@@ -12,7 +12,7 @@
 namespace Microsoft.Research.Dkal.LogicEngine.Factories
 
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.LogicEngine.Simple
+open Microsoft.Research.Dkal.LogicEngine
 
 /// The LogicEngineFactory provides a factory to construct different logic engines.
 type LogicEngineFactory() =
@@ -20,7 +20,8 @@ type LogicEngineFactory() =
   /// Construct a LogicEngine. A logic engine kind must be provided.
   static member LogicEngine (kind: string) = 
     match kind with
-    | "simple" -> new SimpleLogicEngine() :> ILogicEngine
+    | "simple" -> new Simple.SimpleLogicEngine() :> ILogicEngine
+    | "ml" | "ML" -> new ML.MLLogicEngine() :> ILogicEngine
     | k -> failwith <| "Unrecognized logic engine kind: " + k
 
 
