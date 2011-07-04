@@ -10,11 +10,11 @@ do once
 
 ---bob-----------------------------
 // bob tells any rumors about next big stars to his friend chuck
-with P: Dkal.Principal
+with P: Dkal.Principal, Q: Dkal.Principal
     upon 
-        P said isTheNextBigStar(P)
+        P said isTheNextBigStar(Q)
     do
-        send to chuck: isTheNextBigStar(P)
+        send to chuck: isTheNextBigStar(Q)
 
 ---chuck-----------------------------
 // chuck is a good journalist and he needs two different sources
