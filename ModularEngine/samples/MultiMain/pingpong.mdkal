@@ -22,7 +22,8 @@ with X: Int, Y: Int
         // whenever a message from pong arrives
         pong said number(X)
     if
-        // double the number
+        // check that the number is less than 100000 and if so double it
+        asInfon({|"basic"|X < 100000|}) &&
         asInfon({|"basic"|Y:=X*2|})
     do
         // send that new number back to pong
