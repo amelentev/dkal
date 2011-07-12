@@ -22,46 +22,47 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 
+
+
 // The ML Engine is a translation to pure ML
 // of the simple logic engine
 type MLLogicEngine() =
- 
-  //let log = LogManager.GetLogger("LogicEngine.ML") 
-  
-  let mutable _signatureProvider: ISignatureProvider option = None
-  let mutable _infostrate: IInfostrate option = None
-  let mutable _freshVarId = 0
+
+  let _signatureProvider: ISignatureProvider option ref = ref None
+  let _infostrate: IInfostrate option ref = ref None
 
   interface ILogicEngine with
     member mle.Start () = ()
     member mle.Stop () = ()
 
     member mle.set_Infostrate (infostrate: IInfostrate) =
-      _infostrate <- Some infostrate
+      _infostrate := Some infostrate
 
     member mle.get_Infostrate () =
-      _infostrate.Value
+      (!_infostrate).Value
 
     member mle.set_SignatureProvider (signatureProvider: ISignatureProvider) =
-      _signatureProvider <- Some signatureProvider
+      _signatureProvider := Some signatureProvider
 
     member mle.get_SignatureProvider () =
-      _signatureProvider.Value
+      (!_signatureProvider).Value
 
     member mle.Derive (target: ITerm) (substs: ISubstitution seq) = 
-      substs |> List.ofSeq |> List.map Translation.MLsubstitutionOfISubstitution |>
-      MLLogicEngineImpl.derive (Translation.MLtermOfITerm target) |>
-      List.map Translation.ISubstitutionOfMLsubstitution |>
+      substs |> List.ofSeq |> List.map TranslationtoML.MLsubstitutionOfISubstitution |>
+      MLLogicEngineImpl.derive !_infostrate (TranslationtoML.MLtermOfITerm target) |>
+      List.map TranslationfromML.ISubstitutionOfMLsubstitution |>
       Seq.ofList
 
     member mle.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =
-      substs |> List.ofSeq |> List.map Translation.MLsubstitutionOfISubstitution |>
+      substs |> List.ofSeq |> List.map TranslationtoML.MLsubstitutionOfISubstitution |>
       MLLogicEngineImpl.deriveJustification 
-        (Translation.MLtermOfITerm infon) (Translation.MLtermOfITerm proofTemplate) |>
-      List.map Translation.ISubstitutionOfMLsubstitution |>
+        !_infostrate (TranslationtoML.MLtermOfITerm infon) (TranslationtoML.MLtermOfITerm proofTemplate) |>
+      List.map TranslationfromML.ISubstitutionOfMLsubstitution |>
       Seq.ofList
 
     member mle.CheckJustification (evidence: ITerm) =
-      evidence  |> Translation.MLtermOfITerm |> MLLogicEngineImpl.checkJustification |>
-       Option.map Translation.ITermOfMLterm
+      //
+      let aa = evidence  |> TranslationtoML.MLtermOfITerm
+      aa |> MLLogicEngineImpl.checkJustification !_signatureProvider |>
+        Option.map TranslationfromML.ITermOfMLterm
 

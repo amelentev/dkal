@@ -1,4 +1,5 @@
-﻿// *********************************************************
+﻿(*
+// *********************************************************
 //
 //    Copyright (c) Microsoft. All rights reserved.
 //    This code is licensed under the Apache License, Version 2.0.
@@ -8,6 +9,7 @@
 //    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
 //
 // *********************************************************
+*)
 
 namespace Microsoft.Research.Dkal.LogicEngine.ML
 
@@ -20,13 +22,10 @@ open MLType
 module MLLogicEngineImpl =
   let log = ref ""
   let _freshVarId = ref 0
-  let mutable _signatureProvider: ISignatureProvider option = None
-  let mutable _infostrate: IInfostrate option = None
 
   let rec finalOutcome (infon: term) =
     match infon with
     | App(ImpliesInfon, [_; i]) -> finalOutcome i
-    //| App(ImpliesInfon, _) -> failwith "Wrong number of arguments for ImpliesInfon"
     | Forall(_,t) -> finalOutcome t
     | i -> i
 
@@ -35,19 +34,19 @@ module MLLogicEngineImpl =
     | App(SaidInfon, [Const(PrincipalConstant(p)); _]) -> principal = p
     | _ -> false
 
-  let rec checkJustification (evidence: term) =
+  let rec checkJustification _signatureProvider (evidence: term) =
     match evidence with
     | App(SignatureEvidence, [Const(PrincipalConstant(ppal)); inf;
                               Const(SubstrateConstant(signature))]) ->
       if canSign ppal inf &&
-         Utilities.value_checkSignature _signatureProvider inf ppal signature
+         Utilities.value_checkSignature (*!*)_signatureProvider inf ppal signature
       then
         Some inf
       else
         //log.Warn("Spoofed signature {0} from {1} on {2}", signature, ppal, inf)
         None      
     | App(ModusPonensEvidence, [e1; e2]) ->
-      match checkJustification e1, checkJustification e2 with
+      match checkJustification _signatureProvider e1, checkJustification _signatureProvider e2 with
       | Some i1, Some (App(ImpliesInfon, [i1'; i2])) when i1 = i1' ->
         Some i2
       | _ ->
@@ -55,7 +54,7 @@ module MLLogicEngineImpl =
         None  
     | App(AndEvidence, evidences) ->
         let infons = List.collect (fun evidence ->  
-                                    match checkJustification evidence with
+                                    match checkJustification _signatureProvider evidence with
                                     | Some i -> [i]
                                     | None -> []) evidences
         if List.length infons = List.length evidences then
@@ -72,7 +71,7 @@ module MLLogicEngineImpl =
         //log.Warn("Non-true asInfon evidence at {0}", query)
         None    
     | ConcretizationEvidence(ev, subst) ->
-      match checkJustification ev with
+      match checkJustification _signatureProvider ev with
       | Some generalProof -> 
         let concreteProof = match generalProof with
                             | Forall _ -> Term.instantiate generalProof subst
@@ -90,7 +89,8 @@ module MLLogicEngineImpl =
     _freshVarId := !_freshVarId + 1
     ret
 
-  let rec tryDeriveJustification ((subst, conds): substitution * substrateQueryTerm list)
+  //val tryDeriveJustification : IInfostrate option -> (substitution * substrateQueryTerm list) -> term -> (term * term) -> 
+  let rec tryDeriveJustification (_infostrate: IInfostrate option) ((subst, conds): substitution * substrateQueryTerm list)
                              (pr: term) ((goal, inf): term * term) =
       let straight (goal: term, premise: term) = 
         match Term.unifyFrom premise subst goal with
@@ -104,28 +104,28 @@ module MLLogicEngineImpl =
             t, Term.apply pr s'
           else
             t, pr
-        tryDeriveJustification (subst, conds) pr (goal, i)
+        tryDeriveJustification _infostrate (subst, conds) pr (goal, i)
       | App(ImpliesInfon, [i1; i2]) ->
         let v = freshVar Evidence
         let derivePremise (subst, conds, (goalPr:term)) =
           let updateProof (subst, conds, premisePr) =
             let repl = App(ModusPonensEvidence, [premisePr; pr]) // TODO: see Builders.fs and Primitives.fs
             (subst, conds, Term.apply goalPr <| Subst.extend Subst.id (v, repl))
-          let tmp = doDeriveJustification i1 (subst, conds)
+          let tmp = doDeriveJustification _infostrate i1 (subst, conds)
           tmp |> List.map updateProof
         (straight (goal, inf)) @ 
         (List.collect derivePremise 
-          (tryDeriveJustification (subst, conds) (Var v) (goal, i2)))
+          (tryDeriveJustification _infostrate (subst, conds) (Var v) (goal, i2)))
       | inf -> straight (goal, inf)
       
-  and doDeriveJustification (infon: term) ((subst, conds): substitution * substrateQueryTerm list) =
+  and doDeriveJustification (_infostrate: IInfostrate option) (infon: term) ((subst, conds): substitution * substrateQueryTerm list) =
     let straight goal =
       let aux infon = 
         match infon with
         | App(JustifiedInfon, [inf; pr]) -> 
-            tryDeriveJustification (subst, conds) pr (goal, inf)
+            tryDeriveJustification _infostrate (subst, conds) pr (goal, inf)
         | _ -> []
-      List.collect aux (Utilities.value_knowledge _infostrate ())
+      List.collect aux (Utilities.value_knowledge (*!*)_infostrate)
     match infon with
     | App(AsInfon, [ SubstrateQueryTerm(exp) ]) as goal ->
       [subst, conds @ [ exp ], App(AsInfonEvidence, [ SubstrateQueryTerm(exp) ])]
@@ -139,14 +139,14 @@ module MLLogicEngineImpl =
                   (fun (subst, conds, evRight) res3 ->
                     (subst, conds, 
                      App(AndEvidence, [evLeft; evRight])) :: res3)
-                  (doDeriveJustification infon (subst, conds)) []
+                  (doDeriveJustification _infostrate infon (subst, conds)) []
                 ) @ res2) res [])
           ([(subst, conds, App(EmptyEvidence, []))]) 
           infons
       (straight goal) @ parts
     | goal -> straight goal
 
-  let infonsWithPrefix (subst: substitution) (pref: term list) (template: term) =
+  let infonsWithPrefix (_infostrate: IInfostrate option) (subst: substitution) (pref: term list) (template: term) =
     let res = ref []
     let rec stripPrefix subst prefixUnif preconds suff = 
       let immediate = function
@@ -182,26 +182,26 @@ module MLLogicEngineImpl =
       | (pref, Var v) when Subst.domainContains subst v ->
         stripPrefix subst prefixUnif preconds suff (pref, Subst.apply subst v)
       | t -> immediate t
-  
+
     List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, k)) 
-      (Utilities.value_knowledge _infostrate ())
+      (Utilities.value_knowledge _infostrate)
     !res
 
-  let rec doDerive (pref: term list) 
+  let rec doDerive (_infostrate: IInfostrate option) (pref: term list) 
                ((subst, conds): substitution * substrateQueryTerm list)
                (infon: term) = 
       match infon with
       | App(AndInfon, infons) -> 
         List.fold (fun substs infon ->
                    List.collect 
-                     (fun s -> doDerive pref s infon) substs
+                     (fun s -> doDerive _infostrate pref s infon) substs
                   ) [(subst, conds)] infons
       | App(EmptyInfon, [])-> 
         [(subst, conds)]
       | App(SaidInfon, [ppal; infon]) ->
-        doDerive (ppal :: pref) (subst, conds) infon
+        doDerive _infostrate (ppal :: pref) (subst, conds) infon
       | Var(v) when Subst.domainContains subst v ->
-        doDerive pref (subst, conds) (Subst.apply subst v)
+        doDerive _infostrate pref (subst, conds) (Subst.apply subst v)
       | App(AsInfon, [SubstrateQueryTerm(exp)]) ->
         if List.isEmpty pref then
           [(subst, conds @ [ exp ])]
@@ -212,28 +212,28 @@ module MLLogicEngineImpl =
           match Term.unifyFrom ev subst' pr' with
             | Some s -> [(s, conds @ conds')]
             | None -> []
-        doDeriveJustification inf (subst, conds) |> List.collect unifyEv
+        doDeriveJustification _infostrate inf (subst, conds) |> List.collect unifyEv
       | templ ->
         let rec checkOne = function
             | (substConds, pre :: pres) -> 
-              doDerive [] substConds pre |> List.collect (fun s -> checkOne (s, pres))
+              doDerive _infostrate [] substConds pre |> List.collect (fun s -> checkOne (s, pres))
             | (substConds, []) ->
               [substConds]
-        infonsWithPrefix subst pref templ 
-          |> List.map (fun (s, ps) -> ((s, conds), ps))
-          |> List.collect checkOne
+        List.collect checkOne (List.map 
+          (fun (s, ps) -> ((s, conds), ps)) 
+          (infonsWithPrefix _infostrate subst pref templ))
 
-  let derive (target: term) (substs: substitution list) : substitution list =
+  let derive (_infostrate: IInfostrate option) (target: term) (substs: substitution list) : substitution list =
     List.foldBack
       (fun subst res ->
-        (List.foldBack
+        (List.foldBack 
           (fun (subst, conds) res2 ->
             (Utilities.substrateDispatcher_solve conds [subst]) @ res2)
-          (doDerive [] (subst, []) (target)) []
+          (doDerive _infostrate [] (subst, []) (target)) []
         ) @ res)
       substs []
 
-  let deriveJustification (infon: term) (proofTemplate: term)
+  let deriveJustification (_infostrate: IInfostrate option) (infon: term) (proofTemplate: term)
                           (substs: substitution list) : substitution list =
     List.foldBack 
       (fun subst res -> 
@@ -243,6 +243,6 @@ module MLLogicEngineImpl =
              | Some subst -> Utilities.substrateDispatcher_solve conds [subst]
              | None -> []
             ) @ res2)
-          (doDeriveJustification infon (subst, [])) []
+          (doDeriveJustification _infostrate infon (subst, [])) []
         ) @ res)
       substs []

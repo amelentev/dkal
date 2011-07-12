@@ -43,10 +43,10 @@ module MultiMain =
 
   let private messagesLimitExceeded = new AutoResetEvent(false)
 
-  let private createExec(router: IRouter, assembly: Assembly) =
+  let private createExec(router: IRouter, assembly: Assembly, logicEngineKind: string) =
     let kind = "simple"
     let infostrate = InfostrateFactory.Infostrate kind
-    let logicEngine = LogicEngineFactory.LogicEngine kind 
+    let logicEngine = LogicEngineFactory.LogicEngine logicEngineKind
     let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
     let mailbox = MailBoxFactory.MailBox kind logicEngine
     let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
@@ -75,7 +75,7 @@ module MultiMain =
     else
       (ppalName.ToString(), s.Substring(0, j)) :: splitPolicies(s.Substring(j))
 
-  let private execute (policy: string, timeLimit: int, msgsLimit: int) =
+  let private execute (policy: string, timeLimit: int, msgsLimit: int, logicEngineKind: string) =
     // Populate factories
     FactoriesInitializer.Init()
 
@@ -93,7 +93,7 @@ module MultiMain =
     )
     let fixedPointCounter = new CountdownEvent(assemblies.Length)
     let executors = assemblies |> List.mapi (fun i x ->
-      let exec = createExec(routers.[fst x], snd x)
+      let exec = createExec(routers.[fst x], snd x, logicEngineKind)
       exec.FixedPointCallback 
         (fun _ ->
           let reachedGlobalFixedPoint = try fixedPointCounter.Signal() with e -> true
@@ -125,12 +125,14 @@ module MultiMain =
 
   let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
   match args with
-  | [_; policyFile; timeLimit; msgsLimit] ->
+  | [_; policyFile; timeLimit; msgsLimit] | [_; policyFile; timeLimit; msgsLimit; "-MLLogicEngine"] ->
     if not (File.Exists (policyFile)) then
       log.Fatal("File not found: {0}", policyFile)
     else
       try
-        execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit))
+        let logicEngineKind = 
+          (if List.exists (fun a -> a="-MLLogicEngine") args then "ML" else "simple")
+        execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit), logicEngineKind)
       with
         e -> log.ErrorException("Something went wrong", e)
   | _ -> log.Fatal("Wrong number of parameters; expecting multi-policy file, time limit (ms), messages limit")

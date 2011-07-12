@@ -40,6 +40,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MLLogicEngineTypes.fs" />
+    <Compile Include="Subst.fs" />
+    <Compile Include="TranslationtoML.fs" />
+    <Compile Include="TranslationfromML.fs" />
+    <Compile Include="Utilities.fs" />
+    <Compile Include="Term.fs" />
     <Compile Include="MLLogicEngine.fs" />
     <Compile Include="MLLogicEngineWrapper.fs" />
   </ItemGroup>
