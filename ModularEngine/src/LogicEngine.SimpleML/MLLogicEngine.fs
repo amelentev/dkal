@@ -75,7 +75,7 @@ module MLLogicEngineImpl =
       | Some generalProof -> 
         let concreteProof = match generalProof with
                             | Forall _ -> Term.instantiate generalProof subst
-                            | _ -> Term.apply generalProof subst
+                            | _ -> Term.term_apply generalProof subst
         Some concreteProof
       | None -> None
     | _ -> 
@@ -94,14 +94,14 @@ module MLLogicEngineImpl =
                              (pr: term) ((goal, inf): term * term) =
       let straight (goal: term, premise: term) = 
         match Term.unifyFrom premise subst goal with
-          | Some s -> [(s, conds, Term.apply pr s)]
+          | Some s -> [(s, conds, Term.term_apply pr s)]
           | None -> []
       match inf with
       | Forall(v, t) as ft ->
         let i, pr = 
           if Subst.domainContains subst v then
             let newFt, s' = Term.changeVarName ft subst
-            t, Term.apply pr s'
+            t, Term.term_apply pr s'
           else
             t, pr
         tryDeriveJustification _infostrate (subst, conds) pr (goal, i)
@@ -110,7 +110,7 @@ module MLLogicEngineImpl =
         let derivePremise (subst, conds, (goalPr:term)) =
           let updateProof (subst, conds, premisePr) =
             let repl = App(ModusPonensEvidence, [premisePr; pr]) // TODO: see Builders.fs and Primitives.fs
-            (subst, conds, Term.apply goalPr <| Subst.extend Subst.id (v, repl))
+            (subst, conds, Term.term_apply goalPr <| Subst.extend Subst.id (v, repl))
           let tmp = doDeriveJustification _infostrate i1 (subst, conds)
           tmp |> List.map updateProof
         (straight (goal, inf)) @ 
@@ -180,7 +180,7 @@ module MLLogicEngineImpl =
         immediate t
         stripPrefix subst prefixUnif (suff a :: preconds) suff (pref, b)
       | (pref, Var v) when Subst.domainContains subst v ->
-        stripPrefix subst prefixUnif preconds suff (pref, Subst.apply subst v)
+        stripPrefix subst prefixUnif preconds suff (pref, Subst.subst_apply subst v)
       | t -> immediate t
 
     List.iter (fun k -> stripPrefix subst [] [] (fun x -> x) (pref, k)) 
@@ -201,7 +201,7 @@ module MLLogicEngineImpl =
       | App(SaidInfon, [ppal; infon]) ->
         doDerive _infostrate (ppal :: pref) (subst, conds) infon
       | Var(v) when Subst.domainContains subst v ->
-        doDerive _infostrate pref (subst, conds) (Subst.apply subst v)
+        doDerive _infostrate pref (subst, conds) (Subst.subst_apply subst v)
       | App(AsInfon, [SubstrateQueryTerm(exp)]) ->
         if List.isEmpty pref then
           [(subst, conds @ [ exp ])]

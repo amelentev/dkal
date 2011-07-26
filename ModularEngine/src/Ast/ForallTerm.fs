@@ -16,6 +16,7 @@ open Microsoft.Research.Dkal.Interfaces
 open System.Collections.Generic
 
 /// Represents a universally quantified AST term
+[<CustomEqualityAttribute; NoComparisonAttribute>]
 type ForallTerm =
   { 
     /// The quantified variable
@@ -41,6 +42,14 @@ type ForallTerm =
   member ft.ChangeVarName (s: ISubstitution) =
     let v, s' = ForallTerm.FreshVar ft.Var ([for v in s.Domain do yield! (s.Apply v).Vars] @ s.Domain @ ft.Term.Vars)
     { Var = v; Term = ft.Term.Apply s' } :> ITerm, s'
+
+  override ft.Equals (o:obj) =
+    match o with
+    | :? ForallTerm as ft' -> ft.Var.Equals ft'.Var
+                                 && ft.Term.Equals ft'.Term
+    | _ -> false
+
+  override ft.GetHashCode() = (ft.Var, ft.Term).GetHashCode()
 
   interface ITerm with
     member fit.BoundVars = new HashSet<_>(fit.Var :: fit.Term.BoundVars) |> Seq.toList

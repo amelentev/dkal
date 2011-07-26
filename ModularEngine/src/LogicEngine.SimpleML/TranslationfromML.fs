@@ -141,5 +141,5 @@ module TranslationfromML =
   and ISubstitutionOfMLsubstitution (subst: MLType.substitution) : ISubstitution =
     List.fold (fun res k ->
                res.Extend 
-                 (IVarOfMLvar k, ITermOfMLterm (Subst.apply subst k)))
+                 (IVarOfMLvar k, ITermOfMLterm (Subst.subst_apply subst k)))
               Substitution.Id (Subst.domain subst) 

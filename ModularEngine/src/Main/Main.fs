@@ -33,7 +33,7 @@ module Main =
 
   let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
   match args with
-  | [_; routingFile; policyFile; step] ->
+  | [_; routingFile; policyFile; step] | [_; routingFile; policyFile; step; "-MLLogicEngine"] | [_; routingFile; policyFile; step; "-FStarLogicEngine"]  ->
       try  
           let kind = "simple"
 
@@ -47,7 +47,10 @@ module Main =
 
             let router = RouterFactory.Router kind routingFile
             let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
-            let logicEngine = LogicEngineFactory.LogicEngine kind 
+            let logicEngineKind = 
+              (if List.exists (fun a -> a="-MLLogicEngine") args then "ML" else 
+                (if List.exists (fun a -> a="-FStarLogicEngine") args then "FStar" else "simple"))
+            let logicEngine = LogicEngineFactory.LogicEngine logicEngineKind
             let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
             let infostrate = InfostrateFactory.Infostrate kind
             let mailbox = MailBoxFactory.MailBox kind logicEngine

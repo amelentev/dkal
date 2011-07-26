@@ -19,7 +19,7 @@ module Subst = // from Substitution.fs
   let domainContains (s: MLType.substitution) (v: MLType.var) : bool =
     s.ContainsKey v 
 
-  let apply (s: MLType.substitution) (v: MLType.var) : MLType.term =
+  let subst_apply (s: MLType.substitution) (v: MLType.var) : MLType.term =
     let found, ret = s.TryGetValue v
     if found then ret else MLType.Var(v)
 

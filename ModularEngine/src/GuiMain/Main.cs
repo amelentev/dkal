@@ -51,17 +51,22 @@ namespace Microsoft.Research.Dkal.GuiMain
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
-                string routingFile, policyFile;
+                string routingFile, policyFile, logicEngineKind;
+                string kind = "simple";
 
-                if (args.Length == 2) {
+                if (args.Length == 2 || args.Length == 3) {
                     routingFile = args[0];
                     policyFile = args[1];
+                    if (args.Length == 3){
+                      logicEngineKind = args[2];
+                    }
+                    else{
+                      logicEngineKind = "simple";
+                    }
                 } else {
                     MessageBox.Show("Incorrect number of parameters. Expecting: routing table file, policy file");
                     return;
                 }
-                    
-                string kind = "simple";
 
                 // Populate factories
                 FactoriesInitializer.Init();
@@ -69,7 +74,7 @@ namespace Microsoft.Research.Dkal.GuiMain
                 var router = RouterFactory.Router(kind, routingFile);
                 var parser= ParserFactory.InfonParser(kind, router.Me);
                 var printer = PrettyPrinterFactory.InfonPrinter(kind);
-                var logicEngine = LogicEngineFactory.LogicEngine(kind);
+                var logicEngine = LogicEngineFactory.LogicEngine(logicEngineKind);
                 var signatureProvider = SignatureProviderFactory.SignatureProvider(kind);
                 var infostrate = InfostrateFactory.Infostrate(kind);
                 var mailbox = MailBoxFactory.MailBox(kind, logicEngine);

@@ -35,7 +35,7 @@ module Term =
       for v in Subst.domain s do  
         if ret.Contains(v) then
           ret.Remove v |> ignore
-          ret.UnionWith <| vars (Subst.apply s v)
+          ret.UnionWith <| vars (Subst.subst_apply s v)
       ret |> Seq.toList
     | MLType.SubstrateQueryTerm(t0) ->
       t0.Vars |> Seq.toList |> List.map TranslationtoML.MLvarOfIVar
@@ -54,7 +54,7 @@ module Term =
       for v in Subst.domain s do  
         if ret.Contains(v) then
           ret.Remove v |> ignore
-          ret.UnionWith <| boundVars (Subst.apply s v)
+          ret.UnionWith <| boundVars (Subst.subst_apply s v)
       ret |> Seq.toList
     | MLType.SubstrateQueryTerm(t0) ->
       t0.BoundVars |> Seq.toList |> List.map TranslationtoML.MLvarOfIVar
@@ -76,16 +76,16 @@ module Term =
   // from Subst; moved here because of mutual recursions
     let (newSubst : MLType.substitution) = new Dictionary<_, _>(s)
     for v in Subst.domain s' do
-      newSubst.[v] <- apply (Subst.apply s' v) s
+      newSubst.[v] <- term_apply (Subst.subst_apply s' v) s
     for v in Subst.domain s do
       if not <| Subst.domainContains s' v then
-        newSubst.[v] <- Subst.apply s v
+        newSubst.[v] <- Subst.subst_apply s v
     newSubst
 
-  // Subst.composeWith (above) and Term.apply (below) are mutually recursive!!
-  and apply (t: MLType.term) (s: MLType.substitution) : MLType.term =
+  // Subst.composeWith (above) and Term.term_apply (below) are mutually recursive!!
+  and term_apply (t: MLType.term) (s: MLType.substitution) : MLType.term =
     match t with
-    | MLType.Var(v) -> Subst.apply s v // from Variable.fs
+    | MLType.Var(v) -> Subst.subst_apply s v // from Variable.fs
     | MLType.Const _ -> t // from Constants.fs
     | MLType.Forall(v0, t0) -> // from ForallTerm.fs
       // the substitution is not applied to the quantified variable
@@ -93,14 +93,14 @@ module Term =
       // check that there will be no variable capture
       let varsToCheck = new HashSet<_>(vars t0)
       varsToCheck.IntersectWith (Subst.domain s)
-      let mappedVars = Seq.collect (fun (v': MLType.var) -> vars (Subst.apply s v')) varsToCheck
+      let mappedVars = Seq.collect (fun (v': MLType.var) -> vars (Subst.subst_apply s v')) varsToCheck
       if Seq.exists (fun v -> v = v0) mappedVars 
       then
         let newVar, newVarSubst = freshVar v0 ((vars t0) @ (mappedVars |> Seq.toList))
-        MLType.Forall(newVar, apply (apply t0 newVarSubst) s)
+        MLType.Forall(newVar, term_apply (term_apply t0 newVarSubst) s)
       else
-        MLType.Forall(v0, apply t0 s)
-    | MLType.App(f, tl) -> MLType.App(f, List.map (fun t0 -> apply t0 s) tl) // from TreeTerm.fs
+        MLType.Forall(v0, term_apply t0 s)
+    | MLType.App(f, tl) -> MLType.App(f, List.map (fun t0 -> term_apply t0 s) tl) // from TreeTerm.fs
     | MLType.ConcretizationEvidence(t1, s1) -> // from ExplicitSubstitutionTerm.fs
       MLType.ConcretizationEvidence(t1, composeWith s s1)
     | MLType.SubstrateQueryTerm(t0) -> 
@@ -118,7 +118,7 @@ module Term =
   let instantiate (ft: MLType.term) (s: MLType.substitution) = // from ForallTerm.fs
     let remainingVars = new HashSet<_>(boundVars ft) // TODO HashSet
     remainingVars.ExceptWith (Subst.domain s) // TODO HashSet
-    let innerSubst = apply (innerTerm ft) s
+    let innerSubst = term_apply (innerTerm ft) s
     List.fold (fun t v -> MLType.Forall(v, t)) 
       innerSubst (Seq.toList remainingVars) // TODO HashSet
 
@@ -129,26 +129,26 @@ module Term =
         freshVar
           v 
           ((List.foldBack 
-              (fun v acc -> (vars (Subst.apply s v)) @ acc)
+              (fun v acc -> (vars (Subst.subst_apply s v)) @ acc)
               (Subst.domain s) [])
             @ (Subst.domain s) @ (vars t))
-      MLType.Forall(v, apply t s'), s'
+      MLType.Forall(v, term_apply t s'), s'
     | _ -> failwith "changeVarName can only be called on a ForallTerm"
 
   let rec unifyFrom (t1: MLType.term) (s: MLType.substitution) (t2: MLType.term) : MLType.substitution option =
     match t1 with
     | MLType.Var(v1) -> // from Variable.fs
       match t2 with
-      | _ when apply t1 s = apply t2 s -> Some s
+      | _ when term_apply t1 s = term_apply t2 s -> Some s
       | _ when not(List.exists (fun v' -> v1 = v') (vars t2)) -> 
         if Subst.domainContains s v1 then
-          unifyFrom (apply t1 s) s t2
+          unifyFrom (term_apply t1 s) s t2
         else
-          Some <| composeWith (Subst.extend Subst.id (v1, apply t2 s)) s
+          Some <| composeWith (Subst.extend Subst.id (v1, term_apply t2 s)) s
       | _ -> None
     | MLType.Const(c1) -> // from Constants.fs
       match t2 with
-      | _ when t1 = apply t2 s -> Some s
+      | _ when t1 = term_apply t2 s -> Some s
       | MLType.Var(v2) -> unifyFrom t2 s t1
       | _ -> None
     | MLType.Forall(v1, t1') -> // from ForallTerm.fs
@@ -159,11 +159,11 @@ module Term =
           if List.forall 
                 (fun v -> 
                   if List.exists (fun v' -> v' = v) (boundVars t1) then
-                    match Subst.apply s v with
+                    match Subst.subst_apply s v with
                     | MLType.Var(v0) -> List.exists (fun v' -> v' = v0) (boundVars t2)
                     | _ -> false
                   elif List.exists (fun v' -> v' = v) (boundVars t2) then
-                    match Subst.apply s v with
+                    match Subst.subst_apply s v with
                     | MLType.Var(v0) -> List.exists (fun v' -> v' = v0) (boundVars t1)
                     | _ -> false
                   else 
@@ -185,7 +185,7 @@ module Term =
         let mutable ret = s
         let mutable i = 0
         while okSoFar && i < List.length tlist1 do
-          match unifyFrom (apply tlist1.[i] ret) ret (apply tlist2.[i] ret) with
+          match unifyFrom (term_apply tlist1.[i] ret) ret (term_apply tlist2.[i] ret) with
           | Some s ->
             ret <- s
           | None -> 
@@ -199,7 +199,7 @@ module Term =
     | MLType.ConcretizationEvidence(et1, s1) ->
       match t2 with
       | MLType.ConcretizationEvidence(et2, s2) -> 
-        unifyFrom (apply et1 s1) s2 (apply et2 s2)
+        unifyFrom (term_apply et1 s1) s2 (term_apply et2 s2)
       | _ -> unifyFrom t2 s t1
     | MLType.SubstrateQueryTerm(t0) ->
       t0.UnifyFrom (TranslationfromML.ISubstitutionOfMLsubstitution s) (TranslationfromML.ITermOfMLterm t2) |>
