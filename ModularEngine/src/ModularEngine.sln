@@ -96,6 +96,9 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Executor.Factories", "Executor.Factories\Executor.Factories.fsproj", "{1FE1B1DA-1E1D-4C5E-88FA-37F023C28885}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LogicEngine.Factories", "LogicEngine.Factories\LogicEngine.Factories.fsproj", "{ED07A55B-2B70-4232-8728-2F2B9E2B7D1B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FFE3B4FA-C13D-4EF0-9EF6-C3B35AB12EFC} = {FFE3B4FA-C13D-4EF0-9EF6-C3B35AB12EFC}
+	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ast.Infon.Syntax.Factories", "Ast.Infon.Syntax.Factories\Ast.Infon.Syntax.Factories.fsproj", "{FE86E32D-AC35-4F55-BCDE-1FC4BBB22AB3}"
 EndProject
