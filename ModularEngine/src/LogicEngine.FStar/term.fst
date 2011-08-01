@@ -58,9 +58,11 @@ open TranslationFromFStar
     | Types.ConcretizationEvidence((t, s)) -> 
       let ret = HashSet_new(boundVars t) in
       iterate
-        (fun v -> if HashSet_contains ret v then
-          ignore(HashSet_remove ret v) else ();
-          HashSet_unionWith ret (boundVars (subst_apply s v)) )
+        (fun v -> 
+           if HashSet_contains ret v
+           then ignore(HashSet_remove ret v)
+           else ();
+           HashSet_unionWith ret (boundVars (subst_apply s v)) )
         (domain s);
       HashSet_toList(ret)  
     | Types.SubstrateQueryTerm(t0) ->
@@ -135,12 +137,14 @@ open TranslationFromFStar
   val instantiate : Types.term -> Types.substitution -> Types.term
   let instantiate (ft: Types.term) (s: Types.substitution) = (* from ForallTerm.fs *)
     let remainingVars = HashSet_new(boundVars ft) in
-    (*remainingVars.ExceptWith*)HashSet_exceptWith remainingVars (domain s); 
+    HashSet_exceptWith remainingVars (domain s); 
     let innerSubst = term_apply (innerTerm ft) s in
-    (*List.fold*)fold_left (fun t v -> Types.Forall((v, t)))  
-      innerSubst ((*Seq.toList*)HashSet_toList remainingVars)
+      fold_left (fun t v -> Types.Forall((v, t)))  
+        innerSubst (HashSet_toList remainingVars)
 
   val changeVarName : Types.term -> Types.substitution -> (Types.term * Types.substitution)
+  (* Change the variable of the ForallTerm ft such that it does not *)
+  (* appear in s *)
   let changeVarName (ft: Types.term) (s:Types.substitution) = (* from ForallTerm.fs *)
     match ft with
     | Types.Forall((v, t)) ->
@@ -158,10 +162,10 @@ open TranslationFromFStar
   val unifyFromWhileLoop : list Types.term -> list Types.term -> Types.substitution -> ref bool -> ref Types.substitution -> ref int -> unit
   val unifyFrom : Types.term -> Types.substitution -> Types.term -> option Types.substitution
   let rec unifyFromWhileLoop (tlist1 : list Types.term) (tlist2 : list Types.term) s okSoFar ret i=
-    if (read okSoFar) && (lessThan (read i) (length tlist1)) then (* Rk: need of parenthesis around condition in F* *)
-     (match unifyFrom (term_apply (nth tlist1 (read i)) (read ret))
-                      (read ret) 
-                      (term_apply (nth tlist2 (read i)) (read ret)) with
+    if (!okSoFar) && (lessThan (!i) (length tlist1)) then (* Rk: need of parenthesis around condition in F* *)
+     (match unifyFrom (term_apply (nth tlist1 (!i)) (!ret))
+                      (!ret) 
+                      (term_apply (nth tlist2 (!i)) (!ret)) with
       | Some s -> ret := s
       | None -> 
           ((okSoFar := false);
@@ -218,20 +222,9 @@ open TranslationFromFStar
           let okSoFar = ref true in 
           let ret = ref s in
           let i = ref 0 in
-        (*
-        while !okSoFar && !i < List.length tlist1 do
-          (match unifyFrom (term_apply tlist1.[!i] !ret) !ret (term_apply tlist2.[!i] !ret)
-                                      
-          | Some s ->
-            ret := s
-          | None -> 
-            okSoFar := false
-          i := !i + 1
-        done;
-        *)
         unifyFromWhileLoop tlist1 tlist2 s okSoFar ret i;
-        if (*!okSoFar*)(read okSoFar) then
-          Some (read ret)
+        if (!okSoFar) then
+          Some (!ret)
         else
           None
       | _ -> None)
@@ -242,10 +235,10 @@ open TranslationFromFStar
       | _ -> unifyFrom t2 s t1
     | Types.SubstrateQueryTerm(t0) ->
       option_map FStarSubstitutionOfISubstitution
-        ((*t0.UnifyFrom*)substrateQueryTerm_unifyFrom t0(ISubstitutionOfFStarSubstitution s) (ITermOfFStarTerm t2) )
+        (substrateQueryTerm_unifyFrom t0(ISubstitutionOfFStarSubstitution s) (ITermOfFStarTerm t2) )
     | Types.SubstrateUpdateTerm(t0) ->
       option_map FStarSubstitutionOfISubstitution
-        ((*t0.UnifyFrom*)substrateQueryTerm_unifyFrom t0(ISubstitutionOfFStarSubstitution s) (ITermOfFStarTerm t2) )
+        (substrateQueryTerm_unifyFrom t0(ISubstitutionOfFStarSubstitution s) (ITermOfFStarTerm t2) )
       
   let unify (t1: Types.term) (t2: Types.term) : option Types.substitution =
     unifyFrom t1 (id) t2

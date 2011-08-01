@@ -24,7 +24,10 @@ module Utilities =
   let _value_checkSignature (_signatureProvider : ISignatureProvider option) (infon : Types.term) (principal : principal) (sign : obj) =
     _signatureProvider.Value.CheckSignature (TranslationFromFStar.ITermOfFStarTerm infon) principal (sign :?> int)
 
-  let _substrateDispatcher_solve (q : list<ISubstrateQueryTerm>) s =
+  (* Solve the given queries, invoking the necessary substrates, considering all   *)
+  (* possible substitutions. Return more specialized substitutions (if successful) *)
+  let _substrateDispatcher_solve (q : list<ISubstrateQueryTerm>) (s : list<TranslationToFStar.substitution>) 
+    : list<TranslationToFStar.substitution> =
     let q' = Seq.ofList (List.map (fun q0 -> q0 :> ISubstrateQueryTerm) q)
     let s' = Seq.ofList (List.map TranslationFromFStar.ISubstitutionOfFStarSubstitution s)
     SubstrateDispatcher.Solve q' s' |> Seq.toList |>

@@ -1,0 +1,99 @@
+Core DKAL, i.e., DKAL minus substrate updates ... 
+
+  Constants c ::= tt | ff | p | s 
+
+  Variables x
+
+  Sub query q ::= R i1 ... ik
+
+  Types     t ::= Boolean 
+               | Infon 
+               | Principal 
+               | SubQuery 
+               | Evidence
+
+  Evidence  e ::= EmptyEv | SigEv | MPEv | AndEv | AsInfonEv 
+
+  Infons   i,j ::= x 
+               | c 
+               | forall (x:t). i 
+               | Empty
+               | AsInfon q
+               | And i j
+               | Implies i j
+               | Said i j
+               | Justified i j
+
+
+  Infostrate I ::= . | i, I 
+
+  Substrate  S ::= (R c1 .. cn) | S, S'
+
+--------------------------------------------------------------------------------
+                ___________
+               |           |
+               | S; I |= i |  Infon entailment in a substrate and infostrate
+               |___________|
+
+
+  Context pref ::= hole | Said p pref
+
+
+  --------------------- [Emp]  [ Q: Same as T? ]
+    S; I |= Empty
+
+
+    q \in S 
+  --------------------- [Hyp-Substrate]
+    S; I |= AsInfon q
+
+
+     i \in I
+  ---------------- [Hyp-Infostrate]
+    S; I |= i
+
+    S; I |= f(x1,..., xr)
+  ------------------------ [substitution]
+    S; I |= f(u1,..., ur)
+where x1...xr are distinct variables and u1...ur are constants or variables, the type of each ui being the same as the type of the corresponding xi.
+
+    S; I |= pref i
+    S; I |= pref j
+  -------------------------- [And-Intro]
+    S; I |= pref (And i j)
+
+
+    S; I |= pref (And i j) 
+  ------------------------- [And-Elim1]
+    S; I |= pref i
+
+
+    S; I |= pref (And i j) 
+  --------------------------- [And-Elim2]
+    S; I |= pref j
+
+
+    S; I |= pref j
+  ------------------------------- [W-Imp-Intro]
+    S; I |= pref (Implies i j)
+
+
+    S; I |= pref (Implies i j)
+    S; I |= pref i
+  ----------------------- [Imp-Elim]
+    S; I |= pref j
+
+
+Quantifiers are implicit
+
+Quantifiers?
+Justification?
+
+
+
+
+
+
+
+
+
