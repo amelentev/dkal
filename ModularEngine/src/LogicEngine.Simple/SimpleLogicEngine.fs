@@ -179,7 +179,11 @@ type SimpleLogicEngine() =
             | (a, b) :: ts ->
               match s with
                 | None -> None
-                | Some s -> unifyAndSimpl (a.UnifyFrom s b) ts
+                | Some s -> match unifyAndSimpl (a.UnifyFrom s b) ts with
+                            | Some s -> Some s
+                            | None -> match a with
+                                      | ImpliesInfon(_, i2) -> b.UnifyFrom s i2
+                                      | _ -> None
           match unifyAndSimpl (Some subst) ((template, i) :: prefixUnif) with
             | Some subst ->
               res := (subst, preconds) :: !res
