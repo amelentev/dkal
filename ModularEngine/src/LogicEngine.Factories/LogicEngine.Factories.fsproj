@@ -70,6 +70,11 @@
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.FStar.Deps\LogicEngine.FStar.Deps.fsproj">
+      <Name>LogicEngine.FStar.Deps</Name>
+      <Project>{ffe3b4fa-c13d-4ef0-9ef6-c3b35ab12efc}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\LogicEngine.FStar.Wrapper\LogicEngine.FStar.Wrapper.fsproj">
       <Name>LogicEngine.FStar.Wrapper</Name>
       <Project>{a2cfba02-1d02-4df1-b5d9-fb72757c20db}</Project>

@@ -287,7 +287,12 @@ module LogicEngine
       | (a, b) :: ts ->
           (match s with
              | None -> None
-             | Some s -> unifyAndSimpl (unifyFrom a s b) ts)
+             | Some s -> (match unifyAndSimpl (unifyFrom a s b) ts with
+                          | Some s -> Some s
+                          | None -> (match a with
+                                     | App((ImpliesInfon, [i1; i2])) -> 
+                                        unifyFrom b s i2
+                                     | _ -> None)))
 
   val stripPrefix : substitution 
                     -> list (term * term)
