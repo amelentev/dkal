@@ -22,7 +22,7 @@ type LogicEngineFactory() =
     match kind with
     | "simple" -> new Simple.SimpleLogicEngine() :> ILogicEngine
     | "ml" | "ML" -> new ML.MLLogicEngine() :> ILogicEngine
-    | "fstar" | "FStar" | "Fstar" -> new FStar.Wrapper.Wrapper() :> ILogicEngine 
+//    | "fstar" | "FStar" | "Fstar" -> new FStar.Wrapper.Wrapper() :> ILogicEngine 
     | k -> failwith <| "Unrecognized logic engine kind: " + k
 
 
