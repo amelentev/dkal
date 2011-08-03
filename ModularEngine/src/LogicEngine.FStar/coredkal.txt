@@ -39,8 +39,19 @@ Core DKAL, i.e., DKAL minus substrate updates ...
                | G |- u:t |  Well-typed terms
                |__________| 
 
-   -----------------------
+   ----------------------- 
      G, x:t, G' |- x:t
+                           
+(*
+??? What about name clashes?? I suggest two rules instead:						   
+
+   ----------------
+     G, x:t |- x:t
+	 
+	 G |- x:t    x != y
+   ---------------------
+     G, y:t' |- x:t
+*)
 
    --------------------
      G |- tt:Boolean
@@ -48,7 +59,14 @@ Core DKAL, i.e., DKAL minus substrate updates ...
    --------------------
      G |- ff:Boolean
 
-
+     G |- i:Infon    G |- j:Infon
+   --------------------------------
+      G |- AndInfon i j : Infon
+	
+     G |- i:Infon    G |- j:Infon
+   --------------------------------
+      G |- ImpliesInfon i j : Infon
+	  
    --------------------
      G |- p:Principal
 
@@ -61,21 +79,21 @@ Core DKAL, i.e., DKAL minus substrate updates ...
      G |- AsInfon q:Infon
 
 
-     G |- i: Principal
-     G |- j: Infon
+     G |- p: Principal
+     G |- i: Infon
    --------------------
-     G |- Said i j:Infon
+     G |- Said p i:Infon
 
 
      G |- i: Infon
-     G |- j: Evidence    <-------- Base cases?
+     G |- e: Evidence    <-------- Base cases?
    --------------------
-     G |- Justified i j:Infon
+     G |- Justified i e:Infon
 
 
      G,x:t |- i: Infon
-   --------------------
-     G |- forall (x:t). i
+   --------------------------------    Q: can the forall really only be an infon?
+     G |- forall (x:t). i : Infon
 
 
                 _____________

@@ -12,6 +12,9 @@ module CoreDKAL
 (** From types.fst **)
 type principal = string
 
+type int32=int
+type double
+
 type typ =  
   | Infon : typ
   | Principal : typ
@@ -29,8 +32,9 @@ type typ =
 type var = string * typ
   
 type constant = 
-  | True : constant
-  | False : constant
+  | TrueT : constant
+  | FalseT : constant
+  (* Rk: True and False are probably keywords *)
   (* | Bool : bool -> constant *)
   | PrincipalConstant : principal -> constant
   | SubstrateConstant : object -> constant 
@@ -42,6 +46,7 @@ type func =
   | AsInfon : func
   | AndInfon : func
   | ImpliesInfon : func
+  | JustifiedInfon : func
   | RelationInfon : relationInfon -> func
   (* ... *)
 
@@ -52,47 +57,18 @@ type query (* to be replaced by SubstrateUpdate and SubstrateQuery eventually *)
 type term = 
   | Var : var -> term
   | Const : constant -> term
-  | Forall : var -> term -> term
+  | ForallT : var -> term -> term
+  (* Rk: Forall is already a reserved word; error msg not very explicit *)
   | App : func -> list term -> term
   | SubstrateQueryTerm : query -> term
   (* | ... *)
-
-(** to be replaced **)
-(*
-type query
-
-type evidence =
-  | EmptyEv : evidence
-  | SigEv : evidence
-  | MPEv : evidence
-  | AndEv : evidence
-  | AsInfonEv : evidence
-
-type infon =
-  | Variable : var -> infon
-(*   | c  *)
-  | Forall : var -> infon -> infon
-  | Empty : infon
-  | AsInfon : query -> infon
-  | And : infon -> infon -> infon
-  | Said : infon -> infon -> infon
-(*                | And i j *)
-  | Implies : infon -> infon -> infon
- *)
   
-(** added here **)
 
+(** only for Core DKAL **)
 type infostrate = list term
 type substrate = list query
 type varDecl = list var
 type prefix = list term
-
-(* val declarations seem necessary here for funs to be used even in same file *)
-val said : term -> term -> term
-let said (p:term) (i:term) = App SaidInfon [p; i]
-
-val empty : term
-let empty = App EmptyInfon []
   
 (*************)
 (* Utilities *)
@@ -146,7 +122,48 @@ let rec mkPrefix pref i =
 (* Inductive judgments *)
 (***********************) 
 
-(*type types :: varDecl => ? => typ => P =*)
+type types :: varDecl => term => typ => P =
+  | Types_Var : G:varDecl -> x:string -> t:typ -> Mem (x, t) G
+               -> types G (Var((x, t))) t   (* TODO: change rules for name clashes/scope *)
+  | Types_ConstTrueT : G:varDecl -> types G (Const TrueT) Boolean
+  | Types_ConstFalseT : G:varDecl -> types G (Const FalseT) Boolean
+  | Types_ConstPrincipalConstant : G:varDecl -> p:principal
+                             -> types G (Const (PrincipalConstant p)) Principal
+  (* should autocast? *)
+  (*| Types_ConstSubstrateConstant : G:varDecl -> b:bool
+                             -> types G (Const (SubstrateConstant b)) Boolean
+  | Types_ConstSubstrateConstant : G:varDecl -> i:int32
+                             -> types G (Const (SubstrateConstant i)) Int32
+  | Types_ConstSubstrateConstant : G:varDecl -> d:double
+                             -> types G (Const (SubstrateConstant d)) Double
+  | Types_ConstSubstrateConstant : G:varDecl -> s:string
+                             -> types G (Const (SubstrateConstant s)) String *)
+  | Types_ForallT : G:varDecl ->	x:var -> i:term 
+                   -> types (x::G) i Infon
+                   -> types G (ForallT x i) Infon
+  | Types_AppEmptyInfon : G:varDecl -> types G (App EmptyInfon []) Infon
+  | Types_AppSaidInfon : G:varDecl -> p:term -> i:term
+                         -> types G p Principal
+						 -> types G i Infon
+						 -> types G (App SaidInfon [p; i]) Infon
+  | Types_AppAsInfon : G:varDecl -> q:query
+                       -> types G (App AsInfon [(SubstrateQueryTerm q)]) Infon
+  | Types_AppAndInfon : G:varDecl -> i:term -> j:term (* TODO: extend to n *)
+                     -> types G i Infon
+					 -> types G j Infon 
+					 -> types G (App AndInfon [i; j]) Infon
+  | Types_AppImpliesInfon : G:varDecl -> i:term -> j:term
+                     -> types G i Infon
+					 -> types G j Infon 
+					 -> types G (App ImpliesInfon [i; j]) Infon
+  | Types_AppJustifiedInfon : G:varDecl -> i:term -> e:term 
+                            -> types G i Infon
+							-> types G e Evidence
+							-> types G (App JustifiedInfon [i; e]) Infon
+  | Types_AppRelationInfon : G:varDecl -> r:relationInfon (* no type check here *)
+                           -> l:list term
+						 (* TODO: need to typecheck all the subterms! *)
+						   -> types G (App (RelationInfon r) l) Infon
 
 type entails :: substrate => infostrate => varDecl => term => P =
   | Entails_Emp : S:substrate -> I:infostrate -> G:varDecl
@@ -173,10 +190,12 @@ type entails :: substrate => infostrate => varDecl => term => P =
                     -> x:var -> i:term -> i':term
 					-> result:term
 					-> pref:prefix
-			        (*-> MkPrefix pref (Forall x i) result *) (* TODO?? *)
+			        -> MkPrefix pref (ForallT x i) result
 					-> MkPrefix pref i i'
 			        -> entails S I (x::G) i'
 					-> entails S I G result
+
+  (*| Entails_Q_Inst : TODO*)
 				 
   | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
                      -> i:term -> i':term
@@ -191,30 +210,47 @@ type entails :: substrate => infostrate => varDecl => term => P =
                      -> entails S I G result
 
   | Entails_And_Elim1 : S:substrate -> I:infostrate -> G:varDecl
-     -> i : term -> i': term
-     -> j : term
-     -> pref : list term 
-     -> hyp : term
-     -> MkPrefix pref (App AndInfon [i; j]) hyp
-     -> MkPrefix pref i i'
-     -> entails S I G hyp
-     -> entails S I G i'
+                     -> i : term -> i': term
+                     -> j : term
+                     -> pref : list term 
+                     -> hyp : term
+                     -> MkPrefix pref (App AndInfon [i; j]) hyp
+                     -> MkPrefix pref i i'
+                     -> entails S I G hyp
+                     -> entails S I G i'
+	 
+  | Entails_And_Elim2 : S:substrate -> I:infostrate -> G:varDecl
+                     -> i : term
+                     -> j : term -> j': term
+                     -> pref : list term 
+                     -> hyp : term
+                     -> MkPrefix pref (App AndInfon [i; j]) hyp
+                     -> MkPrefix pref j j'
+                     -> entails S I G hyp
+                     -> entails S I G j'
 	 
   | Entails_W_Imp_Intro : S:substrate -> I:infostrate -> G:varDecl 
                       -> i:term
                       -> j:term -> j':term 
                       -> result:term
                       -> pref: list term
-                      -> MkPrefix pref (App ImpliesInfon [i; j]) result
                       -> MkPrefix pref j j'
+                      -> MkPrefix pref (App ImpliesInfon [i; j]) result
                       -> entails S I G j' 
                       -> entails S I G result
-
 					  
-(*
-type Typing :: varDecl => term => typ => P =
-   | Typing_var : g:varDecl -> x:var -> t:typ -> Mem (x,t) g -> Typing g (VarTerm x) t
-*)
+  | Entails_Imp_Elim : S:substrate -> I:infostrate -> G:varDecl
+                     -> i : term -> i':term
+                     -> j : term -> j':term
+                     -> pref : list term 
+                     -> hyp : term
+                     -> MkPrefix pref i i'
+                     -> MkPrefix pref (App ImpliesInfon [i; j]) hyp
+                     -> MkPrefix pref i j'
+					 -> entails S I G i'
+                     -> entails S I G hyp
+                     -> entails S I G j'
+
 (* val subst: i:term -> x:var -> u:term -> (i':term * Subst i x u i') *)
 (* let subst i x u = raise "todo" *)
 
@@ -224,9 +260,52 @@ type Subst :: term => var => term => term => P =
 val subst: i:term -> x:var -> u:term -> (i':term * Subst i x u i')
 let subst i x u = raise "todo"
 
-(************************)
-(* Derivation algorithm *)
-(************************) 
+(*************************)
+(* Derivation algorithms *)
+(*************************) 
+
+val doType: g:varDecl -> t:term -> option(ty:typ * (types g t ty))
+let rec doType g t =
+  match t with
+  | Var((x, t)) -> (match mem (x,t) g with (* TODO: change with new rules *)
+                    | None -> None
+				    | Some(m) -> Some((t, Types_Var g x t m)))
+  | Const TrueT -> Some((Boolean, Types_ConstTrueT g))
+  | Const FalseT -> Some((Boolean, Types_ConstFalseT g))
+  | Const(PrincipalConstant p) -> 
+      Some((Principal,
+            Types_ConstPrincipalConstant g p))
+  | ForallT x i -> (match doType (x::g) i with
+                     | None -> None
+                     | Some((Infon, pr)) -> 
+                         Some((Infon, Types_ForallT g x i pr))
+					 | Some _ -> None)
+  | App EmptyInfon [] -> Some(Infon, Types_AppEmptyInfon g)
+  | App AsInfon [(SubstrateQueryTerm q)] ->
+      Some((Infon, Types_AppAsInfon g q))
+  | App SaidInfon [p; i] ->
+      (match (doType g p, doType g i) with
+	     | (Some((Principal, prp)), Some((Infon, pri))) ->
+		      Some((Infon, Types_AppSaidInfon g p i prp pri))
+		 | _ -> None)
+  | App AndInfon [i; j] ->
+      (match (doType g i, doType g j) with
+	     | (Some((Infon, pri)), Some((Infon, prj))) ->
+		      Some((Infon, Types_AppAndInfon g i j pri prj))
+		 | _ -> None)
+  | App ImpliesInfon [i; j] ->
+      (match (doType g i, doType g j) with
+	     | (Some((Infon, pri)), Some((Infon, prj))) ->
+		      Some((Infon, Types_AppImpliesInfon g i j pri prj))
+		 | _ -> None)
+  | App JustifiedInfon [i; e] ->
+      (match (doType g i, doType g e) with
+	     | (Some((Infon, pri)), Some((Evidence, pre))) ->
+		      Some((Infon, Types_AppJustifiedInfon g i e pri pre))
+		 | _ -> None)
+  | App (RelationInfon r) l -> 
+       Some((Infon, Types_AppRelationInfon g r l))
+  | _ -> None
 
 val doDerive: S:substrate -> I:infostrate -> G:varDecl 
            -> pref:prefix -> i:term 
@@ -255,12 +334,12 @@ let rec doDerive _S _I _G pref inf =
                 | Some pf -> Some ((j, m, Entails_Hyp_Substrate _S _I _G q pf)))
          | _ -> None)
 
-  | Forall x i ->
+  | ForallT x i ->
       (match doDerive _S _I (x::_G) pref i with
 	     | None -> None
 		 | Some((i', mi, ei)) -> 
              let (j, m) = mkPrefix pref inf in
-	         Some((j, m, Entails_Q_Intro _S _I _G x i i' j pref (*m*) mi ei)))
+	         Some((j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei)))
 	 
   | App(AndInfon, [i; j]) -> (* TODO: extend to n variables *)
       (match (doDerive _S _I _G pref i, doDerive _S _I _G pref j) with
@@ -277,7 +356,7 @@ let rec doDerive _S _I _G pref inf =
          | Some((j', mj, ej)) ->
              let (a, m) = mkPrefix pref inf in
 			 Some((a, m,
-			       Entails_W_Imp_Intro _S _I _G i j j' a pref m mj ej)))
+			       Entails_W_Imp_Intro _S _I _G i j j' a pref mj m ej)))
 	  
 
       
