@@ -130,24 +130,24 @@ Core DKAL, i.e., DKAL minus substrate updates ...
     S; K; G |= pref (And i j)
 
 
-    S; K |= pref (And i j) 
+    S; K; G |= pref (And i j) 
   ------------------------- [And-Elim1]
-    S; K |= pref i
+    S; K; G |= pref i
 
 
-    S; K |= pref (And i j) 
+    S; K; G |= pref (And i j) 
   --------------------------- [And-Elim2]
-    S; K |= pref j
+    S; K; G |= pref j
 
 
-    S; K |= pref j
+    S; K; G |= pref j
   ------------------------------- [W-Imp-Intro]
-    S; K |= pref (Implies i j)
+    S; K; G |= pref (Implies i j)
 
 
-    S; K |= pref (Implies i j)
-    S; K |= pref i
+    S; K; G |= pref (Implies i j)
+    S; K; G |= pref i
   ----------------------- [Imp-Elim]
-    S; K |= pref j
+    S; K; G |= pref j
 
 Justification?
