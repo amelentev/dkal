@@ -22,11 +22,12 @@ module CoreDKAL
 (* Type definitions *)
 (********************)
 
+(* TODO: reconcile diffs
+    open Types
+*)
+
 (** From types.fst **)
 type principal = string
-
-type int32=int
-type double
 
 type typ =  
   | Infon : typ
@@ -52,7 +53,7 @@ type constant =
   | PrincipalConstant : principal -> constant
   | SubstrateConstant : object -> constant 
 
-type relationInfon
+type relationInfon (* = ?  Make this concrete as in rest of DKAL *)
 type func =
   | EmptyInfon : func
   | SaidInfon : func
@@ -80,7 +81,7 @@ type term =
 type substitution = list (var * term) 
   (* Dictionary in original implementation, modeled as assoc list *)
 type infostrate = list term
-type substrate = list query
+type substrate (* TODO: extern in DKAL; make this abstract here, instead of a list *)
 type varDecl = list var
 type prefix = list term
   
@@ -102,11 +103,6 @@ let rec mem (a : 'a) (l: list 'a) : option (Mem 'a a l) =
   | h::t -> (match mem a t with
                | None -> None
 			   | Some(m) -> Some(Mem_tl a h t m))
-
-val memSubstrate : q:query -> s:substrate -> option (Mem q s)
-  (* Rk: using _S instead of s in the type declaration confuses F* *)
-let memSubstrate q _S = mem q _S
-  (* Rk: does not accept : let memSubstrate = mem which is essentially the same *)
   
 val memInfostrate : i:term -> is:infostrate -> option (Mem i is)
 let memInfostrate i _I = mem i _I
@@ -131,19 +127,23 @@ let rec mkPrefix pref i =
                  (App SaidInfon [h; j], MkPrefix_Cons h t i j m))
                  (* Rk: if using the function said here, can't prove it *)				 
 
+(******************************)
+(* Trusted external functions *)
+(******************************) 
+
+(* 1. Dynamic type tests from .NET *)
+type TypeOf :: object => typ => E
+(* extern Runtime  FIXME *) val check_object_typ : x:object -> t:typ -> b:bool{b=true => TypeOf x t}
+
+(* 2. Queries to external databases i.e., Substrate *)
+type SubstrateSays :: substrate => query => E
+(* extern Runtime  FIXME *) val check_substrate : s:substrate -> q:query -> b:bool{b=true => SubstrateSays s q}
+
 
 (***********************)
 (* Inductive judgments *)
 (***********************) 
 
-val is_bool : object -> option bool
-val is_int32 : object -> option int32
-val is_double : object -> option double
-val is_string : object -> option string
-(*
-type equals :: * => 'a => 'a => P =
-  | Equals : 'a -> x:'a -> y:'a(*{x=y}*) -> equals 'a x y (*TODO: error msg?? *)
-*)
 type types :: varDecl => term => typ => P =
   | Types_Var : G:varDecl -> x:string -> t:typ -> Mem (x, t) G
                -> types G (Var((x, t))) t   (* TODO: change rules for name clashes/scope *)
@@ -151,19 +151,9 @@ type types :: varDecl => term => typ => P =
   | Types_ConstFalseT : G:varDecl -> types G (Const FalseT) Boolean
   | Types_ConstPrincipalConstant : G:varDecl -> p:principal
                              -> types G (Const (PrincipalConstant p)) Principal
-  (* TODO: should autocast? *)
-  (* idea: extern function isbool:object -> bool *)
-  | Types_ConstSubstrateConstant : G:varDecl -> o:object 
-                                 -> b:bool (*{(is_bool o) = (Some b)}*)
-                                 (*-> Equals (is_bool o) (Some b)*)
-                                 -> types G (Const (SubstrateConstant o)) Boolean
-  (*| Types_ConstSubstrateConstant : G:varDecl -> i:int32
-                             -> types G (Const (SubstrateConstant i)) Int32
-  | Types_ConstSubstrateConstant : G:varDecl -> d:double
-                             -> types G (Const (SubstrateConstant d)) Double
-  | Types_ConstSubstrateConstant : G:varDecl -> s:string
-                             -> types G (Const (SubstrateConstant s)) String *)
-  | Types_ForallT : G:varDecl ->	x:var -> i:term 
+  | Types_ConstSubstrateConstant : G:varDecl -> t:typ -> o:object{TypeOf o t}
+                                 -> types G (Const (SubstrateConstant o)) t
+  | Types_ForallT : G:varDecl -> x:var -> i:term 
                    -> types (x::G) i Infon
                    -> types G (ForallT x i) Infon
   | Types_AppEmptyInfon : G:varDecl -> types G (App EmptyInfon []) Infon
@@ -189,6 +179,24 @@ type types :: varDecl => term => typ => P =
                            -> l:list term
 						 (* TODO: need to typecheck all the subterms! *)
 						   -> types G (App (RelationInfon r) l) Infon
+
+(* type names = list string *)
+(* type Subst :: (\* binders crossed *\) names => (\* subst into this term *\) term => (\* for this *\) var => (\* with this *\) term => (\* result *\) term => P =  *)
+(*   | Subst_ForallTRepl : binders:names -> y:name -> t:typ -> i:term -> x:var{x<>y} -> j:term -> result:term *)
+(*                       -> Subst (y::binders) i x j result *)
+(*                       -> Subst (ForallT (y,t) i) x j (ForallT (y,t) result) *)
+
+(*   | Subst_VarRepl_NoCapture : binders:list string -> x:var -> j:term -> freenames_j:names  *)
+(*                             -> FreeVariables j freenames_j *)
+(*                             -> Disjoint binders freenames_j *)
+(*                             -> Subst binders (Var x) x j j *)
+
+(* val my_lemma: names:binders -> i:term -> x:var -> j:term -> Subst names i x (Var x) j -> option (Eq i j) *)
+(* let my_lemma names i x j pf =  *)
+(*   if i=j then Some (Refl_eq i) *)
+(*   else raise "Impos" *)
+
+(* val subst_special: names:binders -> i:term -> x:var -> Subst names i x (Var x) i *)
 
 
 (* Subst i x u i'  iff  i[u/x] = i' *)
@@ -234,15 +242,15 @@ type entails :: substrate => infostrate => varDecl => term => P =
 
   | Entails_Hyp_Knowledge : S:substrate -> I:infostrate -> G:varDecl
                           -> i:term
-						  -> Mem i I
-						  -> entails S I G i
+                          -> Mem i I
+                          -> entails S I G i
 						  
-  | Entails_Hyp_Substrate : S:substrate -> I:infostrate -> G:varDecl
-                          -> q:query 
-                          -> Mem q S  
+  | Entails_Hyp_Substrate_Trusted  : S:substrate -> I:infostrate -> G:varDecl
+                                  -> q:query{SubstrateSays S q}
 						  (* Eventually, we get a signature from the DB about this fact *)
-                          -> entails S I G (App AsInfon [(SubstrateQueryTerm q)])
+                                  -> entails S I G (App AsInfon [(SubstrateQueryTerm q)])
 						  (* Rk: need parenthesis inside the list *)
+
 
   (* Q: here order of G matters; make sure that's all right; I think so *)
   | Entails_Q_Intro : S:substrate -> I:infostrate -> G:varDecl
@@ -268,6 +276,22 @@ type entails :: substrate => infostrate => varDecl => term => P =
 				   -> MkPrefix pref i' result
 				   -> entails S I G hyp
 				   -> types G u t
+				   -> entails S I G result
+ 
+  | Entails_Q_Inst : S:substrate -> I:infostrate -> G:varDecl
+                   -> x:string
+				   -> t:typ
+				   -> i:term
+				   -> i':term
+				   -> u:term
+				   -> pref:prefix
+				   -> hyp:term
+				   -> result:term
+				   -> MkPrefix pref (ForallT (x, t) i) hyp
+				   -> MkPrefix pref i' result
+                                   -> entails S I G hyp
+				   -> types G u t
+                                   -> Subst i (x, t) u i'
 				   -> entails S I G result
 				 
   | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
@@ -329,6 +353,19 @@ type entails :: substrate => infostrate => varDecl => term => P =
 (*************************) 
 
 val doType: g:varDecl -> t:term -> option(ty:typ * (types g t ty))
+(* val doTypeList : g:varDecl -> terms:list term -> typs:list typ -> option (Zip term typ (types G)) *)
+(* val farg_typing: f:func -> list typ *)
+(* let farg_typing = function  *)
+(*   | EmptyInfon -> [] *)
+
+
+(* let rec doTypeList g terms typs =  *)
+(*   zip_p<term, typ, (types G)> (fun (tm:term) (ty:typ) ->  *)
+(*                                  match doType g tm with  *)
+(*                                    | Some (ty', proof) when ty=ty' -> proof *)
+(*                                    | _ -> None) terms typs *)
+(* use map_p for variable arguments for AndInfon etc. *)
+
 let rec doType g t =
   match t with
   | Var((x, t)) -> (match mem (x,t) g with (* TODO: change with new rules *)
@@ -409,14 +446,15 @@ let rec doDerive _S _I _G pref inf =
 	  (match memInfostrate_inf with
 	     | None -> raise "assert false"
          | Some mis -> Some((j, m, Entails_Hyp_Knowledge _S _I _G i mis)))
-		 
-  | App(AsInfon, [SubstrateQueryTerm q]) -> 
-      (match pref with
-         | [] -> let (j, m) = mkPrefix pref inf in
-             (match memSubstrate q _S with 
-                | None -> None
-                | Some pf -> Some ((j, m, Entails_Hyp_Substrate _S _I _G q pf)))
-         | _ -> None)
+
+(* TODO: Change this to use an the ghost refined version of substrate-hyp *)
+(*   | App(AsInfon, [SubstrateQueryTerm q]) ->  *)
+(*       (match pref with *)
+(*          | [] -> let (j, m) = mkPrefix pref inf in *)
+(*              (match memSubstrate q _S with  *)
+(*                 | None -> None *)
+(*                 | Some pf -> Some ((j, m, Entails_Hyp_Substrate _S _I _G q pf))) *)
+(*          | _ -> None) *)
 
   | ForallT x i ->
       (match doDerive _S _I (x::_G) pref i with

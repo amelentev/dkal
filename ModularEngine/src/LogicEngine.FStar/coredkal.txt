@@ -96,6 +96,7 @@ Core DKAL, i.e., DKAL minus substrate updates ...
      G |- forall (x:t). i : Infon
 
 
+    
                 _____________
                |             |
                | i[u/x] = i' |  Definition of substitution
@@ -183,6 +184,13 @@ Core DKAL, i.e., DKAL minus substrate updates ...
   -------------------------------------- [Q-Inst]
     S; K; G |= pref (i [u/x])
 
+
+    S; K; G |= pref (forall (x:t). i)
+          G |- u:t
+    y not in FreeNames G
+  -------------------------------------- [Q-Inst]
+    S; K; G |= pref (i[y/x][u/y])
+
     S; K; G |= pref i
     S; K; G |= pref j
   -------------------------- [And-Intro]
@@ -208,5 +216,13 @@ Core DKAL, i.e., DKAL minus substrate updates ...
     S; K; G |= pref i
   ----------------------- [Imp-Elim]
     S; K; G |= pref j
+
+
+    S; K; G |= pref (forall (x:t). i)
+    y not in FreeVariables G
+  -------------------------------------------- [Alpha]
+    S; K; G |= pref (forall (y:t). i[y/x])
+
+
 
 Justification?

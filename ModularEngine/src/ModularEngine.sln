@@ -10,6 +10,9 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Interfaces", "Interfaces\Interfaces.fsproj", "{FDDB2EFE-2E4B-4007-909B-DFCE3552FC68}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Main", "Main\Main.fsproj", "{E33580FB-E651-4B24-851D-689F6875284E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{ED07A55B-2B70-4232-8728-2F2B9E2B7D1B} = {ED07A55B-2B70-4232-8728-2F2B9E2B7D1B}
+	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Router.Simple", "Router.Simple\Router.Simple.fsproj", "{62C15AD9-06F2-4C97-A319-1AC3A5059B0E}"
 EndProject
