@@ -101,8 +101,49 @@ Core DKAL, i.e., DKAL minus substrate updates ...
                | i[u/x] = i' |  Definition of substitution
                |_____________|
 
+  ------------
+   x[u/x] = u
+  
+  ------------ (x != y)
+   y[u/x] = y
+  
+  ------------
+   c[u/x] = c
+    
+  ------------------------------------------
+   (forall (x:t). i)[u/x] = forall (x:t). i
+   
+                i[u/x] = i'
+  ------------------------------------------- (x != y)
+   (forall (y:t). i)[u/x] = forall (y:t). i'
+       
+  --------------------
+   Empty[u/x] = Empty   
 
+  ------------------------------
+   (AsInfon q)[u/x] = AsInfon q
+
+   i[u/x] = i'   j[u/x] = j'
+  ----------------------------
+   (And i j)[u/x] = And i' j'
+
+   i[u/x] = i'   j[u/x] = j'
+  ------------------------------------
+   (Implies i j)[u/x] = Implies i' j'
+  
+      p[u/x] = p'   i[u/x] = i'
+  ------------------------------
+   (Said p i)[u/x] = Said p' i'
+
+   i[u/x] = i'   e[u/x] = e'
+  ----------------------------------------
+   (Justified i e)[u/x] = Justified i' e'
+
+  
+    
  TODO (capture avoiding subst. straightforward)
+ 
+ 
 
                 _______________
                |               |
@@ -138,7 +179,7 @@ Core DKAL, i.e., DKAL minus substrate updates ...
 
 
     S; K; G |= pref (forall (x:t). i)
-    S; K; G |- u:t
+          G |- u:t
   -------------------------------------- [Q-Inst]
     S; K; G |= pref (i [u/x])
 

@@ -1,3 +1,16 @@
+(*
+// *********************************************************
+//
+//    Copyright (c) Microsoft. All rights reserved.
+//    This code is licensed under the Apache License, Version 2.0.
+//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// *********************************************************
+*)
+
 (************************)
 (* build:               *)
 (* fstar coredkal.fst   *)
@@ -48,9 +61,8 @@ type func =
   | ImpliesInfon : func
   | JustifiedInfon : func
   | RelationInfon : relationInfon -> func
-  (* ... *)
+  (* | ... *)
 
-type substitution
 
 type query (* to be replaced by SubstrateUpdate and SubstrateQuery eventually *)
 
@@ -65,6 +77,8 @@ type term =
   
 
 (** only for Core DKAL **)
+type substitution = list (var * term) 
+  (* Dictionary in original implementation, modeled as assoc list *)
 type infostrate = list term
 type substrate = list query
 type varDecl = list var
@@ -122,6 +136,14 @@ let rec mkPrefix pref i =
 (* Inductive judgments *)
 (***********************) 
 
+val is_bool : object -> option bool
+val is_int32 : object -> option int32
+val is_double : object -> option double
+val is_string : object -> option string
+(*
+type equals :: * => 'a => 'a => P =
+  | Equals : 'a -> x:'a -> y:'a(*{x=y}*) -> equals 'a x y (*TODO: error msg?? *)
+*)
 type types :: varDecl => term => typ => P =
   | Types_Var : G:varDecl -> x:string -> t:typ -> Mem (x, t) G
                -> types G (Var((x, t))) t   (* TODO: change rules for name clashes/scope *)
@@ -129,10 +151,13 @@ type types :: varDecl => term => typ => P =
   | Types_ConstFalseT : G:varDecl -> types G (Const FalseT) Boolean
   | Types_ConstPrincipalConstant : G:varDecl -> p:principal
                              -> types G (Const (PrincipalConstant p)) Principal
-  (* should autocast? *)
-  (*| Types_ConstSubstrateConstant : G:varDecl -> b:bool
-                             -> types G (Const (SubstrateConstant b)) Boolean
-  | Types_ConstSubstrateConstant : G:varDecl -> i:int32
+  (* TODO: should autocast? *)
+  (* idea: extern function isbool:object -> bool *)
+  | Types_ConstSubstrateConstant : G:varDecl -> o:object 
+                                 -> b:bool (*{(is_bool o) = (Some b)}*)
+                                 (*-> Equals (is_bool o) (Some b)*)
+                                 -> types G (Const (SubstrateConstant o)) Boolean
+  (*| Types_ConstSubstrateConstant : G:varDecl -> i:int32
                              -> types G (Const (SubstrateConstant i)) Int32
   | Types_ConstSubstrateConstant : G:varDecl -> d:double
                              -> types G (Const (SubstrateConstant d)) Double
@@ -165,6 +190,40 @@ type types :: varDecl => term => typ => P =
 						 (* TODO: need to typecheck all the subterms! *)
 						   -> types G (App (RelationInfon r) l) Infon
 
+
+(* Subst i x u i'  iff  i[u/x] = i' *)
+type Subst :: term => var => term => term => P = 
+  | Subst_VarRepl : x:var -> u:term -> Subst (Var x) x u u
+  | Subst_VarIgnore : y:var -> u:term -> x:var{not(x = y)} 
+                    -> Subst (Var y) x u (Var y)
+  | Subst_Const : x:var -> u:term -> c:constant 
+                -> Subst (Const c) x u (Const c)
+  | Subst_ForallTIgnore : x:var -> i:term -> u:term 
+                        -> Subst (ForallT x i) x u (ForallT x i)
+  | Subst_ForallTRepl : y:var -> i:term 
+                      -> x:var{not(x = y)}
+                      -> u:term 
+					  -> i' : term
+					  -> Subst i x u i'
+					  -> Subst (ForallT y i) x u (ForallT y i')
+  (* TODO: do something more general for App? *)
+  | Subst_App0 : f:func -> x:var -> u:term 
+               -> Subst (App f []) x u (App f [])
+  | Subst_App1 : f:func -> x:var -> u:term 
+               -> i:term -> i':term
+			   -> Subst i x u i'
+               -> Subst (App f [i]) x u (App f [i'])
+  | Subst_App2 : f:func -> x:var -> u:term 
+               -> i:term -> i':term
+               -> j:term -> j':term
+			   -> Subst i x u i'
+			   -> Subst j x u j'
+               -> Subst (App f [i; j]) x u (App f [i'; j'])
+  (* Is this really true? Any variable ever in the query? *)
+  | Subst_SubstrateQueryTerm : q:query -> x:var -> u:term
+                     -> Subst (SubstrateQueryTerm q) x u (SubstrateQueryTerm q)
+						   
+						   
 type entails :: substrate => infostrate => varDecl => term => P =
   | Entails_Emp : S:substrate -> I:infostrate -> G:varDecl
                -> pref: prefix
@@ -195,7 +254,21 @@ type entails :: substrate => infostrate => varDecl => term => P =
 			        -> entails S I (x::G) i'
 					-> entails S I G result
 
-  (*| Entails_Q_Inst : TODO*)
+  | Entails_Q_Inst : S:substrate -> I:infostrate -> G:varDecl
+                   -> x:string
+				   -> t:typ
+				   -> i:term 
+				   -> i':term
+				   -> u:term
+				   -> pref:prefix
+				   -> hyp:term
+				   -> result:term
+				   -> MkPrefix pref (ForallT (x, t) i) hyp
+                   -> Subst i (x, t) u i'
+				   -> MkPrefix pref i' result
+				   -> entails S I G hyp
+				   -> types G u t
+				   -> entails S I G result
 				 
   | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
                      -> i:term -> i':term
@@ -251,15 +324,6 @@ type entails :: substrate => infostrate => varDecl => term => P =
                      -> entails S I G hyp
                      -> entails S I G j'
 
-(* val subst: i:term -> x:var -> u:term -> (i':term * Subst i x u i') *)
-(* let subst i x u = raise "todo" *)
-
-type Subst :: term => var => term => term => P = 
-   | Subst_admit : i:term -> x:var -> t:term -> i':term -> Subst i x t i'
-
-val subst: i:term -> x:var -> u:term -> (i':term * Subst i x u i')
-let subst i x u = raise "todo"
-
 (*************************)
 (* Derivation algorithms *)
 (*************************) 
@@ -306,6 +370,26 @@ let rec doType g t =
   | App (RelationInfon r) l -> 
        Some((Infon, Types_AppRelationInfon g r l))
   | _ -> None
+
+val subst: i:term -> x:var -> u:term -> (i':term * Subst i x u i')
+let rec subst i x u = 
+  match i with
+    | Var y when x=y -> u, Subst_VarRepl x u
+    | Var y -> Var y, Subst_VarIgnore y u x (* Rk: no need for a second when. Nice! *)
+    | Const c -> Const c, Subst_Const x u c
+    | ForallT y j when x=y ->
+        ForallT y j, Subst_ForallTIgnore x j u
+	| ForallT y j ->
+	    let (j', pr) = subst j x u in
+          ForallT y j', Subst_ForallTRepl y j x u j' pr
+    | App f [] -> (App f [], Subst_App0 f x u)
+	| App f [i] -> let (i', pri) = subst i x u in
+	                 App f [i'], Subst_App1 f x u i i' pri
+    | App f [i; j] -> let (i', pri) = subst i x u in
+	                  let (j', prj) = subst j x u in
+	                    App f [i'; j'], Subst_App2 f x u i i' j j' pri prj
+	| SubstrateQueryTerm q ->
+	    SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u
 
 val doDerive: S:substrate -> I:infostrate -> G:varDecl 
            -> pref:prefix -> i:term 
