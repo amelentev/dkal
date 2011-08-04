@@ -42,7 +42,8 @@ open TypeHeaders
     | PrincipalConstant : principal -> constant
 
   type relationInfon = (* form TreeTerm.fs, def of type Function *)
-    { name : string; retType: typ; 
+    { name : string; 
+	  retType: typ; 
       argsType : list typ; 
       identity : option term  }
 
@@ -112,9 +113,9 @@ open TypeHeaders
   (* from Ast/ActivePatterns.fs *)
     | Var : var -> term
     | Const : constant -> term
-    | Forall : (var * term) -> term (* Rk: need parenthesis around var*term *)
-    | App : (func * (list term)) -> term
-    | ConcretizationEvidence : (term * substitution) -> term
+    | Forall : var -> term -> term (* Rk: need parenthesis around var*term *)
+    | App : func -> (list term) -> term
+    | ConcretizationEvidence : term -> substitution -> term
     | SubstrateQueryTerm : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
 

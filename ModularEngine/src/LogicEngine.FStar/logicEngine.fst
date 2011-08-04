@@ -61,21 +61,21 @@ module LogicEngine
   val finalOutcome : term -> term
   let rec finalOutcome (infon: term) =
     match infon with
-    | App((ImpliesInfon, [_; i])) -> finalOutcome i
-    | Forall((_,t)) -> finalOutcome t
+    | App ImpliesInfon [_; i] -> finalOutcome i
+    | Forall _ t -> finalOutcome t
     | i -> i
 
   let canSign (principal: principal) (infon: term) =
     match finalOutcome infon with
-    | App((SaidInfon, [Const(PrincipalConstant(p)); _])) -> principal = p
+    | App SaidInfon [Const(PrincipalConstant(p)); _] -> principal = p
     | _ -> false
    
   (* Checks the given evidence and builds the infon that it justifies *)
   val checkJustification : option ISignatureProvider -> term -> option term
   let rec checkJustification _signatureProvider (evidence: term) = 
     match evidence with
-      | App((SignatureEvidence, [Const(PrincipalConstant(ppal)); inf;
-                                 Const(SubstrateConstant(signature))])) ->
+      | App SignatureEvidence [Const(PrincipalConstant(ppal)); inf;
+                               Const(SubstrateConstant(signature))] ->
           if canSign ppal inf &&
             value_checkSignature _signatureProvider inf ppal signature
           then
@@ -84,38 +84,38 @@ module LogicEngine
             (* //log.Warn("Spoofed signature {0} from {1} on {2}", 
                           signature, ppal, inf) *)
             None      
-      | App((ModusPonensEvidence, [e1; e2])) ->
+      | App ModusPonensEvidence [e1; e2] ->
           (match checkJustification _signatureProvider e1, 
                  checkJustification _signatureProvider e2 with
-             | Some i1, Some (App((ImpliesInfon, [i1'; i2]))) when i1 = i1' ->
+             | Some i1, Some (App ImpliesInfon [i1'; i2]) when i1 = i1' ->
                  Some i2
              | _ ->
                  (* //log.Warn("Malformed modus ponens proof on {0} and {1}",
                                e1, e2) *)
                  None )
-      | App((AndEvidence, evidences)) ->
+      | App AndEvidence evidences ->
           let infons = collect 
             (fun evidence ->  
                match checkJustification _signatureProvider evidence with
                  | Some i -> [i]
                  | None -> []) evidences in
             if length infons = length evidences then
-              Some(App(AndInfon, infons))
+              Some(App AndInfon infons)
             else
               (* //log.Warn("Malformed conjunction proof on {0}", evidence) *)
               None
-      | App((AsInfonEvidence, [SubstrateQueryTerm(query)])) ->
+      | App AsInfonEvidence [SubstrateQueryTerm query] ->
           if (not(isEmpty(substrateDispatcher_solve [query] [id]))) then
-            Some(App(AsInfon, [ (SubstrateQueryTerm query) ]))
+            Some(App AsInfon [(SubstrateQueryTerm query)])
           else
             (* //log.Warn("Non-true asInfon evidence at {0}", query) *)
-            None    
-      | ConcretizationEvidence((ev, subst)) ->
+            None
+      | ConcretizationEvidence ev subst ->
           (match checkJustification _signatureProvider ev with
              | Some generalProof -> 
                  let concreteProof = 
                    match generalProof with
-                     | Forall _ -> instantiate generalProof subst
+                     | Forall _ _ -> instantiate generalProof subst
                      | _ -> term_apply generalProof subst
                  in
                    Some concreteProof
@@ -174,7 +174,7 @@ module LogicEngine
                                 | Some s -> [(s, conds, term_apply pr s)]
                                 | None -> [] ) in 
           match inf with
-            | Forall((v, t)) ->
+            | Forall v t ->
                 (match
                    (* idea is just (t, pr), but this ensures there is no  *)
                    (* variable capture                                    *)
@@ -186,7 +186,7 @@ module LogicEngine
                  (* then just not care about the forall v and recurse     *)
                  with (t, pr) -> tryDeriveJustification 
                                    _infostrate (subst, conds) pr (goal, t) )
-            | App((ImpliesInfon, [i1; i2])) -> 
+            | App ImpliesInfon [i1; i2] -> 
                 (* v is the evidence for i2; it will eventually be replaced *)
                 let v = freshVar Evidence in 
                 (* Rk: does not support pairs or triples in the arguments *)
@@ -200,7 +200,7 @@ module LogicEngine
                       subst_conds_premisePr_triple in
                     (* premisePr is the proof of i1 ; pr is the proof of i1 => i2 *)
                     (* then repl is a proof of i2                                 *)
-                    let repl = App(ModusPonensEvidence, [premisePr; pr]) in
+                    let repl = App ModusPonensEvidence [premisePr; pr] in
                       (* TODO: see Builders.fs and Primitives.fs *)
                       (subst, conds,
                         (term_apply goalPr 
@@ -231,19 +231,19 @@ module LogicEngine
         (* just runs tryDeriveJustification on all the JustifiedInfon of the infostrate *)
         let aux infon = 
           match infon with
-            | App((JustifiedInfon, [inf; pr])) -> 
+            | App JustifiedInfon [inf; pr] -> 
                tryDeriveJustification _infostrate (subst, conds) pr (goal, inf)
             | _ -> []
         in
           collect aux (value_knowledge _infostrate)
       in
         (match target with
-          | App((AsInfon, [ SubstrateQueryTerm(exp) ])) ->
+          | App AsInfon [ SubstrateQueryTerm(exp) ] ->
             (* AsInfon(...) is stored as a new side condition *)
                [(subst, append conds [exp], 
-                 App((AsInfonEvidence, SubstrateQueryTerm(exp) :: [])))]
+                 App AsInfonEvidence [(SubstrateQueryTerm(exp))])]
                   (* Rk2: cannot change SubstrateQueryTerm(exp) :: [] to [...] *)
-          | App((AndInfon, infons)) ->(* TODO: fix the performance decrease *)
+          | App AndInfon infons ->(* TODO: fix the performance decrease *)
             (* In the case of conjunction we start with the current substitution and side conditions and *)
             (* continue accumulating these by calling recursively on each of the infons in the conjunction *)
               let parts = 
@@ -257,15 +257,15 @@ module LogicEngine
                                    let (subst3, conds3, evRight) = 
                                      sce_triple2 in
                                      (subst3, conds3, 
-                                       App(AndEvidence, evLeft :: [evRight])))
-                                       (* Bug? I think if evLeft=App(AndEvidence, lLeft),
-                                          the evidence here should be App(AndEvidence, lLeft :: [evRight])
-                                          otherwise it should just be App(AndEvidence, evLeft :: [evRight])
+                                       App AndEvidence (evLeft :: [evRight])))
+                                       (* Bug? I think if evLeft=App AndEvidence lLeft,
+                                          the evidence here should be (App AndEvidence lLeft) :: [evRight])
+                                          otherwise it should just be (App AndEvidence evLeft) :: [evRight])
                                         *)
                                (doDeriveJustification 
                                    _infostrate infon (subst2, conds2))     
                         ) res)
-                   [(subst, conds, App(EmptyEvidence, []))]
+                   [(subst, conds, App EmptyEvidence [])]
                    infons)
               in 
                 append
@@ -290,7 +290,7 @@ module LogicEngine
              | Some s -> (match unifyAndSimpl (unifyFrom a s b) ts with
                           | Some s -> Some s
                           | None -> (match a with
-                                     | App((ImpliesInfon, [i1; i2])) -> 
+                                     | App ImpliesInfon [i1; i2] -> 
                                         unifyFrom b s i2
                                      | _ -> None)))
 
@@ -344,24 +344,24 @@ module LogicEngine
              | None -> ())
       | _ -> () in 
       (match pairPrefixInfon with
-         | ((t1 :: pref), App((SaidInfon, [t2;i]))) -> 
+         | ((t1 :: pref), App SaidInfon [t2; i]) -> (* Rk: , binds tighter than ::, weird*)
            (* if the infon from the infostrate is a said, we try to match it     *)
            (* against t1, the head of the prefix                                 *)
            (* only two cases where suff is changed *)
              (match unifyFrom t1 subst t2 with
                 | Some subst -> 
                     stripPrefix subst prefixUnif preconds 
-                      (fun j -> suff (App(SaidInfon, [t2;j])))
-                      (pref, i) template res
+                      (fun j -> suff (App SaidInfon [t2;j]))
+                      (pref, i) template res 
                 | None -> (* Q: I think this case in unnecessary:              *)
                           (* if the call to unifyFrom returned no solution     *)
                           (* there is no reason why it would have a solution   *)
                           (* later. On all the pairs of prefixUnif, eventually *)
                           (* unifyFrom will be called (in unifyAndSimpl).      *)
                     stripPrefix subst ((t1, t2) :: prefixUnif)
-                      preconds (fun j -> suff (App(SaidInfon, [t2;j])))
-                      (pref, i) template res) 
-         | (pref, App((AndInfon, infons))) ->
+                      preconds (fun j -> suff (App SaidInfon [t2;j]))
+                      (pref, i) template res)
+         | (pref, App AndInfon infons) ->
            (* if an and is in the infostrate, we can use any of it subterms as *)
            (* given. Q: we never try to use the and directly?                  *)
            (* A: probably because we already stripped down the target in       *)
@@ -369,7 +369,7 @@ module LogicEngine
              iterate (fun infon -> 
                         stripPrefix subst prefixUnif preconds suff 
                           (pref, infon) template res) infons
-         | (pref, App((ImpliesInfon, [a; b]))) ->
+         | (pref, App ImpliesInfon [a; b] ) ->
            (* if a => b is in the infostrate, we can try to use it directly... *)
              immediate pairPrefixInfon;
            (* ... or try to use b and add a as a precondition                  *) 
@@ -418,7 +418,7 @@ module LogicEngine
     (* invariant: the result substitution is an extension of subst? (check it) *)
     let (subst, conds)= pair_subst_conds in
       match target with
-        | App((AndInfon, infons)) -> 
+        | App AndInfon infons -> 
           (* In the case of conjunction we start with the current substitution and side conditions and *)
           (* continue accumulating these by calling recursively on each of the infons in the conjunction *)
             (* Q: this fold_left indicates that the returned list is order insensitive *)
@@ -426,21 +426,21 @@ module LogicEngine
                          collect 
                            (fun s -> doDerive _infostrate pref s infon) substs)
               [(subst, conds)] infons
-        | App((EmptyInfon, []))-> 
+        | App EmptyInfon [] -> 
           (* Empty infon is always satisfiable by the current substitution and side conditions *)
             [(subst, conds)]
-        | App((SaidInfon, [ppal; infon])) ->
+        | App SaidInfon [ppal; infon] ->
           (* Said infons are handled recursively by pushing the principal term into the prefix *)
             doDerive _infostrate (ppal :: pref) (subst, conds) infon
         | Var(v) when domainContains subst v ->
           (* If a variable is part of the current substitution it is applied and we call recursively *)
             doDerive _infostrate pref (subst, conds) (subst_apply subst v)
-        | App((AsInfon, [SubstrateQueryTerm(exp)])) ->
+        | App AsInfon [SubstrateQueryTerm(exp)] ->
           (* AsInfon(...) is stored as a new side condition, unless it is inside a non-empty prefix *)
             if isEmpty pref 
             then [(subst, append conds [exp])] (* Q: why not cons? seems to be order sensitive here. *)
             else failwith "asInfon(...) under prefix"
-        | App((JustifiedInfon, [inf; ev])) when pref = [] ->
+        | App JustifiedInfon [inf; ev] when pref = [] ->
           (* Justified infons are treated separately since we need to construct proofs for these *)
           (* we only keep (subst, conds) whose associated evidence unifies with ev *)
             let unifyEv triple = 

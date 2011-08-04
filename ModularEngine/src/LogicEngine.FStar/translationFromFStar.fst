@@ -81,26 +81,26 @@ open Types
     | Types.Const(Types.PrincipalConstant(n)) -> TypeHeaders.PrincipalConstant_ITerm(n) 
     | Types.Const(Types.True) -> Constant_ITerm_bool(true) 
     | Types.Const(Types.False) -> Constant_ITerm_bool(false) 
-    | Types.Forall((v, t)) -> TypeHeaders.Forall(IVarOfFStarVar v, ITermOfFStarTerm t) (* Rk: double parenthesis needed: error msg "Too many pattern variables" confusing *)
+    | Types.Forall v t -> TypeHeaders.Forall(IVarOfFStarVar v, ITermOfFStarTerm t) (* Rk: double parenthesis needed: error msg "Too many pattern variables" confusing *)
     (* 5 special cases for the the functions where the number of arguments
        can vary. Special cases here because they are special cases in Builders.fs *)
-    | Types.App((Types.SeqRule, tl)) ->
+    | Types.App Types.SeqRule tl ->
       TypeHeaders.SeqRuleW(map ITermOfFStarTerm tl)
-    | Types.App((Types.SeqCondition, tl)) ->
+    | Types.App Types.SeqCondition tl ->
       TypeHeaders.SeqConditionW(map ITermOfFStarTerm tl)
-    | Types.App((Types.SeqAction, tl)) ->
+    | Types.App Types.SeqAction tl ->
       TypeHeaders.SeqActionW(map ITermOfFStarTerm tl)
-    | Types.App((Types.AndInfon, tl)) ->
+    | Types.App Types.AndInfon tl ->
       TypeHeaders.AndInfonW(map ITermOfFStarTerm tl)
-    | Types.App((Types.AndEvidence, tl)) ->
+    | Types.App Types.AndEvidence tl ->
       TypeHeaders.AndEvidenceW(map ITermOfFStarTerm tl)
     (* general case for App: all the other cases are the same in Builders.fs *)
-    | Types.App((f, tl)) -> 
+    | Types.App f tl -> 
       Application_ITerm
         (mkApplication (FunctionOfFStarFunc f) (map ITermOfFStarTerm tl))  
     | Types.SubstrateQueryTerm(t0) -> (substrateQueryTerm_ITerm (t0:ISubstrateQueryTerm) : ITerm) 
     | Types.SubstrateUpdateTerm(t1) -> (substrateUpdateTerm_ITerm (t1:ISubstrateUpdateTerm) : ITerm) 
-    | Types.ConcretizationEvidence((t0, s)) -> explicitSubstitutionTerm_ITerm
+    | Types.ConcretizationEvidence t0 s -> explicitSubstitutionTerm_ITerm
        (ITermOfFStarTerm t0) (ISubstitutionOfFStarSubstitution s)
        
   and ISubstitutionOfFStarSubstitution (subst: Types.substitution) : ISubstitution =
