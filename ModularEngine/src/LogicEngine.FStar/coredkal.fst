@@ -11,10 +11,10 @@
 // *********************************************************
 *)
 
-(************************)
-(* build:               *)
-(* fstar coredkal.fst   *)
-(************************)
+(************************************************)
+(* build:                                       *)
+(* fstar typeHeaders.fst types.fst coredkal.fst *)
+(************************************************)
 
 module CoreDKAL
 
@@ -22,94 +22,8 @@ module CoreDKAL
 (* Type definitions *)
 (********************)
 
-(* TODO: reconcile diffs
-    open Types
-*)
-open TypeHeaders
-
-type principal = string
-
-type typ =  
-  | Infon : typ
-  | Principal : typ
-  | SubstrateUpdate : typ
-  | SubstrateQuery : typ
-  | Action : typ
-  | Condition : typ
-  | RuleT : typ
-  | Evidence : typ
-  | Boolean : typ
-  | Int32 : typ
-  | Double : typ
-  | String : typ
-
-type var = (* TODO: only thing not the same as types.fst *)
-  string * typ
-  (*{ typ : typ; name : string }*)
+open Types
   
-type constant = 
-  | TrueT : constant
-  | FalseT : constant
-  | PrincipalConstant : principal -> constant
-  | SubstrateConstant : object -> constant 
-
-type relationInfon = 
-    { name : string; 
-	  retType: typ; 
-      argsType : list typ; 
-      identity : option term  }
-	  
-and func =
-	(* Rule: <condition> do <action> *)
-	| SeqRule : func (* [RuleT;...; RuleT] -> RuleT *)
-	| EmptyRule : func (* [] -> RuleT *)
-	| Rule : func (* [Condition; Action] -> RuleT *)
-	| RuleOnce : func (* [Condition; Action] -> RuleT *)
-	| SeqCondition : func (* [Condition;...; Condition] -> Condition *)
-	| EmptyCondition : func (* [] -> Condition *)
-	| WireCondition : func (* [Infon; Principal] -> Condition *)
-	| KnownCondition : func (* [Infon] -> Condition *)
-	(* Action *)
-	| SeqAction : func (* [Action;...; Action] -> Action *)
-	| EmptyAction : func (* [] -> Action *)
-	| Send : func (* [Principal; Infon] -> Action *)
-	| JustifiedSend : func (* [Principal; Infon] -> Action *)
-	| JustifiedSay : func (* [Principal; Infon] -> Action *)
-	| Learn : func (* [Infon] -> Action *)
-	| Forget : func (* [Infon] -> Action *)
-	| Install : func (* [RuleT] -> Action *)
-	| Uninstall : func (* [RuleT] -> Action *)
-	| Apply : func (* [SubstrateUpdate] -> Action *)
-	| Drop : func (* [Infon] -> Action *)
-	(* Infon *)
-	| EmptyInfon : func (* [] -> Infon *)
-	| AsInfon : func (* [SubstrateQuery] -> Infon *)(* of substrateQueryTerm *)
-	| AndInfon : func (* [Infon; ...; Infon] -> Infon *)
-	| ImpliesInfon : func (* [Infon; Infon] -> Infon *)
-	| SaidInfon : func (* [Principal; Infon] -> Infon *)
-	| JustifiedInfon : func (* [Infon; Evidence] -> Infon *)
-	(* Evidence *)
-	| EmptyEvidence : func (* [] -> Evidence *)
-	| SignatureEvidence : func (* [Principal; Infon; Int32] -> Evidence *)
-	| ModusPonensEvidence : func (* [Evidence; Evidence] -> Evidence *)
-	| AndEvidence : func (* [Evidence;... ; Evidence] -> Evidence *)
-	| AsInfonEvidence : func (* [SubstrateQuery] -> Evidence *)
-	(* Relations defined by the writer of the policy *)
-	| RelationInfon (*of relationInfon*) : relationInfon -> func
-
-and substitution = Dictionary var term 
-
-and term = 
-  | Var : var -> term
-  | Const : constant -> term
-  | ForallT : var -> term -> term
-  (* Rk: Forall is already a reserved word; error msg not very explicit *)
-  | App : func -> list term -> term
-  | ConcretizationEvidence : term -> substitution -> term
-  | SubstrateQueryTerm : ISubstrateQueryTerm -> term
-  | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
-  
-
 (** only for Core DKAL **)
 type infostrate = list term
 type substrate
@@ -158,39 +72,45 @@ let rec mkPrefix pref i =
                  (App SaidInfon [h; j], MkPrefix_Cons h t i j m))
                  (* Rk: if using the function said here, can't prove it *)
 
-val func_typing : func -> (list typ) * typ
-let func_typing = function (* could also take code from Ast.Infon/Primitives.fs *)
-  | SeqRule -> [RuleT; RuleT], RuleT (* any number of args possible *)
-  | EmptyRule -> [], RuleT
-  | Rule -> [Condition; Action], RuleT
-  | RuleOnce -> [Condition; Action], RuleT
-  | SeqCondition -> [Condition; Condition], Condition (* any number of args possible *)
-  | EmptyCondition -> [], Condition
-  | WireCondition -> [Infon; Principal], Condition
-  | KnownCondition -> [Infon], Condition
-  | SeqAction -> [Action; Action], Action (* any number of args possible *)
-  | EmptyAction -> [], Action
-  | Send -> [Principal; Infon], Action
-  | JustifiedSend -> [Principal; Infon], Action
-  | JustifiedSay -> [Principal; Infon], Action
-  | Learn -> [Infon], Action
-  | Forget -> [Infon], Action
-  | Install -> [RuleT], Action
-  | Uninstall -> [RuleT], Action
-  | Apply -> [SubstrateUpdate], Action
-  | Drop -> [Infon], Action
-  | EmptyInfon -> [], Infon
-  | AsInfon -> [SubstrateQuery], Infon
-  | AndInfon -> [Infon; Infon], Infon (* any number of args possible *)
-  | ImpliesInfon -> [Infon; Infon], Infon
-  | SaidInfon -> [Principal; Infon], Infon
-  | JustifiedInfon -> [Infon; Evidence], Infon
-  | EmptyEvidence -> [], Evidence
-  | SignatureEvidence -> [Principal; Infon; Int32], Evidence
-  | ModusPonensEvidence -> [Evidence; Evidence], Evidence
-  | AndEvidence -> [Evidence; Evidence], Evidence (* any number of args possible *)
-  | AsInfonEvidence -> [SubstrateQuery], Evidence
-  | RelationInfon r -> r.argsType, r.retType
+val func_typing : func -> option ((list typ) * typ)
+let func_typing = function
+ (* could also take code from Ast.Infon/Primitives.fs *)
+  | SeqRule -> None (*[RuleT; RuleT], RuleT*) 
+                    (* any number of args possible *)
+  | EmptyRule -> Some([], RuleT)
+  | Rule -> Some([Condition; Action], RuleT)
+  | RuleOnce -> Some([Condition; Action], RuleT)
+  | SeqCondition -> None (*[Condition; Condition], Condition*) 
+                         (* any number of args possible *)
+  | EmptyCondition -> Some([], Condition)
+  | WireCondition -> Some([Infon; Principal], Condition)
+  | KnownCondition -> Some([Infon], Condition)
+  | SeqAction -> None (*[Action; Action], Action*)
+                      (* any number of args possible *)
+  | EmptyAction -> Some([], Action)
+  | Send -> Some([Principal; Infon], Action)
+  | JustifiedSend -> Some([Principal; Infon], Action)
+  | JustifiedSay -> Some([Principal; Infon], Action)
+  | Learn -> Some([Infon], Action)
+  | Forget -> Some([Infon], Action)
+  | Install -> Some([RuleT], Action)
+  | Uninstall -> Some([RuleT], Action)
+  | Apply -> Some([SubstrateUpdate], Action)
+  | Drop -> Some([Infon], Action)
+  | EmptyInfon -> Some([], Infon)
+  | AsInfon -> Some([SubstrateQuery], Infon)
+  | AndInfon -> None (* Some([Infon; Infon], Infon *)
+                     (* any number of args possible *)
+  | ImpliesInfon -> Some([Infon; Infon], Infon)
+  | SaidInfon -> Some([Principal; Infon], Infon)
+  | JustifiedInfon -> Some([Infon; Evidence], Infon)
+  | EmptyEvidence -> Some([], Evidence)
+  | SignatureEvidence -> Some([Principal; Infon; Int32], Evidence)
+  | ModusPonensEvidence -> Some([Evidence; Evidence], Evidence)
+  | AndEvidence -> None (*[Evidence; Evidence], Evidence*)
+                        (* any number of args possible *)
+  | AsInfonEvidence -> Some([SubstrateQuery], Evidence)
+  | RelationInfon r -> Some(r.argsType, r.retType)
 				 
 (******************************)
 (* Trusted external functions *)
@@ -210,11 +130,11 @@ type SubstrateSays :: substrate => ISubstrateQueryTerm => E
 (***********************) 
 
 (* could do a cast in an external file *)
-type types :: varDecl => term => typ => P =
-  | Types_Var : G:varDecl -> x:string -> t:typ -> Mem (x, t) G
-               -> types G (Var (x, t)) t
-  (*| Types_Var : G:varDecl -> x:string -> t:typ -> Mem ({typ=t; name=x;}) G
-               -> types G (Var ( { typ = t; name = x; })) t*)
+type types :: varDecl => term => typ => P =		   
+  | Types_Var : G:varDecl 
+			   -> v:var
+			   -> Mem v G
+               -> types G (Var v) v.typ
 			   (* TODO: change rules for name clashes/scope *)
   | Types_ConstTrueT : G:varDecl -> types G (Const TrueT) Boolean
   | Types_ConstFalseT : G:varDecl -> types G (Const FalseT) Boolean
@@ -338,37 +258,33 @@ type entails :: substrate => infostrate => varDecl => term => P =
 					-> entails S I G result
 
   | Entails_Q_Inst : S:substrate -> I:infostrate -> G:varDecl
-                   -> x:string
-				   -> t:typ
+                   -> v:var
 				   -> i:term 
 				   -> i':term
 				   -> u:term
 				   -> pref:prefix
 				   -> hyp:term
 				   -> result:term
-				   (*-> MkPrefix pref (ForallT ({typ=t; name=x;}) i) hyp
-                   -> Subst i ({typ=t; name=x;}) u i'*)
-				   -> MkPrefix pref (ForallT (x, t) i) hyp
-                   -> Subst i (x, t) u i'
+				   -> MkPrefix pref (ForallT v i) hyp
+                   -> Subst i v u i'
 				   -> MkPrefix pref i' result
 				   -> entails S I G hyp
-				   -> types G u t
+				   -> types G u v.typ
 				   -> entails S I G result
  
   | Entails_Q_Inst : S:substrate -> I:infostrate -> G:varDecl
-                   -> x:string
-				   -> t:typ
+                   -> v:var
 				   -> i:term
 				   -> i':term
 				   -> u:term
 				   -> pref:prefix
 				   -> hyp:term
 				   -> result:term
-				   -> MkPrefix pref (ForallT (x, t) i) hyp
+				   -> MkPrefix pref (ForallT v i) hyp
 				   -> MkPrefix pref i' result
-                                   -> entails S I G hyp
-				   -> types G u t
-                                   -> Subst i (x, t) u i'
+                   -> entails S I G hyp
+				   -> types G u v.typ
+                   -> Subst i v u i'
 				   -> entails S I G result
 				 
   | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
@@ -443,12 +359,10 @@ val doType: g:varDecl -> t:term -> option(ty:typ * (types g t ty))
 (*                                    | _ -> None) terms typs *)
 (* use map_p for variable arguments for AndInfon etc. *)
 
-let rec doType g t =
-  match t with
-  | Var((x, t)) -> (match mem (x,t) g with (* TODO: change with new rules *)
-                    | None -> None
-				    | Some(m) -> Some((t, Types_Var g x t m)))
-	(*			    | Some(m) -> Some((t, Types_Var g x t m))) *)
+let rec doType g = function
+  | Var v -> (match mem v g with (* TODO: change with new rules *)
+                | None -> None
+				| Some m -> Some((v.typ, Types_Var g v m)))
   | Const TrueT -> Some((Boolean, Types_ConstTrueT g))
   | Const FalseT -> Some((Boolean, Types_ConstFalseT g))
   | Const(PrincipalConstant p) -> 
