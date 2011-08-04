@@ -62,7 +62,7 @@ module LogicEngine
   let rec finalOutcome (infon: term) =
     match infon with
     | App ImpliesInfon [_; i] -> finalOutcome i
-    | Forall _ t -> finalOutcome t
+    | ForallT _ t -> finalOutcome t
     | i -> i
 
   let canSign (principal: principal) (infon: term) =
@@ -115,7 +115,7 @@ module LogicEngine
              | Some generalProof -> 
                  let concreteProof = 
                    match generalProof with
-                     | Forall _ _ -> instantiate generalProof subst
+                     | ForallT _ _ -> instantiate generalProof subst
                      | _ -> term_apply generalProof subst
                  in
                    Some concreteProof
@@ -174,7 +174,7 @@ module LogicEngine
                                 | Some s -> [(s, conds, term_apply pr s)]
                                 | None -> [] ) in 
           match inf with
-            | Forall v t ->
+            | ForallT v t ->
                 (match
                    (* idea is just (t, pr), but this ensures there is no  *)
                    (* variable capture                                    *)

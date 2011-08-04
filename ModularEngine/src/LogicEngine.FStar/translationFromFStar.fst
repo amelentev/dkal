@@ -79,9 +79,9 @@ open Types
     | Types.Var(v) -> ITermOfIVar(IVarOfFStarVar v) 
     | Types.Const(Types.SubstrateConstant(o)) -> TypeHeaders.Constant_ITerm(o) 
     | Types.Const(Types.PrincipalConstant(n)) -> TypeHeaders.PrincipalConstant_ITerm(n) 
-    | Types.Const(Types.True) -> Constant_ITerm_bool(true) 
-    | Types.Const(Types.False) -> Constant_ITerm_bool(false) 
-    | Types.Forall v t -> TypeHeaders.Forall(IVarOfFStarVar v, ITermOfFStarTerm t) (* Rk: double parenthesis needed: error msg "Too many pattern variables" confusing *)
+    | Types.Const(Types.TrueT) -> Constant_ITerm_bool(true) 
+    | Types.Const(Types.FalseT) -> Constant_ITerm_bool(false) 
+    | Types.ForallT v t -> TypeHeaders.ForallT(IVarOfFStarVar v, ITermOfFStarTerm t) (* Rk: double parenthesis needed: error msg "Too many pattern variables" confusing *)
     (* 5 special cases for the the functions where the number of arguments
        can vary. Special cases here because they are special cases in Builders.fs *)
     | Types.App Types.SeqRule tl ->

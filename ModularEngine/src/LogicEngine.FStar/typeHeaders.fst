@@ -244,7 +244,7 @@ module TypeHeaders
                                 namespace="Microsoft.Research.Dkal.Ast";
                                 classname="Builders"}
   (* extern BuildersAst val Var : IVar -> ITerm *) (* Rk: moved to Builders.fs because of name conficts *)
-  extern BuildersAst val Forall : (IVar * ITerm) -> ITerm
+  extern BuildersAst val ForallT : (IVar * ITerm) -> ITerm
 
   extern reference BuildersAstInfon {language="F#";
                              dll="Ast.Infon"; (* bin\Debug\Ast.Infon.dll *)

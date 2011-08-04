@@ -91,9 +91,9 @@ module TranslationToFStar =
     | Var(v) -> new Types.Var(FStarVarOfIVar v)  :> Types.term 
     | SubstrateConstant(o) -> new Types.Const(Types.SubstrateConstant(o))  :> Types.term 
     | PrincipalConstant(n) -> new Types.Const(Types.PrincipalConstant(n))  :> Types.term 
-    | True -> new Types.Const(new Types.True() :> Types.constant)  :> Types.term 
-    | False -> new Types.Const(new Types.False() :> Types.constant)  :> Types.term 
-    | Forall(v, t) -> new Types.Forall(FStarVarOfIVar v, FStarTermOfITerm t) :> Types.term 
+    | True -> new Types.Const(new Types.TrueT() :> Types.constant)  :> Types.term 
+    | False -> new Types.Const(new Types.FalseT() :> Types.constant)  :> Types.term 
+    | Forall(v, t) -> new Types.ForallT(FStarVarOfIVar v, FStarTermOfITerm t) :> Types.term 
     | App(f, tl) -> new Types.App(FStarFuncOfFunction f, PrimsListOfList (List.map FStarTermOfITerm tl)) :> Types.term 
     | :? ISubstrateQueryTerm as sq -> new Types.SubstrateQueryTerm(sq)  :> Types.term 
     | :? ISubstrateUpdateTerm as su -> new Types.SubstrateUpdateTerm(su)  :> Types.term 

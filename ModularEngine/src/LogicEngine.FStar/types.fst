@@ -36,8 +36,8 @@ open TypeHeaders
     { typ : typ; name : string }
 
   type constant =
-    | True : constant
-    | False : constant
+    | TrueT : constant
+    | FalseT : constant
     | SubstrateConstant : object -> constant
     | PrincipalConstant : principal -> constant
 
@@ -113,7 +113,7 @@ open TypeHeaders
   (* from Ast/ActivePatterns.fs *)
     | Var : var -> term
     | Const : constant -> term
-    | Forall : var -> term -> term (* Rk: need parenthesis around var*term *)
+    | ForallT : var -> term -> term (* Rk: need parenthesis around var*term *)
     | App : func -> (list term) -> term
     | ConcretizationEvidence : term -> substitution -> term
     | SubstrateQueryTerm : ISubstrateQueryTerm -> term

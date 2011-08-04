@@ -27,7 +27,7 @@ open TranslationFromFStar
   val vars : Types.term -> list Types.var
   let rec vars (t: Types.term) : list Types.var =
     match t with
-    | Types.Forall v t -> (* Rk: error "Too many pattern variables" means Forall(a, b) should be replaced with Forall((a, b)) *)
+    | Types.ForallT v t -> (* Rk: error "Too many pattern variables" means ForallT(a, b) should be replaced with ForallT((a, b)) *)
       let termVars = HashSet_new(vars t) in
       ignore(HashSet_remove termVars v);
       HashSet_toList(termVars)
@@ -51,7 +51,7 @@ open TranslationFromFStar
   val boundVars : Types.term -> list Types.var 
   let rec boundVars (t: Types.term) : list Types.var =
     match t with
-    | Types.Forall v t -> HashSet_toList( HashSet_new(v :: (boundVars t)) )
+    | Types.ForallT v t -> HashSet_toList( HashSet_new(v :: (boundVars t)) )
     | Types.App _ tl -> HashSet_toList( HashSet_new(collect (fun (a: Types.term) -> vars a) tl) )
     | Types.Var _ -> []
     | Types.Const _ -> []
@@ -105,7 +105,7 @@ open TranslationFromFStar
     match t with
     | Types.Var v ->subst_apply s v 
     | Types.Const _ -> t 
-    | Types.Forall v0 t0 -> 
+    | Types.ForallT v0 t0 -> 
       (* the substitution is not applied to the quantified variable *)
       let s = forget s [v0] in
       (* check that there will be no variable capture *)
@@ -115,9 +115,9 @@ open TranslationFromFStar
       if List_exists (fun v -> v = v0) mappedVars 
       then
         let (newVar, newVarSubst) = freshVar v0 (append (vars t0) mappedVars) in
-        Types.Forall newVar (term_apply (term_apply t0 newVarSubst) s)
+        Types.ForallT newVar (term_apply (term_apply t0 newVarSubst) s)
       else
-        Types.Forall v0 (term_apply t0 s)
+        Types.ForallT v0 (term_apply t0 s)
     | Types.App f tl -> Types.App f (map (fun t0 -> term_apply t0 s) tl) (* from TreeTerm.fs *)
     | Types.ConcretizationEvidence t1 s1 -> (* from ExplicitSubstitutionTerm.fs *)
       Types.ConcretizationEvidence t1 (composeWith s s1)
@@ -131,7 +131,7 @@ open TranslationFromFStar
   val innerTerm : Types.term -> Types.term 
   let rec innerTerm (ft: Types.term) = (* from ForallTerm.fs *)
     match ft with 
-    | Types.Forall v t -> innerTerm t
+    | Types.ForallT v t -> innerTerm t
     | _ -> ft
     
   val instantiate : Types.term -> Types.substitution -> Types.term
@@ -139,7 +139,7 @@ open TranslationFromFStar
     let remainingVars = HashSet_new(boundVars ft) in
     HashSet_exceptWith remainingVars (domain s); 
     let innerSubst = term_apply (innerTerm ft) s in
-      fold_left (fun t v -> Types.Forall v t)  
+      fold_left (fun t v -> Types.ForallT v t)  
         innerSubst (HashSet_toList remainingVars)
 
   val changeVarName : Types.term -> Types.substitution -> (Types.term * Types.substitution)
@@ -147,7 +147,7 @@ open TranslationFromFStar
   (* appear in s *)
   let changeVarName (ft: Types.term) (s:Types.substitution) = (* from ForallTerm.fs *)
     match ft with
-    | Types.Forall v t ->
+    | Types.ForallT v t ->
       let (v', s') = 
         freshVar
           v 
@@ -156,7 +156,7 @@ open TranslationFromFStar
               (fun v acc -> append (vars (subst_apply s v)) acc)
               (domain s) [])
            (append (domain s) (vars t))) in
-      (Types.Forall v (term_apply t s'), s')
+      (Types.ForallT v (term_apply t s'), s')
     | _ -> failwith "changeVarName can only be called on a ForallTerm"
     
   val unifyFromWhileLoop : list Types.term -> list Types.term -> Types.substitution -> ref bool -> ref Types.substitution -> ref int -> unit
@@ -189,9 +189,9 @@ open TranslationFromFStar
       | _ when t1 = term_apply t2 s -> Some s
       | Types.Var(v2) -> unifyFrom t2 s t1
       | _ -> None)
-    | Types.Forall v1 t1' -> (* from ForallTerm.fs *)
+    | Types.ForallT v1 t1' -> (* from ForallTerm.fs *)
       (match t2 with
-      | Types.Forall v2 t2' ->
+      | Types.ForallT v2 t2' ->
         (match unifyFrom (innerTerm t1) s (innerTerm t2) with
         | Some s ->
           if List_forall 
