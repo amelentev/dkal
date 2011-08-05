@@ -472,8 +472,8 @@ module LogicEngine
                  (infonsWithPrefix _infostrate subst pref target)) (* : list (substitution * list term))) *)
   
   (*   Heart #2 of backwards chaining                                                    *)
-  (* Given the _infostrate, and a list of                                                *)
-  (* ((subst:substitution, conds:list ISubstrateQueryTerm), preconds:list Term(*Infon*)) *)
+  (* Given the _infostrate, and a                                                 *)
+  (* (subst:substitution, conds:list ISubstrateQueryTerm), preconds:list Term(*Infon*)) *)
   (* such that some target (not in the arguments) would be satisfied by subst if         *)
   (* the conds are true in the substrate and if the preconds (preconditions) are true    *)
   (* in the infostrate (i.e., as infons), derives each of the preconds to get a list of  *)

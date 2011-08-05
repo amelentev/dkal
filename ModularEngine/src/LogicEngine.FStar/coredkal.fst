@@ -14,6 +14,8 @@
 (************************************************)
 (* build:                                       *)
 (* fstar typeHeaders.fst types.fst coredkal.fst *)
+(* or:                                          *)
+(* make coredkal                                *)
 (************************************************)
 
 module CoreDKAL
@@ -341,6 +343,9 @@ type entails :: substrate => infostrate => varDecl => term => P =
                      -> entails S I G hyp
                      -> entails S I G j'
 
+					 
+
+					 
 (*************************)
 (* Derivation algorithms *)
 (*************************) 
@@ -420,21 +425,58 @@ let rec subst i x u =
 	| SubstrateQueryTerm q ->
 	    SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u
 
+(*		
+let term_apply (t:term) (s:substitution) : term =
+  t (* TODO, see term.fst *)
+
+let entails_subst _S _I _G t s = 
+  entails _S _I _G (term_apply t s)		
+*)		
 val doDerive: S:substrate -> I:infostrate -> G:varDecl
              -> pref:prefix -> target:term
 			 -> option (target':term *
                         MkPrefix pref target target' * 
-						entails S I G target')
+				        entails S I G target')
 val tryDerive: S:substrate -> I:infostrate -> G:varDecl
              -> pref:prefix -> target:term
-             -> inf:term
+             -> infon:term{Mem infon I}
 			 -> option (target':term *
                         MkPrefix pref target target' * 
-						entails S I G target')
-let rec doDerive _S _I _G pref target = 
+					    entails S I G target')
+						
+let rec tryDerive _S _I _G pref target infon = 
+  match infon with
+  (* NO! need to use substitutions *)
+  (*
+  | App SaidInfon [p; infon2] ->
+      (match pref with
+	   | p2 :: tl when p = p2 ->
+          (match tryDerive _S _I _G tl target infon2 with
+             | Some((target', m, e)) ->
+			      (*let (target'', m2) = mkPrefix tl target in*)
+                  Some((App SaidInfon [p; target'],
+                        MkPrefix_Cons p tl target target' m,
+                        e))
+			 | _ -> None)
+	   | _ -> None) *)(*
+  | App ImpliesInfon [i; j] ->
+      (match tryDerive _S _I _G pref target j with
+        | None -> None 
+        | Some((j', mj, ej)) ->
+        (match doDerive _S _I _G pref i with
+           | None -> None
+           | Some((i', mi, ei)) ->
+		       let (hyp, mhyp) = mkPrefix pref infon in
+               (b', mb,
+               Entails_Imp_Elim _S _I _G a a' b b' pref hyp ma mhyp mb ea 
+			     ) *)
+		
+  | _ -> None
+						
+and doDerive _S _I _G pref target = 
   let memInfostrate_target = memInfostrate target _I in
   match target with 
-  | App(EmptyInfon, [])-> let (j, m) = mkPrefix pref target in
+  | App EmptyInfon [] -> let (j, m) = mkPrefix pref target in
 		              (* if unable to make F* prove sth, put in a runtime check *)
 			          (* if j = Empty then *)
                    Some((j, m, 
@@ -447,7 +489,7 @@ let rec doDerive _S _I _G pref target =
 	     | None -> raise "assert false"
          | Some mis -> Some((j, m, Entails_Hyp_Knowledge _S _I _G i mis)))
 
-  | App(AsInfon, [SubstrateQueryTerm q]) ->  
+  | App AsInfon [SubstrateQueryTerm q] ->  
       (match pref with 
          | [] -> let (j, m) = mkPrefix pref target in 
              (match check_substrate _S q with  
@@ -462,7 +504,7 @@ let rec doDerive _S _I _G pref target =
              let (j, m) = mkPrefix pref target in
 	         Some((j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei)))
 	 
-  | App(AndInfon, [i; j]) -> (* TODO: extend to n variables *)
+  | App AndInfon [i; j] -> (* TODO: extend to n variables *)
       (match (doDerive _S _I _G pref i, doDerive _S _I _G pref j) with
 	     | (None, _) -> None
 	     | (_, None) -> None
@@ -471,7 +513,7 @@ let rec doDerive _S _I _G pref target =
 		      Some((a, m,
                     Entails_And_Intro _S _I _G i i' j j' a pref m mi mj ei ej)))
 					
-  | App(ImpliesInfon, [i; j]) ->
+  | App ImpliesInfon [i; j] ->
       (match doDerive _S _I _G pref j with
 	     | None -> None
          | Some((j', mj, ej)) ->
@@ -479,7 +521,7 @@ let rec doDerive _S _I _G pref target =
 			 Some((a, m,
 			       Entails_W_Imp_Intro _S _I _G i j j' a pref mj m ej)))
 
-  (*| _ -> tryDerive *)
-	  
-
-      
+  (*| _ -> (* eventually, a collect; for now only pick the first one *)
+    fold_left (fun res infon -> match res with
+		         | None -> tryDerive _S _I _G pref target infon
+		         | _ -> res) None _I *)
