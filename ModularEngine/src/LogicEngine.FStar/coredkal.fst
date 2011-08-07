@@ -125,7 +125,11 @@ val collect_dep : l:list 'a -> (x:'a -> Mem x l -> list 'b) -> list 'b
 let rec collect_dep l f =
   fold_left_dep [] l (fun res x m -> append res (f x m))
 
-
+val option_map : ('a -> 'b) -> option 'a -> option 'b
+let option map a f = match a with
+  | None -> None
+  | Some aa -> Some (f aa)
+  
 (******************************)
 (* Trusted external functions *)
 (******************************)
@@ -137,13 +141,11 @@ type TypeOf :: object => typ => E
 (* 2. Queries to external databases i.e., Substrate *)
 type SubstrateSays :: substrate => ISubstrateQueryTerm => E
 (* extern Runtime  FIXME *) val check_substrate : s:substrate -> q:ISubstrateQueryTerm -> b:bool{b=true => SubstrateSays s q}
-(*
 
 (***********************)
 (* Inductive judgments *)
 (***********************)
-*)
-(* could do a cast in an external file *)
+
 type types :: varDecl => term => typ => P =
   | Types_Var : G:varDecl
                -> v:var
@@ -239,7 +241,6 @@ type Subst :: term => var => term => term => P =
   (* Is this really true? Any variable ever in the ISubstrateQueryTerm? *)
   | Subst_SubstrateQueryTerm : q:ISubstrateQueryTerm -> x:var -> u:term
                      -> Subst (SubstrateQueryTerm q) x u (SubstrateQueryTerm q)
-
 
 type entails :: substrate => infostrate => varDecl => term => P =
   | Entails_Emp : S:substrate -> I:infostrate -> G:varDecl
@@ -354,9 +355,6 @@ type entails :: substrate => infostrate => varDecl => term => P =
                      -> entails S I G i'
                      -> entails S I G hyp
                      -> entails S I G j'
-
-
-
 
 (*************************)
 (* Derivation algorithms *)
@@ -482,7 +480,9 @@ let rec tryDerive _S _I _G pref target infon pr =
           let (hyp, mhyp) = mkPrefix [] infon in 
 		  let prj = Entails_Imp_Elim _S _I _G i i' j j' [] hyp mi mhyp mj ei pr in
             tryDerive _S _I _G pref target j prj) (* then prove (pref target) using j *)
+
   | App AndInfon [i; j] -> (* to use i and j, we can either use i or use j *)
+                           (* eventually the list should contain both solutions *)
 	  let (hyp, mhyp) = mkPrefix [] infon in
 	  let (i', mi) = mkPrefix [] i in
       (match tryDerive _S _I _G pref target i
@@ -492,6 +492,9 @@ let rec tryDerive _S _I _G pref target infon pr =
 		    (let (j', mj) = mkPrefix [] j in
 		     tryDerive _S _I _G pref target j
 			   (Entails_And_Elim2 _S _I _G i j j' [] hyp mhyp mj pr))) 
+			   
+  (*| App ForallT x i ->*)
+
   | _ -> None
 
 and doDerive _S _I _G pref target =
@@ -524,13 +527,13 @@ and doDerive _S _I _G pref target =
          | Some((i', mi, ei)) ->
              let (j, m) = mkPrefix pref target in
                 Some((j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei)))
-
-  (*| ForallT x i -> 
-     map
+				
+  (*| ForallT x i ->  (* doesn't type ?? *)
+     (option_map
        (fun (i', mi, ei) ->
            let (j, m) = mkPrefix pref target in
               (j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei))
-	   (doDerive _S _I (x::_G) pref i)*)
+	   (doDerive _S _I (x::_G) pref i)) *)
 
   | App AndInfon [i; j] -> (* TODO: extend to n variables *)
       (match (doDerive _S _I _G pref i, doDerive _S _I _G pref j) with
