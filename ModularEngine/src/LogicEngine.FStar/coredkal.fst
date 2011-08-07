@@ -74,45 +74,22 @@ let rec mkPrefix pref i =
                  (App SaidInfon [h; j], MkPrefix_Cons h t i j m))
                  (* Rk: if using the function said here, can't prove it *)
 
-val func_typing : func -> option ((list typ) * typ)
-let func_typing = function
- (* could also take code from Ast.Infon/Primitives.fs *)
-  | SeqRule -> None (*[RuleT; RuleT], RuleT*)
-                    (* any number of args possible *)
-  | EmptyRule -> Some([], RuleT)
-  | Rule -> Some([Condition; Action], RuleT)
-  | RuleOnce -> Some([Condition; Action], RuleT)
-  | SeqCondition -> None (*[Condition; Condition], Condition*)
-                         (* any number of args possible *)
-  | EmptyCondition -> Some([], Condition)
-  | WireCondition -> Some([Infon; Principal], Condition)
-  | KnownCondition -> Some([Infon], Condition)
-  | SeqAction -> None (*[Action; Action], Action*)
-                      (* any number of args possible *)
-  | EmptyAction -> Some([], Action)
-  | Send -> Some([Principal; Infon], Action)
-  | JustifiedSend -> Some([Principal; Infon], Action)
-  | JustifiedSay -> Some([Principal; Infon], Action)
-  | Learn -> Some([Infon], Action)
-  | Forget -> Some([Infon], Action)
-  | Install -> Some([RuleT], Action)
-  | Uninstall -> Some([RuleT], Action)
-  | Apply -> Some([SubstrateUpdate], Action)
-  | Drop -> Some([Infon], Action)
-  | EmptyInfon -> Some([], Infon)
-  | AsInfon -> Some([SubstrateQuery], Infon)
-  | AndInfon -> None (* Some([Infon; Infon], Infon *)
-                     (* any number of args possible *)
-  | ImpliesInfon -> Some([Infon; Infon], Infon)
-  | SaidInfon -> Some([Principal; Infon], Infon)
-  | JustifiedInfon -> Some([Infon; Evidence], Infon)
-  | EmptyEvidence -> Some([], Evidence)
-  | SignatureEvidence -> Some([Principal; Infon; Int32], Evidence)
-  | ModusPonensEvidence -> Some([Evidence; Evidence], Evidence)
-  | AndEvidence -> None (*[Evidence; Evidence], Evidence*)
-                        (* any number of args possible *)
-  | AsInfonEvidence -> Some([SubstrateQuery], Evidence)
-  | RelationInfon r -> Some(r.argsType, r.retType)
+(* judgment: is l a list of just constants c *)
+type ConstList :: 'a::* => 'a => list 'a => P =
+  | ConstList_Nil : 'a::* -> c:'a -> ConstList 'a c []
+  | ConstList_Cons : 'a::* -> c:'a -> t:list 'a
+                   -> ConstList 'a c t
+                   -> ConstList 'a c (c::t)
+val constList: c:'a -> l:list 'a -> option(ConstList c l)
+let rec constList c = function
+  | [] -> Some(ConstList_Nil c)
+  | h::t when h = c -> 
+      (match constList c t with
+         | None -> None
+         | Some p -> Some(ConstList_Cons c t p))
+  | _ -> None
+                 
+
 
 
 val fold_left_dep : res:'a -> l:list 'b -> ('a -> x:'b -> Mem x l -> 'a) -> 'a
@@ -129,6 +106,53 @@ val option_map : ('a -> 'b) -> option 'a -> option 'b
 let option map a f = match a with
   | None -> None
   | Some aa -> Some (f aa)
+
+(********** Zip functions taken from coretyping.fst *************)
+type Zip :: 'a::* => 'b::* => ('a => 'b => P) => list 'a => list 'b => P = 
+   | Zip_Nil : 'a::* -> 'b::* -> 'Q::('a => 'b => P) 
+             -> Zip 'a 'b 'Q [] []
+   | Zip_Cons: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
+             -> l1:list 'a -> l2:list 'b 
+             -> x:'a -> y:'b 
+             -> Zip 'a 'b 'Q l1 l2
+             -> 'Q x y
+             -> Zip 'a 'b 'Q (x::l1) (y::l2)
+
+val zip_p: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
+      -> f:(x:'a -> y:'b -> option ('Q x y))
+      -> l1:list 'a
+      -> l2:list 'b
+      -> option (Zip 'a 'b 'Q l1 l2)
+let rec zip_p f l1 l2 = match l1, l2 with
+  | [],[] -> Some (Zip_Nil<'a,'b,'Q>)
+  | (x1::tl1), (x2::tl2) ->
+      match zip_p<'a,'b,'Q> f tl1 tl2, f x1 x2 with
+        | (Some pf_tl), Some pf_hd -> Some (Zip_Cons<'a,'b,'Q> tl1 tl2 x1 x2 pf_tl pf_hd)
+        | _ -> None
+
+val map_p: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
+      -> f:(x:'a -> (y:'b * 'Q x y))
+      -> l1:list 'a
+      -> (l2:list 'b * Zip 'a 'b 'Q l1 l2)
+let rec map_p f l1 = match l1 with
+  | [] -> [], Zip_Nil<'a,'b,'Q>
+  | x::tlx ->
+      let y, pfHd = f x in
+      let tly, pfTl = map_p<'a,'b,'Q> f tlx in
+        (y::tly), Zip_Cons<'a,'b,'Q> tlx tly x y pfTl pfHd
+        
+val map_p_opt: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
+      -> f:(x:'a -> option (y:'b * 'Q x y))
+      -> l1:list 'a
+      -> option (l2:list 'b * Zip 'a 'b 'Q l1 l2)
+let rec map_p_opt f l1 = match l1 with
+  | [] -> Some(([], Zip_Nil<'a,'b,'Q>))
+  | x::tlx ->
+      match f x, map_p_opt<'a,'b,'Q> f tlx with
+        | Some((y, pfHd)), Some((tly, pfTl)) ->
+            Some(((y::tly), Zip_Cons<'a,'b,'Q> tlx tly x y pfTl pfHd))
+        | _ -> None
+  
   
 (******************************)
 (* Trusted external functions *)
@@ -146,6 +170,115 @@ type SubstrateSays :: substrate => ISubstrateQueryTerm => E
 (* Inductive judgments *)
 (***********************)
 
+type FuncTyping :: f:func => typArgs:list typ => typRes:typ => P =
+  (* 5 with variable number of arguments *)
+  | FuncTyping_SeqRule : l:list typ -> ConstList RuleT l 
+                      -> FuncTyping SeqRule l RuleT
+  | FuncTyping_SeqCondition : l:list typ -> ConstList Condition l 
+                           -> FuncTyping SeqCondition l Condition
+  | FuncTyping_SeqAction : l:list typ -> ConstList Action l
+                        -> FuncTyping SeqAction l Action
+  | FuncTyping_AndInfon : l:list typ -> ConstList Infon l
+                       -> FuncTyping AndInfon l Infon
+  | FuncTyping_AndEvidence : l:list typ -> ConstList Evidence l
+                       -> FuncTyping AndEvidence l Evidence
+  (* all others *)
+  | FuncTyping_EmptyRule : FuncTyping EmptyRule [] RuleT
+  | FuncTyping_Rule : FuncTyping Rule [Condition; Action] RuleT
+  | FuncTyping_RuleOnce : FuncTyping RuleOnce [Condition; Action] RuleT
+  | FuncTyping_EmptyCondition : FuncTyping EmptyCondition [] Condition
+  | FuncTyping_WireCondition : FuncTyping WireCondition [Infon; Principal] Condition
+  | FuncTyping_KnownCondition : FuncTyping KnownCondition [Infon] Condition
+  | FuncTyping_EmptyAction : FuncTyping EmptyAction [] Action
+  | FuncTyping_Send : FuncTyping Send [Principal; Infon] Action
+  | FuncTyping_JustifiedSend : FuncTyping JustifiedSend [Principal; Infon] Action
+  | FuncTyping_JustifiedSay : FuncTyping JustifiedSay [Principal; Infon] Action
+  | FuncTyping_Learn : FuncTyping Learn [Infon] Action
+  | FuncTyping_Forget : FuncTyping Forget [Infon] Action
+  | FuncTyping_Install : FuncTyping Install [RuleT] Action
+  | FuncTyping_Uninstall : FuncTyping Uninstall [RuleT] Action
+  | FuncTyping_Apply : FuncTyping Apply [SubstrateUpdate] Action
+  | FuncTyping_Drop : FuncTyping Drop [Infon] Action
+  | FuncTyping_EmptyInfon : FuncTyping EmptyInfon [] Infon
+  | FuncTyping_AsInfon : FuncTyping AsInfon [SubstrateQuery] Infon
+  | FuncTyping_ImpliesInfon : FuncTyping ImpliesInfon [Infon; Infon] Infon
+  | FuncTyping_SaidInfon : FuncTyping SaidInfon [Principal; Infon] Infon
+  | FuncTyping_JustifiedInfon : FuncTyping JustifiedInfon [Infon; Evidence] Infon
+  | FuncTyping_EmptyEvidence : FuncTyping EmptyEvidence [] Evidence
+  | FuncTyping_SignatureEvidence : FuncTyping SignatureEvidence 
+      [Principal; Infon; Int32] Evidence
+  | FuncTyping_ModusPonensEvidence : FuncTyping ModusPonensEvidence 
+      [Evidence; Evidence] Evidence
+  | FuncTyping_AsInfonEvidence : FuncTyping AsInfonEvidence [SubstrateQuery] Evidence
+  | FuncTyping_RelationInfon : r:relationInfon 
+                  -> FuncTyping (RelationInfon r) r.argsType r.retType
+
+val funcTyping : f:func -> typArgs:list typ 
+              -> option (typRes:typ * FuncTyping f typArgs typRes)
+let funcTyping f typArgs = 
+  let getTyp = function (* it's also the return type *)
+    | SeqRule -> RuleT, RuleT
+    | SeqCondition -> Condition, Condition
+    | SeqAction -> Action, Action
+    | AndInfon -> Infon, Infon
+    | AndEvidence -> Evidence, Evidence in
+  match f, typArgs with
+  (* 5 with variable number of arguments *)
+  (*| (SeqRule, l) | (SeqCondition, l) | (SeqAction, l) (* Rk: no multiple match? *)
+  | (AndInfon, l) | (AndEvidence, l) -> *)
+  (* Rk: in conditions, = seems to bind tighter than || *)
+  | SeqRule, _ -> 
+      (match constList RuleT typArgs with
+       | None -> None
+       | Some c -> Some((RuleT, FuncTyping_SeqRule typArgs c)))
+  | SeqCondition, _ -> 
+      (match constList Condition typArgs with
+       | None -> None
+       | Some c -> Some((Condition, FuncTyping_SeqCondition typArgs c)))
+  | SeqAction, _ -> 
+      (match constList Action typArgs with
+       | None -> None
+       | Some c -> Some((Action, FuncTyping_SeqAction typArgs c)))
+  | AndInfon, _ -> 
+      (match constList Infon typArgs with
+       | None -> None
+       | Some c -> Some((Infon, FuncTyping_AndInfon typArgs c)))
+  | AndEvidence, _ -> 
+      (match constList Evidence typArgs with
+       | None -> None
+       | Some c -> Some((Evidence, FuncTyping_AndEvidence typArgs c)))
+  (* all others *)
+  | EmptyRule, [] -> Some((RuleT, FuncTyping_EmptyRule))
+  | Rule, [Condition; Action] -> Some((RuleT, FuncTyping_Rule))
+  | RuleOnce, [Condition; Action]-> Some((RuleT, FuncTyping_RuleOnce))
+  | EmptyCondition, []-> Some((Condition, FuncTyping_EmptyCondition))
+  | WireCondition, [Infon; Principal]-> Some((Condition, FuncTyping_WireCondition))
+  | KnownCondition, [Infon]-> Some((Condition, FuncTyping_KnownCondition))
+  | EmptyAction, []-> Some((Action, FuncTyping_EmptyAction))
+  | Send, [Principal; Infon]-> Some((Action, FuncTyping_Send))
+  | JustifiedSend, [Principal; Infon]-> Some((Action, FuncTyping_JustifiedSend))
+  | JustifiedSay, [Principal; Infon]-> Some((Action, FuncTyping_JustifiedSay))
+  | Learn, [Infon] -> Some((Action, FuncTyping_Learn))
+  | Forget, [Infon]-> Some((Action, FuncTyping_Forget))
+  | Install, [RuleT]-> Some((Action, FuncTyping_Install))
+  | Uninstall, [RuleT]-> Some((Action, FuncTyping_Uninstall))
+  | Apply, [SubstrateUpdate]-> Some((Action, FuncTyping_Apply))
+  | Drop, [Infon]-> Some((Action, FuncTyping_Drop))
+  | EmptyInfon, [] -> Some((Infon, FuncTyping_EmptyInfon))
+  | AsInfon, [SubstrateQuery]-> Some((Infon, FuncTyping_AsInfon))
+  | ImpliesInfon, [Infon; Infon]-> Some((Infon, FuncTyping_ImpliesInfon))
+  | SaidInfon, [Principal; Infon]-> Some((Infon, FuncTyping_SaidInfon))
+  | JustifiedInfon, [Infon; Evidence]-> Some((Infon, FuncTyping_JustifiedInfon))
+  | EmptyEvidence, []-> Some((Evidence, FuncTyping_EmptyEvidence))
+  | SignatureEvidence, [Principal; Infon; Int32]-> 
+      Some((Evidence, FuncTyping_SignatureEvidence))
+  | ModusPonensEvidence, [Evidence; Evidence]-> 
+      Some((Evidence, FuncTyping_ModusPonensEvidence))
+  | AsInfonEvidence, [SubstrateQuery]-> 
+      Some((Evidence, FuncTyping_AsInfonEvidence))
+  | RelationInfon r, a when a = r.argsType -> 
+      Some((r.retType, FuncTyping_RelationInfon r))
+
 type types :: varDecl => term => typ => P =
   | Types_Var : G:varDecl
                -> v:var
@@ -161,29 +294,20 @@ type types :: varDecl => term => typ => P =
   | Types_ForallT : G:varDecl -> x:var -> i:term
                    -> types (x::G) i Infon
                    -> types G (ForallT x i) Infon
-  | Types_AppEmptyInfon : G:varDecl -> types G (App EmptyInfon []) Infon
-  | Types_AppSaidInfon : G:varDecl -> p:term -> i:term
-                         -> types G p Principal
-                         -> types G i Infon
-                         -> types G (App SaidInfon [p; i]) Infon
-  | Types_AppAsInfon : G:varDecl -> q:ISubstrateQueryTerm
-                       -> types G (App AsInfon [(SubstrateQueryTerm q)]) Infon
-  | Types_AppAndInfon : G:varDecl -> i:term -> j:term (* TODO: extend to n *)
-                     -> types G i Infon
-                     -> types G j Infon
-                     -> types G (App AndInfon [i; j]) Infon
-  | Types_AppImpliesInfon : G:varDecl -> i:term -> j:term
-                     -> types G i Infon
-                     -> types G j Infon
-                     -> types G (App ImpliesInfon [i; j]) Infon
-  | Types_AppJustifiedInfon : G:varDecl -> i:term -> e:term
-                            -> types G i Infon
-                            -> types G e Evidence
-                            -> types G (App JustifiedInfon [i; e]) Infon
-  | Types_AppRelationInfon : G:varDecl -> r:relationInfon (* no type check here *)
-                           -> l:list term
-                         (* TODO: need to typecheck all the subterms! *)
-                           -> types G (App (RelationInfon r) l) Infon
+  (*??: is this rule really true? *)
+  | Types_SubstrateQueryTerm : G:varDecl -> q:ISubstrateQueryTerm 
+                               (* TODO: check this rule *)
+                               -> types G (SubstrateQueryTerm q) SubstrateQuery
+  (* generic App rule that replaces all the others *)
+  | Types_App : g:varDecl 
+             -> f:func
+             -> args:list term
+             -> typArgs: list typ
+             -> typRes: typ
+             -> Zip term typ (types g) args typArgs
+             (*-> Zip (fun i t -> types g i t) ilist tylist*) (* ask Nik difference *)
+             -> FuncTyping f typArgs typRes
+             -> types g (App f args) typRes
 
 (* type names = list string *)
 (* type Subst :: (\* binders crossed *\) names => (\* subst into this term *\) term => (\* for this *\) var => (\* with this *\) term => (\* result *\) term => P =  *)
@@ -361,19 +485,6 @@ type entails :: substrate => infostrate => varDecl => term => P =
 (*************************)
 
 val doType: g:varDecl -> t:term -> option(ty:typ * (types g t ty))
-(* val doTypeList : g:varDecl -> terms:list term -> typs:list typ -> option (Zip term typ (types G)) *)
-(* val farg_typing: f:func -> list typ *)
-(* let farg_typing = function  *)
-(*   | EmptyInfon -> [] *)
-
-
-(* let rec doTypeList g terms typs =  *)
-(*   zip_p<term, typ, (types G)> (fun (tm:term) (ty:typ) ->  *)
-(*                                  match doType g tm with  *)
-(*                                    | Some (ty', proof) when ty=ty' -> proof *)
-(*                                    | _ -> None) terms typs *)
-(* use map_p for variable arguments for AndInfon etc. *)
-
 let rec doType g = function
   | Var v -> (match mem v g with (* TODO: change with new rules *)
                 | None -> None
@@ -388,31 +499,16 @@ let rec doType g = function
                      | Some((Infon, pr)) ->
                          Some((Infon, Types_ForallT g x i pr))
                      | Some _ -> None)
-  | App EmptyInfon [] -> Some(Infon, Types_AppEmptyInfon g)
-  | App AsInfon [(SubstrateQueryTerm q)] ->
-      Some((Infon, Types_AppAsInfon g q))
-  | App SaidInfon [p; i] ->
-      (match (doType g p, doType g i) with
-         | (Some((Principal, prp)), Some((Infon, pri))) ->
-              Some((Infon, Types_AppSaidInfon g p i prp pri))
-         | _ -> None)
-  | App AndInfon [i; j] ->
-      (match (doType g i, doType g j) with
-         | (Some((Infon, pri)), Some((Infon, prj))) ->
-              Some((Infon, Types_AppAndInfon g i j pri prj))
-         | _ -> None)
-  | App ImpliesInfon [i; j] ->
-      (match (doType g i, doType g j) with
-         | (Some((Infon, pri)), Some((Infon, prj))) ->
-              Some((Infon, Types_AppImpliesInfon g i j pri prj))
-         | _ -> None)
-  | App JustifiedInfon [i; e] ->
-      (match (doType g i, doType g e) with
-         | (Some((Infon, pri)), Some((Evidence, pre))) ->
-              Some((Infon, Types_AppJustifiedInfon g i e pri pre))
-         | _ -> None)
-  | App (RelationInfon r) l ->
-       Some((Infon, Types_AppRelationInfon g r l))
+  | SubstrateQueryTerm q -> Some(SubstrateQuery, Types_SubstrateQueryTerm g q)
+  | App f args -> 
+     (match map_p_opt (doType g) args with
+        | None -> None
+        | Some((typArgs, przip)) ->
+           (match funcTyping f typArgs with
+              | None -> None
+              | Some((typRes, fpr)) ->
+                   Some((typRes, 
+				         Types_App g f args typArgs typRes przip fpr))))
   | _ -> None
 
 val subst: i:term -> x:var -> u:term -> (i':term * Subst i x u i')
@@ -447,11 +543,11 @@ val doDerive: S:substrate -> I:infostrate -> G:varDecl
              -> option (target':term *
                         MkPrefix pref target target' *
                         entails S I G target')
-						
+                        
 val tryDerive: S:substrate -> I:infostrate -> G:varDecl
              -> pref:prefix -> target:term
              -> infon:term 
-			 -> entails S I G infon
+             -> entails S I G infon
              -> option (target':term *
                         MkPrefix pref target target' *
                         entails S I G target')
@@ -478,21 +574,21 @@ let rec tryDerive _S _I _G pref target infon pr =
        | Some((i', mi, ei)) ->
           let (j', mj) = mkPrefix [] j in
           let (hyp, mhyp) = mkPrefix [] infon in 
-		  let prj = Entails_Imp_Elim _S _I _G i i' j j' [] hyp mi mhyp mj ei pr in
+          let prj = Entails_Imp_Elim _S _I _G i i' j j' [] hyp mi mhyp mj ei pr in
             tryDerive _S _I _G pref target j prj) (* then prove (pref target) using j *)
 
   | App AndInfon [i; j] -> (* to use i and j, we can either use i or use j *)
                            (* eventually the list should contain both solutions *)
-	  let (hyp, mhyp) = mkPrefix [] infon in
-	  let (i', mi) = mkPrefix [] i in
+      let (hyp, mhyp) = mkPrefix [] infon in
+      let (i', mi) = mkPrefix [] i in
       (match tryDerive _S _I _G pref target i
-	          (Entails_And_Elim1 _S _I _G i i' j [] hyp mhyp mi pr) with
-	     | Some a -> Some a
-	     | None -> 
-		    (let (j', mj) = mkPrefix [] j in
-		     tryDerive _S _I _G pref target j
-			   (Entails_And_Elim2 _S _I _G i j j' [] hyp mhyp mj pr))) 
-			   
+              (Entails_And_Elim1 _S _I _G i i' j [] hyp mhyp mi pr) with
+         | Some a -> Some a
+         | None -> 
+            (let (j', mj) = mkPrefix [] j in
+             tryDerive _S _I _G pref target j
+               (Entails_And_Elim2 _S _I _G i j j' [] hyp mhyp mj pr))) 
+               
   (*| App ForallT x i ->*)
 
   | _ -> None
@@ -520,20 +616,20 @@ and doDerive _S _I _G pref target =
                 | false -> None
                 | true -> Some((j, m, Entails_Hyp_Substrate _S _I _G q)))
          | _ -> None)
-		 
+         
   | ForallT x i ->
       (match doDerive _S _I (x::_G) pref i with
          | None -> None
          | Some((i', mi, ei)) ->
              let (j, m) = mkPrefix pref target in
                 Some((j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei)))
-				
+                
   (*| ForallT x i ->  (* doesn't type ?? *)
      (option_map
        (fun (i', mi, ei) ->
            let (j, m) = mkPrefix pref target in
               (j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei))
-	   (doDerive _S _I (x::_G) pref i)) *)
+       (doDerive _S _I (x::_G) pref i)) *)
 
   | App AndInfon [i; j] -> (* TODO: extend to n variables *)
       (match (doDerive _S _I _G pref i, doDerive _S _I _G pref j) with
