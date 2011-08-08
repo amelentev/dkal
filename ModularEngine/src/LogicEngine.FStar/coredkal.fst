@@ -88,9 +88,6 @@ let rec constList c = function
          | None -> None
          | Some p -> Some(ConstList_Cons c t p))
   | _ -> None
-                 
-
-
 
 val fold_left_dep : res:'a -> l:list 'b -> ('a -> x:'b -> Mem x l -> 'a) -> 'a
 let rec fold_left_dep res l f = match l with
@@ -398,6 +395,11 @@ type Subst :: term => var => term => term => P =
                       -> Subst i x u i'
                       -> Subst (ForallT y i) x u (ForallT y i')
   (* TODO: do something more general for App? *)
+  | Subst_App : f:func -> x:var -> u:term
+              -> ilist:list term -> ilist':list term
+			  -> Zip term term (fun i i' => Subst i x u i') ilist ilist'
+			  -> Subst (App f ilist) x u (App f ilist')
+			  (*
   | Subst_App0 : f:func -> x:var -> u:term
                -> Subst (App f []) x u (App f [])
   | Subst_App1 : f:func -> x:var -> u:term
@@ -409,7 +411,7 @@ type Subst :: term => var => term => term => P =
                -> j:term -> j':term
                -> Subst i x u i'
                -> Subst j x u j'
-               -> Subst (App f [i; j]) x u (App f [i'; j'])
+               -> Subst (App f [i; j]) x u (App f [i'; j']) *)
   (* try with n *)
   (*| Subst_Appn : f:func -> x:var -> u:term
                -> ilist : term list
@@ -480,18 +482,6 @@ type entails :: substrate => infostrate => varDecl => term => P =
                    -> Subst i v u i'
                    -> entails S I G result
 
-  (*| Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
-                     -> i:term -> i':term
-                     -> j:term -> j':term
-                     -> result:term
-                     -> pref: prefix
-                     -> MkPrefix pref (App AndInfon [i; j]) result
-                     -> MkPrefix pref i i'
-                     -> MkPrefix pref j j'
-                     -> entails S I G i'
-                     -> entails S I G j'
-                     -> entails S I G result
-  *)
   | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
                      -> ilist:list term
 					 -> ilist':list term
@@ -501,26 +491,6 @@ type entails :: substrate => infostrate => varDecl => term => P =
 					 -> Zip term term (MkPrefix pref) ilist ilist'
 					 -> MapL term (entails S I G) ilist'
 					 -> entails S I G result
-  
-  (*| Entails_And_Elim1 : S:substrate -> I:infostrate -> G:varDecl
-                     -> i : term -> i': term
-                     -> j : term
-                     -> pref : list term
-                     -> hyp : term
-                     -> MkPrefix pref (App AndInfon [i; j]) hyp
-                     -> MkPrefix pref i i'
-                     -> entails S I G hyp
-                     -> entails S I G i'
-
-  | Entails_And_Elim2 : S:substrate -> I:infostrate -> G:varDecl
-                     -> i : term
-                     -> j : term -> j': term
-                     -> pref : list term
-                     -> hyp : term
-                     -> MkPrefix pref (App AndInfon [i; j]) hyp
-                     -> MkPrefix pref j j'
-                     -> entails S I G hyp
-                     -> entails S I G j'*)
 
   | Entails_And_Elim : S:substrate -> I:infostrate -> G:varDecl
                     -> ilist:list term
@@ -598,12 +568,12 @@ let rec subst i x u =
     | ForallT y j ->
         let (j', pr) = subst j x u in
           ForallT y j', Subst_ForallTRepl y j x u j' pr
-    | App f [] -> (App f [], Subst_App0 f x u)
-    | App f [i] -> let (i', pri) = subst i x u in
-                     App f [i'], Subst_App1 f x u i i' pri
-    | App f [i; j] -> let (i', pri) = subst i x u in
-                      let (j', prj) = subst j x u in
-                        App f [i'; j'], Subst_App2 f x u i i' j j' pri prj
+	| App f ilist ->
+	    let (ilist', przip) = 
+          map_p<term, term, (fun i i' => Subst i x u i')>
+		  (* Rk: type annotation necessary *)
+               (fun i -> subst i x u) ilist in
+		  (App f ilist', Subst_App f x u ilist ilist' przip)
     | SubstrateQueryTerm q ->
         SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u
 
@@ -663,8 +633,6 @@ let rec tryDerive _S _I _G pref target infon pr =
 		       let (i', mi) = mkPrefix [] i in
 		       tryDerive _S _I _G pref target i
                  (Entails_And_Elim _S _I _G ilist i i' [] hyp memi mhyp mi pr))
-
-  (*| App AndInfon listi ->*)
        
   (*| App ForallT x i ->*)
 
