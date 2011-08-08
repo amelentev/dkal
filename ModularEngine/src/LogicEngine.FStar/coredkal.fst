@@ -100,7 +100,7 @@ let rec collect_dep l f =
   fold_left_dep [] l (fun res x m -> append res (f x m))
 
 val option_map : ('a -> 'b) -> option 'a -> option 'b
-let option map a f = match a with
+let option_map f a = match a with
   | None -> None
   | Some aa -> Some (f aa)
 
