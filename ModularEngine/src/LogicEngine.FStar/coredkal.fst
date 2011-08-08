@@ -108,6 +108,28 @@ let option map a f = match a with
   | Some aa -> Some (f aa)
 
 (********** Zip functions taken from coretyping.fst *************)
+type MapL :: 'a::* => ('a => P) => list 'a => P =
+   | MapL_Nil : 'a::* -> 'Q::('a => P)
+             -> MapL 'a 'Q []
+   | MapL_Cons : 'a::* -> 'Q::('a => P)
+              -> t:list 'a
+			  -> h:'a
+			  -> MapL 'a 'Q t
+			  -> 'Q h
+			  -> MapL 'a 'Q (h::t)
+			  
+val mapL_p: 'a::* -> 'Q::('a => P)
+         -> f:(x:'a -> option ('Q x))
+		 -> l:list 'a
+		 -> option (MapL 'a 'Q l)
+let rec mapL_p f l = match l with
+  | [] -> Some (MapL_Nil<'a,'Q>)
+  | h::t -> 
+     match mapL_p<'a,'Q> f t, f h with
+	   | Some pf_tl, Some pf_hd ->
+	       Some (MapL_Cons<'a,'Q> t h pf_tl pf_hd)
+	   | _ -> None
+
 type Zip :: 'a::* => 'b::* => ('a => 'b => P) => list 'a => list 'b => P = 
    | Zip_Nil : 'a::* -> 'b::* -> 'Q::('a => 'b => P) 
              -> Zip 'a 'b 'Q [] []
@@ -152,7 +174,39 @@ let rec map_p_opt f l1 = match l1 with
         | Some((y, pfHd)), Some((tly, pfTl)) ->
             Some(((y::tly), Zip_Cons<'a,'b,'Q> tlx tly x y pfTl pfHd))
         | _ -> None
-  
+
+val map_mapL_p: 'a::* -> 'b::* 
+            -> 'Q::('a => 'b => P)
+			-> 'R::('b => P)
+			-> f:(x:'a -> option(x':'b * 'Q x x' * 'R x'))
+			-> l:list 'a
+			-> option (l':list 'b * Zip 'a 'b 'Q l l' * MapL 'b 'R l')
+let rec map_mapL_p f l = match l with
+  | [] -> Some(([], Zip_Nil, MapL_Nil))
+  | h::t -> 
+     (match f h, map_mapL_p f t with
+	    | Some((h', qh, rh)), Some((t', qt, rt)) -> 
+            Some(((h'::t'), (* need parenthesis around the list; precedence of :: and , *)
+			      Zip_Cons<'a, 'b, 'Q> t t' h h' qt qh,
+                  MapL_Cons<'b, 'R> t' h' rt rh))
+	    | _ -> None)
+
+(*
+type Nth :: 'a::* => l:list 'a => i:int => x:'a => P =
+  | Nth_b: 'a::* -> h:'a -> t:list 'a
+           -> Nth 'a (h::t) 0 h
+  | Nth_r: 'a::* -> h:'a -> t:list 'a -> i:int -> x:'a
+           (*-> Nth 'a t (i-1) x*) (*??*)
+		   -> Nth 'a (h::t) i x
+val nth_p: 'a::* -> l:list 'a -> i:int -> 
+         option (x:'a * Nth 'a l i x)
+let rec nth_p l i = match l with
+  | [] -> None
+  | h::t -> 
+     match nth_p t (i-1) with
+	   | None -> None
+	   | Some((x, pr)) -> Some((x, Nth_r<'a> h t i x (*pr*)))
+*) 
   
 (******************************)
 (* Trusted external functions *)
@@ -426,7 +480,7 @@ type entails :: substrate => infostrate => varDecl => term => P =
                    -> Subst i v u i'
                    -> entails S I G result
 
-  | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
+  (*| Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
                      -> i:term -> i':term
                      -> j:term -> j':term
                      -> result:term
@@ -437,8 +491,18 @@ type entails :: substrate => infostrate => varDecl => term => P =
                      -> entails S I G i'
                      -> entails S I G j'
                      -> entails S I G result
-
-  | Entails_And_Elim1 : S:substrate -> I:infostrate -> G:varDecl
+  *)
+  | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
+                     -> ilist:list term
+					 -> ilist':list term
+					 -> result:term
+					 -> pref:prefix
+					 -> MkPrefix pref (App AndInfon ilist) result
+					 -> Zip term term (MkPrefix pref) ilist ilist'
+					 -> MapL term (entails S I G) ilist'
+					 -> entails S I G result
+  
+  (*| Entails_And_Elim1 : S:substrate -> I:infostrate -> G:varDecl
                      -> i : term -> i': term
                      -> j : term
                      -> pref : list term
@@ -456,7 +520,19 @@ type entails :: substrate => infostrate => varDecl => term => P =
                      -> MkPrefix pref (App AndInfon [i; j]) hyp
                      -> MkPrefix pref j j'
                      -> entails S I G hyp
-                     -> entails S I G j'
+                     -> entails S I G j'*)
+
+  | Entails_And_Elim : S:substrate -> I:infostrate -> G:varDecl
+                    -> ilist:list term
+					-> i:term
+					-> i':term
+					-> pref: list term
+					-> hyp:term
+					-> Mem i ilist
+					-> MkPrefix pref (App AndInfon ilist) hyp
+					-> MkPrefix pref i i'
+					-> entails S I G hyp
+					-> entails S I G i'
 
   | Entails_W_Imp_Intro : S:substrate -> I:infostrate -> G:varDecl
                       -> i:term
@@ -577,18 +653,19 @@ let rec tryDerive _S _I _G pref target infon pr =
           let prj = Entails_Imp_Elim _S _I _G i i' j j' [] hyp mi mhyp mj ei pr in
             tryDerive _S _I _G pref target j prj) (* then prove (pref target) using j *)
 
-  | App AndInfon [i; j] -> (* to use i and j, we can either use i or use j *)
-                           (* eventually the list should contain both solutions *)
+  | App AndInfon ilist -> (* to And(ilist), we can use anyone in the ilist*)
+                          (* eventually the list should contain both solutions *)
       let (hyp, mhyp) = mkPrefix [] infon in
-      let (i', mi) = mkPrefix [] i in
-      (match tryDerive _S _I _G pref target i
-              (Entails_And_Elim1 _S _I _G i i' j [] hyp mhyp mi pr) with
-         | Some a -> Some a
-         | None -> 
-            (let (j', mj) = mkPrefix [] j in
-             tryDerive _S _I _G pref target j
-               (Entails_And_Elim2 _S _I _G i j j' [] hyp mhyp mj pr))) 
-               
+	  fold_left_dep None ilist
+	    (fun res i memi -> match res with
+		   | Some _ -> res (* we don't go further, eventually concatenate sols *)
+		   | None ->
+		       let (i', mi) = mkPrefix [] i in
+		       tryDerive _S _I _G pref target i
+                 (Entails_And_Elim _S _I _G ilist i i' [] hyp memi mhyp mi pr))
+
+  (*| App AndInfon listi ->*)
+       
   (*| App ForallT x i ->*)
 
   | _ -> None
@@ -630,16 +707,15 @@ and doDerive _S _I _G pref target =
            let (j, m) = mkPrefix pref target in
               (j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei))
        (doDerive _S _I (x::_G) pref i)) *)
-
-  | App AndInfon [i; j] -> (* TODO: extend to n variables *)
-      (match (doDerive _S _I _G pref i, doDerive _S _I _G pref j) with
-         | (None, _) -> None
-         | (_, None) -> None
-         | (Some((i', mi, ei)), Some((j', mj, ej))) ->
-              let (a, m) = mkPrefix pref target in
-              Some((a, m,
-                    Entails_And_Intro _S _I _G i i' j j' a pref m mi mj ei ej)))
   
+  | App AndInfon ilist ->
+	   match map_mapL_p (doDerive _S _I _G pref) ilist with
+	     | Some((ilist', m, e)) -> 
+		     let (target', mt) = mkPrefix pref target in
+			 Some((target', mt,
+			       Entails_And_Intro _S _I _G ilist ilist' target' pref mt m e))
+         | _ -> None
+		 
   | App ImpliesInfon [i; j] ->
       (match doDerive _S _I _G pref j with
          | None -> None
@@ -648,9 +724,9 @@ and doDerive _S _I _G pref target =
              Some((a, m,
                    Entails_W_Imp_Intro _S _I _G i j j' a pref mj m ej)))
 
- (* | _ -> (* eventually, a collect; for now only pick the first one *)
+  | _ -> (* eventually, a collect; for now only pick the first one *)
     fold_left_dep  None _I
                    (fun res infon pr_mem -> match res with
                       | None -> tryDerive _S _I _G pref target infon
                                 (Entails_Hyp_Knowledge _S _I _G infon pr_mem)
-                      | _ -> res) *)
+                      | _ -> res) 
