@@ -746,11 +746,10 @@ let rec subst i x u =
 		
 		
 (*
-let term_apply (t:term) (s:substitution) : term =
-  t (* TODO, see term.fst *)
-
-let entails_subst _S _I _G t s =
-  entails _S _I _G (term_apply t s)
+(* TODO: syntax?? *)
+(* type entails_subst (*:: substrate => infostrate => varDecl => term => P =*)
+  (ss:substrate) (ii:infostrate) (gg:varDecl) (t:term) (s:substitution) =
+     ( entails ss ii gg (Subst t s) ) *)
 
 val doDerive: S:substrate -> I:infostrate -> G:varDecl
              -> pref:prefix -> target:term
@@ -769,7 +768,6 @@ val tryDerive: S:substrate -> I:infostrate -> G:varDecl
                         MkPrefix pref target target' *
 						s':substitution *
                         entails S I G target')
-
 *)
 
 val doDerive: S:substrate -> I:infostrate -> G:varDecl
@@ -833,7 +831,7 @@ and doDerive _S _I _G pref target =
                       (* if unable to make F* prove sth, put in a runtime check *)
                       (* if j = Empty then *)
                      Some((j, m,
-                          Entails_Emp _S _I _G pref j m))
+                           Entails_Emp _S _I _G pref j m))
                       (* else raise "stupid F*" *)
 
   | i when ((pref = []) && (not (memInfostrate_target = None))) ->

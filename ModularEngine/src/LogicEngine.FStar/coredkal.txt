@@ -55,7 +55,7 @@ Desired extension with evidence and justification:
 Core infon logic entailment
 
  Well-formedness of a context:
-     -- S is a set of closed relations
+     -- S is a set of closed substrate queries
      -- K is a set of closed infons
      -- G is a set of variable/type bindings
 
@@ -72,18 +72,12 @@ Core infon logic entailment
 
     S; K; G |= forall (x:ty). I
           G |- u:ty
-          x not in freenames(u)
   -------------------------------------- [Q-Inst]
     S; K; G |= I[u/x]
 
 
-    S; K; G |= forall (x:ty). I
-    y not in freenames(G)
-  -------------------------------------- [Q-AlphaRename]  
-    S; K; G |= forall (y:ty). I[y/x]
-
-
-  -------------------------- [Emp]  [ Q: Same as T? ] (logic axiom)
+      G |- pref Empty : Infon
+  ------------------------------- [Emp]  [ Q: Same as T? ] (logic axiom)
     S; K; G |= pref Empty
 
 
@@ -113,6 +107,7 @@ Core infon logic entailment
     S; K; G |= pref j
 
 
+    G |- i : Infon
     S; K; G |= pref j
   ------------------------------- [W-Imp-Intro]
     S; K; G |= pref (Implies i j)
@@ -149,7 +144,8 @@ Auxiliary judgment: Well-typed terms
 
      
      arity(R) = (t_1..t_k) 
-     forall j. G |- u_j : u_j
+     for each j in 1..k,
+          G |- u_j : t_j
    -------------------------------
      G |- (R u_1..u_k) : SubQuery
 
@@ -205,7 +201,7 @@ Auxiliary judgment: Capture-avoiding substitution
    (forall (x:ty). I)[u/x] = forall (x:ty). I
    
        y != x           
-       z != x      z not in FV(u)       z not in FV(I)   
+       z != x      z not in FV(u)       z not in FV(i)   
   ---------------------------------------------------------
    (forall (y:ty). I)[u/x] = forall (z:ty). (I[z/y][u/x])
        
