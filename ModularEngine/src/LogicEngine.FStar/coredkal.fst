@@ -50,6 +50,9 @@ let rec mem (a : 'a) (l: list 'a) : option (Mem 'a a l) =
   | h::t -> (match mem a t with
                | None -> None
                | Some(m) -> Some(Mem_tl a h t m))
+			   
+val contains : a:'a -> l:list 'a -> b:bool{((b=true) <=> (In 'a a l))}
+(* TODO *) 
 
 val memInfostrate : i:term -> is:infostrate -> option (Mem i is)
 let memInfostrate i _I = mem i _I
@@ -74,6 +77,7 @@ let rec mkPrefix pref i =
                  (App SaidInfon [h; j], MkPrefix_Cons h t i j m))
                  (* Rk: if using the function said here, can't prove it *)
 
+
 (* judgment: is l a list of just constants c *)
 type ConstList :: 'a::* => 'a => list 'a => P =
   | ConstList_Nil : 'a::* -> c:'a -> ConstList 'a c []
@@ -89,6 +93,7 @@ let rec constList c = function
          | Some p -> Some(ConstList_Cons c t p))
   | _ -> None
 
+
 val fold_left_dep : res:'a -> l:list 'b -> ('a -> x:'b -> Mem x l -> 'a) -> 'a
 let rec fold_left_dep res l f = match l with
   | [] -> res
@@ -99,10 +104,12 @@ val collect_dep : l:list 'a -> (x:'a -> Mem x l -> list 'b) -> list 'b
 let rec collect_dep l f =
   fold_left_dep [] l (fun res x m -> append res (f x m))
 
-val option_map : ('a -> 'b) -> option 'a -> option 'b
-let option_map f a = match a with
+val option_map : f:('a -> 'b) -> oa:option 'a 
+              -> (*ob:*)option 'b(*{forall a. oa = (Some a) => ob = (Some (f a))}*)
+let option_map f = function
   | None -> None
-  | Some aa -> Some (f aa)
+  | Some a -> Some (f a)
+
 
 (********** Zip functions taken from coretyping.fst *************)
 type MapL :: 'a::* => ('a => P) => list 'a => P =
@@ -360,6 +367,196 @@ type types :: varDecl => term => typ => P =
              -> FuncTyping f typArgs typRes
              -> types g (App f args) typRes
 
+
+			 
+
+			 
+(* val subst_special: names:binders -> i:term -> x:var -> Subst names i x (Var x) i *)
+
+(* Axiomatization of sets of variables *)
+type varset = list var
+logic function Empty : varset
+logic function Singleton : var -> varset
+logic function Union : varset -> varset -> varset
+logic function SetMem : var -> varset -> bool
+logic function BoolOr : bool -> bool -> bool
+assume forall (b:bool). (BoolOr b true) = true
+assume forall (b:bool). (BoolOr true b) = true
+assume forall (v:var). (SetMem v (Singleton v)) = true
+assume forall (l1:varset) (l2:varset) (v:var). 
+  SetMem v (Union l1 l2) = (BoolOr (SetMem v l1) (SetMem v l2))
+assume forall (v:var). (SetMem v Empty) = false
+(* extern Runtime *) val union : s1:varset -> s2:varset -> s3:varset{(s3 = (Union s1 s2))}
+
+(* Axiomatization of substitutions *)
+logic function EmptySubst : substitution
+logic function Domain : substitution -> varset
+logic function Select : substitution -> var -> term
+logic function Update : substitution -> var -> term -> substitution
+logic function FreeVars : term -> varset
+logic function FreeVarsSubst : substitution -> varset 
+  (* set of variable in both the domain and the range of the map *)
+assume forall (s:substitution) (x:var) (t:term). 
+  (Select (Update s x t) x) = t
+assume forall (s:substitution) (x:var) (y:var) (t:term).
+  (x <> y) => ((Select (Update s x t) y) = (Select s y))
+assume forall (s:substitution) (x:var) (t:term). 
+  Domain (Update s x t) = (Union (Domain s) (Singleton x))
+assume (Domain EmptySubst) = Empty
+
+logic function Subst : term -> substitution -> term 
+logic function SubstList: list term -> substitution -> list term
+  (* map of subst over the list *)
+assume Subst_VarRepl: (forall (x:var) (s:substitution).
+        ((SetMem x (Domain s)) = true) => ((Subst (Var x) s) = (Select s x)))
+assume Subst_VarIgnore: (forall (x:var) (s:substitution).
+        ((SetMem x (Domain s)) = false) => ((Subst (Var x) s) = (Var x)))
+assume Subst_Const: 
+        (forall (c:constant) (s:substitution). (Subst (Const c) s) = (Const c))
+assume Subst_app: (forall (f:func) (args:list term) (s:substitution).
+        (Subst (App f args) s) = (App f (SubstList args s)))
+assume Subst_forallT_1: 
+        (forall (x:var) (t:term) (s:substitution). 
+           (not(In x (FreeVarsSubst s))) => 
+		       ((Subst (ForallT x t) s) = (ForallT x (Subst t s))))
+assume Subst_forallT_2: 
+        (forall (x:var) (t:term) (s:substitution) (y:var). 
+           ((not(In y (Union (FreeVarsSubst s) (FreeVars t))))) => 
+            (Subst (ForallT x t) s) =
+              (ForallT y (Subst (Subst t (Update EmptySubst x (Var y))) s)))
+assume SubstList_nil:
+        (forall (s:substitution). (SubstList [] s) =  [])
+assume SubstList_cons:
+        (forall (t:term) (tl:list term) (s:substitution).
+           (SubstList (t::tl) s) = ((Subst t s)::(SubstList tl s)))
+
+(* extern Runtime *) val emptySubst: unit -> s:substitution{s=EmptySubst}
+(* extern Runtime *) val lookupVar : s:substitution -> x:var 
+        -> o:option term{((o=None <=> (false=(SetMem x (Domain s)))) &&
+                          (forall (t:term). (o=(Some t)) => 
+						     ((SetMem x (Domain s) = true) && (t=(Select s x)))))}
+(* extern Runtime *) val extendSubst : s:substitution -> x:var -> t:term 
+        -> (s':substitution{s'=(Update s x t)})
+(* extern Runtime *) val inDomain : s:substitution -> x:var 
+        -> b:bool{b=(SetMem x (Domain s))}
+(* extern Runtime *) val inFreevars : s:substitution -> x:var 
+        -> b:bool{b=(SetMem x (FreeVarsSubst s))}
+(* added *)
+(* extern Runtime *) val forgetSubst : s:substitution -> x:var 
+        -> (substitution) (* spec: TODO *)
+(* extern Runtime *) val freeVarsSubst : s:substitution 
+                                        -> f:varset{(f = (FreeVarsSubst s))}
+(* extern Runtime *) val freeVars : t:term -> f:varset{(f = (FreeVars t))}
+(* (* extern Runtime *) val substrateQuerySubst : q1:queryTerm 
+        -> s:substitution -> q2:term{q2=(Subst (SubstrateQueryTerm q1) s)} *)
+
+(* functions from builders.fs *)
+
+
+(*
+val mem_assoc : x:string -> s:varset 
+              -> b:bool{ ((b=false) => (not(In x s)) }
+let rec mem_assoc x s = match s with
+  | [] -> false
+  | y :: tl -> 
+     if y = x then true else mem_assoc x tl
+*)
+
+let _freshVarId = ref 0 (* can't go inside because no inside rec function *)
+
+val freshVar : ty:typ -> s:varset 
+             -> x:var{ not ( In x s ) }
+let rec freshVar ty s =
+  let n = { typ = ty; name = (Concat "fresh" (string_of_any (!_freshVarId))) } in
+   (_freshVarId := !_freshVarId + 1); (* Rk: parenthesis needed *)
+   if not (contains n s) 
+   then n 
+   else freshVar ty s
+     
+(* from term.fst *)	 
+
+
+extern reference TranslationToFStar {language="F#";
+                                     dll="TranslationToFStar";
+                                     namespace="";
+                                     classname="TranslationToFStar"}
+extern TranslationToFStar val FStarVarOfIVar : IVar -> Types.var
+extern TranslationToFStar val FStarTermOfITerm : ITerm -> Types.term
+extern TranslationToFStar val FStarSubstitutionOfISubstitution: ISubstitution -> Types.substitution	 
+	 
+(* see term_apply in term.fst *)
+val subst: i:term -> s:substitution -> i':term{i'=(Subst i s)}
+val substList : tl:list term -> s:substitution -> tl':list term{tl'=(SubstList tl s)}
+let rec subst i s = 
+  match i with
+    | Var y -> 
+        (match lookupVar s y with 
+           | None -> Var y
+           | Some t -> t)
+          
+    | Const c -> Const c
+        
+    | App f tl -> App f (substList tl s)
+    
+	| ForallT x t -> (* code taken partially from term.fst *)
+      (* the substitution is not applied to the quantified variable *)
+        let y : (yy:var{not(In yy (Union (FreeVars t) (FreeVarsSubst s)))}) =
+          freshVar x.typ (union (freeVars t) (freeVarsSubst s)) in
+		let ySubst : (ys:substitution{(ys = (Update EmptySubst x (Var y)))}) =
+          extendSubst (emptySubst ()) x (Var y) in
+		let t' : (tt:term{(tt = (Subst t (Update EmptySubst x (Var y))))}) =
+          subst t ySubst in
+		let t'' : (tt:term{(tt = (Subst (Subst t (Update EmptySubst x (Var y))) s))}) =
+          (subst t' s) in
+        let res = Types.ForallT y t'' in 
+		let _ = Assume <(res = (Subst i s))> () in
+		res
+		
+	| SubstrateQueryTerm t0 ->
+	    let res = 
+          FStarTermOfITerm
+            (TypeHeaders.substrateQueryTerm_apply t0  
+		       (* not sure why I need the TypeHeaders. , TypeHeaders has been opened *)
+		       (TranslationFromFStar.ISubstitutionOfFStarSubstitution s) )
+		in let _ = Assume <(res = (Subst i s))> () in
+		res
+	
+	| SubstrateUpdateTerm t0 ->
+	    let res =
+          FStarTermOfITerm 
+            (TypeHeaders.substrateUpdateTerm_apply t0 
+		       (TranslationFromFStar.ISubstitutionOfFStarSubstitution s) )
+		in let _ = Assume <(res = (Subst i s))> () in
+		res
+	
+	| ConcretizationEvidence t1 s1 -> raise "Evidences not handled"
+	  (* ConcretizationEvidence (ConcretizationEvidence t1 s1) s *) (* correct?? *)
+      (* Types.ConcretizationEvidence t1 (composeWith s s1) *)
+	
+    
+	
+	
+
+(*     | ForallT y j when x=y -> *)
+(*         ForallT y j, Subst_ForallTIgnore x j u *)
+(* 	| ForallT y j -> *)
+(* 	    let (j', pr) = subst j x u in *)
+(*           ForallT y j', Subst_ForallTRepl y j x u j' pr *)
+(* 	| SubstrateQueryTerm q -> *)
+(* 	    SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u *)
+
+and substList ilist s = (* why not map (fun i -> subst i s) ilist ? *)
+  (*map (fun i -> subst i s) ilist*)
+  match ilist with
+  | [] -> []
+  | hd::tl -> 
+      let tl' = substList tl s in 
+      let hd' = subst hd s in
+        Cons<term>  hd' tl'
+		(* type inference is too eager here; need to provide explicit annotation on Cons *)
+			 
+			 
+			 
 (* type names = list string *)
 (* type Subst :: (\* binders crossed *\) names => (\* subst into this term *\) term => (\* for this *\) var => (\* with this *\) term => (\* result *\) term => P =  *)
 (*   | Subst_ForallTRepl : binders:names -> y:name -> t:typ -> i:term -> x:var{x<>y} -> j:term -> result:term *)
@@ -380,6 +577,8 @@ type types :: varDecl => term => typ => P =
 
 
 (* Subst i x u i'  iff  i[u/x] = i' *)
+(** OLD *)
+(*
 type Subst :: term => var => term => term => P =
   | Subst_VarRepl : x:var -> u:term -> Subst (Var x) x u u
   | Subst_VarIgnore : y:var -> u:term -> x:var{not(x = y)}
@@ -394,34 +593,15 @@ type Subst :: term => var => term => term => P =
                       -> i' : term
                       -> Subst i x u i'
                       -> Subst (ForallT y i) x u (ForallT y i')
-  (* TODO: do something more general for App? *)
   | Subst_App : f:func -> x:var -> u:term
               -> ilist:list term -> ilist':list term
 			  -> Zip term term (fun i i' => Subst i x u i') ilist ilist'
 			  -> Subst (App f ilist) x u (App f ilist')
-			  (*
-  | Subst_App0 : f:func -> x:var -> u:term
-               -> Subst (App f []) x u (App f [])
-  | Subst_App1 : f:func -> x:var -> u:term
-               -> i:term -> i':term
-               -> Subst i x u i'
-               -> Subst (App f [i]) x u (App f [i'])
-  | Subst_App2 : f:func -> x:var -> u:term
-               -> i:term -> i':term
-               -> j:term -> j':term
-               -> Subst i x u i'
-               -> Subst j x u j'
-               -> Subst (App f [i; j]) x u (App f [i'; j']) *)
-  (* try with n *)
-  (*| Subst_Appn : f:func -> x:var -> u:term
-               -> ilist : term list
-               -> ilist': term list{}
-               -> Forall i in ilist, Subst i x u i'
-               -> ... *)
+
   (* Is this really true? Any variable ever in the ISubstrateQueryTerm? *)
   | Subst_SubstrateQueryTerm : q:ISubstrateQueryTerm -> x:var -> u:term
                      -> Subst (SubstrateQueryTerm q) x u (SubstrateQueryTerm q)
-
+*)
 type entails :: substrate => infostrate => varDecl => term => P =
   | Entails_Emp : S:substrate -> I:infostrate -> G:varDecl
                -> pref: prefix
@@ -461,25 +641,10 @@ type entails :: substrate => infostrate => varDecl => term => P =
                    -> hyp:term
                    -> result:term
                    -> MkPrefix pref (ForallT v i) hyp
-                   -> Subst i v u i'
+                   (* -> Subst i v u i' *) (* TODO *)
                    -> MkPrefix pref i' result
                    -> entails S I G hyp
                    -> types G u v.typ
-                   -> entails S I G result
-
-  | Entails_Q_Inst : S:substrate -> I:infostrate -> G:varDecl
-                   -> v:var
-                   -> i:term
-                   -> i':term
-                   -> u:term
-                   -> pref:prefix
-                   -> hyp:term
-                   -> result:term
-                   -> MkPrefix pref (ForallT v i) hyp
-                   -> MkPrefix pref i' result
-                   -> entails S I G hyp
-                   -> types G u v.typ
-                   -> Subst i v u i'
                    -> entails S I G result
 
   | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
@@ -557,6 +722,7 @@ let rec doType g = function
 				         Types_App g f args typArgs typRes przip fpr))))
   | _ -> None
 
+(*
 val subst: i:term -> x:var -> u:term -> (i':term * Subst i x u i')
 let rec subst i x u =
   match i with
@@ -576,14 +742,36 @@ let rec subst i x u =
 		  (App f ilist', Subst_App f x u ilist ilist' przip)
     | SubstrateQueryTerm q ->
         SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u
-
+*)
+		
+		
 (*
 let term_apply (t:term) (s:substitution) : term =
   t (* TODO, see term.fst *)
 
 let entails_subst _S _I _G t s =
   entails _S _I _G (term_apply t s)
+
+val doDerive: S:substrate -> I:infostrate -> G:varDecl
+             -> pref:prefix -> target:term
+			 -> s:substitution
+             -> option (target':term *
+                        MkPrefix pref target target' *
+						s':substitution * (* s' more constrained than s *)
+                        entails_subst S I G target' s')
+						
+val tryDerive: S:substrate -> I:infostrate -> G:varDecl
+             -> pref:prefix -> target:term
+			 -> s:substitution
+             -> infon:term 
+             -> entails S I G infon (* or entails_subst S I G infon s ? *)
+             -> option (target':term *
+                        MkPrefix pref target target' *
+						s':substitution *
+                        entails S I G target')
+
 *)
+
 val doDerive: S:substrate -> I:infostrate -> G:varDecl
              -> pref:prefix -> target:term
              -> option (target':term *
@@ -668,12 +856,16 @@ and doDerive _S _I _G pref target =
          | Some((i', mi, ei)) ->
              let (j, m) = mkPrefix pref target in
                 Some((j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei)))
-                
-  (*| ForallT x i ->  (* doesn't type ?? *)
+  (*              
+  | ForallT x i ->  (* doesn't type ?? *)
+     let s__ = _S in let i__ = _I in let g__ = _G in
      (option_map
        (fun (i', mi, ei) ->
-           let (j, m) = mkPrefix pref target in
-              (j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei))
+           let (target', m) = mkPrefix pref target in
+              ((target', m, Entails_Q_Intro _S _I _G x i i' target' pref m mi ei)
+			   : (target':term *
+                  MkPrefix pref target target' *
+                  entails s__ i__ g__ target')))
        (doDerive _S _I (x::_G) pref i)) *)
   
   | App AndInfon ilist ->

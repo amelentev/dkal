@@ -59,6 +59,12 @@ type list :: * => * =
   | Nil : list 'a
   | Cons : 'a -> list 'a -> list 'a
 
+type In :: 'a::* => 'a => list 'a => P
+assume In_hd: forall (hd:'a) (tl:list 'a). (In hd (Cons hd tl))
+assume In_tl: forall (hd:'a) (x:'a) (tl:list 'a). (In x tl) => (In x (Cons hd tl))
+assume notinNil: forall (x:'a). not (In x Nil)
+assume notinCons: forall (x:'a) (y:'a) (tl:list 'a). ((not (In x tl)) && (not (x=y))) => not (In x (Cons y tl))  
+  
 val map: ('a -> 'b) -> list 'a -> list 'b
 let rec map f x = match x with 
   | Nil -> Nil

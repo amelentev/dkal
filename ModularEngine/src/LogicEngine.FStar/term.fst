@@ -103,7 +103,7 @@ open TranslationFromFStar
   (* Subst.composeWith (above) and Term.term_apply (below) are mutually recursive!! *)
   and term_apply (t: Types.term) (s: Types.substitution) : Types.term = 
     match t with
-    | Types.Var v ->subst_apply s v 
+    | Types.Var v -> subst_apply s v 
     | Types.Const _ -> t 
     | Types.ForallT v0 t0 -> 
       (* the substitution is not applied to the quantified variable *)
@@ -111,7 +111,9 @@ open TranslationFromFStar
       (* check that there will be no variable capture *)
       let varsToCheck = HashSet_new(vars t0) in
       HashSet_intersectWith varsToCheck (domain s);
-      let mappedVars = collect (fun (v': Types.var) -> vars (subst_apply s v')) (HashSet_toList varsToCheck) in
+      let mappedVars = collect 
+	                     (fun (v': Types.var) -> vars (subst_apply s v'))
+						 (HashSet_toList varsToCheck) in
       if List_exists (fun v -> v = v0) mappedVars 
       then
         let (newVar, newVarSubst) = freshVar v0 (append (vars t0) mappedVars) in

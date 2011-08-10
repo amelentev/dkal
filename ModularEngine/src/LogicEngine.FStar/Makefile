@@ -8,7 +8,7 @@ logicengine:
 	$(FSTAR) --o LogicEngine.FStar typeHeaders.fst types.fst translationFromFStar.fst term.fst logicEngine.fst
 
 coredkal:
-	fstar typeHeaders.fst types.fst coredkal.fst # --genIL --odir $(FSTBIN)
+	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst coredkal.fst # --genIL --odir $(FSTBIN)
 	# fsc -r $(FSTBIN)/coredkal.dll coredkal_runtime.fs
 	
 clean:
