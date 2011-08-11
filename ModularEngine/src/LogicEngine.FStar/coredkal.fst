@@ -50,7 +50,7 @@ let rec mem (a : 'a) (l: list 'a) : option (Mem 'a a l) =
   | h::t -> (match mem a t with
                | None -> None
                | Some(m) -> Some(Mem_tl a h t m))
-			   
+               
 val contains : a:'a -> l:list 'a -> b:bool{((b=true) <=> (In 'a a l))}
 (* TODO *) 
 
@@ -58,30 +58,32 @@ val memInfostrate : i:term -> is:infostrate -> option (Mem i is)
 let memInfostrate i _I = mem i _I
 
 
-(* Intuition:                                                 *)
-(* MkPrefix [p1;...;pn] i (p1 said (p2 said ... (pn said i))) *)
+(* Intuition:                                                       *)
+(* !! Prefix has to be read backwards                               *)
+(* MkPrefix [p1;...;pn] i = (pn said (p[n-1] said ... (p1 said i))) *)
 type MkPrefix :: list term => term => term => P =
   | MkPrefix_Nil : i:term -> MkPrefix [] i i
   | MkPrefix_Cons : p:term -> ps:list term -> i:term -> i':term
-                   -> MkPrefix ps i i'
-                   -> MkPrefix (p::ps) i (App SaidInfon [p; i'])
+                   -> MkPrefix ps (App SaidInfon [p; i]) i'
+                   -> MkPrefix (p::ps) i i'
                    (* Rk: cannot use said here *)
 
+(*
 type MkPrefixWithVars :: varset => list term => term => term => P 
 val mkPrefixWithVars: ys:varset 
            -> pref:prefix 
            -> i:term 
            -> (i':term * MkPrefixWithVars ys pref i i')
-
+*)
 
 (* Intuition:                                                    *)
-(* mkPrefix [p1;...;pn] i = ( (p1 said (... pn said i)), proof ) *)
+(* mkPrefix [p1;...;pn] i = ( (pn said (... p1 said i)), proof ) *)
 val mkPrefix: pref:prefix -> i:term -> (i':term * dummy:(MkPrefix pref i i'){pref=[] => i=i'})
 let rec mkPrefix pref i =
   (match pref with
      | [] -> (i, MkPrefix_Nil i)
-     | h::t -> let (j, m) = mkPrefix t i in
-                 (App SaidInfon [h; j], MkPrefix_Cons h t i j m))
+     | h::t -> let (j, m) = mkPrefix t (App SaidInfon [h; i]) in
+                 (j, MkPrefix_Cons h t i j m))
                  (* Rk: if using the function said here, can't prove it *)
 
 
@@ -124,22 +126,22 @@ type MapL :: 'a::* => ('a => P) => list 'a => P =
              -> MapL 'a 'Q []
    | MapL_Cons : 'a::* -> 'Q::('a => P)
               -> t:list 'a
-			  -> h:'a
-			  -> MapL 'a 'Q t
-			  -> 'Q h
-			  -> MapL 'a 'Q (h::t)
-			  
+              -> h:'a
+              -> MapL 'a 'Q t
+              -> 'Q h
+              -> MapL 'a 'Q (h::t)
+              
 val mapL_p: 'a::* -> 'Q::('a => P)
          -> f:(x:'a -> option ('Q x))
-		 -> l:list 'a
-		 -> option (MapL 'a 'Q l)
+         -> l:list 'a
+         -> option (MapL 'a 'Q l)
 let rec mapL_p f l = match l with
   | [] -> Some (MapL_Nil<'a,'Q>)
   | h::t -> 
      match mapL_p<'a,'Q> f t, f h with
-	   | Some pf_tl, Some pf_hd ->
-	       Some (MapL_Cons<'a,'Q> t h pf_tl pf_hd)
-	   | _ -> None
+       | Some pf_tl, Some pf_hd ->
+           Some (MapL_Cons<'a,'Q> t h pf_tl pf_hd)
+       | _ -> None
 
 type Zip :: 'a::* => 'b::* => ('a => 'b => P) => list 'a => list 'b => P = 
    | Zip_Nil : 'a::* -> 'b::* -> 'Q::('a => 'b => P) 
@@ -188,36 +190,19 @@ let rec map_p_opt f l1 = match l1 with
 
 val map_mapL_p: 'a::* -> 'b::* 
             -> 'Q::('a => 'b => P)
-			-> 'R::('b => P)
-			-> f:(x:'a -> option(x':'b * 'Q x x' * 'R x'))
-			-> l:list 'a
-			-> option (l':list 'b * Zip 'a 'b 'Q l l' * MapL 'b 'R l')
+            -> 'R::('b => P)
+            -> f:(x:'a -> option(x':'b * 'Q x x' * 'R x'))
+            -> l:list 'a
+            -> option (l':list 'b * Zip 'a 'b 'Q l l' * MapL 'b 'R l')
 let rec map_mapL_p f l = match l with
   | [] -> Some(([], Zip_Nil, MapL_Nil))
   | h::t -> 
      (match f h, map_mapL_p f t with
-	    | Some((h', qh, rh)), Some((t', qt, rt)) -> 
+        | Some((h', qh, rh)), Some((t', qt, rt)) -> 
             Some(((h'::t'), (* need parenthesis around the list; precedence of :: and , *)
-			      Zip_Cons<'a, 'b, 'Q> t t' h h' qt qh,
+                  Zip_Cons<'a, 'b, 'Q> t t' h h' qt qh,
                   MapL_Cons<'b, 'R> t' h' rt rh))
-	    | _ -> None)
-
-(*
-type Nth :: 'a::* => l:list 'a => i:int => x:'a => P =
-  | Nth_b: 'a::* -> h:'a -> t:list 'a
-           -> Nth 'a (h::t) 0 h
-  | Nth_r: 'a::* -> h:'a -> t:list 'a -> i:int -> x:'a
-           (*-> Nth 'a t (i-1) x*) (*??*)
-		   -> Nth 'a (h::t) i x
-val nth_p: 'a::* -> l:list 'a -> i:int -> 
-         option (x:'a * Nth 'a l i x)
-let rec nth_p l i = match l with
-  | [] -> None
-  | h::t -> 
-     match nth_p t (i-1) with
-	   | None -> None
-	   | Some((x, pr)) -> Some((x, Nth_r<'a> h t i x (*pr*)))
-*) 
+        | _ -> None)
   
 (******************************)
 (* Trusted external functions *)
@@ -374,10 +359,6 @@ type types :: varDecl => term => typ => P =
              -> FuncTyping f typArgs typRes
              -> types g (App f args) typRes
 
-
-			 
-
-			 
 (* val subst_special: names:binders -> i:term -> x:var -> Subst names i x (Var x) i *)
 
 (* Axiomatization of sets of variables *)
@@ -446,7 +427,7 @@ assume forall (s1:substitution) (s2:substitution) (x:var) (t:term).
                                   -> x:var 
                                   -> o:option term{((o=None <=> (not (In x (Domain s)))) &&
                                                       (forall (t:term). (o=(Some t)) => 
-   			                                  ((In x (Domain s)) && (t=(Select s x)))))}
+                                                 ((In x (Domain s)) && (t=(Select s x)))))}
 
 (* extern Runtime *) val extendSubst : s:substitution 
                                     -> x:var 
@@ -483,15 +464,15 @@ let rec freshVar ty s =
    then n 
    else freshVar ty s
      
-(* from term.fst *)	 
+(* from term.fst *)     
 extern reference TranslationToFStar {language="F#";
                                      dll="TranslationToFStar";
                                      namespace="";
                                      classname="TranslationToFStar"}
 extern TranslationToFStar val FStarVarOfIVar : IVar -> Types.var
 extern TranslationToFStar val FStarTermOfITerm : ITerm -> Types.term
-extern TranslationToFStar val FStarSubstitutionOfISubstitution: ISubstitution -> Types.substitution	 
-	 
+extern TranslationToFStar val FStarSubstitutionOfISubstitution: ISubstitution -> Types.substitution     
+     
 (* see term_apply in term.fst *)
 val subst: i:term -> s:substitution -> i':term{Subst i s i'}
 val substList : tl:list term -> s:substitution -> tl':list term{SubstList tl s tl'}
@@ -510,49 +491,49 @@ let rec subst i s =
       (* the substitution is not applied to the quantified variable *)
         let y : (yy:var{not(In yy (Union (FreeVars t) (FreeVarsSubst s)))}) =
           freshVar x.typ (union (freeVars t) (freeVarsSubst s)) in
-		let ySubst : (ys:substitution{(ys = (Update EmptySubst x (Var y)))}) =
+        let ySubst : (ys:substitution{(ys = (Update EmptySubst x (Var y)))}) =
           extendSubst (emptySubst ()) x (Var y) in
-		let t_yx : (t_yx:term{((Subst t (Update EmptySubst x (Var y)) t_yx))}) =
+        let t_yx : (t_yx:term{((Subst t (Update EmptySubst x (Var y)) t_yx))}) =
           subst t ySubst in
-		let t' : (t':term{(Subst t_yx s t')}) =
+        let t' : (t':term{(Subst t_yx s t')}) =
           (subst t_yx s) in
 (*         let res : (res:term{Subst i s res}) = Types.ForallT y t' in  *)
         let res = Types.ForallT y t' in 
-	let _ = Assume <(Subst i s res)> () in
-		res
-		
+    let _ = Assume <(Subst i s res)> () in
+        res
+        
 (*     | SubstrateQueryTerm t0 -> *)
-(* 	    let res =  *)
+(*         let res =  *)
 (*           FStarTermOfITerm *)
 (*             (TypeHeaders.substrateQueryTerm_apply t0   *)
-(* 		       (\* not sure why I need the TypeHeaders. , TypeHeaders has been opened *\) *)
-(* 		       (TranslationFromFStar.ISubstitutionOfFStarSubstitution s) ) *)
-(* 		in let _ = Assume <(res = (Subst i s))> () in *)
-(* 		res *)
-	
+(*                (\* not sure why I need the TypeHeaders. , TypeHeaders has been opened *\) *)
+(*                (TranslationFromFStar.ISubstitutionOfFStarSubstitution s) ) *)
+(*         in let _ = Assume <(res = (Subst i s))> () in *)
+(*         res *)
+    
 (*     | SubstrateUpdateTerm t0 -> *)
-(* 	    let res = *)
+(*         let res = *)
 (*           FStarTermOfITerm  *)
 (*             (TypeHeaders.substrateUpdateTerm_apply t0  *)
-(* 		       (TranslationFromFStar.ISubstitutionOfFStarSubstitution s) ) *)
-(* 		in let _ = Assume <(res = (Subst i s))> () in *)
-(* 		res *)
-	
-(*     | ConcretizationEvidence t1 s1 -> raise "Evidences not handled" *)
-(* 	  (\* ConcretizationEvidence (ConcretizationEvidence t1 s1) s *\) (\* correct?? *\) *)
-(*       (\* Types.ConcretizationEvidence t1 (composeWith s s1) *\) *)
-	
+(*                (TranslationFromFStar.ISubstitutionOfFStarSubstitution s) ) *)
+(*         in let _ = Assume <(res = (Subst i s))> () in *)
+(*         res *)
     
-	
-	
+(*     | ConcretizationEvidence t1 s1 -> raise "Evidences not handled" *)
+(*       (\* ConcretizationEvidence (ConcretizationEvidence t1 s1) s *\) (\* correct?? *\) *)
+(*       (\* Types.ConcretizationEvidence t1 (composeWith s s1) *\) *)
+    
+    
+    
+    
 
 (*     | ForallT y j when x=y -> *)
 (*         ForallT y j, Subst_ForallTIgnore x j u *)
-(* 	| ForallT y j -> *)
-(* 	    let (j', pr) = subst j x u in *)
+(*     | ForallT y j -> *)
+(*         let (j', pr) = subst j x u in *)
 (*           ForallT y j', Subst_ForallTRepl y j x u j' pr *)
-(* 	| SubstrateQueryTerm q -> *)
-(* 	    SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u *)
+(*     | SubstrateQueryTerm q -> *)
+(*         SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u *)
 
 and substList ilist s = (* why not map (fun i -> subst i s) ilist ? *)
   (*map (fun i -> subst i s) ilist*)
@@ -562,10 +543,10 @@ and substList ilist s = (* why not map (fun i -> subst i s) ilist ? *)
       let tl' = substList tl s in 
       let hd' = subst hd s in
         Cons<term>  hd' tl'
-		(* type inference is too eager here; need to provide explicit annotation on Cons *)
-			 
-			 
-			 
+        (* type inference is too eager here; need to provide explicit annotation on Cons *)
+             
+             
+             
 (* type names = list string *)
 (* type Subst :: (\* binders crossed *\) names => (\* subst into this term *\) term => (\* for this *\) var => (\* with this *\) term => (\* result *\) term => P =  *)
 (*   | Subst_ForallTRepl : binders:names -> y:name -> t:typ -> i:term -> x:var{x<>y} -> j:term -> result:term *)
@@ -604,8 +585,8 @@ type Subst :: term => var => term => term => P =
                       -> Subst (ForallT y i) x u (ForallT y i')
   | Subst_App : f:func -> x:var -> u:term
               -> ilist:list term -> ilist':list term
-			  -> Zip term term (fun i i' => Subst i x u i') ilist ilist'
-			  -> Subst (App f ilist) x u (App f ilist')
+              -> Zip term term (fun i i' => Subst i x u i') ilist ilist'
+              -> Subst (App f ilist) x u (App f ilist')
 
   (* Is this really true? Any variable ever in the ISubstrateQueryTerm? *)
   | Subst_SubstrateQueryTerm : q:ISubstrateQueryTerm -> x:var -> u:term
@@ -658,13 +639,13 @@ type entails :: substrate => infostrate => varDecl => term => P =
 
   | Entails_And_Intro : S:substrate -> I:infostrate -> G:varDecl
                      -> ilist:list term
-					 -> ilist':list term
-					 -> result:term
-					 -> pref:prefix
-					 -> MkPrefix pref (App AndInfon ilist) result
-					 -> Zip term term (MkPrefix pref) ilist ilist'
-					 -> MapL term (entails S I G) ilist'
-					 -> entails S I G result
+                     -> ilist':list term
+                     -> result:term
+                     -> pref:prefix
+                     -> MkPrefix pref (App AndInfon ilist) result
+                     -> Zip term term (MkPrefix pref) ilist ilist'
+                     -> MapL term (entails S I G) ilist'
+                     -> entails S I G result
 
   | Entails_And_Intro2 : S:substrate -> I:infostrate -> G:varDecl
                     -> i:term -> i':term
@@ -680,15 +661,15 @@ type entails :: substrate => infostrate => varDecl => term => P =
 
   | Entails_And_Elim : S:substrate -> I:infostrate -> G:varDecl
                     -> ilist:list term
-					-> i:term
-					-> i':term
-					-> pref: list term
-					-> hyp:term
-					-> Mem i ilist
-					-> MkPrefix pref (App AndInfon ilist) hyp
-					-> MkPrefix pref i i'
-					-> entails S I G hyp
-					-> entails S I G i'
+                    -> i:term
+                    -> i':term
+                    -> pref: list term
+                    -> hyp:term
+                    -> Mem i ilist
+                    -> MkPrefix pref (App AndInfon ilist) hyp
+                    -> MkPrefix pref i i'
+                    -> entails S I G hyp
+                    -> entails S I G i'
 
   | Entails_W_Imp_Intro : S:substrate -> I:infostrate -> G:varDecl
                       -> i:term
@@ -740,7 +721,7 @@ let rec doType g = function
               | None -> None
               | Some((typRes, fpr)) ->
                    Some((typRes, 
-				         Types_App g f args typArgs typRes przip fpr))))
+                         Types_App g f args typArgs typRes przip fpr))))
   | _ -> None
 
 (*
@@ -755,17 +736,17 @@ let rec subst i x u =
     | ForallT y j ->
         let (j', pr) = subst j x u in
           ForallT y j', Subst_ForallTRepl y j x u j' pr
-	| App f ilist ->
-	    let (ilist', przip) = 
+    | App f ilist ->
+        let (ilist', przip) = 
           map_p<term, term, (fun i i' => Subst i x u i')>
-		  (* Rk: type annotation necessary *)
+          (* Rk: type annotation necessary *)
                (fun i -> subst i x u) ilist in
-		  (App f ilist', Subst_App f x u ilist ilist' przip)
+          (App f ilist', Subst_App f x u ilist ilist' przip)
     | SubstrateQueryTerm q ->
         SubstrateQueryTerm q, Subst_SubstrateQueryTerm q x u
 *)
-		
-		
+        
+        
 (*
 (* TODO: syntax?? *)
 (* type entails_subst (*:: substrate => infostrate => varDecl => term => P =*)
@@ -774,20 +755,20 @@ let rec subst i x u =
 
 val doDerive: S:substrate -> I:infostrate -> G:varDecl
              -> pref:prefix -> target:term
-			 -> s:substitution
+             -> s:substitution
              -> option (target':term *
                         MkPrefix pref target target' *
-						s':substitution * (* s' more constrained than s *)
+                        s':substitution * (* s' more constrained than s *)
                         entails_subst S I G target' s')
-						
+                        
 val tryDerive: S:substrate -> I:infostrate -> G:varDecl
              -> pref:prefix -> target:term
-			 -> s:substitution
+             -> s:substitution
              -> infon:term 
              -> entails S I G infon (* or entails_subst S I G infon s ? *)
              -> option (target':term *
                         MkPrefix pref target target' *
-						s':substitution *
+                        s':substitution *
                         entails S I G target')
 *)
 
@@ -897,12 +878,12 @@ let rec tryDerive _S _I _G pref target infon pr =
   | App AndInfon ilist -> (* to And(ilist), we can use anyone in the ilist*)
                           (* eventually the list should contain both solutions *)
       let (hyp, mhyp) = mkPrefix [] infon in
-	  fold_left_dep None ilist
-	    (fun res i memi -> match res with
-		   | Some _ -> res (* we don't go further, eventually concatenate sols *)
-		   | None ->
-		       let (i', mi) = mkPrefix [] i in
-		       tryDerive _S _I _G pref target i
+      fold_left_dep None ilist
+        (fun res i memi -> match res with
+           | Some _ -> res (* we don't go further, eventually concatenate sols *)
+           | None ->
+               let (i', mi) = mkPrefix [] i in
+               tryDerive _S _I _G pref target i
                  (Entails_And_Elim _S _I _G ilist i i' [] hyp memi mhyp mi pr))
        
   (*| App ForallT x i ->*)
@@ -912,18 +893,33 @@ let rec tryDerive _S _I _G pref target infon pr =
 and doDerive _S _I _G pref target =
   let memInfostrate_target = memInfostrate target _I in
   match target with
+  | App AndInfon ilist ->
+       match map_mapL_p (doDerive _S _I _G pref) ilist with
+         | Some((ilist', m, e)) -> 
+             let (target', mt) = mkPrefix pref target in
+             Some((target', mt,
+                   Entails_And_Intro _S _I _G ilist ilist' target' pref mt m e))
+         | _ -> None
+		 
   | App EmptyInfon [] -> let (j, m) = mkPrefix pref target in
                       (* if unable to make F* prove sth, put in a runtime check *)
                       (* if j = Empty then *)
                      Some((j, m,
                           Entails_Emp _S _I _G pref j m))
                       (* else raise "stupid F*" *)
-
-  | i when ((pref = []) && (not (memInfostrate_target = None))) ->
-      let (j, m) = mkPrefix pref target in
-      (match memInfostrate_target with
-         | None -> raise "assert false"
-         | Some mis -> Some((j, m, Entails_Hyp_Knowledge _S _I _G i mis)))
+					  
+  | App SaidInfon [ppal; infon] ->
+      (match doDerive _S _I _G (ppal::pref) infon with
+         | None -> None
+         (*| Some((i, mi, ei)) ->
+            let (i', mi') = mkPrefix pref target in
+            Some((i, mi', ei))) *)
+         | Some((i, MkPrefix_Cons ppal' pref' i' i'' pr, ei)) 
+             (*when ((ppal=ppal') && (pref=pref') && (i=i'') && (i'=infon))*) -> 
+               Some((i, pr, ei))
+         | Some _ -> raise "assert false")
+		 
+  (*| Var(v) when domainContains subst v -> *) (* TODO *)
 
   | App AsInfon [SubstrateQueryTerm q] ->
       (match pref with
@@ -931,7 +927,14 @@ and doDerive _S _I _G pref target =
              (match check_substrate _S q with
                 | false -> None
                 | true -> Some((j, m, Entails_Hyp_Substrate _S _I _G q)))
-         | _ -> None)
+         | _ -> raise "asInfon(...) under prefix")
+
+  (* should be handled by tryDerive *)		 
+  | i when ((pref = []) && (not (memInfostrate_target = None))) ->
+      let (j, m) = mkPrefix pref target in
+      (match memInfostrate_target with
+         | None -> raise "assert false"
+         | Some mis -> Some((j, m, Entails_Hyp_Knowledge _S _I _G i mis)))
          
   | ForallT x i ->
       (match doDerive _S _I (x::_G) pref i with
@@ -939,6 +942,7 @@ and doDerive _S _I _G pref target =
          | Some((i', mi, ei)) ->
              let (j, m) = mkPrefix pref target in
                 Some((j, m, Entails_Q_Intro _S _I _G x i i' j pref m mi ei)))
+
   (*              
   | ForallT x i ->  (* doesn't type ?? *)
      let s__ = _S in let i__ = _I in let g__ = _G in
@@ -946,19 +950,12 @@ and doDerive _S _I _G pref target =
        (fun (i', mi, ei) ->
            let (target', m) = mkPrefix pref target in
               ((target', m, Entails_Q_Intro _S _I _G x i i' target' pref m mi ei)
-			   : (target':term *
+               : (target':term *
                   MkPrefix pref target target' *
                   entails s__ i__ g__ target')))
        (doDerive _S _I (x::_G) pref i)) *)
-  
-  | App AndInfon ilist ->
-	   match map_mapL_p (doDerive _S _I _G pref) ilist with
-	     | Some((ilist', m, e)) -> 
-		     let (target', mt) = mkPrefix pref target in
-			 Some((target', mt,
-			       Entails_And_Intro _S _I _G ilist ilist' target' pref mt m e))
-         | _ -> None
-		 
+
+         
   | App ImpliesInfon [i; j] ->
       (match doDerive _S _I _G pref j with
          | None -> None
