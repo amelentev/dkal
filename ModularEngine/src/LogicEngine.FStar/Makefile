@@ -10,6 +10,9 @@ logicengine:
 coredkal:
 	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst coredkal.fst # --genIL --odir $(FSTBIN)
 	# fsc -r $(FSTBIN)/coredkal.dll coredkal_runtime.fs
+
+coredkal2:
+	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst typing.fst subst.fst coredkal2.fst 
 	
 clean:
 	rm -f $(FSTBIN)/Types.dll $(FSTBIN)/Builders.dll $(FSTBIN)/Subst.dll $(FSTBIN)/TranslationtoFStar.dll $(FSTBIN)/TranslationfromFStar.dll $(FSTBIN)/Utilities.dll $(FSTBIN)/Term.dll $(FSTBIN)/FStarLogicEngineImpl.dll $(FSTBIN)/FStarLogicEngine.dll

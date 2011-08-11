@@ -33,7 +33,7 @@ open TypeHeaders
     | String : typ
 
   type var = (* IVar *)
-    { typ : typ; name : string }
+    { name : string; typ : typ }
 
   type constant =
     | TrueT : constant
@@ -43,7 +43,7 @@ open TypeHeaders
 
   type relationInfon = (* form TreeTerm.fs, def of type Function *)
     { name : string; 
-	  retType: typ; 
+      retType: typ; 
       argsType : list typ; 
       identity : option term  }
 
@@ -115,9 +115,9 @@ open TypeHeaders
     | Const : constant -> term
     | ForallT : var -> term -> term (* Rk: need parenthesis around var*term *)
     | App : func -> (list term) -> term
-    | ConcretizationEvidence : term -> substitution -> term
     | SubstrateQueryTerm : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
+    | ConcretizationEvidence : term -> substitution -> term
 
   (* Rk: does not work if I put substitution after term and not before *)
 
