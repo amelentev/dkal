@@ -60,6 +60,26 @@ let rec withPrefix pfx i = match pfx with
 val stripPrefix: i:term -> pref:prefix -> j:term{(WithPrefix pref j)=i}
 (* stripPrefix is a partial function *)
 
+val unify: u:varDecl 
+        -> s1:substitution
+        -> i:term    
+        -> goal:term (* u subsetof (freevars goal) *)
+        -> option (s2:substitution{Extends s2 s1})
+(* ad hoc implementation of unification
+     informally, only variables in u are available for unification.
+*)
+
+val allSharedPrefixes : u:varDecl
+                     -> s1:substitution
+                     -> i:term 
+                     -> j:term 
+                     -> list (s2:substitution{Extends s2 s1} * 
+                              pfx2:prefix * 
+                              i':term{Subst i s2 (WithPrefix pfx2 i')}  * 
+                              j':term{Subst j s2 (WithPrefix pfx2 j')})
+(* TODO *)
+
+
 val withPrefixL: pfx:prefix -> i:list term -> j:list term{j=(WithPrefixL pfx i)}
 
 type entails :: substrate => infostrate => varDecl => term => P =
@@ -200,14 +220,6 @@ val doDerive:   S:substrate
                                                                  pref':prefix{SubstList pref s3 pref'} *
                                                                  entails S K G (WithPrefix pref' goal'))))
 																 
-val unify: u:varDecl 
-        -> s1:substitution
-        -> i:term    
-        -> goal:term (* u subsetof (freevars goal) *)
-        -> option (s2:substitution{Extends s2 s1})
-(* ad hoc implementation of unification
-     informally, only variables in u are available for unification.
-*)
 
 (* tries to prove (withPrefix pref goal) using (infon);
    but really what we will eventually prove is
@@ -221,98 +233,132 @@ val tryDerive:  S:substrate
              -> s1:substitution
              -> pref:prefix 
              -> goal:term
-             -> pref_infon:prefix (* suff in original implementation *)
              -> infon:term
              -> mkpf_infon:(s4:substitution{Extends s4 s1}
                              -> (infon':term{Subst infon s4 infon'} *
-                                 pref_infon':prefix{SubstList pref_infon s4 pref_infon'} *
-                                 entails S K G (WithPrefix pref_infon' infon')))
+                                 entails S K G infon'))
              -> option (s2:substitution{Extends s2 s1} *
                           (s3:substitution{Extends s3 s2} 
                              -> (goal':term{Subst goal s3 goal'} *
                                  pref':prefix{SubstList pref s3 pref'} *
-								 (* introduce pref_infon' somehow *)
                                  entails S K G (WithPrefix pref' goal'))))
+val tryDeriveWrapper:  S:substrate 
+                    -> K:infostrate 
+                    -> G:varDecl
+                    -> U:varDecl             (* Variables available for unification in goal *)
+                    -> s1:substitution
+                    -> goal:term
+                    -> infon:term{In infon K}
+                    -> option (s2:substitution{Extends s2 s1} *
+                                 (s3:substitution{Extends s3 s2} 
+                                  -> (goal':term{Subst goal s3 goal'} *
+                                        entails S K G goal')))
 
-let rec tryDerive s k g u s1 pref goal pref_infon infon mkpf_infon = 
+let rec tryDerive s k g u s1 pref goal infon mkpf_infon = 
   match infon with
   | App AndInfon [infon1; infon2] ->
       let mkpf_infon1 (s4:substitution{Extends s4 s1}) =
-        let (infon', pref_infon', pf_infon') = mkpf_infon s4 in
-        let infon1' = subst infon1 s4 in (* inefficient, should grab the one from infon' *)
+        let (infon', pf_infon') = mkpf_infon s4 in
+        let infon1' = subst infon1 s4 in (* TODO: inefficient, should grab the one from infon', but need an inversion lemma *)
         let infon2' = subst infon2 s4 in
         if infon' = App AndInfon [infon1'; infon2']
-        then ((infon1', pref_infon', 
-               Entails_And_Elim1 s k g infon1' infon2' pref_infon' pf_infon') :                             
-                (infon1':term{Subst infon1 s4 infon1'} *
-                 pref_infon':prefix{SubstList pref_infon s4 pref_infon'} *
-                 entails s k g (WithPrefix pref_infon' infon1')))
-        else raise "impos" in (* not completely true: nondeterminism of substitution *)
-      (match tryDerive s k g u s1 pref goal pref_infon infon1 mkpf_infon1 with
+        then ((infon1', Entails_And_Elim1 s k g infon1' infon2' [] pf_infon') :                             
+                (infon1':term{Subst infon1 s4 infon1'} * entails s k g infon1'))
+        else raise "impos" in (* TODO: unreachable, since infon1 and infon2 are q-free (so subst is deterministic) *)
+      (match tryDerive s k g u s1 pref goal infon1 mkpf_infon1 with
          | Some res -> Some res
          | None -> 
             let mkpf_infon2 (s4:substitution{Extends s4 s1}) =
-              let (infon', pref_infon', pf_infon') = mkpf_infon s4 in
+              let (infon', pf_infon') = mkpf_infon s4 in
               let infon1' = subst infon1 s4 in
               let infon2' = subst infon2 s4 in
               if infon' = App AndInfon [infon1'; infon2']
-              then ((infon2', pref_infon', 
-                     Entails_And_Elim2 s k g infon1' infon2' pref_infon' pf_infon') :                             
-                      (infon2':term{Subst infon2 s4 infon2'} *
-                       pref_infon':prefix{SubstList pref_infon s4 pref_infon'} *
-                       entails s k g (WithPrefix pref_infon' infon2')))
+              then ((infon2', Entails_And_Elim2 s k g infon1' infon2' [] pf_infon') :                             
+                      (infon2':term{Subst infon2 s4 infon2'} * entails s k g infon2'))
               else raise "impos" in 
-            tryDerive s k g u s1 pref goal pref_infon infon1 mkpf_infon1) 
-                     
+              tryDerive s k g u s1 pref goal infon1 mkpf_infon1) 
+        
   | App ImpliesInfon [i; j] ->
-      (match doDerive s k g u s1 pref_infon i with (* for now, []; later change it, cf. suff *)
+      (match doDerive s k g u s1 [] i with (* for now, []; later change it, cf. suff *)
          | None -> None
          | Some((s2, mkpf_i)) ->
              let mkpf_j (s4:substitution{Extends s4 s2}) =
                let (i', pref_i', pf_i') = mkpf_i s4 in
-               let (infon', pref_infon', pf_infon') = mkpf_infon s4 in
+               let (infon', pf_infon') = mkpf_infon s4 in
                let j' = subst j s4 in
-               if ((infon' = App ImpliesInfon [i'; j']) && (pref_i' = pref_infon'))
-               then ((j', pref_infon',
-                      Entails_Imp_Elim s k g i' j' pref_infon' pf_i' pf_infon') :
-                       (j':term{Subst j s4 j'} *
-                        pref_infon':prefix{SubstList pref_infon s4 pref_infon'} *
-                        entails s k g (WithPrefix pref_infon' j')))
-               else raise "impos" in None
-             (* ?? *) (*tryDerive s k g u s2 pref goal pref_infon j mkpf_j*))
-(*			 
-  | (App SaidInfon [p2; i]) (*when (last pref <> None)*) -> (* TODO: parsing *)
-      (match last pref with
-	     | None -> raise "impos" (* could easily assert false *)
-		 | Some((p1, pref1)) ->
-		     match unify u s1 p2(*infon*) p1(*goal*) with
-			   | None -> None
-			   | Some s2 ->
-				   let p2' = subst p2 s2 in
-				   if (p2':term) = p1
-				   then 
-					 tryDerive s k g u s2 pref1 goal (p2'::pref_infon) i mkpf_infon
-				   else raise "bad substitution"	
-*)
-	
-(*
-  | _ -> let pref_goal = withPrefix pref goal in
-    match unify u s1 infon pref_goal with 
-      | None -> None
-      | Some s2 -> 
-          let continuation (s3:substitution{Extends s3 s2}) = 
-            let goal' = subst goal s3 in  (* Subst goal s3 goal' *)
-            let pref' = substList pref s3 in  (* SubstList pref s3 pref' *)
-            let pref_goal' = withPrefix pref' goal' in  (* pref_goal'= (WithPrefix pref' goal') *)
-              if (pref_goal':term) = infon then 
-                ((goal', pref', mkpf_infon s3) : 
-                   (goal':term{Subst goal s3 goal'} *
-                    pref':prefix{SubstList pref s3 pref'} *
-                    entails s k g (WithPrefix pref' goal')))
-              else raise "bad substitution" in 
-            Some (s2, continuation)
-*)
-                
+               if infon' = (App ImpliesInfon [i'; j']) 
+               then ((j', Entails_Imp_Elim s k g i' j' pref_i' pf_i' pf_infon') :
+                       (j':term{Subst j s4 j'} * entails s k g j'))
+               else raise "impos" (* TODO: Unreachable *)
+             in
+               match tryDerive s k g u s2 pref goal j mkpf_j with 
+                 | None -> None 
+                 | Some ((s3, mkpf)) -> Some (s3, mkpf)) (* Need to repack the existential at a different type *)
+
+  | _ -> 
+      let pref_goal = withPrefix pref goal in
+        match unify u s1 infon pref_goal with 
+          | None -> None
+          | Some s2 -> 
+              let continuation (s3:substitution{Extends s3 s2}) = 
+                let s3_infon, entails_s3_infon = mkpf_infon s3 in 
+                let s3_goal = subst goal s3 in  (* Subst goal s3 s3_goal *)
+                let s3_pref = substList pref s3 in  (* SubstList pref s3 s3_pref *)
+                let s3_pref_goal = withPrefix s3_pref s3_goal in  (* s3_pref_goal = (WithPrefix s3_pref s3_goal) *)
+                  if (s3_pref_goal:term) = s3_infon then 
+                    ((s3_goal, s3_pref, entails_s3_infon) : 
+                       (goal':term{Subst goal s3 goal'} *
+                          pref':prefix{SubstList pref s3 pref'} *
+                          entails s k g (WithPrefix pref' goal')))
+                  else raise "bad substitution" in 
+                Some (s2, continuation) 
+
+and tryDeriveWrapper s k g u s1 goal infon = 
+  let callTryDerive (arg :
+                       (s2:substitution{Extends s2 s1} *
+                          pref:prefix *
+                          goal':term{Subst goal s2 (WithPrefix pref goal')} *
+                          infon':term{Subst infon s2 (WithPrefix pref infon')}))
+      : option (s3:substitution{Extends s3 s1} * 
+                  (s4:substitution{Extends s4 s3} -> 
+                    (goal_res:term{Subst goal s4 goal_res} * entails s k g goal_res))) = 
+
+    let (s2, pref, goal', infon') = arg in 
+    let mkpf_infon (s3:substitution{Extends s3 s2}) : 
+        (infon'':term{Subst infon' s3 infon''} * entails s k g infon'') = 
+      (match checkWF s k g with
+         | None -> raise "ill-formed environment"
+         | Some pf_wf -> (* this is P-kinded, I don't get it *)	    
+	     let infon'' = subst infon' s3 in 
+	       if (infon:term) = infon''
+	       then (infon'', 
+		     Entails_Hyp_Knowledge s k g infon pf_wf)
+	       else (* TODO: Must use Entails_Alpha to conclude *)
+                 raise "not a closed infon in infostrate") in
+      match tryDerive s k g u s2 pref goal' infon' mkpf_infon with 
+        | None -> None
+        | Some((s3, mkpf)) -> (* Extends s3 s2 *)
+            let mkpf_pair (s4:substitution{Extends s4 s3}) = 
+              let (goal'', pref', entails_pf) = mkpf s4 in 
+                (* Have:
+                      Subst goal' s4 goal'' 
+                      SubstList pref s4 pref' 
+                      entails s k g (WithPrefix pref' goal'') *)
+              let goal_res = withPrefix pref' goal'' in 
+              let s4_goal = subst goal s4 in 
+                (* Need: 
+                      goal_res : Subst goal s4 goal_res
+                      entails s k g goal_res *)
+                if (s4_goal : term) = goal_res 
+                then ((goal_res, entails_pf):
+                        (goal_res:term{Subst goal s4 goal_res} * entails s k g goal_res))
+                else raise "impos"
+                  (* TODO: Should be able to use this and q-free goal to conclude unreachable
+                     Subst goal s2 (WithPrefix pref goal') *) in 
+              Some (s3, mkpf_pair) in 
+  let prefixes = allSharedPrefixes u s1 goal infon in 
+    map_one prefixes callTryDerive 
+      
 
 (* result S K G s3 pref goal) *)
 and doDerive s k g u s1 pref goal = 
@@ -414,23 +460,40 @@ and doDerive s k g u s1 pref goal =
                Some (s2, continuation))
 			   
   (*| Var(v) (* when... *) -> *)
-     
-			   
-(*
   | _ -> 
-      let call_tryDerive (infon:term{In infon k}) =
-        let mkpf_infon (s2:substitution{Extends s2 s1}) : entails s k g infon =
-           (match checkWF s k g with
-              | None -> raise "ill-formed environment"
-              | Some pf_wf -> (* this is P-kinded, I don't get it *)	    
-	              let infon' = subst infon s2 in
-		 	  	  if infon = infon'
-			      then (infon', [],
-				        Entails_Hyp_Knowledge s k g infon pf_wf)
-			      else raise "not a closed infon in infostrate") in
-        tryDerive s k g u s1 pref goal [] infon mkpf_infon in
-      match map_one k call_tryDerive with (* should this be done last? *)
-        | Some result -> Some result
-        | None -> None
-*)
-          
+      let pref_goal = withPrefix pref goal in 
+      let call_tryDerive (infon:term{In infon k}) 
+          : option (s2:substitution{Extends s2 s1} *
+                      (s3:substitution{Extends s3 s2} -> (goal':term{Subst goal s3 goal'} *
+                                                            pref':prefix{SubstList pref s3 pref'} *
+                                                            entails s k g (WithPrefix pref' goal')))) = 
+	
+        match tryDeriveWrapper s k g u s1 pref_goal infon with 
+          | None -> None 
+          | Some ((s2, mk_pref_goal_pair)) -> 
+              let mk_pref_goal (s3:substitution{Extends s3 s2}) =
+                let pref_goal', entails_pref_goal' = mk_pref_goal_pair s3 in 
+                  (* Subst pref_goal s3 pref_goal' *)
+                  (* entails s k g pref_goal' *)
+                  (* We know: pref_goal' = (s3 (WithPrefix pref goal)) *)
+                let pref' = substList pref s3 in (* SubstList pref s3 pref' *)
+                let goal' = subst goal s3 in 
+                let goal'' = stripPrefix pref_goal' pref' in  
+                  (* entails s k g (WithPrefix pref' goal'') *)
+                  (* Need: Subst goal s3 goal' 
+                     and:  SubstList pref s3 pref'
+                     and:  entails s k g (WithPrefix pref' goal') *)
+                  if (goal' : term)=goal'' 
+                  then 
+                    ((goal', pref', entails_pref_goal'): 
+                       (goal':term{Subst goal s3 goal'} *
+                          pref':prefix{SubstList pref s3 pref'} *
+                          entails s k g (WithPrefix pref' goal')))
+                  else raise "Impos" (* TODO: if goal is q-free we're done *)  in 
+                Some (s2, mk_pref_goal) in
+        map_one k call_tryDerive 
+
+(* with (\* should this be done last? *\) *)
+(*           | Some result -> Some result *)
+(*           | None -> None *)
+              

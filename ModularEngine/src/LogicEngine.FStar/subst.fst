@@ -48,7 +48,11 @@ assume Subst_forallT_Alpha: forall (x:var) (t:term) (s:substitution) (y:var) (t_
             (Subst t_yx s t'))
         => (Subst (ForallT x t) s (ForallT y t'))
 
-assume SubstList_nil: forall (s:substitution). SubstList [] s []
+assume SubstList_nil: forall (s:substitution). (SubstList [] s [])
+assume SubstList_nil_inv_x: forall (s:substitution) (x:list term). 
+     (SubstList x s []) => (x=[])
+assume SubstList_nil_inv_y: forall (s:substitution) (y:list term). 
+     (SubstList [] s y) => (y=[])
 assume SubstList_cons: forall (t:term) (t':term) (tl:list term) (tl':list term) (s:substitution). 
         (Subst t s t' && SubstList tl s tl')
     <=> (SubstList (t::tl) s (t'::tl'))
