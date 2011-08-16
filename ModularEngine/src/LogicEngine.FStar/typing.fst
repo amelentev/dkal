@@ -25,6 +25,13 @@ type WF :: substrate => infostrate => varDecl => P
 val checkWF : s:substrate -> k:infostrate -> g:varDecl -> option (WF s k g)
 (* TODO, i.e., unique names in vardecl *)
 
+val containsVar : g:varDecl -> x:var -> bool
+let containsVar g x = 
+  List_exists (fun (y:var) ->
+                 let yn:string = y.name in 
+                 let xn:string = x.name in 
+                   ((yn=xn) : bool)) g
+
 (* NS: Can we write this as a logic function? *)
 type FuncTyping :: f:func => typArgs:list typ => typRes:typ => P =
   (* 5 with variable number of arguments *)

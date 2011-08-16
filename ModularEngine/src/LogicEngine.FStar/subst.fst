@@ -8,7 +8,7 @@ logic function Singleton : var -> varset
 logic function Union : varset -> varset -> varset
 assume forall (v:var). (In v (Singleton v))
 assume forall (l1:varset) (l2:varset) (v:var). 
-        ((In v l1) || (In v l2)) => (In v (Union l1 l2))
+        ((In v l1) || (In v l2)) <=> (In v (Union l1 l2))
 assume forall (v:var). not(In v Empty)
 (* extern Runtime *) val union : s1:varset -> s2:varset -> s3:varset{(s3 = (Union s1 s2))}
 
