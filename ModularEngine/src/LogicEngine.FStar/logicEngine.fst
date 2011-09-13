@@ -293,6 +293,15 @@ module LogicEngine
                                      | App ImpliesInfon [i1; i2] -> 
                                         unifyFrom b s i2
                                      | _ -> None)))
+  val last : list 'a -> ('a * list 'a)
+  let rec last l = (* gets out the last member of a list *)
+    match l with
+      | [] -> failwith "Empty list"
+      | h::t -> if t=[]
+                then (h, [])
+                else 
+                  let (a, b) = last t in
+                  (a, h::b)
 
   val stripPrefix : substitution 
                     -> list (term * term)
@@ -344,10 +353,11 @@ module LogicEngine
              | None -> ())
       | _ -> () in 
       (match pairPrefixInfon with
-         | ((t1 :: pref), App SaidInfon [t2; i]) -> (* Rk: , binds tighter than ::, weird*)
+         | (pref, App SaidInfon [t2; i]) when (not (pref = [])) -> (* Rk: , binds tighter than ::, weird*)
            (* if the infon from the infostrate is a said, we try to match it     *)
            (* against t1, the head of the prefix                                 *)
            (* only two cases where suff is changed *)
+             let (t1, pref) = last pref in
              (match unifyFrom t1 subst t2 with
                 | Some subst -> 
                     stripPrefix subst prefixUnif preconds 
