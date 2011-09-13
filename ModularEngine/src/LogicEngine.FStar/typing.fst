@@ -1,4 +1,5 @@
 module Typing
+open TypeHeaders
 open Types
 open Util
 
@@ -21,11 +22,7 @@ let rec constList c = function
          | Some p -> Some(ConstList_Cons c t p))
   | _ -> None
 
-type WF :: substrate => infostrate => varDecl => P 
-val checkWF : s:substrate -> k:infostrate -> g:varDecl -> option (WF s k g)
-(* TODO, i.e., unique names in vardecl *)
-
-val containsVar : g:varDecl -> x:var -> bool
+val containsVar : g:vars -> x:var -> bool
 let containsVar g x = 
   List_exists (fun (y:var) ->
                  let yn:string = y.name in 
@@ -142,61 +139,160 @@ let funcTyping f typArgs =
   | RelationInfon r, a when a = r.argsType -> 
       Some((r.retType, FuncTyping_RelationInfon r))
 
-type types :: varDecl => term => typ => P =
-  | Types_Var : G:varDecl
-               -> v:var
-               -> Mem v G
-               -> types G (Var v) v.typ
-               (* TODO: change rules for name clashes/scope *)
-  | Types_ConstTrueT : G:varDecl -> types G (Const TrueT) Boolean
-  | Types_ConstFalseT : G:varDecl -> types G (Const FalseT) Boolean
-  | Types_ConstPrincipalConstant : G:varDecl -> p:principal
-                             -> types G (Const (PrincipalConstant p)) Principal
-  | Types_ConstSubstrateConstant : G:varDecl -> t:typ -> o:object{TypeOf o t}
-                                 -> types G (Const (SubstrateConstant o)) t
-  | Types_ForallT : G:varDecl -> x:var -> i:term
-                   -> types (x::G) i Infon
-                   -> types G (ForallT x i) Infon
-  (*??: is this rule really true? *)
-  | Types_SubstrateQueryTerm : G:varDecl -> q:ISubstrateQueryTerm 
-                               (* TODO: check this rule *)
-                               -> types G (SubstrateQueryTerm q) SubstrateQuery
-  (* generic App rule that replaces all the others *)
-  | Types_App : g:varDecl 
-             -> f:func
-             -> args:list term
-             -> typArgs: list typ
-             -> typRes: typ
-             -> Zip term typ (types g) args typArgs
-             (*-> Zip (fun i t -> types g i t) ilist tylist*) (* ask Nik difference *)
-             -> FuncTyping f typArgs typRes
-             -> types g (App f args) typRes
+type wfG :: vars => P = 
+  | WFG_Empty : wfG []
+  | WFG_Cons : 
+       x:var 
+    -> g:vars{not (In x g)}
+    -> wfG g 
+    -> wfG (x::g)
 
-
-val doType: g:varDecl -> t:term -> option(ty:typ * (types g t ty))
-let rec doType g = function
-  | Var v -> (match mem v g with (* TODO: change with new rules *)
-                | None -> None
-                | Some m -> Some((v.typ, Types_Var g v m)))
-  | Const TrueT -> Some((Boolean, Types_ConstTrueT g))
-  | Const FalseT -> Some((Boolean, Types_ConstFalseT g))
-  | Const(PrincipalConstant p) ->
-      Some((Principal,
-            Types_ConstPrincipalConstant g p))
-  | ForallT x i -> (match doType (x::g) i with
-                     | None -> None
-                     | Some((Infon, pr)) ->
-                         Some((Infon, Types_ForallT g x i pr))
-                     | Some _ -> None)
-  | SubstrateQueryTerm q -> Some(SubstrateQuery, Types_SubstrateQueryTerm g q)
-  | App f args -> 
-     (match map_p_opt (doType g) args with
+val decideWFG : g:vars -> option (wfG g)
+let rec decideWFG g = match g with 
+  | [] -> Some (WFG_Empty)
+  | x::tl -> 
+      if contains x tl 
+      then None
+      else match decideWFG tl with 
         | None -> None
-        | Some((typArgs, przip)) ->
-           (match funcTyping f typArgs with
-              | None -> None
-              | Some((typRes, fpr)) ->
-                   Some((typRes, 
-				         Types_App g f args typArgs typRes przip fpr))))
-  | _ -> None
+        | Some pf -> Some (WFG_Cons x tl pf)
 
+type typing :: vars => term => typ => P =
+  | Typing_Var : 
+       G:vars
+    -> v:var
+    -> Mem v G
+    -> typing G (Var v) v.typ
+
+  | Typing_ConstTrueT : 
+       G:vars 
+    -> typing G (Const TrueT) Boolean
+
+  | Typing_ConstFalseT : 
+       G:vars 
+    -> typing G (Const FalseT) Boolean
+
+  | Typing_ConstPrincipalConstant : 
+       G:vars 
+    -> p:principal
+    -> typing G (Const (PrincipalConstant p)) Principal
+
+  | Typing_ConstSubstrateConstant : 
+       G:vars 
+    -> t:typ 
+    -> o:object{TypeOf o t}
+    -> typing G (Const (SubstrateConstant o)) t
+
+  | Typing_SubstrateQueryTerm : 
+       G:vars 
+    -> q:ISubstrateQueryTerm 
+    -> typing G (SubstrateQueryTerm q) SubstrateQuery
+
+  | Typing_App : 
+       G:vars 
+    -> f:func
+    -> args:list term
+    -> formal_ts:list typ
+    -> result_t:typ
+    -> FuncTyping f formal_ts result_t
+    -> Zip term typ (typing G) args formal_ts
+    -> typing G (App f args) result_t
+    
+val constantTyping: g:vars -> c:constant -> (ty:typ * typing g (Const c) ty) 
+let constantTyping g c = match c with 
+  | TrueT -> (Boolean, Typing_ConstTrueT g)
+  | FalseT -> (Boolean, Typing_ConstFalseT g)
+  | SubstrateConstant _ -> raise "NYI: SubstrateConstant typing"
+  | PrincipalConstant p -> (Principal, Typing_ConstPrincipalConstant g p)
+
+let terr msg x = raise (Concat "Typing failure: " (Concat msg (string_of_any x)))
+
+val doTyping: g:vars -> t:term -> (ty:typ * (typing g t ty))
+let rec doTyping g = function
+  | Var v -> (match mem v g with 
+                | None -> terr "Variable not found: " (string_of_any v)
+                | Some m -> (v.typ, Typing_Var g v m))
+      
+  | Const c -> constantTyping g c
+
+  | SubstrateQueryTerm q -> SubstrateQuery, Typing_SubstrateQueryTerm g q
+
+  | SubstrateUpdateTerm _ -> raise "NYI: Typing SubstrateUpdateTerm"
+      
+  | App f args -> 
+      let formal_ts, przip = map_p (doTyping g) args in 
+        match funcTyping f formal_ts with
+          | None -> terr "Function typing failed: " f
+          | Some ((result_t, ftyping)) -> 
+              (result_t, Typing_App g f args formal_ts result_t ftyping przip)
+
+val checkTyping : g:vars -> t:term -> ty:typ -> option (typing g t ty)
+let checkTyping g t ty =
+  let ty', pf = doTyping g t in 
+    if ty=ty' then Some pf else None
+
+val doTypingList : g:vars -> ts:list term -> xs:vars -> option (Zip term var (fun (i:term) (x:var) => typing g i x.typ) ts xs)
+let doTypingList g ts xs = zip_p<term, var, (fun (i:term) (x:var) => typing g i x.typ)> (fun t x -> checkTyping g t x.typ) ts xs
+
+type polytyping :: vars => polyterm => P = 
+  | PolyTyping_Mono : 
+       G:vars 
+    -> i:term
+    -> typing G i Infon
+    -> polytyping G (MonoTerm i) 
+
+  | PolyTyping_ForallT : 
+       G:vars 
+    -> xs:vars
+    -> i:term
+    -> wfG (lconcat xs G)
+    -> typing (lconcat xs G) i Infon
+    -> polytyping G (ForallT xs i)
+    
+val doPolyTyping: g:vars -> p:polyterm -> Partial (polytyping g p)
+let rec doPolyTyping g p = match p with
+  | MonoTerm t -> 
+      (match doTyping g t with 
+         | Infon, pf -> MkPartial (PolyTyping_Mono g t pf)
+         | ty, _ -> terr "Expected Infon type, got " (string_of_any ty))
+        
+  | ForallT xs t -> 
+      let g' = concat xs g in
+        match decideWFG g' with 
+          | None -> terr "PolyTerms must bind distinct names. Repeated names: " xs
+          | Some wf -> 
+              match doTyping g' t with 
+                | Infon, pf -> MkPartial (PolyTyping_ForallT g xs t wf pf)
+                | ty, _ -> terr "Expected Infon type, got " (string_of_any ty)
+                      
+type wfK :: infostrate => P  =
+  | WFK_Empty : wfK []
+  | WFK_Cons : 
+         p:polyterm
+      -> K:infostrate
+      -> polytyping [] p
+      -> wfK K
+      -> wfK (p::K)
+
+val checkWFK : k:infostrate -> Partial (wfK k)
+let rec checkWFK k = match k with 
+  | [] -> MkPartial (WFK_Empty)
+  | p::tl -> 
+      match doPolyTyping [] p with
+        | MkPartial tp -> 
+            match checkWFK tl with 
+              | MkPartial pftl -> MkPartial (WFK_Cons p tl tp pftl)
+        
+
+type WF :: substrate => infostrate => vars => P =
+  | WF_SKG: 
+      S:substrate -> K:infostrate -> G:vars 
+    -> wfK K 
+    -> wfG G
+    -> WF S K G
+
+val checkWF : s:substrate -> k:infostrate -> g:vars -> option (WF s k g)
+let checkWF s k g = 
+  match checkWFK k, decideWFG g with 
+    | MkPartial wfk, Some wfg -> Some (WF_SKG s k g wfk wfg)
+    | _ -> None

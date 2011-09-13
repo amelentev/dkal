@@ -62,8 +62,25 @@ type list :: * => * =
 type In :: 'a::* => 'a => list 'a => P
 assume In_hd: forall (hd:'a) (tl:list 'a). (In hd (Cons hd tl))
 assume In_tl: forall (hd:'a) (x:'a) (tl:list 'a). (In x tl) => (In x (Cons hd tl))
+assume inConsInv: forall (x:'a) (y:'a) (tl:list 'a). (In x (Cons y tl)) <=> ((x=y) || (In x tl))
 assume notinNil: forall (x:'a). not (In x Nil)
-assume notinCons: forall (x:'a) (y:'a) (tl:list 'a). ((not (In x tl)) && (not (x=y))) => not (In x (Cons y tl))  
+(* assume notinCons: forall (x:'a) (y:'a) (tl:list 'a). ((not (In x tl)) && (not (x=y))) => not (In x (Cons y tl))   *)
+
+val contains : a:'a -> l:list 'a -> b:bool{((b=true) <=> (In 'a a l))}
+let rec contains a l = match l with 
+  | [] -> false
+  | hd::tl -> 
+      if a=hd then true
+      else contains a tl
+
+type Disjoint :: 'a::* => list 'a => list 'a => E
+assume (forall (xs:list 'a) (ys:list 'a). Disjoint xs ys <=> (forall (x:'a). In x xs => not(In x ys)))
+val check_disjoint: xs:list 'a -> ys:list 'a -> b:bool{b=true <=> Disjoint 'a xs ys}
+(* let rec check_disjoint xs ys = match xs with  *)
+(*   | [] -> true *)
+(*   | x::xtl ->  *)
+(*       if contains x ys then false *)
+(*       else check_disjoint xtl ys *)
   
 val map: ('a -> 'b) -> list 'a -> list 'b
 let rec map f x = match x with 

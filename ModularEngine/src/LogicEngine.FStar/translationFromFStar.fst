@@ -1,23 +1,22 @@
-﻿#light
-(*
-// *********************************************************
-//
-//    Copyright (c) Microsoft. All rights reserved.
-//    This code is licensed under the Apache License, Version 2.0.
-//    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-//    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-//    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-//    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-//
-// *********************************************************
+﻿(*
+  // *********************************************************
+  //
+  //    Copyright (c) Microsoft. All rights reserved.
+  //    This code is licensed under the Apache License, Version 2.0.
+  //    THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+  //    ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+  //    IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+  //    PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+  //
+  // *********************************************************
 *)
 
 module TranslationFromFStar
 open TypeHeaders
 open Types
 
-  let ITypeOfFStarTyp (t: Types.typ) : IType =
-    match t with
+let ITypeOfFStarTyp (t: Types.typ) : IType =
+  match t with
     | Types.Infon -> TypeHeaders.Infon false
     | Types.Principal -> TypeHeaders.Principal false
     | Types.SubstrateUpdate -> TypeHeaders.SubstrateUpdate false
@@ -31,15 +30,16 @@ open Types
     | Types.Double -> TypeHeaders.Double false
     | Types.String -> TypeHeaders.String false
 
-  val IVarOfFStarVar : Types.var -> IVar
-  let IVarOfFStarVar (v: Types.var) : IVar =
-    mkIVar (v.name : string) (ITypeOfFStarTyp (v.typ : Types.typ)) (* Rk: type annotations needed *)
+val IVarOfFStarVar : Types.var -> IVar
+let IVarOfFStarVar (v: Types.var) : IVar =
+  mkIVar (v.name : string) (ITypeOfFStarTyp (v.typ : Types.typ)) (* Rk: type annotations needed *)
 
-  val FunctionOfFStarFunc : Types.func -> Function
-  val ITermOfFStarTerm : Types.term -> ITerm
-  val ISubstitutionOfFStarSubstitution : Types.substitution -> ISubstitution
-  let rec FunctionOfFStarFunc (f: Types.func) : Function = 
-    match f with
+val FunctionOfFStarFunc : Types.func -> Function
+val ITermOfFStarTerm : Types.term -> ITerm
+val ITermOfPolyTerm : Types.polyterm -> ITerm
+val ISubstitutionOfFStarSubstitution : Types.substitution -> ISubstitution
+let rec FunctionOfFStarFunc (f: Types.func) : Function = 
+  match f with
     | Types.SeqRule -> option_get(SolveFunctionW (TypeHeaders.SeqRuleStr false))
     | Types.EmptyRule -> option_get(SolveFunctionW (TypeHeaders.EmptyRule false))
     | Types.Rule -> option_get(SolveFunctionW(TypeHeaders.RuleF false))
@@ -70,40 +70,42 @@ open Types
     | Types.ModusPonensEvidence -> option_get(SolveFunctionW(TypeHeaders.EvModusPonens false))
     | Types.AndEvidence -> option_get(SolveFunctionW(TypeHeaders.EvAnd false))
     | Types.AsInfonEvidence -> option_get(SolveFunctionW(TypeHeaders.EvAsInfon false))
-    | Types.RelationInfon f -> mkFunction f.name (ITypeOfFStarTyp f.retType) 
-		                             (map ITypeOfFStarTyp f.argsType)
-																 (option_map ITermOfFStarTerm f.identity)
+    | Types.RelationInfon f -> (mkFunction f.name 
+                                  (ITypeOfFStarTyp f.retType) 
+	                          (map ITypeOfFStarTyp f.argsType)
+	                          (option_map ITermOfFStarTerm f.identity))
 
-  and ITermOfFStarTerm (t: Types.term) : ITerm =
-    match t with
+and ITermOfFStarTerm (t: Types.term) : ITerm =
+  match t with
     | Types.Var(v) -> ITermOfIVar(IVarOfFStarVar v) 
     | Types.Const(Types.SubstrateConstant(o)) -> TypeHeaders.Constant_ITerm(o) 
     | Types.Const(Types.PrincipalConstant(n)) -> TypeHeaders.PrincipalConstant_ITerm(n) 
     | Types.Const(Types.TrueT) -> Constant_ITerm_bool(true) 
     | Types.Const(Types.FalseT) -> Constant_ITerm_bool(false) 
-    | Types.ForallT v t -> TypeHeaders.ForallT(IVarOfFStarVar v, ITermOfFStarTerm t) (* Rk: double parenthesis needed: error msg "Too many pattern variables" confusing *)
-    (* 5 special cases for the the functions where the number of arguments
-       can vary. Special cases here because they are special cases in Builders.fs *)
+        (* 5 special cases for the the functions where the number of arguments
+           can vary. Special cases here because they are special cases in Builders.fs *)
     | Types.App Types.SeqRule tl ->
-      TypeHeaders.SeqRuleW(map ITermOfFStarTerm tl)
+        TypeHeaders.SeqRuleW(map ITermOfFStarTerm tl)
     | Types.App Types.SeqCondition tl ->
-      TypeHeaders.SeqConditionW(map ITermOfFStarTerm tl)
+        TypeHeaders.SeqConditionW(map ITermOfFStarTerm tl)
     | Types.App Types.SeqAction tl ->
-      TypeHeaders.SeqActionW(map ITermOfFStarTerm tl)
+        TypeHeaders.SeqActionW(map ITermOfFStarTerm tl)
     | Types.App Types.AndInfon tl ->
-      TypeHeaders.AndInfonW(map ITermOfFStarTerm tl)
+        TypeHeaders.AndInfonW(map ITermOfFStarTerm tl)
     | Types.App Types.AndEvidence tl ->
-      TypeHeaders.AndEvidenceW(map ITermOfFStarTerm tl)
-    (* general case for App: all the other cases are the same in Builders.fs *)
-    | Types.App f tl -> 
-      Application_ITerm
-        (mkApplication (FunctionOfFStarFunc f) (map ITermOfFStarTerm tl))  
-    | Types.SubstrateQueryTerm(t0) -> (substrateQueryTerm_ITerm (t0:ISubstrateQueryTerm) : ITerm) 
-    | Types.SubstrateUpdateTerm(t1) -> (substrateUpdateTerm_ITerm (t1:ISubstrateUpdateTerm) : ITerm) 
-    | Types.ConcretizationEvidence t0 s -> explicitSubstitutionTerm_ITerm
-       (ITermOfFStarTerm t0) (ISubstitutionOfFStarSubstitution s)
-       
-  and ISubstitutionOfFStarSubstitution (subst: Types.substitution) : ISubstitution =
-    fold_left (fun res k ->SubstExtend res (IVarOfFStarVar k, 
-		                                        ITermOfFStarTerm (subst_apply subst k)))
-              Id (domain subst) 
+        TypeHeaders.AndEvidenceW(map ITermOfFStarTerm tl)
+          (* general case for App: all the other cases are the same in Builders.fs *)
+    | Types.App f tl -> (Application_ITerm
+                           (mkApplication (FunctionOfFStarFunc f) (map ITermOfFStarTerm tl)))
+    | Types.SubstrateQueryTerm t0 -> (substrateQueryTerm_ITerm (t0:ISubstrateQueryTerm) : ITerm) 
+    | Types.SubstrateUpdateTerm t1 -> (substrateUpdateTerm_ITerm (t1:ISubstrateUpdateTerm) : ITerm) 
+        
+and ITermOfPolyTerm (t: Types.polyterm) : ITerm = match t with 
+  | Types.ForallT xs t -> 
+      fold_left (fun t x -> TypeHeaders.ForallT(IVarOfFStarVar x, t)) (ITermOfFStarTerm t) xs
+  | Types.MonoTerm t -> ITermOfFStarTerm t
+      
+and ISubstitutionOfFStarSubstitution (subst: Types.substitution) : ISubstitution =
+  fold_left (fun res k -> SubstExtend res (IVarOfFStarVar k, 
+		                           ITermOfFStarTerm (subst_apply subst k)))
+    Id (domain subst)    

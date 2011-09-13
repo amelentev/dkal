@@ -34,6 +34,7 @@ open TypeHeaders
 
   type var = (* IVar *)
     { name : string; typ : typ }
+  type vars = list var
 
   type constant =
     | TrueT : constant
@@ -103,26 +104,31 @@ open TypeHeaders
     | RelationInfon (*of relationInfon*) : relationInfon -> func
       (* no active pattern for it, base case for infons *)
 
-  and substitution = Dictionary var term 
-  (* wrap the functions of dictionary used inside
-     other functions and only use them there.
-     use Guido's functional wrapper from Substitution *)
-
   and term = (* ITerm *)
   (* from Ast.Tree/ActivePatterns.fs *)
   (* from Ast/ActivePatterns.fs *)
     | Var : var -> term
     | Const : constant -> term
-    | ForallT : var -> term -> term (* Rk: need parenthesis around var*term *)
-    | App : func -> (list term) -> term
     | SubstrateQueryTerm : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
-    | ConcretizationEvidence : term -> substitution -> term
+    | App : func -> list term -> term
 
-  (* Rk: does not work if I put substitution after term and not before *)
+  and polyterm = 
+    | MonoTerm : term -> polyterm
+    | ForallT : vars -> term -> polyterm
 
+  type infostrate = list polyterm
+  type prefix = list term
+
+  type substitution = Dictionary var term 
   val subst_apply : substitution -> var -> term
   let subst_apply s v = subst_apply_def s v (Var v)
 
-  val id : substitution 
-  let id = emptySubst false
+  logic function AsTerms : vars -> list term
+  assume (AsTerms [] = [])          
+  assume (forall (x:var) (xs:vars). (AsTerms (x::xs)) = ((Var x)::(AsTerms xs)))
+  val asTerms: xs:vars -> ts:list term{(AsTerms xs)=ts}
+  let rec asTerms = function
+    | [] -> []
+    | hd::tl -> (Var hd)::asTerms tl
+end
