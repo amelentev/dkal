@@ -109,6 +109,9 @@
       <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="LogicEngine.FStar">
+      <HintPath>..\LogicEngine.FStar\bin\LogicEngine.FStar.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="NLog">

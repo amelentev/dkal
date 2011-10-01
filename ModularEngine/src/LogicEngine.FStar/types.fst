@@ -1,4 +1,3 @@
-﻿#light
 (*
 // *********************************************************
 //
@@ -21,8 +20,8 @@ open TypeHeaders
   (* BasicType types *)
     | Infon : typ
     | Principal : typ
-    | SubstrateUpdate : typ
-    | SubstrateQuery : typ
+    | SubstrateUpdate : typ (* see ISubstrateUpdate.fs *)
+    | SubstrateQuery : typ (* see ISubstrateQuery.fs *)
     | Action : typ
     | Condition : typ
     | RuleT : typ
@@ -34,80 +33,102 @@ open TypeHeaders
     | String : typ
 
   type var = (* IVar *)
-    { typ : typ; name : string }
+    { name : string; typ : typ }
+  type vars = list var
 
   type constant =
-    | True : constant
-    | False : constant
+    | TrueT : constant
+    | FalseT : constant
     | SubstrateConstant : object -> constant
     | PrincipalConstant : principal -> constant
 
   type relationInfon = (* form TreeTerm.fs, def of type Function *)
-    { name : string; retType: typ; 
+    { name : string; 
+      retType: typ; 
       argsType : list typ; 
       identity : option term  }
 
   and func =
   (* from Ast.Infon/ActivePatterns.fs *)
+  (* types from Ast.Infon/Primitives.fs, function SolveFunction *)
+  (* and its use in Ast.Infon/Builders.fs *)
     (* Rule: <condition> do <action> *)
-    | SeqRule : func
-    | EmptyRule : func
-    | Rule : func
-    | RuleOnce : func
+    | SeqRule : func (* [RuleT;...; RuleT] -> RuleT *)
+    | EmptyRule : func (* [] -> RuleT *)
+    | Rule : func (* [Condition; Action] -> RuleT *)
+    | RuleOnce : func (* [Condition; Action] -> RuleT *)
     (* Condition *)
-    | SeqCondition : func
-    | EmptyCondition : func
-    | WireCondition : func (* upon in concrete syntax *)
-    | KnownCondition : func (* if in concrete syntax *)
+    | SeqCondition : func (* [Condition;...; Condition] -> Condition *)
+    | EmptyCondition : func (* [] -> Condition *)
+    | WireCondition : func (* [Infon; Principal] -> Condition *)
+      (* upon in concrete syntax *)
+    | KnownCondition : func (* [Infon] -> Condition *)
+      (* if in concrete syntax *)
     (* Action *)
-    | SeqAction : func
-    | EmptyAction : func
-    | Send : func (* ppal (destination), msg *)
-    | JustifiedSend : func (* ppal (destination), msg *)
-    | JustifiedSay : func (* ppal (destination), msg *)
-    | Learn : func
-    | Forget : func
-    | Install : func (* add a rule to set of rules *)
-    | Uninstall : func (* regarding a rule *)
-    | Apply : func (* of substrateUpdateTerm // apply this update to the substrate *)
-    | Drop : func (* regarding an infon that came in as a message *)
+    | SeqAction : func (* [Action;...; Action] -> Action *)
+    | EmptyAction : func (* [] -> Action *)
+    | Send : func (* [Principal; Infon] -> Action *)
+      (* ppal (destination), msg *)
+    | JustifiedSend : func (* [Principal; Infon] -> Action *)
+      (* ppal (destination), msg *)
+    | JustifiedSay : func (* [Principal; Infon] -> Action *)
+      (* ppal (destination), msg *)
+    | Learn : func (* [Infon] -> Action *)
+    | Forget : func (* [Infon] -> Action *)
+    | Install : func (* [RuleT] -> Action *)
+      (* add a rule to set of rules *)
+    | Uninstall : func (* [RuleT] -> Action *)
+    | Apply : func (* [SubstrateUpdate] -> Action *)
+      (* of substrateUpdateTerm // apply this update to the substrate *)
+    | Drop : func (* [Infon] -> Action *)
+      (* regarding an infon that came in as a message *)
     (* Infon *)
-    | EmptyInfon : func
-    | AsInfon : func (* of substrateQueryTerm *)
-    | AndInfon : func (* may be easier to consider just binary case *)
-    | ImpliesInfon : func (* infon, infon *)
-    | SaidInfon : func (* ppal (sender), msg *)
-    | JustifiedInfon : func (* infon, evidence *)
+    | EmptyInfon : func (* [] -> Infon *)
+    | AsInfon : func (* [SubstrateQuery] -> Infon *)(* of substrateQueryTerm *)
+    | AndInfon : func (* [Infon; ...; Infon] -> Infon *)
+      (* may be easier to consider just binary case *)
+    | ImpliesInfon : func (* [Infon; Infon] -> Infon *)
+    | SaidInfon : func (* [Principal; Infon] -> Infon *)
+      (* ppal (sender), msg *)
+    | JustifiedInfon : func (* [Infon; Evidence] -> Infon *)
     (* Evidence *)
-    | EmptyEvidence : func
-    | SignatureEvidence : func (* ppal, term, int *)
+    | EmptyEvidence : func (* [] -> Evidence *)
+    | SignatureEvidence : func (* [Principal; Infon; Int32] -> Evidence *)
+      (* ppal, term, int *)
       (* might want to change the third type to dsig, signature for .Net *)
-    | ModusPonensEvidence : func
-    | AndEvidence : func
-    | AsInfonEvidence : func (* of substrateQueryTerm *)
+    | ModusPonensEvidence : func (* [Evidence; Evidence] -> Evidence *)
+    | AndEvidence : func (* [Evidence;... ; Evidence] -> Evidence *)
+    | AsInfonEvidence : func (* [SubstrateQuery] -> Evidence *)
+      (* of substrateQueryTerm *)
+    (* Relations defined by the writer of the policy *)
     | RelationInfon (*of relationInfon*) : relationInfon -> func
-    (* no active pattern for it, base case for infons *)
-
-  and substitution = Dictionary var term 
-  (* wrap the functions of dictionary used inside
-     other functions and only use them there.
-     use Guido's functional wrapper from Substitution *)
+      (* no active pattern for it, base case for infons *)
 
   and term = (* ITerm *)
   (* from Ast.Tree/ActivePatterns.fs *)
   (* from Ast/ActivePatterns.fs *)
     | Var : var -> term
     | Const : constant -> term
-    | Forall : (var * term) -> term (* Rk: need parenthesis around var*term *)
-    | App : (func * (list term)) -> term
-    | ConcretizationEvidence : (term * substitution) -> term
     | SubstrateQueryTerm : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
+    | App : func -> list term -> term
 
-  (* Rk: does not work if I put substitution after term and not before *)
+  and polyterm = 
+    | MonoTerm : term -> polyterm
+    | ForallT : vars -> term -> polyterm
 
+  type infostrate = list polyterm
+  type prefix = list term
+
+  type substitution = Dictionary var term 
   val subst_apply : substitution -> var -> term
   let subst_apply s v = subst_apply_def s v (Var v)
 
-  val id : substitution 
-  let id = emptySubst false
+  logic function AsTerms : vars -> list term
+  assume (AsTerms [] = [])          
+  assume (forall (x:var) (xs:vars). (AsTerms (x::xs)) = ((Var x)::(AsTerms xs)))
+  val asTerms: xs:vars -> ts:list term{(AsTerms xs)=ts}
+  let rec asTerms = function
+    | [] -> []
+    | hd::tl -> (Var hd)::asTerms tl
+end

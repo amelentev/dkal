@@ -24,6 +24,13 @@ module TypeHeaders
                                         namespace="";
                                         classname="Microsoft.Research.Dkal.Interfaces"}
   extern ISubstrateQueryTerm type ISubstrateQueryTerm :: *
+  type substrate
+  (* TODO: Implement this external function *)
+  type SubstrateSays :: substrate => ISubstrateQueryTerm => E
+  extern ISubstrateQueryTerm val check_substrate: s:substrate
+                                               -> q:ISubstrateQueryTerm 
+                                               -> b:bool{b=true => SubstrateSays s q}
+
   extern reference ISubstrateUpdateTerm {language="F#";
                                          dll="Interfaces";
                                          namespace="";
@@ -244,7 +251,7 @@ module TypeHeaders
                                 namespace="Microsoft.Research.Dkal.Ast";
                                 classname="Builders"}
   (* extern BuildersAst val Var : IVar -> ITerm *) (* Rk: moved to Builders.fs because of name conficts *)
-  extern BuildersAst val Forall : (IVar * ITerm) -> ITerm
+  extern BuildersAst val ForallT : (IVar * ITerm) -> ITerm
 
   extern reference BuildersAstInfon {language="F#";
                              dll="Ast.Infon"; (* bin\Debug\Ast.Infon.dll *)
@@ -266,7 +273,3 @@ module TypeHeaders
 	let AndInfonW l = AndInfon (ListOfPrimsList l)
   val AndEvidenceW : list ITerm -> ITerm
 	let AndEvidenceW l = AndEvidence (ListOfPrimsList l)
-
-
-
-

@@ -179,7 +179,11 @@ type SimpleLogicEngine() =
             | (a, b) :: ts ->
               match s with
                 | None -> None
-                | Some s -> unifyAndSimpl (a.UnifyFrom s b) ts
+                | Some s -> match unifyAndSimpl (a.UnifyFrom s b) ts with
+                            | Some s -> Some s
+                            | None -> match a with
+                                      | ImpliesInfon(_, i2) -> b.UnifyFrom s i2
+                                      | _ -> None
           match unifyAndSimpl (Some subst) ((template, i) :: prefixUnif) with
             | Some subst ->
               res := (subst, preconds) :: !res
@@ -187,7 +191,14 @@ type SimpleLogicEngine() =
         | _ -> ()
              
       function
-      | ((t1: ITerm) :: pref, SaidInfon (t2, i)) ->
+      | (pref, SaidInfon (t2, i)) when pref <> [] ->
+        let rec last l = (* gets out the last member of a list *)
+          match l with
+            | [] -> failwith "Empty list"
+            | [h] -> (h, [])
+            | h::t -> let (a, b) = last t
+                      (a, h::b)
+        let ((t1 : ITerm), pref) = last pref
         match t1.UnifyFrom subst t2 with
           | Some subst -> 
             stripPrefix subst prefixUnif preconds (fun i -> suff (SaidInfon (t2, i))) (pref, i)

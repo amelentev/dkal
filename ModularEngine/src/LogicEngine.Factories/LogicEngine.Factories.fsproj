@@ -55,6 +55,9 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LogicEngine.FStar">
+      <HintPath>..\LogicEngine.FStar\bin\LogicEngine.FStar.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -68,6 +71,11 @@
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.FStar.Deps\LogicEngine.FStar.Deps.fsproj">
+      <Name>LogicEngine.FStar.Deps</Name>
+      <Project>{ffe3b4fa-c13d-4ef0-9ef6-c3b35ab12efc}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\LogicEngine.FStar.Wrapper\LogicEngine.FStar.Wrapper.fsproj">

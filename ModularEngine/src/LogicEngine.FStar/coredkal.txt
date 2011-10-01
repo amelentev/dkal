@@ -1,0 +1,227 @@
+Core DKAL, i.e., DKAL minus substrate updates and justification.
+
+--------------------------------------------------------------------------------
+Syntax
+
+Meta-variables:
+  Substrate Constant: sconst
+  Substrate relations: R
+  Principal Constant: pconst   (just a string in the code)
+  Variables: x                 (just a string in the code)
+  Signatures: sig              (an int32 in the code)
+
+  Constants c ::= tt | ff | pconst | sconst
+	
+  Substrate query q ::= R u1 ... uk
+
+  Types     ty ::= Boolean 
+                | Infon 
+                | Principal 
+                | SubQuery 
+
+  NB: we generally use i and j for infon terms and p for principal
+      terms; u is a generic term.
+
+  Terms u, i, j, p ::=  x    
+                     | c 
+                     | Empty
+                     | AsInfon q
+                     | And i j
+                     | Implies i j
+                     | Said p j
+
+  Quant. terms I   ::= i                      (Note: Explicit quantifiers)
+                     | forall (x:ty). I
+
+  Infostrate K ::= . | I, K 
+
+  Substrate  S ::= . | (R c1 .. cn) | S, S' 
+
+  Var decl   G ::= . | x:ty | G, G'
+
+  Prefix  pref ::= hole | Said p pref     
+
+      A prefix is a quotation context, modeled as a function from
+      infon to infon. We write (pref i) for the substitution of the
+      (single) hole in pref with a term i.
+                                            
+Desired extension with evidence and justification:
+
+   We aim to extend the syntax of terms with a construct:   Justified i e
+   where e is an evidence term or pattern etc.
+
+
+--------------------------------------------------------------------------------
+Core infon logic entailment
+
+ Well-formedness of a context:
+     -- S is a set of closed substrate queries
+     -- K is a set of closed infons
+     -- G is a set of variable/type bindings
+
+                _______________
+               |               |
+               | S; K; G |= I  |  Quantified infon entailment in a substrate, 
+               |_______________|  infostrate, and variable decl environment
+
+
+    S; K; G,x:ty |= I
+  ---------------------------------------- [Q-Intro]
+    S; K; G |= forall (x:ty). I
+
+
+    S; K; G |= forall (x:ty). I
+          G |- u:ty
+  -------------------------------------- [Q-Inst]
+    S; K; G |= I[u/x]
+
+
+      G |- pref Empty : Infon
+  ------------------------------- [Emp]  [ Q: Same as T? ] (logic axiom)
+    S; K; G |= pref Empty
+
+
+     i \in K
+  ---------------- [Hyp-Knowledge]
+    S; K; G |= i
+
+
+    q \in S 
+  ------------------------- [Hyp-Substrate]
+    S; K; G |= AsInfon q
+
+
+    S; K; G |= pref i
+    S; K; G |= pref j
+  -------------------------- [And-Intro]
+    S; K; G |= pref (And i j)
+
+
+    S; K; G |= pref (And i j) 
+  ------------------------- [And-Elim1]
+    S; K; G |= pref i
+
+
+    S; K; G |= pref (And i j) 
+  --------------------------- [And-Elim2]
+    S; K; G |= pref j
+
+
+    G |- i : Infon
+    S; K; G |= pref j
+  ------------------------------- [W-Imp-Intro]
+    S; K; G |= pref (Implies i j)
+
+
+    S; K; G |= pref (Implies i j)
+    S; K; G |= pref i
+  ---------------------------------- [Imp-Elim]
+    S; K; G |= pref j
+
+--------------------------------------------------------------------------------
+Auxiliary judgment: Well-typed terms
+                ___________
+               |           |
+               | G |- I:ty |  
+               |___________| 				   
+
+
+   ------------------------
+     G, x:ty |- x:ty
+	 
+     G |- x:ty    x != y
+   ----------------------
+     G, y:ty' |- x:ty
+
+   --------------------
+     G |- tt:Boolean
+
+   --------------------
+     G |- ff:Boolean
+
+   ------------------------
+     G |- pconst:Principal
+
+     
+     arity(R) = (t_1..t_k) 
+     for each j in 1..k,
+          G |- u_j : t_j
+   -------------------------------
+     G |- (R u_1..u_k) : SubQuery
+
+	 
+     G |- i:Infon    G |- j:Infon
+   --------------------------------
+      G |- And i j : Infon
+	
+     G |- i:Infon    G |- j:Infon
+   --------------------------------
+      G |- Implies i j : Infon
+	  
+   --------------------
+     G |- p:Principal
+
+   --------------------
+     G |- Empty:Infon
+
+
+     G |- q:SubQuery 
+   --------------------
+     G |- AsInfon q:Infon
+
+
+     G |- p: Principal
+     G |- i: Infon
+   --------------------
+     G |- Said p i:Infon
+
+     G,x:ty |- I: Infon
+   --------------------------------    Q: can the forall really only be an infon?
+     G |- forall (x:ty). I : Infon
+
+--------------------------------------------------------------------------------
+Auxiliary judgment: Capture-avoiding substitution
+
+                _____________
+               |             |
+               | I[u/x] = I' |  
+               |_____________|
+
+
+  ------------
+   x[u/x] = u
+  
+  ------------ (x != y)
+   y[u/x] = y
+  
+  ------------
+   c[u/x] = c
+    
+  --------------------------------------------
+   (forall (x:ty). I)[u/x] = forall (x:ty). I
+   
+       y != x           
+       z != x      z not in FV(u)       z not in FV(i)   
+  ---------------------------------------------------------
+   (forall (y:ty). I)[u/x] = forall (z:ty). (I[z/y][u/x])
+       
+  --------------------
+   Empty[u/x] = Empty   
+  
+    u_i[u/x] = u_i'
+  -----------------------------------------------------------
+   (AsInfon (R u_1...u_k))[u/x] = AsInfon (R u_1' ... u_k')
+
+   i[u/x] = i'   j[u/x] = j'
+  ----------------------------
+   (And i j)[u/x] = And i' j'
+
+   i[u/x] = i'   j[u/x] = j'
+  ------------------------------------
+   (Implies i j)[u/x] = Implies i' j'
+  
+      p[u/x] = p'   i[u/x] = i'
+  ------------------------------
+   (Said p i)[u/x] = Said p' i'
+
+

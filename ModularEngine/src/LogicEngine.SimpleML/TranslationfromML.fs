@@ -117,7 +117,7 @@ module TranslationfromML =
     | MLType.Const(MLType.False) -> Constant(false) :> ITerm
     | MLType.Forall(v, t) -> {Var = IVarOfMLvar v; 
                           Term = ITermOfMLterm t} :> ITerm
-    // 5 special cases for the the functions where the number of arguments
+    // 5 special cases for the functions where the number of arguments
     // can vary. Special cases here because they are special cases in Builders.fs
     | MLType.App(MLType.SeqRule, tl) ->
       Builders.SeqRule(List.map ITermOfMLterm tl)
