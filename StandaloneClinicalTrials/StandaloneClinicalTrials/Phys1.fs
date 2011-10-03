@@ -49,6 +49,9 @@ module Phys1
                 | _ -> failwithf "%O>> expecting an integer value for n1" me
         | App(ImpliesInfon, _) ->
             _delegations <- _delegations @ [m.content]
+        | App(RelationInfon(keyForRecord), [Const(SubstrateConstant(key)); Const(SubstrateConstant(patient)); Const(SubstrateConstant(trial))]) ->
+            let record = List.find (fun (r: Record) -> r.patient.Equals(patient) && r.trial.Equals(trial)) records
+            printfn "%O>> key to open record for patient %O in trial %O with cyphered data %O is %O" me patient trial record.data key
         | _ -> failwithf "%O>> got unrecognizable message" me
 
     let suscribe() =
