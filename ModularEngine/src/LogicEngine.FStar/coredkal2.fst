@@ -24,7 +24,8 @@ open Unify
 (*********************************************************************************)
 logic function WithPrefix : prefix -> term -> term 
 assume forall (i:term). (WithPrefix [] i) = i
-assume forall (p:term) (pfx:prefix) (i:term). (WithPrefix (p::pfx) i) = (WithPrefix pfx (App SaidInfon [p; i]))
+assume forall (p:term) (pfx:prefix) (i:term). 
+  (WithPrefix (p::pfx) i) = (WithPrefix pfx (App SaidInfon [p; i]))
 val withPrefix: pfx:prefix -> i:term -> j:term{j=(WithPrefix pfx i)}
 let rec withPrefix pfx i = match pfx with 
   | [] -> i

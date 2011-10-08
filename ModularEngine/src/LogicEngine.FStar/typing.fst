@@ -139,6 +139,13 @@ let funcTyping f typArgs =
   | RelationInfon r, a when a = r.argsType -> 
       Some((r.retType, FuncTyping_RelationInfon r))
 
+(* Well-formedness of an environment of variables *)
+(* (a list of var = a list of {name; typ} ) *)
+(* i.e., no variable appears several times *)
+(* TODO *)
+(* JBJ: this well-foundedness condition checks that the same pair *)
+(* (variable, typ) does not appear twice, not that the *)
+(* same variable does not appear twice. See def of In in prims.fst *)
 type wfG :: vars => P = 
   | WFG_Empty : wfG []
   | WFG_Cons : 
@@ -205,6 +212,7 @@ let constantTyping g c = match c with
   | SubstrateConstant _ -> raise "NYI: SubstrateConstant typing"
   | PrincipalConstant p -> (Principal, Typing_ConstPrincipalConstant g p)
 
+(* raise type error *)
 let terr msg x = raise (Concat "Typing failure: " (Concat msg (string_of_any x)))
 
 val doTyping: g:vars -> t:term -> (ty:typ * (typing g t ty))
