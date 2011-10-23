@@ -84,7 +84,7 @@ namespace Microsoft.Research.Dkal.GuiMain
                 try {
                     assembly = parser.ParseAssembly(File.ReadAllText(policyFile));
                 } catch (ParseException e) {
-                    MessageBox.Show("Error while parsing in line " + e.Data2 + ", column " + e.Data3 + ": " + e.Data2, "Syntax Error");
+                    MessageBox.Show("Error while parsing in line " + e.Data2 + ", column " + e.Data3 + ": " + e.Data1, "Syntax Error");
                     return;
                 }
 

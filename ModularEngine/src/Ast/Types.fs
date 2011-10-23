@@ -16,10 +16,14 @@ open Microsoft.Research.Dkal.Interfaces
 /// Defines the basic IType implementations for DKAL types
 module Type = 
 
-  type private BasicType(fullName: string, name: string) = 
+  type private BasicType(fullName: string, name: string, ?baseType: IType) = 
     interface IType with
       member bt.FullName = fullName
       member bt.Name = name
+      member bt.BaseType = baseType
+      member bt.IsSubtypeOf t = 
+        bt.Equals t || (match baseType with None -> false | Some bt -> bt.IsSubtypeOf t)
+
     override bt.GetHashCode() = (bt :> IType).FullName.GetHashCode()
     override bt.Equals (o: obj) = 
       match o with
@@ -27,8 +31,14 @@ module Type =
       | _ -> false
     override bt.ToString() = (bt :> IType).FullName
 
+  /// Type for abstract infons (either justified or non justified)
+  let AbstractInfon = new BasicType("Dkal.AbstractInfon", "AbstractInfon") :> IType
+
   /// Type for infons
-  let Infon = new BasicType("Dkal.Infon", "Infon") :> IType
+  let Infon = new BasicType("Dkal.Infon", "Infon", AbstractInfon) :> IType
+
+  /// Type for infons
+  let JustifiedInfon = new BasicType("Dkal.JustifiedInfon", "JustifiedInfon", AbstractInfon) :> IType
 
   /// Type for principals
   let Principal = new BasicType("Dkal.Principal", "Principal") :> IType
@@ -57,6 +67,8 @@ module Type =
       with 
         member t.FullName = typ.FullName
         member t.Name = typ.Name
+        member t.BaseType = None
+        member t.IsSubtypeOf t' = t.Equals t'
     /// The .NET type wrapped by this Substrate type
     member s.Type = typ
     override s.Equals t' = match t' with
@@ -74,6 +86,7 @@ module Type =
   let FromFullName fn = 
     match fn with
     | "Dkal.Infon" -> Infon
+    | "Dkal.JustifiedInfon" -> JustifiedInfon
     | "Dkal.Principal" -> Principal
     | "Dkal.SubstrateUpdate" -> SubstrateUpdate
     | "Dkal.SubstrateQuery" -> SubstrateQuery

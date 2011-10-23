@@ -111,9 +111,9 @@ module Primitives =
     | EmptyCondition -> 
       Some {Name = f; RetType = Type.Condition; ArgsType = []; Identity = None}
     | WireCondition -> 
-      Some {Name = f; RetType = Type.Condition; ArgsType = [Type.Infon; Type.Principal]; Identity = None}
+      Some {Name = f; RetType = Type.Condition; ArgsType = [Type.AbstractInfon; Type.Principal]; Identity = None}
     | KnownCondition -> 
-      Some {Name = f; RetType = Type.Condition; ArgsType = [Type.Infon]; Identity = None}
+      Some {Name = f; RetType = Type.Condition; ArgsType = [Type.AbstractInfon]; Identity = None}
 
     // Actions
     | SeqAction -> 
@@ -122,15 +122,15 @@ module Primitives =
     | EmptyAction -> 
       Some {Name = f; RetType = Type.Action; ArgsType = []; Identity = None}
     | Send -> 
-      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.AbstractInfon]; Identity = None}
     | JustifiedSend -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
     | JustifiedSay -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
     | Learn -> 
-      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.AbstractInfon]; Identity = None}
     | Forget -> 
-      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.AbstractInfon]; Identity = None}
     | Install -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Rule]; Identity = None}
     | Uninstall -> 
@@ -138,7 +138,7 @@ module Primitives =
     | Apply -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.SubstrateUpdate]; Identity = None}
     | Drop -> 
-      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.AbstractInfon]; Identity = None}
     
     // Infons
     | EmptyInfon ->
@@ -153,7 +153,7 @@ module Primitives =
       Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Infon]; 
             Identity = Some <| ({Function=(SolveFunction EmptyInfon).Value; Args=[]} :> ITerm) }
     | Justified ->
-      Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Evidence]; Identity = None}
+      Some {Name = f; RetType = Type.JustifiedInfon; ArgsType = [Type.Infon; Type.Evidence]; Identity = None}
 
     // Evidence
     | EvEmpty ->

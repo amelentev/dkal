@@ -21,6 +21,12 @@ type IType =
   /// Full name for this type
   abstract member FullName: string
 
+  /// Base type
+  abstract member BaseType: IType option
+
+  /// Returns true if this type can be seen as the typed passed as parameter
+  abstract member IsSubtypeOf: IType -> bool
+
 
 /// ITerm implementations are the AST elements. They encode everything from 
 /// variables and constants to asInfon queries, rules, etc.

@@ -275,9 +275,8 @@ type SimpleExecutor(router: IRouter,
   /// are grouped into one big message
   member private se.Send (messages: HashSet<ITerm * ITerm>) =
     let needSending = Seq.filter (fun m -> not <| sentMessages.Contains m) messages
-    let groupedByDestination = Seq.groupBy (fun (infon, ppal) -> ppal) needSending
-    for (ppal, msgs) in groupedByDestination do
-      let bigMsg = AndInfon([for (msg, ppal) in msgs -> msg]).Normalize()
-      router.Send bigMsg ppal
+    // let groupedByDestination = Seq.groupBy (fun (infon, ppal) -> ppal) needSending
+    for (msgs, ppal) in needSending do
+      router.Send msgs ppal
     sentMessages.UnionWith needSending
     (needSending |> Seq.toList).IsEmpty |> not
