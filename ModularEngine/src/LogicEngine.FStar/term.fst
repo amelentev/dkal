@@ -16,14 +16,6 @@ module Term
 open TypeHeaders
 open TranslationFromFStar
 
-  extern reference TranslationToFStar {language="F#";
-                                       dll="TranslationToFStar";
-                                       namespace="";
-                                       classname="TranslationToFStar"}
-  extern TranslationToFStar val FStarVarOfIVar : IVar -> Types.var
-  extern TranslationToFStar val FStarTermOfITerm : ITerm -> Types.term
-  extern TranslationToFStar val FStarSubstitutionOfISubstitution: ISubstitution -> Types.substitution
-
   val vars : Types.term -> list Types.var
   let rec vars (t: Types.term) : list Types.var =
     match t with

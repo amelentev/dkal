@@ -125,10 +125,18 @@ open TypeHeaders
   let subst_apply s v = subst_apply_def s v (Var v)
 
   logic function AsTerms : vars -> list term
-  assume (AsTerms [] = [])          
+  assume (AsTerms [] = [])         
   assume (forall (x:var) (xs:vars). (AsTerms (x::xs)) = ((Var x)::(AsTerms xs)))
   val asTerms: xs:vars -> ts:list term{(AsTerms xs)=ts}
   let rec asTerms = function
     | [] -> []
     | hd::tl -> (Var hd)::asTerms tl
+
+  extern reference TranslationToFStar {language="F#";
+                                       dll="TranslationToFStar";
+                                       namespace="";
+                                       classname="TranslationToFStar"}
+  extern TranslationToFStar val FStarVarOfIVar : IVar -> (*Types.*)var
+  extern TranslationToFStar val FStarTermOfITerm : ITerm -> (*Types.*)term
+  extern TranslationToFStar val FStarSubstitutionOfISubstitution: ISubstitution -> (*Types.*)substitution
 end

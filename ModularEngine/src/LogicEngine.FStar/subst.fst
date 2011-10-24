@@ -29,9 +29,9 @@ logic function FreeVarsSubst : substitution -> vars
 
 
 (* Axiomatization of substitution itself *)
-logic function SubstQuery : ISubstrateQueryTerm -> substitution -> ISubstrateQueryTerm
-logic function Subst : term -> substitution -> term
-logic function SubstList : list term -> substitution -> list term
+logic function SubstQuery : ISubstrateQueryTerm -> substitution -> ISubstrateQueryTerm (* substitution of all variables in a SubstrateQueryTerm *)
+logic function Subst : term -> substitution -> term (* substitution of all variables in a term *)
+logic function SubstList : list term -> substitution -> list term (* substitution of all variables in a list of terms *)
 assume Subst_VarRepl: forall (x:var) (s:substitution).
         (In x (Domain s)) => ((Subst (Var x) s)=(Select s x))
 assume Subst_VarIgnore: forall (x:var) (s:substitution).
@@ -47,6 +47,7 @@ assume SubstList_cons: forall (t:term) (tl:list term) (s:substitution).
            (SubstList (t::tl) s) = ((Subst t s)::(SubstList tl s))
 
 logic function PolySubst : polyterm -> substitution -> polyterm
+(* substitution of all variables in a polyterm *)
 assume (forall (s:substitution) (xs:vars) (body:term). Disjoint (FreeVarsSubst s) xs =>
     ((PolySubst (ForallT xs body) s)=(ForallT xs (Subst body s))))
 assume (forall (s:substitution) (body:term). 
