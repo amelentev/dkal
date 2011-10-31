@@ -26,7 +26,7 @@ type Variable =
     member v.UnifyFrom s t = 
       match (v :> IVar), t with
       | v1, v2 when (v1 :> ITerm).Apply(s) = v2.Apply(s) -> Some s
-      | v, t when not(List.exists (fun v' -> v = v') t.Vars) -> 
+      | v, t when not(List.exists (fun v' -> v = v') <| (t.Apply s).Vars) -> 
         if s.DomainContains v then
           v.Apply(s).UnifyFrom s t
         else
