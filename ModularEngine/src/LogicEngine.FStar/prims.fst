@@ -216,7 +216,7 @@ let ignore a = ()
 val collect : ('a -> list 'b) -> list 'a -> list 'b (* Rk: need of val declaration otherwise compiler raises exception *)
 let collect (f: 'a -> list 'b) (l : list 'a) : list 'b =
   fold_right (fun a acc -> append (f a) acc) l []
-    
+
 val filter : ('a -> bool) -> list 'a -> list 'a
 let filter (f: 'a -> bool) (l : list 'a) =
   fold_right (fun a acc -> if (f a) then a :: acc else acc) l []

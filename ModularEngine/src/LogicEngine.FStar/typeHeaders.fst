@@ -25,6 +25,7 @@ module TypeHeaders
                                         classname="Microsoft.Research.Dkal.Interfaces"}
   extern ISubstrateQueryTerm type ISubstrateQueryTerm :: *
   type substrate
+
   (* TODO: Implement this external function *)
   type SubstrateSays :: substrate => ISubstrateQueryTerm => E
   extern ISubstrateQueryTerm val check_substrate: s:substrate

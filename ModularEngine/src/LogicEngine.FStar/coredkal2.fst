@@ -11,7 +11,7 @@
 // *********************************************************
 *)
 
-module CoreDKAL
+module InfonLogic
 open TypeHeaders
 open Types
 open Util
@@ -358,19 +358,21 @@ val deriveQuant: U:vars             (* Variables available for unification in go
               -> S:substrate 
               -> K:infostrate 
               -> G:vars
+              -> s0:substitution(* {(Domain s0) subset G} *)
               -> goal:term
-              -> option (s:substitution(* {(Domain s)=U} *) *
+              -> option (s:substitution(* {(Domain s)=U}  s extends s0 *) *
                          polyentails S K [] (ForallT G (Subst goal s)))
-let rec deriveQuant u s k g goal = 
+let rec deriveQuant u s k g s0 goal = 
   match decideWFG g with 
     | None -> None
     | Some wfg -> 
-        let s0 = emptySubst() in 
-          match doDerive s k g u s0 [] goal with 
-            | None -> None
-            | Some ((s1, mkpf)) -> 
-                match mkpf s1 with 
-                  | MkPartial pfs1 -> 
-                      let res = Entails_Q_Intro s k g (subst goal s1) wfg pfs1 in 
-                        Some ((s1, res))
-                  | _ -> None
+        match doDerive s k g u s0 [] goal with 
+          | None -> None
+          | Some ((s1, mkpf)) -> 
+              match mkpf s1 with 
+                | MkPartial pfs1 -> 
+                    let res = Entails_Q_Intro s k g (subst goal s1) wfg pfs1 in 
+                      Some ((s1, res))
+                | _ -> None
+
+
