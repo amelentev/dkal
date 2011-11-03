@@ -2,13 +2,10 @@ module State
 open TypeHeaders
 open Types
 
-type Knows :: polyterm => E
-type infostrate = list (i:polyterm{Knows i}) 
-
 private val infos : ref infostrate
 let infos = ref []
 
-val addToInfostrate : i:polyterm{Valid i} -> unit
+val addToInfostrate : i:polyterm{Knows i} -> unit
 let addToInfostrate i = infos := i::!infos
 
 val getInfostrate : unit -> infostrate

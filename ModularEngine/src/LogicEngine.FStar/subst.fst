@@ -31,6 +31,7 @@ assume (Domain EmptySubst) = Empty
 (* freevars of both the domain and the range *)
 (* the set of variables is represented as a list with possible double occurrences
    but logically it is still a set, not a multiset *)
+logic function FreeVarsPoly : polyterm -> vars
 logic function FreeVars : term -> vars
 logic function FreeVarsSubst : substitution -> vars 
 assume FreeVars_Var: forall (x:var). (FreeVars(Var x) = [x])

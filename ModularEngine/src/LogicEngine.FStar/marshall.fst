@@ -17,7 +17,7 @@ type msg =
 
 val polyterm2bytes : polyterm -> bytes
 val bytes2polyterm : bytes -> polyterm
-val parse: b:bytes -> p:polyterm{Received b => Received p}
+val parse: b:bytes -> p:polyterm{Net.Received b => Net.Received p}
 val concat : list bytes -> bytes
 val unconcat: bytes -> list bytes
 

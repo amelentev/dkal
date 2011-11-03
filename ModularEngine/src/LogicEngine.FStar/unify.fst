@@ -77,9 +77,9 @@ let unify s1 u xs i goal =
         Some(s2, l) else raise "Fix problem in unification"
   | None -> None
   
-  vaval unify_poly: s1:substitution
-        -> uvars1:vars 
-        -> uvars2:vars 
-        -> p1:polyterm
-        -> p2:polyterm
-        -> option (s2:substitution{Extends s2 s1})
+val unify_poly: s1:substitution
+            -> uvars1:vars 
+            -> uvars2:vars 
+            -> p1:polyterm
+            -> p2:polyterm
+            -> option (s2:substitution{Extends s2 s1})

@@ -117,7 +117,10 @@ open TypeHeaders
     | MonoTerm : term -> polyterm
     | ForallT : vars -> term -> polyterm
 
+  type Knows :: polyterm => E
+  type kpolyterm = i:polyterm{Knows i}
   type infostrate = list polyterm
+(*   type infostrate = list polyterm *)
   type prefix = list term
 
   type substitution = Dictionary var term 

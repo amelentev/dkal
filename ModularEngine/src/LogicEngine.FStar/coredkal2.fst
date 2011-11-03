@@ -124,7 +124,7 @@ and polyentails :: substrate => infostrate => vars => polyterm => P =
   | Entails_Hyp_Knowledge :
        S:substrate -> K:infostrate -> G:vars
     -> i:polyterm{In i K}
-    -> i':polyterm
+    -> i':polyterm{In i K}
     -> polytyping [] i
     -> alphaEquiv i i'
     -> polytyping G i'
