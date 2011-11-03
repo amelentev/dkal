@@ -6,8 +6,10 @@ DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
 FSTAR=fstar --UNSAFE_skip_target_checker --genIL --dotnet4 --odir $(FSTBIN) --prims prims.fst
 
 coredkal2:
-	# currently raises the logic_function bug
-	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst --genIL --odir $(FSTBIN2)
+	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst
+
+coredkal2_genIL:
+	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst --genIL --odir $(FSTBIN2) --UNSAFE
 
 coredkal2_ok:
 	# if commenting out the last few lines of types.fst

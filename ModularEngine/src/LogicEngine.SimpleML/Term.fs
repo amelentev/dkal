@@ -140,7 +140,7 @@ module Term =
     | MLType.Var(v1) -> // from Variable.fs
       match t2 with
       | _ when term_apply t1 s = term_apply t2 s -> Some s
-      | _ when not(List.exists (fun v' -> v1 = v') (vars t2)) -> 
+      | _ when not(List.exists (fun v' -> v1 = v') (vars (term_apply t2 s))) -> 
         if Subst.domainContains s v1 then
           unifyFrom (term_apply t1 s) s t2
         else

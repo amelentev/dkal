@@ -107,11 +107,19 @@ let rec assoc a x = match x with
   | Nil -> None
   | Cons (a', b) tl -> if a=a' then Some b else assoc a tl
 
-val append: x:list 'a -> y:list 'a -> list 'a 
+logic function Append : list 'a -> list 'a -> list 'a
+assume forall (y:list 'a). Append Nil y = y
+assume forall (a:'a) (tl:list 'a) (y:list 'a). 
+   ((Append (Cons a tl) y) = (Cons a (Append tl y)))
+val append: x:list 'a -> y:list 'a -> z:list 'a{z=(Append x y)} 
 let rec append x y = match x with
   | Nil -> y
   | Cons a tl -> Cons a (append tl y)
 
+logic function ConcatMap: ('a -> list 'b) -> list 'a -> list 'b
+assume forall (f:'a -> list 'b). (ConcatMap f [] = [])
+(*assume forall (f:'a -> list 'b) (a:'a) (tl:list 'a). (*Rk: cannot do that*)
+    ((ConcatMap f (a::tl)) = (Append (f a) (ConcatMap f tl)))*)
 val concatMap: ('a -> list 'b) -> list 'a -> list 'b
 let rec concatMap f = function
   | [] -> []
