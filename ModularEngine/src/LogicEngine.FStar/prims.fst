@@ -81,7 +81,7 @@ val check_disjoint: xs:list 'a -> ys:list 'a -> b:bool{b=true <=> Disjoint 'a xs
 (*   | x::xtl ->  *)
 (*       if contains x ys then false *)
 (*       else check_disjoint xtl ys *)
-  
+
 val map: ('a -> 'b) -> list 'a -> list 'b
 let rec map f x = match x with 
   | Nil -> Nil
