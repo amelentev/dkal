@@ -151,14 +151,12 @@ module Builders =
 
   let emptySubst (b:bool) : Dictionary<'a,'b> = 
     new Dictionary<_, _>()
-    
   
   let copy (s : Dictionary<'a,'b>) : Dictionary<'a,'b> =
     new Dictionary<_, _>(s)
 
   let assign (s: Dictionary<'a,'b>) (v:'a) (t:'b) : bool =
     s.[v] <- t; false
-  
 
   let extend (s: Dictionary<'a,'b>) (v:'a) (t:'b) = 
 //    if t = (Types.Var(v) :> Types.term) then 
@@ -182,3 +180,17 @@ module Builders =
     let relevantVars = new HashSet<_>(_domain s)
     relevantVars.ExceptWith vars
     _restrictTo s (relevantVars |> Seq.toList)
+
+  (* For CoreDKAL2 only *)
+  let mkSubst (al:'a list) (bl:'b list) : Dictionary<'a, 'b> =
+    let res = new Dictionary<'a, 'b>() in
+    List.iter2 (fun a b -> res.[a] <- b) al bl;
+    res
+
+  let substQuery (q:ISubstrateQueryTerm) (s:Dictionary<IVar, ITerm>) : ITerm =
+    q.Apply(new Substitution(s) :> ISubstitution)
+
+  let extends (s2:Dictionary<'a, 'b>) (s1:Dictionary<'a, 'b>) : bool =
+    true (* TODO: dummy, need to get rid of it eventually *)
+
+ 

@@ -248,12 +248,12 @@ let rec doDerive s k g u s1 pref goal =
     | App AsInfon [SubstrateQueryTerm q] ->
         (match pref with
            | [] -> 
-               let mkpf (s2:substitution{Extends s2 s1}) : kresult s k g pref goal s2 =
-                 let q' = substQuery q s2 in
-                   if check_substrate s q'
+           (*    let mkpf (s2:substitution{Extends s2 s1}) : kresult s k g pref goal s2 =
+                 let q' = substQuery q s2 in  (* returns a term, not a SubstrateQueryTerm *)
+                   if check_substrate s q' 
                    then MkPartial (Entails_Hyp_Substrate s k g q')
                    else raise "Substrate query failed" 
-               in Some (s1, mkpf)
+               in Some (s1, mkpf) *) raise "TODO"
            | _ -> None) (* AsInfon not allowed under prefix *)
 	  
     | _ -> map_one k (tryDeriveAlpha s k g u s1 pref goal)

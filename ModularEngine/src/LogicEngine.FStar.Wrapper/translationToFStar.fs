@@ -90,12 +90,12 @@ module TranslationToFStar =
     let rec aux (t : ITerm) =
       match t with
       | Forall(v, t') -> let tl, body = aux t' in (v::tl, body)
-      | _ -> t
+      | _ -> ([], t)
     in let vars, body = aux term in
     match vars with
     | [] -> new Types.MonoTerm(FStarTermOfITerm body)
     | _ -> new Types.ForallT(
-             PrimsListOfList(List.map FStarVarOfIVar vars),
+             PrimsListofList(List.map FStarVarOfIVar vars),
              FStarTermOfITerm body) :> Types.term
 
   and FStarTermOfITerm (term: ITerm) : Types.term =
