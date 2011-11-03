@@ -52,6 +52,8 @@ assume (forall (s:substitution) (xs:vars) (body:term). Disjoint (FreeVarsSubst s
 assume (forall (s:substitution) (body:term). 
     ((PolySubst (MonoTerm body) s)=(MonoTerm (Subst body s))))
 
+val polysubst: polyterm -> substitution -> polyterm
+
 (* Building substitutions *)
 logic function MkSubst: vars -> list term -> substitution
 assume (MkSubst [] [] = EmptySubst)

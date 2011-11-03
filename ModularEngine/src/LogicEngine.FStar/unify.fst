@@ -13,3 +13,12 @@ val unify: s1:substitution
         -> option (s2:substitution{Extends s2 s1} * list term)
 
 
+
+val unify_poly: s1:substitution
+        -> uvars1:vars 
+        -> uvars2:vars 
+        -> p1:polyterm
+        -> p2:polyterm
+        -> option (s2:substitution{Extends s2 s1})
+
+

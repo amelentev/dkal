@@ -4,6 +4,7 @@ FSTBIN=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin
 FSTBIN2=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin2
 DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
 FSTAR=fstar --UNSAFE_skip_target_checker --genIL --dotnet4 --odir $(FSTBIN) --prims prims.fst
+SOURCES=typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst net.fst crypto.fst marshall.fst state.fst interp.fst
 
 coredkal2:
 	# currently raises the logic_function bug
@@ -27,8 +28,11 @@ coredkal:
 	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst coredkal.fst # --genIL --odir $(FSTBIN)
 	# fsc -r $(FSTBIN)/coredkal.dll coredkal_runtime.fs
 
-wc: 
-	wc -l prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst 
+interp: $(SOURCES)
+	fstar --prims prims.fst $^ --o $@
+
+wc: $(SOURCES)
+	wc -l prims.fst $^
 
 clean:
 	rm -f $(FSTBIN)/Types.dll $(FSTBIN)/Builders.dll $(FSTBIN)/Subst.dll $(FSTBIN)/TranslationtoFStar.dll $(FSTBIN)/TranslationfromFStar.dll $(FSTBIN)/Utilities.dll $(FSTBIN)/Term.dll $(FSTBIN)/FStarLogicEngineImpl.dll $(FSTBIN)/FStarLogicEngine.dll
