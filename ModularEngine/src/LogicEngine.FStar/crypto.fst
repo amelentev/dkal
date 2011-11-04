@@ -3,7 +3,8 @@ open TypeHeaders
 open Types
 
 (* read creds from a config file *)
-val lookup_my_credentials : unit -> principal
+type IsMe :: principal => E
+val lookup_my_credentials : unit -> p:principal{IsMe p}
 
 type dsig
 

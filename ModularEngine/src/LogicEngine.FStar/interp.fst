@@ -9,12 +9,7 @@ open Subst
 type vars = list var
 type substitutions = list substitution
 
-type IsMe :: principal => E
-val me : p:principal{IsMe p}
-let me = 
-  let v = Crypto.lookup_my_credentials () in 
-    assume (IsMe v);
-    v
+let me = Crypto.lookup_my_credentials () 
 
 type condition =
   | If   : polyterm -> condition
@@ -78,7 +73,9 @@ type Holds :: _ = fun (xs:vars) (cs:list condition) (s:substitution) => (HoldsMa
 (* -------------------------------------------------------------------------------- *)
 type Enabled :: action => E
 assume forall (i:infon). (Enabled (Learn i)) => Knows i
-assume forall (me:principal) (p:principal) (i:infon).(Enabled (Send (Const (PrincipalConstant p)) i) && IsMe me) => SaysTo me p i
+assume forall (me:principal) (p:principal) (i:infon).
+          (Enabled (Send (Const (PrincipalConstant p)) i) && Crypto.IsMe me) 
+       => SaysTo me p i
 
 type rule =
   | Rule : xs:vars 
