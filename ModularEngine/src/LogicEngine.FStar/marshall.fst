@@ -8,12 +8,12 @@ logic function ReprVars : vars -> string
 logic function ReprMono : term -> string
 logic function ReprPoly : polyterm -> string
 assume forall (xs:vars) (t:term). 
-                         ReprPoly (ForallT xs t) = Strcat ["(Forall ("; 
-                                                           (ReprVars xs);
-                                                           ") ";
-                                                           (ReprMono t);
-                                                           ")"]
-assume forall (t:term). ReprPoly (MonoTerm t) = ReprMono t
+           (ReprPoly (ForallT xs t)) = (Strcat ([ "(Forall (";
+                                               (ReprVars xs);
+                                               ") ";
+                                               (ReprMono t);
+                                               ")"]))
+assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
 
 (* type Star :: P => * = *)
 (*  | MkStar : 'a::P -> Star 'a *)
@@ -61,3 +61,4 @@ type msg =
 val concat : list bytes -> bytes
 val unconcat: bytes -> list bytes
 val msg2bytes: msg -> bytes
+val b2s: b:bytes -> s:string{Net.Received b => Net.Received s}

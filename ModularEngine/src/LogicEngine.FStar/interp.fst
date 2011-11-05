@@ -108,11 +108,13 @@ let derive u goal s0 =
 val comms : ref (list communication)
 let comms = ref []
 
-let get_communications _unit = 
+val get_communications: unit -> unit
+let rec get_communications _unit = 
   let message = Net.receive () in
-  let infon = Marshall.parse message in 
-    comms := infon::(!comms)
-
+    match Marshall.parseInfon (b2s message) with 
+      | Some infon -> comms := infon::(!comms)
+      | _ -> get_communications ()
+          
 val _dropCommunications: i:infon{Enabled (Drop i)} -> unit
 let dropCommunications i = 
   let changed, comms' = 
