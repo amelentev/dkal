@@ -86,17 +86,17 @@ module TranslationToFStar =
                PrimsOptionOfOption(Option.map FStarTermOfITerm f.Identity),
                f.Name, FStarTypOfIType f.RetType)) :> Types.func 
 
-  and FStarPolyTermOfITerm (term : ITerm) : Types.term =
+  and FStarPolyTermOfITerm (term : ITerm) : Types.polyterm =
     let rec aux (t : ITerm) =
       match t with
       | Forall(v, t') -> let tl, body = aux t' in (v::tl, body)
       | _ -> ([], t)
     in let vars, body = aux term in
     match vars with
-    | [] -> new Types.MonoTerm(FStarTermOfITerm body)
+    | [] -> new Types.MonoTerm(FStarTermOfITerm body) :> Types.polyterm
     | _ -> new Types.ForallT(
-             PrimsListofList(List.map FStarVarOfIVar vars),
-             FStarTermOfITerm body) :> Types.term
+             PrimsListOfList(List.map FStarVarOfIVar vars),
+             FStarTermOfITerm body) :> Types.polyterm
 
   and FStarTermOfITerm (term: ITerm) : Types.term =
     match term with
@@ -109,8 +109,8 @@ module TranslationToFStar =
     | App(f, tl) -> new Types.App(FStarFuncOfFunction f, PrimsListOfList (List.map FStarTermOfITerm tl)) :> Types.term 
     | :? ISubstrateQueryTerm as sq -> new Types.SubstrateQueryTerm(sq)  :> Types.term 
     | :? ISubstrateUpdateTerm as su -> new Types.SubstrateUpdateTerm(su)  :> Types.term 
-    | ConcretizationEvidence(t, s) -> 
-        new Types.ConcretizationEvidence(FStarTermOfITerm t, FStarSubstitutionOfISubstitution s) :> Types.term 
+    (*| ConcretizationEvidence(t, s) -> (* not supported any more *) 
+        new Types.ConcretizationEvidence(FStarTermOfITerm t, FStarSubstitutionOfISubstitution s) :> Types.term *)
     | _ -> failwith "FStarTermOfITerm, case not supported"
 
   and FStarSubstitutionOfISubstitution (subst: ISubstitution) : substitution =

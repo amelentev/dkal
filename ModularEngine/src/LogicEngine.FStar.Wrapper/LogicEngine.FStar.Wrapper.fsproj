@@ -35,8 +35,8 @@
     <Reference Include="basic">
       <HintPath>..\LogicEngine.FStar\bin\basic.dll</HintPath>
     </Reference>
-    <Reference Include="LogicEngine.FStar">
-      <HintPath>..\LogicEngine.FStar\bin\LogicEngine.FStar.dll</HintPath>
+    <Reference Include="InfonLogic">
+      <HintPath>..\LogicEngine.FStar\bin2\InfonLogic.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />

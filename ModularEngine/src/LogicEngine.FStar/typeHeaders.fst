@@ -24,7 +24,8 @@ module TypeHeaders
                                         namespace="";
                                         classname="Microsoft.Research.Dkal.Interfaces"}
   extern ISubstrateQueryTerm type ISubstrateQueryTerm :: *
-  type substrate
+  type substrate = unit 
+  (* TODO: we don't really use the substrate anywhere; but this does not really make sense *)
 
   (* TODO: Implement this external function *)
   type SubstrateSays :: substrate => ISubstrateQueryTerm => E

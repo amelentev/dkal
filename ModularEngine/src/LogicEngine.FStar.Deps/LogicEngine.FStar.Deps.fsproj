@@ -32,6 +32,9 @@
     <DocumentationFile>bin\Release\LogicEngine.FStar.Deps.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LogicEngine.FStar">
+      <HintPath>..\LogicEngine.FStar\bin\LogicEngine.FStar.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="Prims">

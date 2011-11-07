@@ -2,6 +2,7 @@ module Unify
 open TypeHeaders
 open Types
 open Subst
+open TranslationFromFStar
 
 val fold_left2 : ('a -> 'b -> 'c -> option 'a) 
               -> option 'a -> list 'b -> list 'c -> option 'a
@@ -10,7 +11,7 @@ let rec fold_left2 f a lb lc =
   | (None, (_, _)) -> None
   | (sa, ([], [])) -> sa
   | (Some(a), ((b::tb), (c::tc))) -> fold_left2 f (f a b c) tb tc
-  | (_, _) -> raise "fold_left2"
+  | (_, _) -> raise "Error in fold_left2, lists are not the same size"
 
 val addSubst : s:substitution -> x:var -> t:term -> substitution
 (* composes s with {x -> t} *)
@@ -18,7 +19,7 @@ let addSubst s1 x t =
   let substxt = extendSubst (emptySubst()) x t in
   fold_left
     (fun s y -> 
-	   match lookupVar s y with
+	   match lookupVar s1 y with
 	   | None -> raise "impos"
 	   | Some(ty) -> extendSubst s y (subst ty substxt))
     (emptySubst())
@@ -53,15 +54,15 @@ let rec unify_aux s1 v2 v1 t1 t2 : option substitution =
       when ((f1 = f2) && (length tlist1 = length tlist2)) ->
 	  fold_left2 (fun s t1' t2' -> unify_aux s v2 v1 t1' t2')
 	    (Some(s1)) tlist1 tlist2
-  (*| SubstrateQueryTerm t0 ->
+  | SubstrateQueryTerm t0, _ ->
       option_map FStarSubstitutionOfISubstitution
-        (substrateQueryTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s)
+        (substrateQueryTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1)
 		                                 (ITermOfFStarTerm t2) )
-  | SubstrateUpdateTerm t0 ->
+  | SubstrateUpdateTerm t0, _ ->
       option_map FStarSubstitutionOfISubstitution
-        (substrateQueryTerm_unifyFrom t0(ISubstitutionOfFStarSubstitution s)
-		                                (ITermOfFStarTerm t2) )
-  *)| _ -> None
+        (substrateUpdateTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1)
+		                                 (ITermOfFStarTerm t2) )
+  | _ -> None
 
 let unify s1 u xs i goal =
   match unify_aux s1 u xs i goal with

@@ -321,7 +321,9 @@ and tryDerive s k g u s1 pref goal infon mkpf_infon =
           (match tryDerive s k g u s1 pref goal (MonoTerm infon1) mkpf_infon1 with
              | Some res -> Some res
              | None -> tryDerive s k g u s1 pref goal (MonoTerm infon2) mkpf_infon2)
-            
+    
+	| MonoTerm (App AndInfon _) -> failwith "TODO And for 0, 1, 3 or more terms"
+	        
     | MonoTerm (App ImpliesInfon [i; j]) ->
         let monoinfon = App ImpliesInfon [i; j] in
           (match doDerive s k g u s1 [] i with (* TODO: This is no longer backwards chaining. Fix. *)
@@ -375,4 +377,47 @@ let rec deriveQuant u s k g s0 goal =
                       Some ((s1, res))
                 | _ -> None
 
+  (*******************)
+  (* Wrappers for F# *)
+  (*******************) 
+  (* mostly taken from logicEngine.fst *)
 
+  let checkJustification _signatureProvider (evidence: term) = 
+    failwith "checkJustification not supported in FStar Engine"
+
+  let checkJustificationWrapper (s:option ISignatureProvider) (e:term) =
+    OptionOfPrimsOption (checkJustification s e)
+
+  val dropProof : 'a::* -> 'b::('a => P) -> (option (x:'a * 'b x) -> list 'a)
+  let dropProof = function
+  | None -> [ ]
+  | Some((a, b)) -> [ a ]
+
+  (* Obtain a list of Substitution with accompanying side conditions (AsInfon *)
+  (* ITerms) [call to doDerive]. Then return only those Substitutions that    *)
+  (* satisfy all their side conditions [call to substrateDispatcher_solve].   *)
+  let derive (_infostrate: option infostrate) (target: term(*Infon*)) 
+             (substs: list substitution) : list substitution =
+  (* drop the constructive proof to send the substitutions to F#              *)
+    match _infostrate with None -> [] | Some k ->
+      let variables = freeVars target in
+      collect
+        (fun subst ->
+          match (deriveQuant variables () k variables subst target) with
+		  | None -> [ ]
+		  | Some((a, b)) -> [ a ])
+      substs
+      
+  let deriveWrapper (_i: option infostrate) (t: term) (s: list substitution) 
+                    (*: (TranslationfromFStar.listFS substitution) *)=
+    (ListOfPrimsList (derive _i t s)) 
+
+  let deriveJustification 
+      (_infostrate: option IInfostrate) (target: term(*Infon*)) (proofTemplate: term(*Evidence*))
+      (substs: list substitution) : list substitution =
+	failwith "deriveJustification not supported in FStar Engine"
+      
+  let deriveJustificationWrapper (_i: option IInfostrate) (i: term) 
+                                 (p: term) (s: list substitution) 
+                                 (*: listFS substitution*) =
+    ListOfPrimsList (deriveJustification _i i p s)

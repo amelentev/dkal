@@ -182,15 +182,17 @@ module Builders =
     _restrictTo s (relevantVars |> Seq.toList)
 
   (* For CoreDKAL2 only *)
-  let mkSubst (al:'a list) (bl:'b list) : Dictionary<'a, 'b> =
+  (*let mkSubst (al:Types.vars) (bl:Types.term list) : Types.substitution =
     let res = new Dictionary<'a, 'b>() in
     List.iter2 (fun a b -> res.[a] <- b) al bl;
     res
 
-  let substQuery (q:ISubstrateQueryTerm) (s:Dictionary<IVar, ITerm>) : ITerm =
+  let substQuery (q:ISubstrateQueryTerm) (s:Types.substitution) : Types.term =
     q.Apply(new Substitution(s) :> ISubstitution)
 
-  let extends (s2:Dictionary<'a, 'b>) (s1:Dictionary<'a, 'b>) : bool =
+  let extends (s2:Types.substitution) (s1:Types.substitution) : bool =
     true (* TODO: dummy, need to get rid of it eventually *)
-
- 
+ *)
+  (*let lookupVar (s:substitution) (x:var) = *)
+    
+    
