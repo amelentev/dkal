@@ -10,7 +10,7 @@ coredkal2:
 	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst
 
 coredkal2_genIL:
-	fstar --o InfonLogic --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst --genIL --odir $(FSTBIN2) --UNSAFE
+	fstar --prims prims.fst --writePrims typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst --genIL --odir $(FSTBIN2) --UNSAFE
 
 coredkal2_ok:
 	# if commenting out the last few lines of types.fst

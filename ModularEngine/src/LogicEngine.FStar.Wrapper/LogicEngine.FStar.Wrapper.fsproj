@@ -46,9 +46,30 @@
     <Reference Include="runtime">
       <HintPath>..\LogicEngine.FStar\bin\runtime.dll</HintPath>
     </Reference>
+    <Reference Include="Subst">
+      <HintPath>..\LogicEngine.FStar\bin2\Subst.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="TranslationFromFStar">
+      <HintPath>..\LogicEngine.FStar\bin2\TranslationFromFStar.dll</HintPath>
+    </Reference>
+    <Reference Include="TypeHeaders">
+      <HintPath>..\LogicEngine.FStar\bin2\TypeHeaders.dll</HintPath>
+    </Reference>
+    <Reference Include="Types">
+      <HintPath>..\LogicEngine.FStar\bin2\Types.dll</HintPath>
+    </Reference>
+    <Reference Include="Typing">
+      <HintPath>..\LogicEngine.FStar\bin2\Typing.dll</HintPath>
+    </Reference>
+    <Reference Include="Unify">
+      <HintPath>..\LogicEngine.FStar\bin2\Unify.dll</HintPath>
+    </Reference>
+    <Reference Include="Util">
+      <HintPath>..\LogicEngine.FStar\bin2\Util.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">
