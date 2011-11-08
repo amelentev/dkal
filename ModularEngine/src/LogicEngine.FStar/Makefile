@@ -45,3 +45,5 @@ prepare:
 	cp -r $(MY_FSTAR_HOME)/bin/*.dll $(FSTBIN)/
 	$(FSTAR) --writePrims
 
+run:
+	DkalMulti.exe ../../samples/MultiMain/clinical_trials.mdkal 1000 1000 -FStarLogicEngine
