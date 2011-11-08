@@ -382,7 +382,7 @@ let rec deriveQuant u s k g s0 goal =
   (*******************) 
   (* mostly taken from logicEngine.fst *)
 
-  let checkJustification _signatureProvider (evidence: term) = 
+  let checkJustification (_signatureProvider : option ISignatureProvider) (evidence: term) = 
     failwith "checkJustification not supported in FStar Engine"
 
   let checkJustificationWrapper (s:option ISignatureProvider) (e:term) =

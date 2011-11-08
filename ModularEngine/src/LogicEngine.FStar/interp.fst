@@ -175,7 +175,7 @@ let evalCond xs sl c = match c with
   | Upon i -> collect (fun s -> matchComms xs (Subst.polysubst i s) s) sl
 
 val _evalConds: xs:vars -> cs:conditions -> list (s:substitution{Holds xs cs s})      
-let evalConds xs cs = fold_left (evalCond xs) [(Subst.emptySubst())] cs
+let evalConds xs cs = fold_left (evalCond xs) [(Subst.emptySubst false)] cs
 
 val _enabledActions : r:rule -> list (a:action{Enabled a})
 let enabledActions r = match r with 

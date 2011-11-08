@@ -1,11 +1,13 @@
 module Subst
+open TypeHeaders
 open Types
 open Util
 
-extern reference Builders  {language="F#";
-                            dll="LogicEngine.FStar.Deps";
-                            namespace="Microsoft.Research.Dkal.LogicEngine.FStar.Deps";
-                            classname="Builders"}
+extern reference Utilities {
+    language="F#";
+    dll="LogicEngine.FStar";
+    namespace="Microsoft.Research.Dkal.LogicEngine.FStar";
+    classname="Utilities"}
 
 (* Axiomatization of sets of variables *)
 logic function Empty : vars
@@ -33,15 +35,22 @@ assume (Domain EmptySubst) = Empty
    but logically it is still a set, not a multiset *)
 logic function FreeVarsPoly : polyterm -> vars
 logic function FreeVars : term -> vars
-logic function FreeVarsSubst : substitution -> vars 
+logic function FreeVarsSubst : substitution -> vars
+logic function FreeVarsSubst_aux : substitution -> vars -> vars 
 assume FreeVars_Var: forall (x:var). (FreeVars(Var x) = [x])
 assume FreeVars_Const: forall (c:constant). (FreeVars(Const c) = [])
 assume FreeVars_App_nil: forall (f:func). (FreeVars(App f []) = [])
 assume FreeVars_App_cons: forall (f:func) (t:term) (tl:list term).
         ((FreeVars(App f (t::tl))) = (Append (FreeVars t) (FreeVars(App f tl))))
+assume FreeVarsSubst_aux_nil: forall (s:substitution) (v:vars).
+        (v = []) => (FreeVarsSubst_aux s v = [])
+assume FreeVarsSubst_aux_cons: forall (s:substitution) (x:var) (v:vars).
+        ((FreeVarsSubst_aux s (x::v)) = (Append (FreeVars (Select s x)) (FreeVarsSubst_aux s v)))
+assume FreeVarSubst_all: forall (s:substitution).
+        ((FreeVarsSubst s) = (FreeVarsSubst_aux s (Domain s)))
 
 (* Axiomatization of substitution itself *)
-logic function SubstQuery : ISubstrateQueryTerm -> substitution -> term (* substitution of all variables in a SubstrateQueryTerm *)
+logic function SubstQuery : ISubstrateQueryTerm -> substitution -> ISubstrateQueryTerm (* substitution of all variables in a SubstrateQueryTerm *)
 logic function Subst : term -> substitution -> term (* substitution of all variables in a term *)
 logic function SubstList : list term -> substitution -> list term (* substitution of all variables in a list of terms *)
 assume Subst_VarRepl: forall (x:var) (s:substitution).
@@ -53,7 +62,7 @@ assume Subst_Const: forall (c:constant) (s:substitution).
 assume Subst_App: forall (f:func) (args:list term) (s:substitution).
           ((Subst (App f args) s)=(App f (SubstList args s)))
 assume Subst_QueryTerm: forall (q:ISubstrateQueryTerm) (s:substitution). 
-          ((Subst (SubstrateQueryTerm q) s)=(SubstQuery q s))
+          ((Subst (SubstrateQueryTerm q) s)=(SubstrateQueryTerm (SubstQuery q s)))
 assume SubstList_nil: forall (s:substitution). ((SubstList [] s)=[])
 assume SubstList_cons: forall (t:term) (tl:list term) (s:substitution). 
            (SubstList (t::tl) s) = ((Subst t s)::(SubstList tl s))
@@ -71,10 +80,17 @@ val polysubst: polyterm -> substitution -> polyterm
 logic function MkSubst: vars -> list term -> substitution
 assume (MkSubst [] [] = EmptySubst)
 assume (forall (x:var) (t:term) (xs:vars) (ts:list term). (MkSubst (x::xs) (t::ts)) = (Update (MkSubst xs ts) x t))
-(* Rk: the type in Builders.fs is more generic, will it work?
-       but I cannot use the type term / var in Builders.fs anyway,
-	   so this seems like the only solution to force the dependent type here *)
-extern Builders val mkSubst : xs:vars -> ts:list term -> s:substitution{s=(MkSubst xs ts)}
+(* solution 1 (preferred but the F# file does not compile, see utilities.fs) *)
+
+extern Utilities val mkSubst : xs:vars -> ts:list term -> s:substitution{s=(MkSubst xs ts)}
+
+(* solution 2 (but it does not allow to put any arbitrary output refinement) *)
+(*
+extern Utilities val mkSubst_aux : xs:listFS var -> ts:listFS term -> substitution
+val mkSubst : xs:vars -> ts:list term -> substitution
+let mkSubst xs ts =
+  mkSubst_aux (ListOfPrimsList xs) (ListOfPrimsList ts)
+*)
 
 type Extends :: substitution => substitution => E
 assume forall (s:substitution). Extends s s
@@ -83,44 +99,41 @@ assume forall (s1:substitution) (s2:substitution) (x:var) (t:term).
         => Extends (Update s2 x t) s1
 (* what if x appears free in some elements of the image of s2?? *)
 
-extern Builders val substQuery: q:ISubstrateQueryTerm -> s:substitution -> q':term{(SubstQuery q s)=q'}
-(* Rk: the type in Builders.fs is more generic *)
-extern Builders val emptySubst: unit -> s:substitution{s=EmptySubst}
+extern Utilities val substQuery: q:ISubstrateQueryTerm -> s:substitution -> q':ISubstrateQueryTerm{(SubstQuery q s)=q'}
+extern Utilities val emptySubst: bool -> s:substitution{s=EmptySubst}
 
 (* TODO: dummy, need to get rid of it eventually *)
-extern Builders val extends : 
+extern Utilities val extends : 
      s2:substitution
   -> s1:substitution 
   -> b:bool{((b=true) <=> (Extends s2 s1))}
 
-val lookupVar : 
+extern Utilities val lookupVar : 
      s:substitution 
   -> x:var 
   -> o:option term{((o=None <=> (not (In x (Domain s)))) &&
                       (forall (t:term). (o=(Some t)) => 
-   			  ((In x (Domain s)) && (t=(Select s x)))))}
-(* let lookupVar s x = *)
+   			  ((In x (Domain s)) && (t=(Select s x)))))} 
 
-val extendSubst : 
+extern Utilities val extendSubst : 
      s:substitution 
   -> x:var 
   -> t:term(*{(Subst t s)=t && not(In x (Domain s))}*) (* TODO *)
   -> s':substitution{s'=(Update s x t)}
 
+extern Utilities val domain : s:substitution -> v:vars{(v = (Domain s))}
+
 val inDomain : 
      s:substitution 
   -> x:var 
   -> b:bool{b=true <=> In x (Domain s)}
-   
-val inFreevars : 
-     s:substitution 
-  -> x:var 
-  -> b:bool{b=true <=> In x (FreeVarsSubst s)}
+let inDomain s x =
+  contains x (domain s)
 
-val freeVarsSubst : 
-     s:substitution 
-  -> f:vars{(f = (FreeVarsSubst s))}
-
+extern Utilities val substrateQueryTerm_Vars :
+  s:ISubstrateQueryTerm -> f:vars{(f = (FreeVars (SubstrateQueryTerm s)))}
+extern Utilities val substrateUpdateTerm_Vars :
+  s:ISubstrateUpdateTerm -> f:vars{(f = (FreeVars (SubstrateUpdateTerm s)))}
 val freeVars : 
      t:term 
   -> f:vars{(f = (FreeVars t))}
@@ -129,8 +142,35 @@ let rec freeVars t = match t with
   | Const c -> []
   | App f [] -> []
   | App f (h::t) -> append (freeVars h) (freeVars (App f t))
-  | SubstrateQueryTerm _ -> failwith "TODO"
-  | SubstrateUpdateTerm _ -> failwith "TODO"
+  | SubstrateQueryTerm s -> substrateQueryTerm_Vars s
+  | SubstrateUpdateTerm s -> substrateUpdateTerm_Vars s
+
+val freeVarsSubst_aux :
+     s:substitution -> v:vars -> f:vars{(f = (FreeVarsSubst_aux s v))}
+let rec freeVarsSubst_aux s v =
+  match v with
+  | [] -> []
+  | x::tl -> (match lookupVar s x with
+             | None -> failwith "impos"
+			 | Some(t) -> append (freeVars t) (freeVarsSubst_aux s tl))
+
+val freeVarsSubst : (* maybe a way to not make it extern? *) 
+     s:substitution 
+  -> f:vars{(f = (FreeVarsSubst s))}
+let freeVarsSubst s =
+  freeVarsSubst_aux s (domain s)
+(* collect (fun k -> match lookupVar s k with
+                    | None -> [ ]
+					| Some(t) -> freeVars t
+		  ) (domain s) *)
+    
+val inFreevars : 
+     s:substitution 
+  -> x:var 
+  -> b:bool{b=true <=> In x (FreeVarsSubst s)}
+let inFreevars s x =
+  contains x (freeVarsSubst s)
+
 
 let genId =
   let ctr = ref 0 in 

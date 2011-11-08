@@ -24,17 +24,7 @@ open Microsoft.Research.Dkal.LogicEngine.FStar.Deps
 type substitution = Dictionary<Types.var, Types.term>
 
 type Wrapper() =
-  
-  (*let rec PrimsListofList (l:list<'a>) : Prims.list<'a> = 
-    match l with
-    | [] -> new Prims.Nil<'a>() :> Prims.list<'a>
-    | h::t -> new Prims.Cons<'a>(h, PrimsListofList t) :> Prims.list<'a>
 
-  let PrimsOptionofOption (o:option<'a>) : Prims.option<'a> = 
-    match o with
-    | None -> new Prims.None<'a>() :> Prims.option<'a>
-    | Some(a) -> new Prims.Some<'a>(a) :> Prims.option<'a>
-  *)
   let _signatureProvider: ISignatureProvider option ref = ref None
   let _infostrate: IInfostrate option ref = ref None
 
@@ -77,9 +67,9 @@ type Wrapper() =
       Seq.ofList
 
     member le.CheckJustification (evidence: ITerm) =
-      (*evidence  |> TranslationToFStar.FStarTermOfITerm |>
-      InfonLogic.checkJustificationWrapper 
+      evidence  |> TranslationToFStar.FStarTermOfITerm |>
+      (InfonLogic.checkJustificationWrapper.TyApp() :?> (ISignatureProvider Prims.option -> Types.term -> Types.term option)) 
         (Builders.PrimsOptionOfOption !_signatureProvider) |>
-      Option.map TranslationFromFStar.ITermOfFStarTerm*)
-      failwith "TODO checkJustification"
+      Option.map TranslationFromFStar.ITermOfFStarTerm
+      (*failwith "TODO checkJustification"*)
 

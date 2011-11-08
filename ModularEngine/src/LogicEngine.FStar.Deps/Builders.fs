@@ -110,15 +110,6 @@ module Builders =
   let nth (l: list<'a>) (i: int) : 'a = l.[i]
   let lessThan (i:int) (j:int) : bool = i < j
 
-  let _substrateQueryTerm_Vars (s:substrateQueryTerm) = s.Vars
-  let _substrateUpdateTerm_Vars (s:substrateUpdateTerm) = s.Vars
-  let _substrateQueryTerm_boundVars (s:substrateQueryTerm) = s.BoundVars
-  let _substrateUpdateTerm_boundVars (s:substrateUpdateTerm) = s.BoundVars
-  let substrateQueryTerm_apply (s:substrateQueryTerm) (s2:ISubstitution) : ITerm = s.Apply s2
-  let substrateUpdateTerm_apply (s:substrateUpdateTerm) (s2:ISubstitution) : ITerm = s.Apply s2
-  let _substrateQueryTerm_unifyFrom (s:substrateQueryTerm) (s2:ISubstitution) (t:ITerm) : ISubstitution option = s.UnifyFrom s2 t
-  let _substrateUpdateTerm_unifyFrom (s:substrateUpdateTerm) (s2:ISubstitution) (t:ITerm) : ISubstitution option = s.UnifyFrom s2 t
-
   type listFS<'a> = list<'a>
   let NilFS (b:bool) : listFS<'a> = []
   let ConsFS (h:'a) (t:listFS<'a>) : listFS<'a> = h::t
@@ -140,7 +131,16 @@ module Builders =
   let PrimsTupleOfTuple (t:tupleFS<'a,'b>) : Prims.DepTuple<'a, 'b> =
     let (x, y) = t in
     new Prims.DconDepTuple<'a, 'b>(x, y) :> Prims.DepTuple<'a, 'b>
-  
+
+  let _substrateQueryTerm_Vars (s:substrateQueryTerm) = s.Vars
+  let _substrateUpdateTerm_Vars (s:substrateUpdateTerm) = s.Vars
+  let _substrateQueryTerm_boundVars (s:substrateQueryTerm) = s.BoundVars
+  let _substrateUpdateTerm_boundVars (s:substrateUpdateTerm) = s.BoundVars
+  let substrateQueryTerm_apply (s:substrateQueryTerm) (s2:ISubstitution) : ITerm = s.Apply s2
+  let substrateUpdateTerm_apply (s:substrateUpdateTerm) (s2:ISubstitution) : ITerm = s.Apply s2
+  let _substrateQueryTerm_unifyFrom (s:substrateQueryTerm) (s2:ISubstitution) (t:ITerm) : ISubstitution option = s.UnifyFrom s2 t
+  let _substrateUpdateTerm_unifyFrom (s:substrateUpdateTerm) (s2:ISubstitution) (t:ITerm) : ISubstitution option = s.UnifyFrom s2 t
+
   (* Dictionary utilities *)
   let domainContains (s: Dictionary<'a,'b>) (v: 'a) : bool =
     s.ContainsKey v 
@@ -148,10 +148,10 @@ module Builders =
   let subst_apply_def (s: Dictionary<'a,'b>) (v: 'a) (def:'b) : 'b = 
     let found, ret = s.TryGetValue v
     if found then ret else def
-
+(*
   let emptySubst (b:bool) : Dictionary<'a,'b> = 
     new Dictionary<_, _>()
-  
+*)
   let copy (s : Dictionary<'a,'b>) : Dictionary<'a,'b> =
     new Dictionary<_, _>(s)
 
@@ -181,18 +181,6 @@ module Builders =
     relevantVars.ExceptWith vars
     _restrictTo s (relevantVars |> Seq.toList)
 
-  (* For CoreDKAL2 only *)
-  (*let mkSubst (al:Types.vars) (bl:Types.term list) : Types.substitution =
-    let res = new Dictionary<'a, 'b>() in
-    List.iter2 (fun a b -> res.[a] <- b) al bl;
-    res
 
-  let substQuery (q:ISubstrateQueryTerm) (s:Types.substitution) : Types.term =
-    q.Apply(new Substitution(s) :> ISubstitution)
-
-  let extends (s2:Types.substitution) (s1:Types.substitution) : bool =
-    true (* TODO: dummy, need to get rid of it eventually *)
- *)
-  (*let lookupVar (s:substitution) (x:var) = *)
     
     

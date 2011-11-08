@@ -117,7 +117,7 @@ module TranslationToFStar =
     (List.fold (fun res k -> 
                extend res
                  (FStarVarOfIVar k) (FStarTermOfITerm (subst.Apply k)))
-               (emptySubst false) subst.Domain
+               (new Dictionary<_, _>()) subst.Domain
     )
 
 

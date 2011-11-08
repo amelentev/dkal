@@ -5,7 +5,7 @@ open Util
 
 (* 1. Dynamic type tests from .NET *)
 type TypeOf :: object => typ => E
-val check_object_typ : x:object -> t:typ -> b:bool{b=true => TypeOf x t}
+(*val check_object_typ : x:object -> t:typ -> b:bool{b=true => TypeOf x t}*) (* never used *)
 
 (* judgment: is l a list of just constants c *)
 type ConstList :: 'a::* => 'a => list 'a => P =

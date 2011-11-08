@@ -16,13 +16,13 @@ let rec fold_left2 f a lb lc =
 val addSubst : s:substitution -> x:var -> t:term -> substitution
 (* composes s with {x -> t} *)
 let addSubst s1 x t =
-  let substxt = extendSubst (emptySubst()) x t in
+  let substxt = extendSubst (emptySubst false) x t in
   fold_left
     (fun s y -> 
 	   match lookupVar s1 y with
 	   | None -> raise "impos"
 	   | Some(ty) -> extendSubst s y (subst ty substxt))
-    (emptySubst())
+    (emptySubst false)
     (domain s1)
 
 (* ad hoc implementation of unification
@@ -72,12 +72,15 @@ let unify s1 u xs i goal =
 			  match lookupVar s3 x with
 			    | None -> raise "impos"
 			    | Some t -> extendSubst s3 x t
-			 ) (emptySubst()) (domain s3) in
+			 ) (emptySubst false) (domain s3) in
       let l = map (fun x -> subst (Var x) s3) xs in
       if extends s2 s1 then (* This is cheating: the condition is almost never true *)
         Some(s2, l) else raise "Fix problem in unification"
   | None -> None
-  
+ 
+(* Spec?? What do we want this to do?
+   In particular, do we want to add the variables in the foralls in front of
+   p1 and p2 into the unification variables or not? *)
 val unify_poly: s1:substitution
             -> uvars1:vars 
             -> uvars2:vars 
