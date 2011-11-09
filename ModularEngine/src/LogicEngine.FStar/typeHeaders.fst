@@ -275,3 +275,8 @@ module TypeHeaders
 	let AndInfonW l = AndInfon (ListOfPrimsList l)
   val AndEvidenceW : list ITerm -> ITerm
 	let AndEvidenceW l = AndEvidence (ListOfPrimsList l)
+
+  extern Builders val lessOrEqualThan : object -> object -> bool
+  (* casts the two objects to Int32 and performs an <= on them *)
+  
+  extern Builders val object_of_int : int -> object

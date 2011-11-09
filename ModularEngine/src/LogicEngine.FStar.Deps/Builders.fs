@@ -181,6 +181,9 @@ module Builders =
     relevantVars.ExceptWith vars
     _restrictTo s (relevantVars |> Seq.toList)
 
+  let lessOrEqualThan (a:obj) (b:obj) : bool =
+    (a :?> int32) <= (b :?> int32)
 
-    
+  let object_of_int (i:int) : obj =
+    (i :> obj)
     
