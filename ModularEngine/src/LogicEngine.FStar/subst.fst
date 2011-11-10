@@ -203,8 +203,8 @@ let rec subst i s = match i with
                 | Some t -> t)
   | Const c -> Const c
   | App f tl -> App f (substList tl s)
-  | SubstrateQueryTerm q -> failwith "TODO"
-     (* FStarTermOfITerm(substQuery q s) *)
+  | SubstrateQueryTerm q ->
+     SubstrateQueryTerm(substQuery q s)
 	
 and substList ilist s = match ilist with
   | [] -> []
