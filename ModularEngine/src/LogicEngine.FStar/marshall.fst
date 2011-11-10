@@ -42,7 +42,6 @@ assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
 
 val printSubstrateConstant: object -> string
 val printSubstrateQuery: ISubstrateQueryTerm -> string
-val printSubstrateUpdate: ISubstrateUpdateTerm -> string
 
 val printList: ('a -> string) -> list 'a -> string -> string
 let rec printList printOne l delimiter =
@@ -79,7 +78,7 @@ let printTyp ty = match ty with
   | String -> "String"
 
 val printVar: var -> string
-let printVar v = strcat "Var"
+let printVar v = strcat "Var("
                  (strcat (v.name)
                  (strcat ", "
                  (strcat (printTyp v.typ)
@@ -109,7 +108,8 @@ let printRelationInfon r =
   (strcat ", ["
   (strcat (printList printTyp r.argsType "; ")
   (strcat "], "
-  (printOption printMono r.identity)))))))
+  (strcat (printOption printMono r.identity)
+   ")")))))))
  
 let printFunc f = match f with
   | SeqRule -> "SeqRule"
@@ -149,7 +149,7 @@ let printFunc f = match f with
   | Var x -> printVar x
   | Const c -> printConst c
   | SubstrateQueryTerm q -> printSubstrateQuery q
-  | SubstrateUpdateTerm u -> printSubstrateUpdate u
+  | SubstrateUpdateTerm u -> raise "unexpected SubstrateUpdate"
   | App f ts -> strcat "(App "
                 (strcat (printFunc f)
                 (strcat " ["
@@ -168,11 +168,88 @@ let str = match p with
 assume ((ReprPoly p) = str);
 str
 
+(* ============================ parsing ========================= *)
+val parseSubstrateConstant: string -> object
+val parseSubstrateQuery: string -> ISubstrateQueryTerm
+
+val parseList: (string -> 'a) -> string -> string -> list 'a
+
+val parseOption: (string -> 'a) -> string -> option 'a
+
+val parseTyp: string -> typ
+let parseTyp str =
+  if str = "Infon" then Infon
+  else if str = "Principal" then Principal
+  else if str = "SubstrateUpdate" then SubstrateUpdate
+  else if str = "SubstrateQuery" then SubstrateQuery
+  else if str = "Action" then Action
+  else if str = "Condition" then Condition
+  else if str = "RuleT" then RuleT
+  else if str = "Evidence" then Evidence
+  else if str = "Boolean" then Boolean 
+  else if str = "Int32" then Int32
+  else if str = "Double" then Double 
+  else if str = "String" then String
+  else raise (strcat "unexpected Typ: " str)
+
+val parseVar: string -> var
+let parseVar str =
+  if not(strStartsWith str "Var") 
+  then raise (strcat "unexpected var: " str)
+  else let indexOfComma = strIndexOf str "," in
+  let name = strSubstring str 4 (indexOfComma-4) in
+  let indexOfRightPar = strIndexOf str ")" in
+  let typ = parseTyp (strSubstring str (indexOfComma+1) (indexOfRightPar-indexOfComma-1)) in
+  {name = name; typ = typ}
+
+val parsePrincipal: string -> principal
+let parsePrincipal str = str
+
+val parseConst: string -> constant
+let parseConst str =
+  if str = "TrueT" then TrueT
+  else if str = "FalseT" then FalseT
+  else if strStartsWith str "SubstrateConstant" then 
+    let lastIndexOfrp = strLastIndexOf str ")" in
+    let strSubstrate = strSubstring str 18 (lastIndexOfrp - 18) in
+    let o = parseSubstrateConstant strSubstrate in
+    SubstrateConstant o
+  else if strStartsWith str "PrincipalConstant" then
+    let lastIndexOfrp = strLastIndexOf str ")" in
+    let strPrincipal = strSubstring str 18 (lastIndexOfrp - 18) in
+    let p = parsePrincipal strPrincipal in
+    PrincipalConstant p
+  else raise (strcat "unexpected constant: " str)
+
+val parseRelationInfon: string -> relationInfon
+val parseFunc: string -> func
+val parseMono: string -> term
+
+let parseRelationInfon str =
+ let indexOfComma = strIndexOf str "," in
+ let name = strSubstring str 14 (indexOfComma - 14) in
+ let rest = strSubstringNoLength str (indexOfComma+1) in (* skip the whitespace *)
+ let indexofComma = strIndexOf rest "," in
+ let retType = parseTyp (strSubstring rest 0 (indexOfComma-1)) in
+ let rest = strSubstringNoLength rest (indexOfComma+2) in 
+ let indexOfPar = strIndexOf rest "]" in
+ let argsType = parseList parseTyp (strSubstring rest 0 (indexOfPar-1)) ";" in
+ let identity = parseOption parseMono (strSubstring rest (indexOfPar+3) (strIndexOf rest ")" - indexOfPar - 3)) in
+ {name = name; retType = retType; argsType = argsType; identity = identity}
+ 
+
+val parsePoly: string -> polyterm
+
 (* Note: As for the printer, this function is recursive and so not in P. *)
 val parseInfon: b:string -> option (p:polyterm{(Net.Received b => Net.Received p) &&
                                                (ReprPoly p)=b})
-let parseInfon b = raise "TODO"                                         
-
+let parseInfon b = 
+  let p = 
+    if strStartsWith b "(Forall" then parsePoly b 
+    else MonoTerm(parseMono b) in
+  assume ((Net.Received b => Net.Received p) &&
+          (ReprPoly p)=b);
+  Some p
 
 (* -------------------------------------------------------------------------------- *)
 

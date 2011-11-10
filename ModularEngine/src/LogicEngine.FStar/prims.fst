@@ -175,6 +175,11 @@ extern Runtime val writeToFile : string -> 'a -> string
 extern Runtime val writeCertToFile : string -> 'a -> string
 extern Runtime val print_int : int -> bool
 extern Runtime val strcat : string -> string -> string
+extern Runtime val strStartsWith: string -> string -> bool
+extern Runtime val strSubstring: string -> int -> int -> string
+extern Runtime val strSubstringNoLength: string -> int -> string
+extern Runtime val strIndexOf: string -> string -> int
+extern Runtime val strLastIndexOf: string -> string -> int
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool
