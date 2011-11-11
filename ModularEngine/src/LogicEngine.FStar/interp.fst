@@ -31,8 +31,6 @@ type communications = list communication
 (* -------------------------------------------------------------------------------- *)
 (* Spec: Validity of condition(s) *)
 (* -------------------------------------------------------------------------------- *)
-type Includes :: vars => vars => E (* TODO *)
-
 logic function CondSubst : condition -> substitution -> condition
 assume forall (i:infon) (s:substitution). (CondSubst (If i) s) = (If (PolySubst i s))
 assume forall (i:infon) (s:substitution). (CondSubst (Upon i) s) = (Upon (PolySubst i s))
@@ -86,23 +84,22 @@ type rules = list rule
 
 (* ================= Wrapping external functions ===================== *)
 
-val _derive:  u:vars
+val _derive: u:vars
           -> goal:infon
-          -> s0:substitution
-          -> list (s:substitution{HoldsOne u (CondSubst (If goal) s0) s})
-let derive u goal s0 = 
+          -> subst0:substitution
+          -> list (subst:substitution{HoldsOne u (CondSubst (If goal) subst0) subst})
+let derive u goal subst0 = 
   let s = State.getSubstrate () in
   let k = State.getInfostrate () in 
-    match goal with 
-      | MonoTerm i -> 
-          (match InfonLogic.deriveQuant u s k [] s0 i with 
-             | None -> []
-             | Some ((s, pf)) ->  [(s:substitution)])
-      | ForallT xs i -> 
-          (match InfonLogic.deriveQuant u s k xs s0 i with 
-             | None -> []
-             | Some ((s, pf)) ->  [(s:substitution)])
-
+  let goal' = polysubst goal subst0 in 
+    if (includes u (domain subst0)) &&
+       (includes u (freeVarsPoly goal')) (* TODO: push into pre-condition *)
+    then match InfonLogic.deriveQuant u s k subst0 goal with
+      | None -> []
+      | Some ((subst, pf)) -> 
+          assert (HoldsOne u (CondSubst (If goal) subst0) subst); 
+          [(subst:substitution)]
+    else []
 (* ================= Process state and messaging ===================== *)
 val comms : Ref (list communication)
 let comms = newref []
