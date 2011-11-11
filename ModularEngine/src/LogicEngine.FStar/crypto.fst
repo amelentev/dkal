@@ -59,3 +59,9 @@ let rsa_verify p pk x b s =
           if res
           then let _ = assume ('P x) in res
           else res
+
+val rsa_keyleak:  'a::* -> 'P::('a => E) 
+             -> p:principal
+             -> x:privkey 'a 'P p{forall (x:'a). 'P x}
+             -> bytes
+end
