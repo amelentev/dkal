@@ -100,7 +100,7 @@ val printRelationInfon:relationInfon -> string
 val printFunc: func -> string
 val printMono: term -> string
 
-let printRelationInfon r =
+let rec printRelationInfon r =
   strcat "RelationInfon("
   (strcat (r.name)
   (strcat ", "
@@ -111,7 +111,7 @@ let printRelationInfon r =
   (strcat (printOption printMono r.identity)
    ")")))))))
  
-let printFunc f = match f with
+and printFunc f = match f with
   | SeqRule -> "SeqRule"
   | EmptyRule -> "EmptyRule"
   | Rule -> "Rule"
@@ -145,16 +145,16 @@ let printFunc f = match f with
   | RelationInfon r -> strcat "RelationInfon(" 
                        (strcat (printRelationInfon r) ")")
 
-(*let printMono t = match t with
+and printMono t = match t with
   | Var x -> printVar x
-  | Const c -> printConst c
-  | SubstrateQueryTerm q -> printSubstrateQuery q
+  | Const c -> strcat "Const " (printConst c)
+  | SubstrateQueryTerm q -> strcat "SubstrateQuery " (printSubstrateQuery q)
   | SubstrateUpdateTerm u -> raise "unexpected SubstrateUpdate"
   | App f ts -> strcat "(App "
                 (strcat (printFunc f)
                 (strcat " ["
                 (strcat (printList printMono ts "; ")
-                 "])"))) *)
+                 "])"))) 
 
 val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
 let printInfon p = 
@@ -169,87 +169,210 @@ assume ((ReprPoly p) = str);
 str
 
 (* ============================ parsing ========================= *)
-val parseSubstrateConstant: string -> object
-val parseSubstrateQuery: string -> ISubstrateQueryTerm
 
-val parseList: (string -> 'a) -> string -> string -> list 'a
+val parseSubstrateConstant: string -> (object * string)
+val parseSubstrateQuery: string -> (ISubstrateQueryTerm * string)
 
-val parseOption: (string -> 'a) -> string -> option 'a
+val rmPfxStr: string -> string -> string
+let rmPfxStr str substr = 
+  let str = strTrim str in
+  if strStartsWith str substr
+  then let n = strLength substr in
+    strSubstringNoLength str n
+  else raise (strcat str (strcat " does not have prefix " substr))
 
-val parseTyp: string -> typ
+val getAll: (string -> ('a *string)) -> string -> string -> list 'a -> (list 'a * string)  
+let rec getAll parseOne str delimiter ones = 
+  let str = strTrim str in
+  if strStartsWith str "["  
+  then let rest = rmPfxStr str "[" in
+    let one, rest = parseOne rest in
+    let newones: list 'a = append ones [one] in
+    let result: (list 'a * string) = getAll parseOne rest delimiter newones in
+    result
+  else if strStartsWith str delimiter
+  then let rest = rmPfxStr str delimiter in
+    let one, rest = parseOne rest in
+    let newones = append ones [one] in
+    getAll parseOne rest delimiter newones
+  else if strStartsWith str "]" 
+  then (ones, rmPfxStr str "]") 
+  else raise (strcat "unexpected string in parseList: " str)
+
+val parseList: (string -> ('a*string)) -> string -> string -> ((list 'a) * string)
+let parseList (parseOne: string -> ('a * string)) (str: string) (delimiter:string) : (list 'a * string) =
+  getAll parseOne str delimiter ([]: list 'a)
+
+val parseOption: (string -> ('a*string)) -> string -> (option 'a * string)
+let parseOption parseOne str =
+  let str = strTrim str in
+  if strStartsWith str "None"
+  then (None, strSubstringNoLength str 4)
+  else if strStartsWith str "Some" 
+  then let rest = strSubstringNoLength str 5 in
+    let one, rest = parseOne rest in
+    let rest = rmPfxStr rest ")" in
+    Some one, rest
+  else raise (strcat "unexpected string in parseOption: " str)
+
+val parseString: string -> string -> (string * string) 
+let parseString str delimiter =
+  let index = strIndexOf str delimiter in
+  strSubstring str 0 index, strSubstringNoLength str index
+
+val parseTyp: string -> (typ * string)
 let parseTyp str =
-  if str = "Infon" then Infon
-  else if str = "Principal" then Principal
-  else if str = "SubstrateUpdate" then SubstrateUpdate
-  else if str = "SubstrateQuery" then SubstrateQuery
-  else if str = "Action" then Action
-  else if str = "Condition" then Condition
-  else if str = "RuleT" then RuleT
-  else if str = "Evidence" then Evidence
-  else if str = "Boolean" then Boolean 
-  else if str = "Int32" then Int32
-  else if str = "Double" then Double 
-  else if str = "String" then String
+  let str = strTrim str in
+  let rmPfx n = strSubstringNoLength str n in
+  if strStartsWith str "Infon" then (Infon, rmPfx 5)
+  else if strStartsWith str "Principal" then (Principal, rmPfx 9)
+  else if strStartsWith str "SubstrateUpdate" then (SubstrateUpdate, rmPfx 15)
+  else if strStartsWith str "SubstrateQuery" then (SubstrateQuery, rmPfx 14)
+  else if strStartsWith str "Action" then (Action, rmPfx 6)
+  else if strStartsWith str "Condition" then (Condition, rmPfx 9)
+  else if strStartsWith str "RuleT" then (RuleT, rmPfx 5)
+  else if strStartsWith str "Evidence" then (Evidence, rmPfx 8)
+  else if strStartsWith str "Boolean" then (Boolean, rmPfx 7)
+  else if strStartsWith str "Int32" then (Int32, rmPfx 5)
+  else if strStartsWith str "Double" then (Double, rmPfx 6)
+  else if strStartsWith str "String" then (String, rmPfx 6)
   else raise (strcat "unexpected Typ: " str)
 
-val parseVar: string -> var
+val parseVar: string -> (var*string)
 let parseVar str =
+  let str = strTrim str in
   if not(strStartsWith str "Var") 
   then raise (strcat "unexpected var: " str)
-  else let indexOfComma = strIndexOf str "," in
-  let name = strSubstring str 4 (indexOfComma-4) in
-  let indexOfRightPar = strIndexOf str ")" in
-  let typ = parseTyp (strSubstring str (indexOfComma+1) (indexOfRightPar-indexOfComma-1)) in
-  {name = name; typ = typ}
+  else let rest = strSubstringNoLength str 4 in
+  let name, rest = parseString rest "," in
+  let rest = rmPfxStr rest "," in
+  let typ, rest = parseTyp rest in
+  let rest = rmPfxStr rest ")" in
+  {name = name; typ = typ}, rest
 
-val parsePrincipal: string -> principal
-let parsePrincipal str = str
-
-val parseConst: string -> constant
+val parseConst: string -> (constant*string)
 let parseConst str =
-  if str = "TrueT" then TrueT
-  else if str = "FalseT" then FalseT
+  let str = strTrim str in
+  let rmPfx n = strSubstringNoLength str n in
+  if str = "TrueT" then (TrueT, rmPfx 5)
+  else if str = "FalseT" then (FalseT, rmPfx 6)
   else if strStartsWith str "SubstrateConstant" then 
-    let lastIndexOfrp = strLastIndexOf str ")" in
-    let strSubstrate = strSubstring str 18 (lastIndexOfrp - 18) in
-    let o = parseSubstrateConstant strSubstrate in
-    SubstrateConstant o
+    let rest = rmPfx 18 in
+    let o, rest = parseSubstrateConstant rest in
+    let rest = rmPfxStr rest ")" in
+    SubstrateConstant o, rest
   else if strStartsWith str "PrincipalConstant" then
-    let lastIndexOfrp = strLastIndexOf str ")" in
-    let strPrincipal = strSubstring str 18 (lastIndexOfrp - 18) in
-    let p = parsePrincipal strPrincipal in
-    PrincipalConstant p
+    let rest = rmPfx 18 in
+    let p, rest = parseString rest ")" in
+    let rest = rmPfxStr rest ")" in
+    PrincipalConstant p, rest
   else raise (strcat "unexpected constant: " str)
 
-val parseRelationInfon: string -> relationInfon
-val parseFunc: string -> func
-val parseMono: string -> term
+val parseRelationInfon: string -> (relationInfon*string)
+val parseFunc: string -> (func*string)
+val parseMono: string -> (term*string)
 
-let parseRelationInfon str =
- let indexOfComma = strIndexOf str "," in
- let name = strSubstring str 14 (indexOfComma - 14) in
- let rest = strSubstringNoLength str (indexOfComma+1) in (* skip the whitespace *)
- let indexofComma = strIndexOf rest "," in
- let retType = parseTyp (strSubstring rest 0 (indexOfComma-1)) in
- let rest = strSubstringNoLength rest (indexOfComma+2) in 
- let indexOfPar = strIndexOf rest "]" in
- let argsType = parseList parseTyp (strSubstring rest 0 (indexOfPar-1)) ";" in
- let identity = parseOption parseMono (strSubstring rest (indexOfPar+3) (strIndexOf rest ")" - indexOfPar - 3)) in
- {name = name; retType = retType; argsType = argsType; identity = identity}
+let rec parseRelationInfon str =
+  let str = strTrim str in
+  let rest = strSubstringNoLength str 14 in
+  let name, rest = parseString rest "," in
+  let rest = rmPfxStr rest "," in
+  let retType, rest = parseTyp rest in
+  let rest = rmPfxStr rest "," in
+  let rest = rmPfxStr rest "[" in
+  let argsType, rest = parseList parseTyp rest ";" in
+  let rest = rmPfxStr rest "]" in
+  let rest = rmPfxStr rest "," in
+  let identity, rest = parseOption parseMono rest in
+  {name = name; retType = retType; argsType = argsType; identity = identity}, rest
  
+and parseFunc str =
+  let str = strTrim str in
+  let rmPfx n = strSubstringNoLength str n in
+  if strStartsWith str "SeqRule" then (SeqRule, rmPfx 7)
+  else if strStartsWith str "EmptyRule" then (EmptyRule, rmPfx 9)
+  else if strStartsWith str "Rule" then (Rule, rmPfx 4)
+  else if strStartsWith str "RuleOnce" then (RuleOnce, rmPfx 8)
+  else if strStartsWith str "SeqCondition" then (SeqCondition, rmPfx 12)
+  else if strStartsWith str "EmptyCondition" then (EmptyCondition, rmPfx 14)
+  else if strStartsWith str "WireCondition" then (WireCondition, rmPfx 13)
+  else if strStartsWith str "KnownCondition" then (KnownCondition, rmPfx 14)
+  else if strStartsWith str "SeqAction" then (SeqAction, rmPfx 9)
+  else if strStartsWith str "EmptyAction" then (EmptyAction, rmPfx 11)
+  else if strStartsWith str "Send" then (Send, rmPfx 4)
+  else if strStartsWith str "JustifiedSend" then (JustifiedSend, rmPfx 13) 
+  else if strStartsWith str "JustifiedSay" then (JustifiedSay, rmPfx 12)
+  else if strStartsWith str "Learn" then (Learn, rmPfx 5)
+  else if strStartsWith str "Forget" then (Forget, rmPfx 6)
+  else if strStartsWith str "Install" then (Install, rmPfx 7)
+  else if strStartsWith str "Uninstall" then (Uninstall, rmPfx 9)
+  else if strStartsWith str "Apply" then (Apply, rmPfx 5)
+  else if strStartsWith str "Drop" then (Drop, rmPfx 4)
+  else if strStartsWith str "EmptyInfon" then (EmptyInfon, rmPfx 10)
+  else if strStartsWith str "AsInfon" then (AsInfon, rmPfx 7)
+  else if strStartsWith str "AndInfon" then (AndInfon, rmPfx 8)
+  else if strStartsWith str "ImpliesInfon" then (ImpliesInfon, rmPfx 12)
+  else if strStartsWith str "SaidInfon" then (SaidInfon, rmPfx 9)
+  else if strStartsWith str "JustifiedInfon" then (JustifiedInfon, rmPfx 14)
+  else if strStartsWith str "EmptyEvidence" then (EmptyEvidence, rmPfx 13)
+  else if strStartsWith str "SignatureEvidence" then (SignatureEvidence, rmPfx 17)
+  else if strStartsWith str "ModusPonensEvidence" then (ModusPonensEvidence, rmPfx 19)
+  else if strStartsWith str "AndEvidence" then (AndEvidence, rmPfx 11)
+  else if strStartsWith str "AsInfonEvidence" then (AsInfonEvidence, rmPfx 15)
+  else if strStartsWith str "RelationInfon"
+  then let rest = rmPfx 14 in
+    let r, rest = parseRelationInfon rest in
+    RelationInfon r, rest 
+  else raise (strcat "unexpected Func: " str)
 
-val parsePoly: string -> polyterm
+and parseMono str = 
+  let str = strTrim str in
+  if strStartsWith str "Var" then
+    let x, rest = parseVar str in
+    Var x, rest
+  else if strStartsWith str "Const"
+  then let rest = strSubstringNoLength str 5 in
+    let c, rest = parseConst rest in
+    Const c, rest
+  else if strStartsWith str "SubstrateQuery"
+  then let rest = strSubstringNoLength str 15 in
+    let q , rest = parseSubstrateQuery rest in
+    SubstrateQueryTerm q, rest
+  else if strStartsWith str "(App" 
+  then let rest = strSubstringNoLength str 4 in
+    let f, rest = parseFunc rest in
+    let rest = rmPfxStr rest "[" in
+    let ts, rest = parseList parseMono rest ";" in
+    App f ts, rest
+  else raise (strcat "unexpected Mono: " str)
+
+val parsePoly: string -> (polyterm*string)
+let parsePoly str =
+  let str = strTrim str in
+  let rest = rmPfxStr str "(" in
+  let xs, rest = parseList parseVar rest "," in
+  let rest = rmPfxStr rest ")" in
+  let t, rest = parseMono rest in
+  let rest = rmPfxStr rest ")" in
+  ForallT xs t, rest
 
 (* Note: As for the printer, this function is recursive and so not in P. *)
 val parseInfon: b:string -> option (p:polyterm{(Net.Received b => Net.Received p) &&
                                                (ReprPoly p)=b})
+
+
 let parseInfon b = 
-  let p = 
+  let b = strTrim b in
+  let p, rest = 
     if strStartsWith b "(Forall" then parsePoly b 
-    else MonoTerm(parseMono b) in
-  assume ((Net.Received b => Net.Received p) &&
-          (ReprPoly p)=b);
-  Some p
+    else let t, rest = parseMono b in
+      MonoTerm t, rest in
+  if strLength rest = 0 
+  then let _ = assume ((Net.Received b => Net.Received p) &&
+                      (ReprPoly p)=b) in
+    (*Some p*) raise ""
+  else raise (strcat "unexpected remaining string: " rest)
+  
 
 (* -------------------------------------------------------------------------------- *)
 
