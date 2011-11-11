@@ -180,7 +180,6 @@ extern Runtime val strStartsWith: string -> string -> bool
 extern Runtime val strSubstring: string -> int -> int -> string
 extern Runtime val strSubstringNoLength: string -> int -> string
 extern Runtime val strIndexOf: string -> string -> int
-extern Runtime val strLastIndexOf: string -> string -> int
 extern Runtime val strLength: string -> int
 extern Runtime val strTrim: string -> string
 extern Runtime val intToString: int -> string
