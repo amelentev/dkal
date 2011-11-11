@@ -24,7 +24,8 @@ module TypeHeaders
                                         namespace="";
                                         classname="Microsoft.Research.Dkal.Interfaces"}
   extern ISubstrateQueryTerm type ISubstrateQueryTerm :: *
-  type substrate
+  type substrate = unit 
+  (* TODO: we don't really use the substrate anywhere; but this does not really make sense *)
 
   (* TODO: Implement this external function *)
   type SubstrateSays :: substrate => ISubstrateQueryTerm => E
@@ -274,3 +275,8 @@ module TypeHeaders
 	let AndInfonW l = AndInfon (ListOfPrimsList l)
   val AndEvidenceW : list ITerm -> ITerm
 	let AndEvidenceW l = AndEvidence (ListOfPrimsList l)
+
+  extern Builders val lessOrEqualThan : object -> object -> bool
+  (* casts the two objects to Int32 and performs an <= on them *)
+  
+  extern Builders val object_of_int : int -> object

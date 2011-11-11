@@ -1,5 +1,4 @@
 module SampleProgram1
-open TypeHeaders
 open Types
 open Interp
 open Subst

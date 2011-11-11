@@ -1,5 +1,4 @@
 module Marshall
-open TypeHeaders
 open Types
 
 logic function Strcat : list string -> string
@@ -40,7 +39,6 @@ assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
          by providing an explicit ranking function, then we will have proved 
          that at least ReprPoly is at least a function. *)
 
-val printSubstrateConstant: object -> string
 val printSubstrateQuery: ISubstrateQueryTerm -> string
 
 val printList: ('a -> string) -> list 'a -> string -> string
@@ -88,11 +86,12 @@ val printPrincipal: principal -> string
 let printPrincipal p = p
 
 val printConst: constant -> string
-let printConst c = match c with
+let rec printConst c = match c with
   | TrueT -> "TrueT"
   | FalseT -> "FalseT"
+  | Int i -> strcat "Int(" (strcat (intToString i) ")")
   | SubstrateConstant o -> strcat "SubstrateConstant("
-                           (strcat (printSubstrateConstant o) ")")
+                           (strcat (printConst o) ")")
   | PrincipalConstant p ->
     strcat "PrincipalConstant(" (strcat (printPrincipal p) ")")
 
@@ -251,14 +250,18 @@ let parseVar str =
   {name = name; typ = typ}, rest
 
 val parseConst: string -> (constant*string)
-let parseConst str =
+let rec parseConst str =
   let str = strTrim str in
   let rmPfx n = strSubstringNoLength str n in
-  if str = "TrueT" then (TrueT, rmPfx 5)
-  else if str = "FalseT" then (FalseT, rmPfx 6)
+  if strStartsWith str "TrueT" then (TrueT, rmPfx 5)
+  else if strStartsWith str "FalseT" then (FalseT, rmPfx 6)
+  else if strStartsWith str "Int" then 
+    let rest = rmPfx 4 in
+    let indexOfRP = strIndexOf rest ")" in
+    (Int (stringToInt (strSubstring rest 0 indexOfRP)), strSubstringNoLength rest (indexOfRP+1))
   else if strStartsWith str "SubstrateConstant" then 
     let rest = rmPfx 18 in
-    let o, rest = parseSubstrateConstant rest in
+    let o, rest = parseConst rest in
     let rest = rmPfxStr rest ")" in
     SubstrateConstant o, rest
   else if strStartsWith str "PrincipalConstant" then

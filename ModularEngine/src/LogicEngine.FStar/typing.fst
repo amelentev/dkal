@@ -4,8 +4,8 @@ open Types
 open Util
 
 (* 1. Dynamic type tests from .NET *)
-type TypeOf :: object => typ => E
-val check_object_typ : x:object -> t:typ -> b:bool{b=true => TypeOf x t}
+type TypeOf :: constant => typ => E
+(*val check_object_typ : x:object -> t:typ -> b:bool{b=true => TypeOf x t}*) (* never used *)
 
 (* judgment: is l a list of just constants c *)
 type ConstList :: 'a::* => 'a => list 'a => P =
@@ -187,7 +187,7 @@ type typing :: vars => term => typ => P =
   | Typing_ConstSubstrateConstant : 
        G:vars 
     -> t:typ 
-    -> o:object{TypeOf o t}
+    -> o:constant{TypeOf o t}
     -> typing G (Const (SubstrateConstant o)) t
 
   | Typing_SubstrateQueryTerm : 

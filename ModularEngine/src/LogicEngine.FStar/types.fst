@@ -12,8 +12,25 @@
 *)
 
 module Types
-open TypeHeaders
+(* open TypeHeaders *)
   type principal = string
+  type substrate
+  type ISubstrateQueryTerm
+  type ISubstrateUpdateTerm
+  type SubstrateSays :: substrate => ISubstrateQueryTerm => E
+  val get_substrate : unit -> substrate
+  val check_substrate: s:substrate
+                    -> q:ISubstrateQueryTerm 
+                    -> b:bool{b=true => SubstrateSays s q}
+  let check_substrate s q = false
+
+
+  extern reference Generics {language="F#";
+                             dll="mscorlib";
+                             namespace="System.Collections";
+                             classname="Generic"}
+  extern Generics type Dictionary :: * => * => *
+  extern Generics type HashSet :: * => *
 
   type typ =  (* IType *)
   (* from Types.fs, see also Ast/ActivePatterns.fs *)
@@ -39,7 +56,8 @@ open TypeHeaders
   type constant =
     | TrueT : constant
     | FalseT : constant
-    | SubstrateConstant : object -> constant
+    | Int : int -> constant
+    | SubstrateConstant : constant -> constant
     | PrincipalConstant : principal -> constant
 
   type relationInfon = (* form TreeTerm.fs, def of type Function *)
@@ -123,9 +141,7 @@ open TypeHeaders
 (*   type infostrate = list polyterm *)
   type prefix = list term
 
-  type substitution = Dictionary var term 
-  val subst_apply : substitution -> var -> term
-  let subst_apply s v = subst_apply_def s v (Var v)
+  type substitution = list (var * term)
 
   logic function AsTerms : vars -> list term
   assume (AsTerms [] = [])         
@@ -135,11 +151,4 @@ open TypeHeaders
     | [] -> []
     | hd::tl -> (Var hd)::asTerms tl
 
-  extern reference TranslationToFStar {language="F#";
-                                       dll="TranslationToFStar";
-                                       namespace="";
-                                       classname="TranslationToFStar"}
-  extern TranslationToFStar val FStarVarOfIVar : IVar -> (*Types.*)var
-  extern TranslationToFStar val FStarTermOfITerm : ITerm -> (*Types.*)term
-  extern TranslationToFStar val FStarSubstitutionOfISubstitution: ISubstitution -> (*Types.*)substitution
 end

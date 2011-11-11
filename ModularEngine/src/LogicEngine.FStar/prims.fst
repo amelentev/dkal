@@ -102,11 +102,12 @@ let rec iterate f x = match x with
   | Nil -> ()
   | Cons a tl -> let _ = f a in iterate f tl
                                    
-val assoc: 'a -> list ('a*'b) -> option 'b
+val assoc: x:'a -> l:list ('a*'b) -> option 'b
 let rec assoc a x = match x with
   | Nil -> None
   | Cons (a', b) tl -> if a=a' then Some b else assoc a tl
 
+val zip: list 'a -> list 'b -> list ('a * 'b)
 logic function Append : list 'a -> list 'a -> list 'a
 assume forall (y:list 'a). Append Nil y = y
 assume forall (a:'a) (tl:list 'a) (y:list 'a). 
@@ -155,10 +156,10 @@ extern reference Runtime { language = "F#";
 
 type Serialized :: 'a::* => 'a => bytes => E
 
-extern Runtime type ref :: * => *
-extern Runtime val ref : 'a -> ref 'a
-extern Runtime val read : ref 'a -> 'a
-extern Runtime val write : ref 'a -> 'a -> unit
+extern Runtime type Ref :: * => *
+extern Runtime val newref : 'a -> Ref 'a
+extern Runtime val read : Ref 'a -> 'a
+extern Runtime val write : Ref 'a -> 'a -> unit
 
 extern Runtime type punit :: P
 extern Runtime val freshname : bool -> string
@@ -182,6 +183,8 @@ extern Runtime val strIndexOf: string -> string -> int
 extern Runtime val strLastIndexOf: string -> string -> int
 extern Runtime val strLength: string -> int
 extern Runtime val strTrim: string -> string
+extern Runtime val intToString: int -> string
+extern Runtime val stringToInt: string -> int
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool

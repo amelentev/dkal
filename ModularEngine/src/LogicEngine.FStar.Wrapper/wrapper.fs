@@ -24,17 +24,7 @@ open Microsoft.Research.Dkal.LogicEngine.FStar.Deps
 type substitution = Dictionary<Types.var, Types.term>
 
 type Wrapper() =
-  
-  let rec PrimsListofList (l:list<'a>) : Prims.list<'a> = 
-    match l with
-    | [] -> new Prims.Nil<'a>() :> Prims.list<'a>
-    | h::t -> new Prims.Cons<'a>(h, PrimsListofList t) :> Prims.list<'a>
 
-  let PrimsOptionofOption (o:option<'a>) : Prims.option<'a> = 
-    match o with
-    | None -> new Prims.None<'a>() :> Prims.option<'a>
-    | Some(a) -> new Prims.Some<'a>(a) :> Prims.option<'a>
-  
   let _signatureProvider: ISignatureProvider option ref = ref None
   let _infostrate: IInfostrate option ref = ref None
 
@@ -56,23 +46,30 @@ type Wrapper() =
       (!_signatureProvider).Value
 
     member le.Derive (target: ITerm) (substs: ISubstitution seq) : ISubstitution seq = 
-      substs |> List.ofSeq |> List.map TranslationToFStar.FStarSubstitutionOfISubstitution |>
-      PrimsListofList |>
-      LogicEngine.deriveWrapper (PrimsOptionofOption !_infostrate) (TranslationToFStar.FStarTermOfITerm target) |>
+      substs |> List.ofSeq |>
+      List.map TranslationToFStar.FStarSubstitutionOfISubstitution |>
+      Builders.PrimsListOfList |> 
+      InfonLogic.deriveWrapper 
+        (!_infostrate |> Option.map (fun i -> i.Knowledge |> Seq.toList 
+                                              |> List.map TranslationToFStar.FStarPolyTermOfITerm
+                                              |> Builders.PrimsListOfList)
+                      |> Builders.PrimsOptionOfOption)
+        (TranslationToFStar.FStarTermOfITerm target) |>
       List.map TranslationFromFStar.ISubstitutionOfFStarSubstitution |>
       Seq.ofList
 
     member le.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =
       substs |> List.ofSeq |> List.map TranslationToFStar.FStarSubstitutionOfISubstitution |>
-      PrimsListofList |>
-      LogicEngine.deriveJustificationWrapper
-        (PrimsOptionofOption !_infostrate) (TranslationToFStar.FStarTermOfITerm infon) (TranslationToFStar.FStarTermOfITerm proofTemplate) |>
+      Builders.PrimsListOfList |>
+      InfonLogic.deriveJustificationWrapper
+        (Builders.PrimsOptionOfOption !_infostrate) (TranslationToFStar.FStarTermOfITerm infon) (TranslationToFStar.FStarTermOfITerm proofTemplate) |>
       List.map TranslationFromFStar.ISubstitutionOfFStarSubstitution |>
       Seq.ofList
 
     member le.CheckJustification (evidence: ITerm) =
-      //
       evidence  |> TranslationToFStar.FStarTermOfITerm |>
-      LogicEngine.checkJustificationWrapper (Builders.PrimsOptionOfOption !_signatureProvider) |>
+      (InfonLogic.checkJustificationWrapper.TyApp() :?> (ISignatureProvider Prims.option -> Types.term -> Types.term option)) 
+        (Builders.PrimsOptionOfOption !_signatureProvider) |>
       Option.map TranslationFromFStar.ITermOfFStarTerm
+      (*failwith "TODO checkJustification"*)
 
