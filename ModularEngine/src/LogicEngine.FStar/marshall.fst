@@ -1,7 +1,7 @@
 module Marshall
 open Types
 
-logic function Strcat : list string -> string
+logic function Strcat : string -> string -> string
 logic function ReprVar : var -> string
 logic function ReprVars : vars -> string
 logic function ReprConst: constant -> string
@@ -11,11 +11,11 @@ logic function ReprFunc: func -> string
 logic function ReprMono : term -> string
 logic function ReprPoly : polyterm -> string
 assume forall (xs:vars) (t:term). 
-           (ReprPoly (ForallT xs t)) = (Strcat ([ "(Forall (";
-                                               (ReprVars xs);
-                                               ") ";
-                                               (ReprMono t);
-                                               ")"]))
+           (ReprPoly (ForallT xs t)) = (Strcat "(Forall ["
+                                       (Strcat (ReprVars xs)
+                                       (Strcat "] "
+                                       (Strcat (ReprMono t)
+                                               ")"))))
 assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
 
 (* type Star :: P => * = *)
@@ -79,7 +79,7 @@ let printTyp ty = match ty with
 val printVar: var -> string
 let printVar v = strcat "Var("
                  (strcat (v.name)
-                 (strcat ", "
+                 (strcat ","
                  (strcat (printTyp v.typ)
                   ")")))
 
@@ -103,11 +103,11 @@ val printMono: term -> string
 let rec printRelationInfon r =
   strcat "RelationInfon("
   (strcat (r.name)
-  (strcat ", "
+  (strcat ","
   (strcat (printTyp r.retType)
-  (strcat ", ["
-  (strcat (printList printTyp r.argsType "; ")
-  (strcat "], "
+  (strcat ",["
+  (strcat (printList printTyp r.argsType ";")
+  (strcat "],"
   (strcat (printOption printMono r.identity)
    ")")))))))
  
@@ -151,8 +151,8 @@ and printMono t = match t with
   | SubstrateUpdateTerm u -> raise "unexpected SubstrateUpdate"
   | App f ts -> strcat "(App "
                 (strcat (printFunc f)
-                (strcat " ["
-                (strcat (printList printMono ts "; ")
+                (strcat ",["
+                (strcat (printList printMono ts ";")
                  "])"))) 
 
 val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
@@ -161,7 +161,7 @@ let str = match p with
   | MonoTerm t -> printMono t
   | ForallT xs t -> strcat "(Forall [" 
                     (strcat (printList printVar xs ",")
-                    (strcat "] "
+                    (strcat "]"
                     (strcat (printMono t)
                      ")"))) in
 assume ((ReprPoly p) = str);
@@ -172,9 +172,8 @@ str
 val parseSubstrateQuery: string -> (ISubstrateQueryTerm * string)
 
 (* remove the prefix of a string *)
-val rmPfxStr: string -> string -> string
+val rmPfxStr: s:string -> pfx:string -> string
 let rmPfxStr str pfx = 
-  let str = strTrim str in
   if strStartsWith str pfx
   then let n = strLength pfx in
     strSubstringNoLength str n
@@ -182,7 +181,6 @@ let rmPfxStr str pfx =
 
 val getAll: (string -> ('a *string)) -> string -> string -> list 'a -> (list 'a * string)  
 let rec getAll parseOne str delimiter ones = 
-  let str = strTrim str in
   if strStartsWith str "["  
   then let rest = rmPfxStr str "[" in
     let one, rest = parseOne rest in
@@ -203,7 +201,6 @@ let parseList (parseOne: string -> ('a * string)) (str: string) (delimiter:strin
 
 val parseOption: (string -> ('a*string)) -> string -> (option 'a * string)
 let parseOption parseOne str =
-  let str = strTrim str in
   if strStartsWith str "None"
   then (None, strSubstringNoLength str 4)
   else if strStartsWith str "Some"  (* Some(...) *)
@@ -220,7 +217,6 @@ let parseString str delimiter =
 
 val parseTyp: string -> (typ * string)
 let parseTyp str =
-  let str = strTrim str in
   let rmPfx n = strSubstringNoLength str n in
   if strStartsWith str "Infon" then (Infon, rmPfx 5)
   else if strStartsWith str "Principal" then (Principal, rmPfx 9)
@@ -238,7 +234,6 @@ let parseTyp str =
 
 val parseVar: string -> (var*string)
 let parseVar str =
-  let str = strTrim str in
   if not(strStartsWith str "Var") 
   then raise (strcat "unexpected var: " str)
   else let rest = strSubstringNoLength str 4 in
@@ -250,7 +245,6 @@ let parseVar str =
 
 val parseConst: string -> (constant*string)
 let rec parseConst str =
-  let str = strTrim str in
   let rmPfx n = strSubstringNoLength str n in
   if strStartsWith str "TrueT" then (TrueT, rmPfx 5)
   else if strStartsWith str "FalseT" then (FalseT, rmPfx 6)
@@ -258,12 +252,12 @@ let rec parseConst str =
     let rest = rmPfx 4 in
     let indexOfRP = strIndexOf rest ")" in
     (Int (stringToInt (strSubstring rest 0 indexOfRP)), strSubstringNoLength rest (indexOfRP+1))
-  else if strStartsWith str "SubstrateConstant" then 
+  else if strStartsWith str "SubstrateConstant(" then 
     let rest = rmPfx 18 in
     let o, rest = parseConst rest in
     let rest = rmPfxStr rest ")" in
     SubstrateConstant o, rest
-  else if strStartsWith str "PrincipalConstant" then
+  else if strStartsWith str "PrincipalConstant(" then
     let rest = rmPfx 18 in
     let p, rest = parseString rest ")" in
     let rest = rmPfxStr rest ")" in
@@ -275,7 +269,6 @@ val parseFunc: string -> (func*string)
 val parseMono: string -> (term*string)
 
 let rec parseRelationInfon str = (* RelationInfon(name, typ, [;], identity) *)
-  let str = strTrim str in
   let rest = strSubstringNoLength str 14 in
   let name, rest = parseString rest "," in
   let rest = rmPfxStr rest "," in
@@ -288,7 +281,6 @@ let rec parseRelationInfon str = (* RelationInfon(name, typ, [;], identity) *)
   {name = name; retType = retType; argsType = argsType; identity = identity}, rest
  
 and parseFunc str =
-  let str = strTrim str in
   let rmPfx n = strSubstringNoLength str n in
   if strStartsWith str "SeqRule" then (SeqRule, rmPfx 7)
   else if strStartsWith str "EmptyRule" then (EmptyRule, rmPfx 9)
@@ -326,21 +318,21 @@ and parseFunc str =
   else raise (strcat "unexpected Func: " str)
 
 and parseMono str = 
-  let str = strTrim str in
   if strStartsWith str "Var" then
     let x, rest = parseVar str in
     Var x, rest
-  else if strStartsWith str "Const"
-  then let rest = strSubstringNoLength str 5 in
+  else if strStartsWith str "Const "
+  then let rest = strSubstringNoLength str 6 in
     let c, rest = parseConst rest in
     Const c, rest
-  else if strStartsWith str "SubstrateQuery"
+  else if strStartsWith str "SubstrateQuery "
   then let rest = strSubstringNoLength str 15 in
     let q , rest = parseSubstrateQuery rest in
     SubstrateQueryTerm q, rest
-  else if strStartsWith str "(App" 
-  then let rest = strSubstringNoLength str 4 in
+  else if strStartsWith str "(App " 
+  then let rest = strSubstringNoLength str 5 in
     let f, rest = parseFunc rest in
+    let rest = rmPfxStr rest "," in
     let ts, rest = parseList parseMono rest ";" in
     let rest = rmPfxStr rest ")" in
     App f ts, rest
@@ -348,7 +340,6 @@ and parseMono str =
 
 val parsePoly: string -> (polyterm*string)
 let parsePoly str =
-  let str = strTrim str in
   let rest = rmPfxStr str "(Forall " in
   let xs, rest = parseList parseVar rest "," in
   let t, rest = parseMono rest in
@@ -361,15 +352,14 @@ val parseInfon: b:string -> option (p:polyterm{(Net.Received b => Net.Received p
 
 
 let parseInfon b = 
-  let b = strTrim b in
   let p, rest = 
     if strStartsWith b "(Forall" then parsePoly b 
     else let t, rest = parseMono b in
       MonoTerm t, rest in
   if strLength rest = 0 
-  then (*assume ((Net.Received b => Net.Received p) &&
+  then assume ((Net.Received b => Net.Received p) &&
                       (ReprPoly p)=b);
-    Some p*) raise ""
+    Some p
   else raise (strcat "unexpected remaining string: " rest)
   
 
