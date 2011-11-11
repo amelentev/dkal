@@ -1,21 +1,145 @@
 module Marshall
 open Types
 
-logic function Strcat : string -> string -> string
+logic function ReprQuery: ISubstrateQueryTerm -> string
+
+logic function ReprTyp: typ -> string
+assume ((ReprTyp Infon) = "Infon")
+assume ((ReprTyp Principal) = "Principal")
+assume ((ReprTyp SubstrateUpdate) = "SubstrateUpdate")
+assume ((ReprTyp SubstrateQuery) = "SubstrateQuery")
+assume ((ReprTyp Action) = "Action")
+assume ((ReprTyp Condition) = "Condition")
+assume ((ReprTyp RuleT) = "RuleT")
+assume ((ReprTyp Evidence) = "Evidence")
+assume ((ReprTyp Boolean) = "Boolean")
+assume ((ReprTyp Int32) = "Int32")
+assume ((ReprTyp Double) = "Double")
+assume ((ReprTyp String) = "String")
+
 logic function ReprVar : var -> string
-logic function ReprVars : vars -> string
+assume forall (name:string) (typ:typ).
+  ((ReprVar ({name=name;typ=typ})) = (Strcat "Var("
+                                     (Strcat name
+                                     (Strcat ","
+                                     (Strcat (ReprTyp typ)
+                                      ")")))))
+
+logic function ReprVars: list var -> string
+assume ((ReprVars []) = "")
+assume forall (hd:var) (tl: list var).
+    ((ReprVars (hd::tl)) = (Strcat (ReprVar hd)
+                           (Strcat ";"
+                           (ReprVars tl )))) 
+
 logic function ReprConst: constant -> string
-logic function ReprSubstrateQueryTerm: ISubstrateQueryTerm -> string
-logic function ReprSubstrateUpdateTerm: ISubstrateUpdateTerm -> string
+assume ((ReprConst TrueT) = "TrueT")
+assume ((ReprConst FalseT) = "FalseT")
+assume forall (i:int).
+  ((ReprConst (Int i)) = (Strcat "Int("
+                         (Strcat (ReprInt i)
+                          ")")))
+assume forall (o:constant).
+  ((ReprConst (SubstrateConstant o)) = (Strcat "SubstrateConstant("
+                                       (Strcat (ReprConst o)
+                                        ")")))
+assume forall (p:principal).
+  ((ReprConst (PrincipalConstant p)) = (Strcat "PrincipalConstant("
+                                       (Strcat p ")")))
+
+logic function ReprTyps: list typ -> string
+assume ((ReprTyps []) = "")
+assume forall (hd:typ) (tl: list typ).
+  ((ReprTyps (hd::tl)) = (Strcat (ReprTyp hd)
+                         (Strcat ";"
+                         (ReprTyps tl))))
+
+logic function ReprRelationInfon: relationInfon -> string
 logic function ReprFunc: func -> string
 logic function ReprMono : term -> string
+logic function ReprMonoOption: option term -> string
+logic function ReprMonos: list term -> string
+
+assume forall (r:relationInfon). 
+   ((ReprRelationInfon r) = 
+    (Strcat "RelationInfon("
+    (Strcat (r.name)
+    (Strcat ","
+    (Strcat (ReprTyp (r.retType))
+    (Strcat ",["
+    (Strcat (ReprTyps (r.argsType))
+    (Strcat "],"
+    (Strcat (ReprMonoOption (r.identity))
+    ")")))))))))
+
+assume ((ReprFunc SeqRule) = "SeqRule")
+assume ((ReprFunc EmptyRule) = "EmptyRule")
+assume ((ReprFunc Rule) = "Rule")
+assume ((ReprFunc RuleOnce) = "RuleOnce")
+assume ((ReprFunc SeqCondition) = "SeqCondition")
+assume ((ReprFunc EmptyCondition) = "EmptyCondition")
+assume ((ReprFunc WireCondition) = "WireCondition")
+assume ((ReprFunc KnownCondition) = "KnownCondition")
+assume ((ReprFunc SeqAction) = "SeqAction")
+assume ((ReprFunc EmptyAction) = "EmptyAction")
+assume ((ReprFunc Send) = "Send")
+assume ((ReprFunc JustifiedSend) = "JustifiedSend")
+assume ((ReprFunc JustifiedSay) = "JustifiedSay")
+assume ((ReprFunc Learn) = "Learn")
+assume ((ReprFunc Forget) = "Forget")
+assume ((ReprFunc Install) = "Install")
+assume ((ReprFunc Uninstall) = "Uninstall")
+assume ((ReprFunc Apply) = "Apply")
+assume ((ReprFunc Drop) = "Drop")
+assume ((ReprFunc EmptyInfon) = "EmptyInfon")
+assume ((ReprFunc AsInfon) = "AsInfon")
+assume ((ReprFunc AndInfon) = "AndInfon")
+assume ((ReprFunc ImpliesInfon) = "ImpliesInfon")
+assume ((ReprFunc SaidInfon) = "SaidInfon")
+assume ((ReprFunc JustifiedInfon) = "JustifiedInfon")
+assume ((ReprFunc EmptyEvidence) = "EmptyEvidence")
+assume ((ReprFunc SignatureEvidence) = "SignatureEvidence")
+assume ((ReprFunc ModusPonensEvidence) = "ModusPonensEvidence")
+assume ((ReprFunc AndEvidence) = "AndEvidence")
+assume ((ReprFunc AsInfonEvidence) = "AsInfonEvidence")
+assume forall (r:relationInfon).
+  ((ReprFunc (RelationInfon r)) = (ReprRelationInfon r))
+
+assume forall (x:var).
+  ((ReprMono (Var x)) = (ReprVar x))
+assume forall (c:constant).
+  ((ReprMono (Const c)) = (Strcat "Const " (ReprConst c)))
+assume forall (q:ISubstrateQueryTerm).
+  ((ReprMono (SubstrateQueryTerm q)) =
+   (Strcat "SubstrateQuery " (ReprQuery q)))
+assume forall (f:func) (ts:list term).
+  ((ReprMono (App f ts)) =
+   (Strcat "(App "
+   (Strcat (ReprFunc f)
+   (Strcat ",["
+   (Strcat (ReprMonos ts)
+   "])")))))                           
+
+assume ((ReprMonoOption None) = "None")
+assume forall (t:term).
+  ((ReprMonoOption (Some t)) = (Strcat "Some("
+                               (Strcat (ReprMono t)
+                               ")")))
+
+assume ((ReprMonos []) = "")
+assume forall (hd:term) (tl:list term).
+  ((ReprMonos (hd::tl)) = (Strcat (ReprMono hd)
+                        (Strcat ";"
+                        (ReprMonos tl))))
+
 logic function ReprPoly : polyterm -> string
 assume forall (xs:vars) (t:term). 
            (ReprPoly (ForallT xs t)) = (Strcat "(Forall ["
                                        (Strcat (ReprVars xs)
-                                       (Strcat "] "
+                                       (Strcat "]"
                                        (Strcat (ReprMono t)
                                                ")"))))
+
 assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
 
 (* type Star :: P => * = *)
@@ -39,29 +163,9 @@ assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
          by providing an explicit ranking function, then we will have proved 
          that at least ReprPoly is at least a function. *)
 
-val printSubstrateQuery: ISubstrateQueryTerm -> string
+val printSubstrateQuery: q:ISubstrateQueryTerm -> s:string{(ReprQuery q)=s}
 
-(* print a list of items, separated by delimiter, no brackets around *)
-val printList: ('a -> string) -> list 'a -> string -> string
-let rec printList printOne l delimiter =
-  match l with
-   | [] -> ""
-   | hd::tl -> 
-     (match tl with
-        | [] -> printOne hd
-        | _ -> strcat (printOne hd)
-               (strcat delimiter
-                (printList printOne tl delimiter)))
-
-val printOption: ('a -> string) -> option 'a -> string
-let printOption printA opt =
-  match opt with
-    | None -> "None"
-    | Some a -> strcat "Some("
-                (strcat (printA a)
-                 ")")
-
-val printTyp: typ -> string
+val printTyp: t:typ -> s:string{(ReprTyp t) = s}
 let printTyp ty = match ty with
   | Infon -> "Infon"
   | Principal -> "Principal"
@@ -76,17 +180,22 @@ let printTyp ty = match ty with
   | Double -> "Double"
   | String -> "String"
 
-val printVar: var -> string
+val printVar: v:var -> s:string{(ReprVar v) = s}
 let printVar v = strcat "Var("
                  (strcat (v.name)
                  (strcat ","
                  (strcat (printTyp v.typ)
                   ")")))
 
-val printPrincipal: principal -> string
-let printPrincipal p = p
+val printVars: l:list var -> s:string{(ReprVars l)=s}
+let rec printVars l =
+  match l with
+    | [] -> ""
+    | v::tl -> strcat (printVar v)
+               (strcat ";"
+               (printVars tl))
 
-val printConst: constant -> string
+val printConst: c:constant -> s:string{(ReprConst c) = s}
 let rec printConst c = match c with
   | TrueT -> "TrueT"
   | FalseT -> "FalseT"
@@ -94,11 +203,28 @@ let rec printConst c = match c with
   | SubstrateConstant o -> strcat "SubstrateConstant("
                            (strcat (printConst o) ")")
   | PrincipalConstant p ->
-    strcat "PrincipalConstant(" (strcat (printPrincipal p) ")")
+    strcat "PrincipalConstant(" (strcat p ")")
 
-val printRelationInfon:relationInfon -> string
-val printFunc: func -> string
-val printMono: term -> string
+val printTyps: l:list typ -> s:string{(ReprTyps l) = s}
+let rec printTyps l =
+  match l with
+    | [] -> ""
+    | hd::tl -> strcat (printTyp hd)
+                (strcat ";"
+                (printTyps tl))
+
+(*val printRelationInfon: r:relationInfon -> string
+val printFunc: f:func -> string
+val printMono: t:term -> string
+val printMonoOption: o:option term -> string
+val printMonos: l:list term -> string
+*)
+
+val printRelationInfon: r:relationInfon -> s:string{(ReprRelationInfon r) = s}
+val printFunc: f:func -> s:string{(ReprFunc f) = s}
+val printMono: t:term -> s:string{(ReprMono t) = s}
+val printMonoOption: o:option term -> s:string{(ReprMonoOption o) = s}
+val printMonos: l:list term -> s:string{(ReprMonos l) = s} 
 
 let rec printRelationInfon r =
   strcat "RelationInfon("
@@ -106,9 +232,9 @@ let rec printRelationInfon r =
   (strcat ","
   (strcat (printTyp r.retType)
   (strcat ",["
-  (strcat (printList printTyp r.argsType ";")
+  (strcat (printTyps r.argsType)
   (strcat "],"
-  (strcat (printOption printMono r.identity)
+  (strcat (printMonoOption r.identity)
    ")")))))))
  
 and printFunc f = match f with
@@ -152,20 +278,33 @@ and printMono t = match t with
   | App f ts -> strcat "(App "
                 (strcat (printFunc f)
                 (strcat ",["
-                (strcat (printList printMono ts ";")
+                (strcat (printMonos ts)
                  "])"))) 
+
+and printMonoOption (opt: option term) =
+  match opt with
+    | None -> "None"
+    | Some t -> strcat "Some("
+                (strcat (printMono t)
+                 ")")
+
+and printMonos (l: list term) =
+  match l with
+    | []  -> ""
+    | hd::tl -> strcat (printMono hd)
+                (strcat ";"
+                (printMonos tl))
 
 val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
 let printInfon p = 
-let str = match p with
+ match p with
   | MonoTerm t -> printMono t
   | ForallT xs t -> strcat "(Forall [" 
-                    (strcat (printList printVar xs ",")
+                    (strcat (printVars xs)
                     (strcat "]"
                     (strcat (printMono t)
-                     ")"))) in
-assume ((ReprPoly p) = str);
-str
+                     ")")))
+
 
 (* ============================ parsing ========================= *)
 
@@ -181,19 +320,14 @@ let rmPfxStr str pfx =
 
 val getAll: (string -> ('a *string)) -> string -> string -> list 'a -> (list 'a * string)  
 let rec getAll parseOne str delimiter ones = 
-  if strStartsWith str "["  
-  then let rest = rmPfxStr str "[" in
-    let one, rest = parseOne rest in
-    let newones: list 'a = append ones [one] in
-    getAll parseOne rest delimiter newones 
-  else if strStartsWith str delimiter
-  then let rest = rmPfxStr str delimiter in
-    let one, rest = parseOne rest in
+  if strStartsWith str delimiter
+  then getAll parseOne (rmPfxStr str delimiter) delimiter ones 
+  else if strStartsWith str "]" 
+  then (ones, str) 
+  else 
+    let one, rest = parseOne str in
     let newones = append ones [one] in
     getAll parseOne rest delimiter newones
-  else if strStartsWith str "]" 
-  then (ones, rmPfxStr str "]") 
-  else raise (strcat "unexpected string in getAll: " str)
 
 val parseList: (string -> ('a*string)) -> string -> string -> ((list 'a) * string)
 let parseList (parseOne: string -> ('a * string)) (str: string) (delimiter:string) : (list 'a * string) =
@@ -273,9 +407,9 @@ let rec parseRelationInfon str = (* RelationInfon(name, typ, [;], identity) *)
   let name, rest = parseString rest "," in
   let rest = rmPfxStr rest "," in
   let retType, rest = parseTyp rest in
-  let rest = rmPfxStr rest "," in
+  let rest = rmPfxStr rest ",[" in
   let argsType, rest = parseList parseTyp rest ";" in
-  let rest = rmPfxStr rest "," in
+  let rest = rmPfxStr rest "]," in
   let identity, rest = parseOption parseMono rest in
   let rest = rmPfxStr rest ")" in
   {name = name; retType = retType; argsType = argsType; identity = identity}, rest
@@ -332,16 +466,17 @@ and parseMono str =
   else if strStartsWith str "(App " 
   then let rest = strSubstringNoLength str 5 in
     let f, rest = parseFunc rest in
-    let rest = rmPfxStr rest "," in
+    let rest = rmPfxStr rest ",[" in
     let ts, rest = parseList parseMono rest ";" in
-    let rest = rmPfxStr rest ")" in
+    let rest = rmPfxStr rest "])" in
     App f ts, rest
   else raise (strcat "unexpected Mono: " str)
 
 val parsePoly: string -> (polyterm*string)
 let parsePoly str =
-  let rest = rmPfxStr str "(Forall " in
+  let rest = rmPfxStr str "(Forall [" in
   let xs, rest = parseList parseVar rest "," in
+  let rest = rmPfxStr str "]" in
   let t, rest = parseMono rest in
   let rest = rmPfxStr rest ")" in
   ForallT xs t, rest
