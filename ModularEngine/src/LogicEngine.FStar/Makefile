@@ -3,8 +3,12 @@ MY_DKAL_HOME=`cygpath -d $${DKAL_HOME}`
 FSTBIN=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin
 FSTBIN2=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin2
 DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
-FSTAR=fstar --UNSAFE_skip_target_checker --genIL --dotnet4 --odir $(FSTBIN) --prims prims.fst
-SOURCES=typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst net.fst crypto.fst marshall.fst state.fst interp.fst prog.fst clinical_trials.fst
+FSTAR=fstar --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst
+#typeHeaders.fst translationFromFStar.fst 
+SOURCES=types.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst net.fst crypto.fst marshall.fst state.fst interp.fst prog.fst clinical_trials.fst
+
+interp: $(SOURCES)
+	$(FSTAR) --writePrims $^ --o $@
 
 coredkal2:
 	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst util.fst subst.fst typing.fst unify.fst coredkal2.fst
@@ -30,8 +34,6 @@ coredkal:
 	fstar --prims prims.fst typeHeaders.fst types.fst translationFromFStar.fst coredkal.fst # --genIL --odir $(FSTBIN)
 	# fsc -r $(FSTBIN)/coredkal.dll coredkal_runtime.fs
 
-interp: $(SOURCES)
-	fstar --prims prims.fst $^ --o $@
 
 wc: $(SOURCES)
 	wc -l prims.fst $^

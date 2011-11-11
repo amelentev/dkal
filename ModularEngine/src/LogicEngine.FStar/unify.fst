@@ -1,8 +1,8 @@
 module Unify
-open TypeHeaders
+(* open TypeHeaders *)
 open Types
 open Subst
-open TranslationFromFStar
+(* open TranslationFromFStar *)
 
 val fold_left2 : ('a -> 'b -> 'c -> option 'a) 
               -> option 'a -> list 'b -> list 'c -> option 'a
@@ -16,13 +16,13 @@ let rec fold_left2 f a lb lc =
 val addSubst : s:substitution -> x:var -> t:term -> substitution
 (* composes s with {x -> t} *)
 let addSubst s1 x t =
-  let substxt = extendSubst (emptySubst false) x t in
+  let substxt = extendSubst (emptySubst ()) x t in
   fold_left
     (fun s y -> 
 	   match lookupVar s1 y with
 	   | None -> raise "impos"
 	   | Some(ty) -> extendSubst s y (subst ty substxt))
-    (emptySubst false)
+    (emptySubst ())
     (domain s1)
 
 (* ad hoc implementation of unification
@@ -54,14 +54,14 @@ let rec unify_aux s1 v2 v1 t1 t2 : option substitution =
       when ((f1 = f2) && (length tlist1 = length tlist2)) ->
 	  fold_left2 (fun s t1' t2' -> unify_aux s v2 v1 t1' t2')
 	    (Some(s1)) tlist1 tlist2
-  | SubstrateQueryTerm t0, _ ->
-      option_map FStarSubstitutionOfISubstitution
-        (substrateQueryTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1)
-		                                 (ITermOfFStarTerm t2) )
-  | SubstrateUpdateTerm t0, _ ->
-      option_map FStarSubstitutionOfISubstitution
-        (substrateUpdateTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1)
-		                                 (ITermOfFStarTerm t2) )
+  | SubstrateQueryTerm t0, _ -> None
+(*       option_map FStarSubstitutionOfISubstitution *)
+(*         (substrateQueryTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1) *)
+(* 		                                 (ITermOfFStarTerm t2) ) *)
+  | SubstrateUpdateTerm t0, _ -> None
+(*       option_map FStarSubstitutionOfISubstitution *)
+(*         (substrateUpdateTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1) *)
+(* 		                                 (ITermOfFStarTerm t2) ) *)
   | _ -> None
 
 let unify s1 u xs i goal =
@@ -72,7 +72,7 @@ let unify s1 u xs i goal =
 			  match lookupVar s3 x with
 			    | None -> raise "impos"
 			    | Some t -> extendSubst s3 x t
-			 ) (emptySubst false) (domain s3) in
+			 ) (emptySubst ()) (domain s3) in
       let l = map (fun x -> subst (Var x) s3) xs in
       if extends s2 s1 then (* This is cheating: the condition is almost never true *)
         Some(s2, l) else raise "Fix problem in unification"

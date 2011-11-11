@@ -1,5 +1,4 @@
 module Marshall
-open TypeHeaders
 open Types
 
 logic function Strcat : list string -> string

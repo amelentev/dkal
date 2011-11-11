@@ -1,5 +1,4 @@
 module ClinicalTrials
-open TypeHeaders
 open Types
 open Interp
 
@@ -62,10 +61,10 @@ let keyForRecord key record = rel (ri "keyForRecord" [Int32; Int32]) [key; recor
 let org1Policy = 
 
   let me = Const (PrincipalConstant "org1") in
-  let trial = Const (SubstrateConstant (object_of_int 42)) in
+  let trial = Const (SubstrateConstant (Int 42)) in
   let site = Const (PrincipalConstant "site1") in
-  let site_n1 = Const (SubstrateConstant (object_of_int 1000)) in
-  let site_n2 = Const (SubstrateConstant (object_of_int 1250)) in
+  let site_n1 = Const (SubstrateConstant (Int 1000)) in
+  let site_n2 = Const (SubstrateConstant (Int 1250)) in
 
   let rule1 = 
     (* quantified vars *)
@@ -86,11 +85,11 @@ let org1Policy =
 let site1Policy = 
 
   let me = Const (PrincipalConstant "site1") in
-  let trial = Const (SubstrateConstant (object_of_int 42)) in
+  let trial = Const (SubstrateConstant (Int 42)) in
   let org = Const (PrincipalConstant "org1") in
   let phys = Const (PrincipalConstant "phys1") in
-  let phys_n1 = Const (SubstrateConstant (object_of_int 1010)) in
-  let phys_n2 = Const (SubstrateConstant (object_of_int 1050)) in
+  let phys_n1 = Const (SubstrateConstant (Int 1010)) in
+  let phys_n2 = Const (SubstrateConstant (Int 1050)) in
 
   let rule1 = 
     (* unification vars *)
@@ -127,11 +126,11 @@ let site1Policy =
 let phys1Policy = 
 
   let me = Const (PrincipalConstant "phys1") in
-  let trial = Const (SubstrateConstant (object_of_int 42)) in
+  let trial = Const (SubstrateConstant (Int 42)) in
   let org = Const (PrincipalConstant "org1") in
   let site = Const (PrincipalConstant "site1") in
   let keyMgr = Const (PrincipalConstant "keyMgr") in
-  let r = Const (SubstrateConstant (object_of_int 1015)) in
+  let r = Const (SubstrateConstant (Int 1015)) in
 
   let rule1 = 
     (* unification vars *)
@@ -166,12 +165,12 @@ let phys1Policy =
   [rule1]
 
 (* --------- keyMgr --------- *)
-let phys1Policy = 
+let keyMgrPolicy = 
 
   let me = Const (PrincipalConstant "keyMgr") in
   let org = Const (PrincipalConstant "org1") in
-  let r = Const (SubstrateConstant (object_of_int 1015)) in
-  let k = Const (SubstrateConstant (object_of_int 13131313)) in
+  let r = Const (SubstrateConstant (Int 1015)) in
+  let k = Const (SubstrateConstant (Int 13131313)) in
   
   let rule1 = 
     (* unification vars *)

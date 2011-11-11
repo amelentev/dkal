@@ -1,9 +1,8 @@
 module State
-open TypeHeaders
 open Types
 
-private val infos : ref infostrate
-let infos = ref []
+private val infos : Ref infostrate
+let infos = newref []
 
 val addToInfostrate : i:polyterm{Knows i} -> unit
 let addToInfostrate i = infos := i::!infos

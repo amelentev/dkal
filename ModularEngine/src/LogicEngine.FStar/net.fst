@@ -1,5 +1,4 @@
 module Net
-open TypeHeaders
 open Types
 
 type Received :: 'a::* => 'a => E

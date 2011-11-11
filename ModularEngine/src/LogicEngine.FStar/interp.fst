@@ -1,5 +1,4 @@
 module Interp
-open TypeHeaders
 open Types
 open Util
 open Marshall
@@ -105,8 +104,8 @@ let derive u goal s0 =
              | Some ((s, pf)) ->  [(s:substitution)])
 
 (* ================= Process state and messaging ===================== *)
-val comms : ref (list communication)
-let comms = ref []
+val comms : Ref (list communication)
+let comms = newref []
 
 val get_communications: unit -> unit
 let rec get_communications _unit = 
@@ -124,7 +123,7 @@ let dropCommunications i =
     (comms := comms');
     changed
 
-let outbuffer = ref []
+let outbuffer = newref []
 let clear_out_buffer () = outbuffer := []
 
 let dispatch p m = 
@@ -175,7 +174,7 @@ let evalCond xs sl c = match c with
   | Upon i -> collect (fun s -> matchComms xs (Subst.polysubst i s) s) sl
 
 val _evalConds: xs:vars -> cs:conditions -> list (s:substitution{Holds xs cs s})      
-let evalConds xs cs = fold_left (evalCond xs) [(Subst.emptySubst false)] cs
+let evalConds xs cs = fold_left (evalCond xs) [(Subst.emptySubst ())] cs
 
 val _enabledActions : r:rule -> list (a:action{Enabled a})
 let enabledActions r = match r with 
