@@ -41,6 +41,7 @@ assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
 
 val printSubstrateQuery: ISubstrateQueryTerm -> string
 
+(* print a list of items, separated by delimiter, no brackets around *)
 val printList: ('a -> string) -> list 'a -> string -> string
 let rec printList printOne l delimiter =
   match l with
@@ -141,8 +142,7 @@ and printFunc f = match f with
   | ModusPonensEvidence -> "ModusPonensEvidence"
   | AndEvidence -> "AndEvidence"
   | AsInfonEvidence -> "AsInfonEvidence"
-  | RelationInfon r -> strcat "RelationInfon(" 
-                       (strcat (printRelationInfon r) ")")
+  | RelationInfon r -> printRelationInfon r
 
 and printMono t = match t with
   | Var x -> printVar x
@@ -159,9 +159,9 @@ val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
 let printInfon p = 
 let str = match p with
   | MonoTerm t -> printMono t
-  | ForallT xs t -> strcat "(Forall (" 
+  | ForallT xs t -> strcat "(Forall [" 
                     (strcat (printList printVar xs ",")
-                    (strcat ") "
+                    (strcat "] "
                     (strcat (printMono t)
                      ")"))) in
 assume ((ReprPoly p) = str);
@@ -169,16 +169,16 @@ str
 
 (* ============================ parsing ========================= *)
 
-val parseSubstrateConstant: string -> (object * string)
 val parseSubstrateQuery: string -> (ISubstrateQueryTerm * string)
 
+(* remove the prefix of a string *)
 val rmPfxStr: string -> string -> string
-let rmPfxStr str substr = 
+let rmPfxStr str pfx = 
   let str = strTrim str in
-  if strStartsWith str substr
-  then let n = strLength substr in
+  if strStartsWith str pfx
+  then let n = strLength pfx in
     strSubstringNoLength str n
-  else raise (strcat str (strcat " does not have prefix " substr))
+  else raise (strcat str (strcat " does not have prefix " pfx))
 
 val getAll: (string -> ('a *string)) -> string -> string -> list 'a -> (list 'a * string)  
 let rec getAll parseOne str delimiter ones = 
@@ -187,8 +187,7 @@ let rec getAll parseOne str delimiter ones =
   then let rest = rmPfxStr str "[" in
     let one, rest = parseOne rest in
     let newones: list 'a = append ones [one] in
-    let result: (list 'a * string) = getAll parseOne rest delimiter newones in
-    result
+    getAll parseOne rest delimiter newones 
   else if strStartsWith str delimiter
   then let rest = rmPfxStr str delimiter in
     let one, rest = parseOne rest in
@@ -196,7 +195,7 @@ let rec getAll parseOne str delimiter ones =
     getAll parseOne rest delimiter newones
   else if strStartsWith str "]" 
   then (ones, rmPfxStr str "]") 
-  else raise (strcat "unexpected string in parseList: " str)
+  else raise (strcat "unexpected string in getAll: " str)
 
 val parseList: (string -> ('a*string)) -> string -> string -> ((list 'a) * string)
 let parseList (parseOne: string -> ('a * string)) (str: string) (delimiter:string) : (list 'a * string) =
@@ -207,7 +206,7 @@ let parseOption parseOne str =
   let str = strTrim str in
   if strStartsWith str "None"
   then (None, strSubstringNoLength str 4)
-  else if strStartsWith str "Some" 
+  else if strStartsWith str "Some"  (* Some(...) *)
   then let rest = strSubstringNoLength str 5 in
     let one, rest = parseOne rest in
     let rest = rmPfxStr rest ")" in
@@ -275,18 +274,17 @@ val parseRelationInfon: string -> (relationInfon*string)
 val parseFunc: string -> (func*string)
 val parseMono: string -> (term*string)
 
-let rec parseRelationInfon str =
+let rec parseRelationInfon str = (* RelationInfon(name, typ, [;], identity) *)
   let str = strTrim str in
   let rest = strSubstringNoLength str 14 in
   let name, rest = parseString rest "," in
   let rest = rmPfxStr rest "," in
   let retType, rest = parseTyp rest in
   let rest = rmPfxStr rest "," in
-  let rest = rmPfxStr rest "[" in
   let argsType, rest = parseList parseTyp rest ";" in
-  let rest = rmPfxStr rest "]" in
   let rest = rmPfxStr rest "," in
   let identity, rest = parseOption parseMono rest in
+  let rest = rmPfxStr rest ")" in
   {name = name; retType = retType; argsType = argsType; identity = identity}, rest
  
 and parseFunc str =
@@ -323,8 +321,7 @@ and parseFunc str =
   else if strStartsWith str "AndEvidence" then (AndEvidence, rmPfx 11)
   else if strStartsWith str "AsInfonEvidence" then (AsInfonEvidence, rmPfx 15)
   else if strStartsWith str "RelationInfon"
-  then let rest = rmPfx 14 in
-    let r, rest = parseRelationInfon rest in
+  then let r, rest = parseRelationInfon str in
     RelationInfon r, rest 
   else raise (strcat "unexpected Func: " str)
 
@@ -344,17 +341,16 @@ and parseMono str =
   else if strStartsWith str "(App" 
   then let rest = strSubstringNoLength str 4 in
     let f, rest = parseFunc rest in
-    let rest = rmPfxStr rest "[" in
     let ts, rest = parseList parseMono rest ";" in
+    let rest = rmPfxStr rest ")" in
     App f ts, rest
   else raise (strcat "unexpected Mono: " str)
 
 val parsePoly: string -> (polyterm*string)
 let parsePoly str =
   let str = strTrim str in
-  let rest = rmPfxStr str "(" in
+  let rest = rmPfxStr str "(Forall " in
   let xs, rest = parseList parseVar rest "," in
-  let rest = rmPfxStr rest ")" in
   let t, rest = parseMono rest in
   let rest = rmPfxStr rest ")" in
   ForallT xs t, rest
@@ -371,9 +367,9 @@ let parseInfon b =
     else let t, rest = parseMono b in
       MonoTerm t, rest in
   if strLength rest = 0 
-  then let _ = assume ((Net.Received b => Net.Received p) &&
-                      (ReprPoly p)=b) in
-    (*Some p*) raise ""
+  then (*assume ((Net.Received b => Net.Received p) &&
+                      (ReprPoly p)=b);
+    Some p*) raise ""
   else raise (strcat "unexpected remaining string: " rest)
   
 
