@@ -1,7 +1,7 @@
 module Marshall
 open Types
 
-logic function ReprQuery: ISubstrateQueryTerm -> string
+
 
 logic function ReprTyp: typ -> string
 assume ((ReprTyp Infon) = "Infon")
@@ -54,11 +54,22 @@ assume forall (hd:typ) (tl: list typ).
                          (Strcat ";"
                          (ReprTyps tl))))
 
+logic function ReprQuery: ISubstrateQueryTerm -> string
 logic function ReprRelationInfon: relationInfon -> string
 logic function ReprFunc: func -> string
 logic function ReprMono : term -> string
 logic function ReprMonoOption: option term -> string
 logic function ReprMonos: list term -> string
+
+assume forall (q:ISubstrateQueryTerm).
+  ((ReprQuery q) =
+   (Strcat "SubstrateQuery("
+   (Strcat (ReprMono q.n)
+   (Strcat ","
+   (Strcat (ReprMono q.low)
+   (Strcat ","
+   (Strcat (ReprMono q.hi)
+   ")")))))))
 
 assume forall (r:relationInfon). 
    ((ReprRelationInfon r) = 
@@ -111,7 +122,7 @@ assume forall (c:constant).
   ((ReprMono (Const c)) = (Strcat "Const " (ReprConst c)))
 assume forall (q:ISubstrateQueryTerm).
   ((ReprMono (SubstrateQueryTerm q)) =
-   (Strcat "SubstrateQuery " (ReprQuery q)))
+   (ReprQuery q))
 assume forall (f:func) (ts:list term).
   ((ReprMono (App f ts)) =
    (Strcat "(App "
@@ -167,8 +178,6 @@ assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
          by providing an explicit ranking function, then we will have proved 
          that at least ReprPoly is at least a function. *)
 
-val printSubstrateQuery: q:ISubstrateQueryTerm -> s:string{(ReprQuery q)=s}
-
 val printTyp: t:typ -> s:string{(ReprTyp t) = s}
 let printTyp ty = match ty with
   | Infon -> "Infon"
@@ -222,6 +231,7 @@ val printFunc: f:func -> s:string{(ReprFunc f) = s}
 val printMono: t:term -> s:string{(ReprMono t) = s}
 val printMonoOption: o:option term -> s:string{(ReprMonoOption o) = s}
 val printMonos: l:list term -> s:string{(ReprMonos l) = s} 
+val printQuery: q:ISubstrateQueryTerm -> s:string{(ReprQuery q) = s}
 
 let rec printRelationInfon r =
   strcat "RelationInfon("
@@ -270,7 +280,7 @@ and printFunc f = match f with
 and printMono t = match t with
   | Var x -> printVar x
   | Const c -> strcat "Const " (printConst c)
-  | SubstrateQueryTerm q -> strcat "SubstrateQuery " (printSubstrateQuery q)
+  | SubstrateQueryTerm q -> printQuery q
   | SubstrateUpdateTerm u -> raise "unexpected SubstrateUpdate"
   | App f ts -> strcat "(App "
                 (strcat (printFunc f)
@@ -292,6 +302,15 @@ and printMonos (l: list term) =
                 (strcat ";"
                 (printMonos tl))
 
+and printQuery q = 
+  strcat "SubstrateQuery("
+  (strcat (printMono (q.n))
+  (strcat ","
+  (strcat (printMono (q.low)) 
+  (strcat ","
+  (strcat (printMono (q.hi))
+  ")")))))
+
 val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
 let printInfon p = 
  match p with
@@ -304,8 +323,6 @@ let printInfon p =
 
 
 (* ============================ parsing ========================= *)
-
-val parseSubstrateQuery: s:string -> (q:ISubstrateQueryTerm * r1:string * r2:string{((ReprQuery q)=r1 && (Strcat r1 r2) = s)})
 
 (* remove the prefix of a string *)
 val rmPfxStr: s:string -> pfx:string -> r:string{(Strcat pfx r) = s}
@@ -384,6 +401,7 @@ val parseFunc: str:string -> (f:func * r1:string * r2:string{(ReprFunc f) = r1 &
 val parseMono: str:string -> (t:term * r1:string * r2:string{(ReprMono t) = r1 && (Strcat r1 r2) = str})
 val parseMonoOption: str:string -> (t:option term * r1:string * r2:string{(ReprMonoOption t) = r1 && (Strcat r1 r2)=str})
 val parseMonos: str:string -> (ts:list term * r1:string * r2:string{(ReprMonos ts)=r1 && (Strcat r1 r2) = str})
+val parseQuery: str:string -> (q:ISubstrateQueryTerm * r1:string * r2:string{(ReprQuery q)=r1 && (Strcat r1 r2) = str})
 
 let rec parseRelationInfon str = 
   let rest1 = strRmPfx str "RelationInfon(" in
@@ -462,10 +480,9 @@ and parseMono str =
   then let rest = strRmPfx str "Const " in
     let c, r_c, rest = parseConst rest in
     Const c, strcat "Const " r_c, rest
-  else if strStartsWith str "SubstrateQuery "
-  then let rest = strRmPfx str "SubstrateQuery " in
-    let q, r_q, rest = parseSubstrateQuery rest in
-    SubstrateQueryTerm q, strcat "SubstrateQuery " r_q, rest
+  else if strStartsWith str "SubstrateQuery"
+  then let q, r_q, rest = parseQuery str in
+    SubstrateQueryTerm q, r_q, rest
   else if strStartsWith str "(App " 
   then let rest = strRmPfx str "(App " in
     let f, r_f, rest = parseFunc rest in
@@ -490,6 +507,22 @@ and parseMonos str =
     let rest = strRmPfx rest ";" in
     let tl, r_tl, rest = parseMonos rest in
     (hd::tl), strcat r_hd (strcat ";" r_tl), rest
+
+and parseQuery str =
+  let rest = strRmPfx str "SubstrateQuery(" in
+  let i, r_i, rest = parseMono rest in
+  let rest = strRmPfx rest "," in
+  let l, r_l, rest = parseMono rest in
+  let rest = strRmPfx rest "," in
+  let h, r_h, rest = parseMono rest in
+  let rest = strRmPfx rest ")" in
+  {n=i;low=l;hi=h}, 
+  strcat "SubstrateQuery(" 
+    (strcat r_i 
+    (strcat "," 
+    (strcat r_l
+    (strcat ","
+    (strcat r_h ")"))))), rest
 
 val parsePoly: str:string -> (p:polyterm * r1:string * r2:string{(ReprPoly p) = r1 && (Strcat r1 r2)= str})
 let parsePoly str =

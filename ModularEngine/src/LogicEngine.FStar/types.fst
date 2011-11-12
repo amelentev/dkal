@@ -116,7 +116,7 @@ module Types
     | RelationInfon (*of relationInfon*) : relationInfon -> func
       (* no active pattern for it, base case for infons *)
 
-  and ISubstrateQueryTerm::* = term * term * term (* var, low, high *)
+  and ISubstrateQueryTerm::* = {n:term; low: term; hi: term}
 
   and term = (* ITerm *)
   (* from Ast.Tree/ActivePatterns.fs *)
@@ -134,20 +134,19 @@ module Types
   type SubstrateSays :: substrate => ISubstrateQueryTerm => E
 
   val mkSubstrateQuery: term -> term -> term -> ISubstrateQueryTerm
-  let mkSubstrateQuery n low hi = (n, low, hi)
+  let mkSubstrateQuery i l h = {n=i; low=l; hi=h}
 
   val check_substrate: s:substrate
                     -> q:ISubstrateQueryTerm 
                     -> b:bool{b=true => SubstrateSays s q}
-  let check_substrate s q =  match q with
-    | (n, low, hi) -> 
-      let getInt t =  (* get a const int from a term *)
-        (match t with
-           | Const (Int i) -> i
-           | _ -> raise "unexpected term in check_substrate") in
-      if intCheckRange (getInt n) (getInt low) (getInt hi) 
-      then (assume (SubstrateSays s q); true)
-      else false
+  let check_substrate s q =
+    let getInt t =  (* get a const int from a term *)
+      (match t with
+         | Const (Int i) -> i
+         | _ -> raise "unexpected term in check_substrate") in
+    if intCheckRange (getInt q.n) (getInt q.low) (getInt q.hi) 
+    then (assume (SubstrateSays s q); true)
+    else false
 
   type Knows :: polyterm => E
   type kpolyterm = i:polyterm{Knows i}
