@@ -14,30 +14,10 @@ let mkRule xs cs acts =
 
 (* --------- Type for integer intervals substrate queries --------- *)
 type intervalSubstrateQuery = ISubstrateQueryTerm
-   (* { lowerBound: term; elem: term; upperBound: term } *)  
-(* TODO: make intervalSubstrateQuery fit into an ISubstrateQuery!! *)
 
-(* TODO extern Builders *) val mkIntervalSubstrateQuery : term -> term -> term -> intervalSubstrateQuery
-(* let mkIntervalSubstrateQuery l e u = 
-   { lowerBound = l; elem = e; upperBound = u } *)
-(* TODO extern Builders *) val getIntervalSubstrateQuery : intervalSubstrateQuery -> (term * term * term)
-(* let getIntervalSubstrateQuery i =
-   ( i.lowerBound ; i.elem ; i.upperBound ) *)
-
-(* This substrate works only when the three elements are integer constants.
-   It returns true iff lowerBound <= elem && elem <= upperBound *)
-let evalIntervalSubstrateQuery (isq:intervalSubstrateQuery) : bool = failwith "TODO"
-(* The following code would compile but does not allow intervalSubstrateQuery
-   to be an instance of ISubstrateQueryTerm *)
-(*    match (isq.lowerBound : term), (isq.elem : term), (isq.upperBound : term) with
-    | Const(SubstrateConstant l), Const (SubstrateConstant e),
-        Const (SubstrateConstant u) ->
-          (lessOrEqualThan l e) && (lessOrEqualThan e u)
-    (* XXX: I could not convert l, e, u to Int32 and check (l <= e && e <= u) *)
-    | _ -> failwith "expecting constants"
-*)
-
-
+val mkIntervalSubstrateQuery : term -> term -> term -> intervalSubstrateQuery
+let mkIntervalSubstrateQuery = mkSubstrateQuery
+ 
 (* --------- Shorthands to construct infons --------- *)
 let said ppal infon = App SaidInfon [ppal; infon]
 let And i1 i2 = App AndInfon [i1; i2]   (* and is an F* keyword *)

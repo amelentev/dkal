@@ -15,15 +15,9 @@ module Types
 (* open TypeHeaders *)
   type principal = string
   type substrate
-  type ISubstrateQueryTerm
   type ISubstrateUpdateTerm
-  type SubstrateSays :: substrate => ISubstrateQueryTerm => E
-  val get_substrate : unit -> substrate
-  val check_substrate: s:substrate
-                    -> q:ISubstrateQueryTerm 
-                    -> b:bool{b=true => SubstrateSays s q}
-  let check_substrate s q = false
 
+  (*val get_substrate : unit -> substrate*)
 
   extern reference Generics {language="F#";
                              dll="mscorlib";
@@ -122,6 +116,8 @@ module Types
     | RelationInfon (*of relationInfon*) : relationInfon -> func
       (* no active pattern for it, base case for infons *)
 
+  and ISubstrateQueryTerm::* = term * term * term (* var, low, high *)
+
   and term = (* ITerm *)
   (* from Ast.Tree/ActivePatterns.fs *)
   (* from Ast/ActivePatterns.fs *)
@@ -134,6 +130,24 @@ module Types
   and polyterm = 
     | MonoTerm : term -> polyterm
     | ForallT : vars -> term -> polyterm
+
+  type SubstrateSays :: substrate => ISubstrateQueryTerm => E
+
+  val mkSubstrateQuery: term -> term -> term -> ISubstrateQueryTerm
+  let mkSubstrateQuery n low hi = (n, low, hi)
+
+  val check_substrate: s:substrate
+                    -> q:ISubstrateQueryTerm 
+                    -> b:bool{b=true => SubstrateSays s q}
+  let check_substrate s q =  match q with
+    | (n, low, hi) -> 
+      let getInt t =  (* get a const int from a term *)
+        (match t with
+           | Const (Int i) -> i
+           | _ -> raise "unexpected term in check_substrate") in
+      if intCheckRange (getInt n) (getInt low) (getInt hi) 
+      then (assume (SubstrateSays s q); true)
+      else false
 
   type Knows :: polyterm => E
   type kpolyterm = i:polyterm{Knows i}
