@@ -177,6 +177,10 @@ extern Runtime val writeCertToFile : string -> 'a -> string
 extern Runtime val print_int : int -> bool
 
 logic function Strcat : string -> string -> string
+assume forall (str:string). ((Strcat str "") = str)
+assume forall (str:string). ((Strcat "" str) = str)
+assume forall (s1:string) (s2:string) (s3:string).
+  ((Strcat s1 (Strcat s2 s3)) = (Strcat (Strcat s1 s2) s3))
 logic function ReprInt: int -> string
 extern Runtime val strcat : s1:string -> s2:string -> r:string{(Strcat s1 s2) = r}
 extern Runtime val strStartsWith: string -> string -> bool
@@ -187,7 +191,7 @@ extern Runtime val strLength: s:string -> int
 extern Runtime val intToString: n:int -> s:string{s=(ReprInt n)}
 extern Runtime val stringToInt: s:string -> n:int{s=(ReprInt n)}
 extern Runtime val strRmPfx: s:string -> pfx:string -> r:string{s=(Strcat pfx r)}
-extern Runtime val strSplitByDelimiter: s:string -> d:string -> (r1:string*r2:string{s=(Strcat r1 r2)})
+extern Runtime val strSplitByDelimiter: s:string -> d:string -> (r1:string*r2:string{(Strcat r1 r2)=s})
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool
