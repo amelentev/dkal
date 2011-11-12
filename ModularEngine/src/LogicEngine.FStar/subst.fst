@@ -20,7 +20,6 @@ assume Subst_dom_upd:forall (s:substitution) (x:var) (t:term).
                      Domain ((x,t)::s) = (x::(Domain s))
 
 (* Axiomatization of substitution on (mono)terms *)
-logic function SubstQuery : ISubstrateQueryTerm -> substitution -> ISubstrateQueryTerm 
 logic function Subst      : term -> substitution -> term               
 logic function SubstList  : list term -> substitution -> list term 
 assume Subst_Var1:forall (x:var) (s:substitution). 
@@ -32,7 +31,7 @@ assume Subst_Cnst:forall (c:constant) (s:substitution).
 assume Subst_Appl:forall (f:func) (args:list term) (s:substitution). 
                   ((Subst (App f args) s)=(App f (SubstList args s)))
 assume Subst_QyTm:forall (q:ISubstrateQueryTerm) (s:substitution). 
-                  ((Subst (SubstrateQueryTerm q) s)=(SubstrateQueryTerm (SubstQuery q s)))
+                  ((Subst (SubstrateQueryTerm q) s)=(SubstrateQueryTerm ({n=(Subst q.n s); low=(Subst q.low s); hi=(Subst q.hi s)})))
 assume SubstList0:forall (s:substitution). ((SubstList [] s)=[])
 assume SubstList1:forall (t:term) (tl:list term) (s:substitution). 
                   (SubstList (t::tl) s) = ((Subst t s)::(SubstList tl s))
@@ -44,7 +43,8 @@ assume FreeVars_Const: forall (c:constant). (FreeVars(Const c) = [])
 assume FreeVars_App1 : forall (f:func). (FreeVars(App f []) = [])
 assume FreeVars_App2 : forall (f:func) (t:term) (tl:list term).
                        ((FreeVars(App f (t::tl))) = (Append (FreeVars t) (FreeVars(App f tl))))
-
+assume FreeVars_SubQ : forall (s:ISubstrateQueryTerm). 
+                       ((FreeVars (SubstrateQueryTerm s))) = (Append (FreeVars (s.n)) (Append (FreeVars (s.low)) (FreeVars (s.hi))))
 logic function FreeVarsSubst : substitution -> vars 
 assume FreeVarsSubst_Emp: FreeVarsSubst [] = []
 assume FreeVarsSubst_Upd: forall (s:substitution) (x:var) (v:term).
@@ -69,10 +69,6 @@ type Extends :: substitution => substitution => E
 (*********************************************************************************)
 (* Implementation *)
 (*********************************************************************************)
-val substQuery: q:ISubstrateQueryTerm -> s:substitution -> q':ISubstrateQueryTerm{(SubstQuery q s)=q'}
-val substrateQueryTerm_Vars : s:ISubstrateQueryTerm -> f:vars{(f = (FreeVars (SubstrateQueryTerm s)))}
-val substrateUpdateTerm_Vars : s:ISubstrateUpdateTerm -> f:vars{(f = (FreeVars (SubstrateUpdateTerm s)))}
-
 val emptySubst: unit -> s:substitution{s=[]}
 let emptySubst b = []
 
@@ -131,8 +127,8 @@ let rec freeVars t = match t with
   | Const c -> []
   | App f [] -> []
   | App f (h::t) -> append (freeVars h) (freeVars (App f t))
-  | SubstrateQueryTerm s -> substrateQueryTerm_Vars s
-  | SubstrateUpdateTerm s -> substrateUpdateTerm_Vars s
+  | SubstrateQueryTerm s -> append (freeVars s.n) (append (freeVars s.low) (freeVars s.hi))
+  | SubstrateUpdateTerm s -> raise "NYI: substrateUpdateTerm_Vars s"
 
 val freeVarsSubst: s:substitution -> f:vars{(f = (FreeVarsSubst s))}
 let rec freeVarsSubst s = match s with
@@ -171,14 +167,18 @@ let rec freshVars xs = match xs with
        and generate the logic function axioms from this code. *)
 val subst: i:term -> s:substitution -> i':term{(Subst i s)=i'}
 val substList : tl:list term -> s:substitution -> tl':list term{(SubstList tl s)=tl'}
+val substQuery :   q:ISubstrateQueryTerm 
+                -> s:substitution
+                -> r:ISubstrateQueryTerm{r=({n=(Subst q.n s); low=(Subst q.low s); hi=(Subst q.hi s)})}
 let rec subst i s = match i with
   | Var y -> (match lookupVar s y with
                 | None -> Var y
                 | Some t -> t)
   | Const c -> Const c
   | App f tl -> App f (substList tl s)
-  | SubstrateQueryTerm q -> SubstrateQueryTerm(substQuery q s)
-	
+  | SubstrateQueryTerm q -> SubstrateQueryTerm({n=(subst q.n s); low=(subst q.low s); hi=(subst q.hi s)})
+  | SubstrateUpdateTerm _ -> raise "NYI: Substrate updates"
+
 and substList ilist s = match ilist with
   | [] -> []
   | hd::tl ->
@@ -186,6 +186,8 @@ and substList ilist s = match ilist with
       let hd' = subst hd s in
         Cons<term> hd' tl' (* type inference is too eager here and infers a refined instantiation;
                               need to provide explicit annotation on Cons *)
+
+and substQuery q s = {n=(subst q.n s); low=(subst q.low s); hi=(subst q.hi s)}
 
 val polysubst: p1:polyterm -> s:substitution -> p2:polyterm{(PolySubst p1 s)=p2}
 let polysubst p1 s = 

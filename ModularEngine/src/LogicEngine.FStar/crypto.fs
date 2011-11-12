@@ -7,8 +7,8 @@ open System.Security.Cryptography
 let sha1_instance = SHA1.Create ()
 let sha1 (x:byte []) : byte [] = sha1_instance.ComputeHash x
 
-let rsa_new_key_pair (b:bool) : Prims.DepTuple2SS<string, string>  = 
-  failwith "Not yet implemented" 
+(* let rsa_new_key_pair (b:bool) : Prims.DepTuple2SS<string, string>  =  *)
+(*   failwith "Not yet implemented"  *)
 
 let rsa_sign_impl (v:byte []) (skey:string) = 
   let rsa = new RSACryptoServiceProvider() in
