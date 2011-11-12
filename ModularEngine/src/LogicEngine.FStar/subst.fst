@@ -2,7 +2,6 @@ module Subst
 open Types
 open Util
 
-
 val subst_apply : substitution -> var -> term
 let subst_apply s v = match assoc v s with 
   | None -> Var v
@@ -75,7 +74,7 @@ assume (forall (s:substitution) (xs:vars) (body:term). Disjoint (FreeVarsSubst s
 assume (forall (s:substitution) (body:term). 
     ((PolySubst (MonoTerm body) s)=(MonoTerm (Subst body s))))
 
-val polysubst: polyterm -> substitution -> polyterm
+val polysubst: p1:polyterm -> s:substitution -> p2:polyterm{(PolySubst p1 s)=p2}
 
 (* Building substitutions *)
 logic function MkSubst: vars -> list term -> substitution
@@ -157,6 +156,8 @@ let rec freeVars t = match t with
   | App f (h::t) -> append (freeVars h) (freeVars (App f t))
   | SubstrateQueryTerm s -> substrateQueryTerm_Vars s
   | SubstrateUpdateTerm s -> substrateUpdateTerm_Vars s
+
+val freeVarsPoly : t:polyterm -> f:vars{(FreeVarsPoly t)=f}
 
 val freeVarsSubst_aux :
      s:substitution -> v:vars -> f:vars{(f = (FreeVarsSubst_aux s v))}

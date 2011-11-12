@@ -64,7 +64,10 @@ assume In_hd: forall (hd:'a) (tl:list 'a). (In hd (Cons hd tl))
 assume In_tl: forall (hd:'a) (x:'a) (tl:list 'a). (In x tl) => (In x (Cons hd tl))
 assume inConsInv: forall (x:'a) (y:'a) (tl:list 'a). (In x (Cons y tl)) <=> ((x=y) || (In x tl))
 assume notinNil: forall (x:'a). not (In x Nil)
-(* assume notinCons: forall (x:'a) (y:'a) (tl:list 'a). ((not (In x tl)) && (not (x=y))) => not (In x (Cons y tl))   *)
+
+type Includes :: 'a::* => list 'a => list 'a => E
+assume Includes_nil: forall (l:list 'a). Includes l []
+assume Includes_cons: forall (l:list 'a) (l':list 'a) (x:'a). In x l && Includes l l' => Includes l (x::l') 
 
 val contains : a:'a -> l:list 'a -> b:bool{((b=true) <=> (In 'a a l))}
 let rec contains a l = match l with 
@@ -72,6 +75,11 @@ let rec contains a l = match l with
   | hd::tl -> 
       if a=hd then true
       else contains a tl
+
+val includes : l:list 'a -> m:list 'a -> b:bool{b=true => Includes l m}
+let rec includes l m = match m with 
+  | [] -> true
+  | hd::tlm -> (contains hd l) && (includes l tlm)
 
 type Disjoint :: 'a::* => list 'a => list 'a => E
 assume (forall (xs:list 'a) (ys:list 'a). Disjoint xs ys <=> (forall (x:'a). In x xs => not(In x ys)))
@@ -202,7 +210,7 @@ extern Runtime val Assume: 'P::E -> unit -> (y:unit{'P})
 extern Runtime val PAssume: 'P::E -> int -> (y:punit{'P})
 extern Runtime val pickle: x:'a -> (b:bytes{Serialized x b})
 extern Runtime val unpickle: b:bytes -> (x:'a{Serialized x b})
-extern Runtime val assert : 'P::E -> x:unit{'P} -> (y:unit{'P})
+extern Runtime val Assert : 'P::E -> x:unit{'P} -> (y:unit{'P})
 extern Runtime val throw: string -> 'a 
 
 val loop : unit -> 'a
@@ -234,6 +242,11 @@ val collect : ('a -> list 'b) -> list 'a -> list 'b (* Rk: need of val declarati
 let collect (f: 'a -> list 'b) (l : list 'a) : list 'b =
   fold_right (fun a acc -> append (f a) acc) l []
 
+val collect_in : l:list 'a -> (x:'a{In x l} -> list 'b) -> list 'b 
+let rec collect_in l f = match l with 
+  | [] -> []
+  | hd::tl -> append (f hd) (collect_in tl f)
+
 val filter : ('a -> bool) -> list 'a -> list 'a
 let filter (f: 'a -> bool) (l : list 'a) =
   fold_right (fun a acc -> if (f a) then a :: acc else acc) l []
@@ -263,3 +276,4 @@ val _dummy_op_Subtraction        : int -> int -> int
 val _dummy_op_Addition           : int -> int -> int
 val _dummy_op_GreaterThanOrEqual : int -> int -> bool
 val _dummy_op_Negation           : x:bool -> y:bool { (y=true => x=false) && (y=false => x=true)}
+
