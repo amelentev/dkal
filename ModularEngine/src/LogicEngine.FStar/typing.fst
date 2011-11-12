@@ -202,7 +202,7 @@ type typing :: vars => term => typ => P =
     -> formal_ts:list typ
     -> result_t:typ
     -> FuncTyping f formal_ts result_t
-    -> Zip term typ (typing G) args formal_ts
+    -> ZipP term typ (typing G) args formal_ts
     -> typing G (App f args) result_t
     
 val constantTyping: g:vars -> c:constant -> (ty:typ * typing g (Const c) ty) 
@@ -239,7 +239,7 @@ let checkTyping g t ty =
   let ty', pf = doTyping g t in 
     if ty=ty' then Some pf else None
 
-val doTypingList : g:vars -> ts:list term -> xs:vars -> option (Zip term var (fun (i:term) (x:var) => typing g i x.typ) ts xs)
+val doTypingList : g:vars -> ts:list term -> xs:vars -> option (ZipP term var (fun (i:term) (x:var) => typing g i x.typ) ts xs)
 let doTypingList g ts xs = zip_p<term, var, (fun (i:term) (x:var) => typing g i x.typ)> (fun t x -> checkTyping g t x.typ) ts xs
 
 type polytyping :: vars => polyterm => P = 

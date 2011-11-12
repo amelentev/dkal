@@ -416,7 +416,9 @@ let rec parseRelationInfon str =
    (strcat r_argts
    (strcat "],"
    (strcat r_id ")"))))))) in 
-  r, r_r, rest9
+   (assume ((ReprRelationInfon r)=r_r);
+    assume ((Strcat r_r rest9)=str);
+    r, r_r, rest9)
 
 and parseFunc str =
   if strStartsWith str "SeqRule" then (SeqRule, "SeqRule", strRmPfx str "SeqRule")

@@ -58,6 +58,8 @@ type MapL :: 'a::* => ('a => P) => list 'a => P =
      -> MapL 'a 'Q t
      -> 'Q h
      -> MapL 'a 'Q (h::t)
+
+type ForallL :: _ = (fun ('a::*) (xs:list 'a) ('P::'a => P) => (MapL 'a 'P xs ))
 			  
 val mapL_p: 'a::*
         -> 'Q::('a => P)
@@ -82,49 +84,49 @@ type ZipE :: 'a::* => 'b::* => ('a => 'b => E) => list 'a => list 'b => P =
              -> ZipE 'a 'b 'Q (x::l1) (Cons<'b> y l2)
 
 
-type Zip :: 'a::* => 'b::* => ('a => 'b => P) => list 'a => list 'b => P = 
-   | Zip_Nil : 'a::* -> 'b::* -> 'Q::('a => 'b => P) 
-             -> Zip 'a 'b 'Q [] []
-   | Zip_Cons: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
+type ZipP :: 'a::* => 'b::* => ('a => 'b => P) => list 'a => list 'b => P = 
+   | ZipP_Nil : 'a::* -> 'b::* -> 'Q::('a => 'b => P) 
+             -> ZipP 'a 'b 'Q [] []
+   | ZipP_Cons: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
              -> l1:list 'a -> l2:list 'b 
              -> x:'a -> y:'b 
-             -> Zip 'a 'b 'Q l1 l2
+             -> ZipP 'a 'b 'Q l1 l2
              -> 'Q x y
-             -> Zip 'a 'b 'Q (x::l1) (y::l2)
+             -> ZipP 'a 'b 'Q (x::l1) (y::l2)
 
 val zip_p: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
       -> f:(x:'a -> y:'b -> option ('Q x y))
       -> l1:list 'a
       -> l2:list 'b
-      -> option (Zip 'a 'b 'Q l1 l2)
+      -> option (ZipP 'a 'b 'Q l1 l2)
 let rec zip_p f l1 l2 = match l1, l2 with
-  | [],[] -> Some (Zip_Nil<'a,'b,'Q>)
+  | [],[] -> Some (ZipP_Nil<'a,'b,'Q>)
   | (x1::tl1), (x2::tl2) ->
       match zip_p<'a,'b,'Q> f tl1 tl2, f x1 x2 with
-        | (Some pf_tl), Some pf_hd -> Some (Zip_Cons<'a,'b,'Q> tl1 tl2 x1 x2 pf_tl pf_hd)
+        | (Some pf_tl), Some pf_hd -> Some (ZipP_Cons<'a,'b,'Q> tl1 tl2 x1 x2 pf_tl pf_hd)
         | _ -> None
 
 val map_p: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
       -> f:(x:'a -> (y:'b * 'Q x y))
       -> l1:list 'a
-      -> (l2:list 'b * Zip 'a 'b 'Q l1 l2)
+      -> (l2:list 'b * ZipP 'a 'b 'Q l1 l2)
 let rec map_p f l1 = match l1 with
-  | [] -> [], Zip_Nil<'a,'b,'Q>
+  | [] -> [], ZipP_Nil<'a,'b,'Q>
   | x::tlx ->
       let y, pfHd = f x in
       let tly, pfTl = map_p<'a,'b,'Q> f tlx in
-        (y::tly), Zip_Cons<'a,'b,'Q> tlx tly x y pfTl pfHd
+        (y::tly), ZipP_Cons<'a,'b,'Q> tlx tly x y pfTl pfHd
         
 val map_p_opt: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
       -> f:(x:'a -> option (y:'b * 'Q x y))
       -> l1:list 'a
-      -> option (l2:list 'b * Zip 'a 'b 'Q l1 l2)
+      -> option (l2:list 'b * ZipP 'a 'b 'Q l1 l2)
 let rec map_p_opt f l1 = match l1 with
-  | [] -> Some(([], Zip_Nil<'a,'b,'Q>))
+  | [] -> Some(([], ZipP_Nil<'a,'b,'Q>))
   | x::tlx ->
       match f x, map_p_opt<'a,'b,'Q> f tlx with
         | Some((y, pfHd)), Some((tly, pfTl)) ->
-            Some(((y::tly), Zip_Cons<'a,'b,'Q> tlx tly x y pfTl pfHd))
+            Some(((y::tly), ZipP_Cons<'a,'b,'Q> tlx tly x y pfTl pfHd))
         | _ -> None
 
 val map_mapL_p: 'a::* -> 'b::* 
@@ -132,14 +134,14 @@ val map_mapL_p: 'a::* -> 'b::*
 			-> 'R::('b => P)
 			-> f:(x:'a -> option(x':'b * 'Q x x' * 'R x'))
 			-> l:list 'a
-			-> option (l':list 'b * Zip 'a 'b 'Q l l' * MapL 'b 'R l')
+			-> option (l':list 'b * ZipP 'a 'b 'Q l l' * MapL 'b 'R l')
 let rec map_mapL_p f l = match l with
-  | [] -> Some(([], Zip_Nil, MapL_Nil))
+  | [] -> Some(([], ZipP_Nil, MapL_Nil))
   | h::t -> 
      (match f h, map_mapL_p f t with
 	    | Some((h', qh, rh)), Some((t', qt, rt)) -> 
             Some(((h'::t'), (* need parenthesis around the list; precedence of :: and , *)
-			      Zip_Cons<'a, 'b, 'Q> t t' h h' qt qh,
+			      ZipP_Cons<'a, 'b, 'Q> t t' h h' qt qh,
                   MapL_Cons<'b, 'R> t' h' rt rh))
 	    | _ -> None)
 
