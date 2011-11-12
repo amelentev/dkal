@@ -4,12 +4,13 @@ open Interp
 
 (* --------- Borrowed from prog.fst --------- *)
 type TrustRule :: _ = 
-    (fun (xs:vars) (cs:conditions) (acts:actions) => 
-        (forall (a:action) (subst:substitution). In a acts && Holds xs cs subst => (Enabled (ActionSubst a subst))))
+    (fun (xs:vars) (cs:conditions) (a:action) => 
+        (forall (subst:substitution). Holds xs cs subst => (Enabled (ActionSubst a subst))))
 
 let mkRule xs cs acts = 
-  assume (TrustRule xs cs acts);
-  Rule xs cs acts
+  let acts = map (fun a -> assume (TrustRule xs cs a);
+                    (a:(a:action{TrustRule xs cs a}))) acts in
+    Rule xs cs acts
 
 (* --------- Type for integer intervals substrate queries --------- *)
 type intervalSubstrateQuery = ISubstrateQueryTerm
@@ -46,7 +47,7 @@ let asInfon isq = App AsInfon [(SubstrateQueryTerm isq)]
 
 (* --------- Shorthands to construct infon relations --------- *)
 let rel relInf terms = (App (RelationInfon relInf)) terms
-let ri name argsTyp = { name=name; retType=Infon; argsType=argsTyp; identity=None }
+let ri name argsTyp = { fname=name; retType=Infon; argsType=argsTyp; identity=None }
 
 (* --------- Infon relations used in the clinical trials scenario --------- *)
 let participates site trial = rel (ri "participates" [Principal; Int32]) [site; trial]

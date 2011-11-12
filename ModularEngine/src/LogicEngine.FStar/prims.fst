@@ -64,7 +64,10 @@ assume In_hd: forall (hd:'a) (tl:list 'a). (In hd (Cons hd tl))
 assume In_tl: forall (hd:'a) (x:'a) (tl:list 'a). (In x tl) => (In x (Cons hd tl))
 assume inConsInv: forall (x:'a) (y:'a) (tl:list 'a). (In x (Cons y tl)) <=> ((x=y) || (In x tl))
 assume notinNil: forall (x:'a). not (In x Nil)
-(* assume notinCons: forall (x:'a) (y:'a) (tl:list 'a). ((not (In x tl)) && (not (x=y))) => not (In x (Cons y tl))   *)
+
+type Includes :: 'a::* => list 'a => list 'a => E
+assume Includes_nil: forall (l:list 'a). Includes l []
+assume Includes_cons: forall (l:list 'a) (l':list 'a) (x:'a). In x l && Includes l l' => Includes l (x::l') 
 
 val contains : a:'a -> l:list 'a -> b:bool{((b=true) <=> (In 'a a l))}
 let rec contains a l = match l with 
@@ -72,6 +75,11 @@ let rec contains a l = match l with
   | hd::tl -> 
       if a=hd then true
       else contains a tl
+
+val includes : l:list 'a -> m:list 'a -> b:bool{b=true => Includes l m}
+let rec includes l m = match m with 
+  | [] -> true
+  | hd::tlm -> (contains hd l) && (includes l tlm)
 
 type Disjoint :: 'a::* => list 'a => list 'a => E
 assume (forall (xs:list 'a) (ys:list 'a). Disjoint xs ys <=> (forall (x:'a). In x xs => not(In x ys)))
@@ -126,6 +134,13 @@ let rec concatMap f = function
   | [] -> []
   | a::tl -> append (f a) (concatMap f tl)
 
+val mapSome : (x:'a -> option 'b) -> list 'a -> list 'b
+(* let rec mapSome f l = match l with  *)
+(*   | [] -> [] *)
+(*   | hd::tl -> match f hd with  *)
+(*       | None -> mapSome f tl *)
+(*       | Some x -> x::(mapSome f tl) *)
+
 extern reference String {language="C#";
                          dll="mscorlib";
                          namespace="System";
@@ -141,13 +156,21 @@ let rec ConcatList sep l = match l with
         if tl="" then hd
         else Concat (Concat hd sep) tl
 
-
+logic function UnicodeStringToBytes: string -> bytes
+extern reference SysTextUnicodeEncoding {language="C#";
+                             dll="mscorlib";
+                             namespace="System.Text";
+                             classname="UnicodeEncoding"}
+extern SysTextUnicodeEncoding val ToUnicodeString: b:bytes -> s:string{(UnicodeStringToBytes s) = b}
+extern SysTextUnicodeEncoding val FromUnicodeString: s:string -> b:bytes{(UnicodeStringToBytes s) = b}
+                            
 extern reference SysConvert {language="C#";
                              dll="mscorlib";
                              namespace="System";
                              classname="Convert"}
 extern SysConvert val ToBase64String : bytes -> string
 extern SysConvert val FromBase64String : string -> bytes
+
 
 extern reference Runtime { language = "F#";
                            dll="runtime";
@@ -175,7 +198,23 @@ extern Runtime val string_of_any_for_coq_afn : 'a -> string
 extern Runtime val writeToFile : string -> 'a -> string
 extern Runtime val writeCertToFile : string -> 'a -> string
 extern Runtime val print_int : int -> bool
-extern Runtime val strcat : string -> string -> string
+
+logic function Strcat : string -> string -> string
+assume forall (str:string). ((Strcat str "") = str)
+assume forall (str:string). ((Strcat "" str) = str)
+assume forall (s1:string) (s2:string) (s3:string).
+  ((Strcat s1 (Strcat s2 s3)) = (Strcat (Strcat s1 s2) s3))
+assume forall (s1:string) (s2:string) (s:string).
+  ((s1=s2) => (Strcat s1 s) = (Strcat s2 s))
+assume forall (s1:string) (s2:string) (s:string).
+  ((s1=s2) => (Strcat s s1) = (Strcat s s2))
+logic function ReprInt: int -> string
+extern Runtime val strcat : s1:string -> s2:string -> r:string{(Strcat s1 s2) = r}
+extern Runtime val strStartsWith: string -> string -> bool
+extern Runtime val intToString: n:int -> s:string{s=(ReprInt n)}
+extern Runtime val stringToInt: s:string -> n:int{s=(ReprInt n)}
+extern Runtime val strRmPfx: s:string -> pfx:string -> r:string{s=(Strcat pfx r)}
+extern Runtime val strSplitByDelimiter: s:string -> d:string -> (r1:string*r2:string{(Strcat r1 r2)=s})
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool
@@ -186,7 +225,7 @@ extern Runtime val Assume: 'P::E -> unit -> (y:unit{'P})
 extern Runtime val PAssume: 'P::E -> int -> (y:punit{'P})
 extern Runtime val pickle: x:'a -> (b:bytes{Serialized x b})
 extern Runtime val unpickle: b:bytes -> (x:'a{Serialized x b})
-extern Runtime val assert : 'P::E -> x:unit{'P} -> (y:unit{'P})
+extern Runtime val Assert : 'P::E -> x:unit{'P} -> (y:unit{'P})
 extern Runtime val throw: string -> 'a 
 
 val loop : unit -> 'a
@@ -218,6 +257,11 @@ val collect : ('a -> list 'b) -> list 'a -> list 'b (* Rk: need of val declarati
 let collect (f: 'a -> list 'b) (l : list 'a) : list 'b =
   fold_right (fun a acc -> append (f a) acc) l []
 
+val collect_in : l:list 'a -> (x:'a{In x l} -> list 'b) -> list 'b 
+let rec collect_in l f = match l with 
+  | [] -> []
+  | hd::tl -> append (f hd) (collect_in tl f)
+
 val filter : ('a -> bool) -> list 'a -> list 'a
 let filter (f: 'a -> bool) (l : list 'a) =
   fold_right (fun a acc -> if (f a) then a :: acc else acc) l []
@@ -247,3 +291,4 @@ val _dummy_op_Subtraction        : int -> int -> int
 val _dummy_op_Addition           : int -> int -> int
 val _dummy_op_GreaterThanOrEqual : int -> int -> bool
 val _dummy_op_Negation           : x:bool -> y:bool { (y=true => x=false) && (y=false => x=true)}
+

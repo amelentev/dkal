@@ -81,9 +81,9 @@ let unify s1 u xs i goal =
 (* Spec?? What do we want this to do?
    In particular, do we want to add the variables in the foralls in front of
    p1 and p2 into the unification variables or not? *)
-val unify_poly: s1:substitution
-            -> uvars1:vars 
-            -> uvars2:vars 
-            -> p1:polyterm
-            -> p2:polyterm
-            -> option (s2:substitution{Extends s2 s1})
+val match_pattern: tm:polyterm
+            -> s1:substitution
+            -> upat:vars 
+            -> pattern:polyterm
+            -> option (s2:substitution{Includes upat (Domain s2) && 
+                                      (tm = (PolySubst (PolySubst pattern s1) s2))})
