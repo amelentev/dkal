@@ -133,6 +133,10 @@ assume forall (hd:term) (tl:list term).
                         (ReprMonos tl))))
 
 logic function ReprPoly : polyterm -> string
+
+assume forall (p:polyterm). (Crypto.Serialized p (UnicodeStringToBytes (ReprPoly p)))
+assume forall (p:polyterm). (Net.Received (ReprPoly p) => Net.Received p)
+
 assume forall (xs:vars) (t:term). 
            (ReprPoly (ForallT xs t)) = (Strcat "(Forall ["
                                        (Strcat (ReprVars xs)

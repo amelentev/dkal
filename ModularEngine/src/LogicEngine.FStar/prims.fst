@@ -149,13 +149,21 @@ let rec ConcatList sep l = match l with
         if tl="" then hd
         else Concat (Concat hd sep) tl
 
-
+logic function UnicodeStringToBytes: string -> bytes
+extern reference SysTextUnicodeEncoding {language="C#";
+                             dll="mscorlib";
+                             namespace="System.Text";
+                             classname="UnicodeEncoding"}
+extern SysTextUnicodeEncoding val ToUnicodeString: b:bytes -> s:string{(UnicodeStringToBytes s) = b}
+extern SysTextUnicodeEncoding val FromUnicodeString: s:string -> b:bytes{(UnicodeStringToBytes s) = b}
+                            
 extern reference SysConvert {language="C#";
                              dll="mscorlib";
                              namespace="System";
                              classname="Convert"}
 extern SysConvert val ToBase64String : bytes -> string
 extern SysConvert val FromBase64String : string -> bytes
+
 
 extern reference Runtime { language = "F#";
                            dll="runtime";
@@ -196,10 +204,6 @@ assume forall (s1:string) (s2:string) (s:string).
 logic function ReprInt: int -> string
 extern Runtime val strcat : s1:string -> s2:string -> r:string{(Strcat s1 s2) = r}
 extern Runtime val strStartsWith: string -> string -> bool
-extern Runtime val strSubstring: string -> int -> int -> string
-extern Runtime val strSubstringNoLength: string -> int -> string
-extern Runtime val strIndexOf: string -> string -> int
-extern Runtime val strLength: s:string -> int
 extern Runtime val intToString: n:int -> s:string{s=(ReprInt n)}
 extern Runtime val stringToInt: s:string -> n:int{s=(ReprInt n)}
 extern Runtime val strRmPfx: s:string -> pfx:string -> r:string{s=(Strcat pfx r)}
