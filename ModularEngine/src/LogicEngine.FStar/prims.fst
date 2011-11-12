@@ -134,6 +134,13 @@ let rec concatMap f = function
   | [] -> []
   | a::tl -> append (f a) (concatMap f tl)
 
+val mapSome : (x:'a -> option 'b) -> list 'a -> list 'b
+(* let rec mapSome f l = match l with  *)
+(*   | [] -> [] *)
+(*   | hd::tl -> match f hd with  *)
+(*       | None -> mapSome f tl *)
+(*       | Some x -> x::(mapSome f tl) *)
+
 extern reference String {language="C#";
                          dll="mscorlib";
                          namespace="System";

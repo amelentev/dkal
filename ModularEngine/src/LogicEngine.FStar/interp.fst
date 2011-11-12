@@ -41,29 +41,28 @@ assume forall (i:infon) (s:substitution). (ActionSubst (Drop i) s) = (Drop (Poly
 assume forall (p:term) (i:infon) (s:substitution). (ActionSubst (Fwd p i) s) = (Fwd (Subst p s) (PolySubst i s))
 assume forall (p:term) (i:infon) (s:substitution). (ActionSubst (Send p i) s) = (Send (Subst p s) (PolySubst i s))
 
-type HoldsOne :: vars => condition => substitution => E
-assume forall (xs:vars) (i:infon) (subst:substitution) (s:substrate) (k:infostrate). 
+type HoldsOne :: substitution => vars => condition => substitution => E
+assume Holds_if: forall (xs:vars) (i:infon) (substin:substitution) (subst:substitution) 
+                         (s:substrate) (k:infostrate). 
          ((Includes xs (Domain subst)) && 
-          (Includes xs (FreeVarsPoly i)) &&
-          (InfonLogic.polyentails s k [] (PolySubst i subst)))
-      => HoldsOne xs (If i) subst
-assume forall (xs:vars) (pat:infon) (subst:substitution) (c:communication). 
-         ((Includes xs (Domain subst)) &&
-          (Includes xs (FreeVarsPoly pat)) &&
-          ((PolySubst pat subst)=c))
-      => HoldsOne xs (Upon pat) subst
+          (Includes xs (FreeVarsPoly (PolySubst i substin))) &&
+          (InfonLogic.polyentails s k [] (PolySubst (PolySubst i substin) subst)))
+      => HoldsOne substin xs (If i) subst
 
-type HoldsMany :: substitution => vars => list condition => substitution => E
-assume forall (s:substitution) (xs:vars).
-          (Includes (Domain s) xs) && (Includes xs (Domain s))
-          =>  HoldsMany s xs [] s
-assume forall (s1:substitution) (xs:vars) (c:condition) (s1':substitution) 
-              (cs:conditions) (s2:substitution). 
-          (HoldsOne xs (CondSubst c s1) s1') && 
-          (HoldsMany s1' xs cs s2)
-          => HoldsMany s1 xs cs s2
-          
-type Holds :: _ = fun (xs:vars) (cs:list condition) (s:substitution) => (HoldsMany EmptySubst xs cs s)
+assume Holds_upon: forall (xs:vars) (pat:infon) (substin:substitution) (subst:substitution) (c:communication). 
+         ((Includes xs (Domain subst)) &&
+          (Includes xs (FreeVarsPoly (PolySubst pat substin))) &&
+          ((PolySubst (PolySubst pat substin) subst)=c))
+      => HoldsOne substin xs (Upon pat) subst
+
+type HoldsMany :: vars => list condition => substitution => E
+assume forall (xs:vars). HoldsMany xs [] EmptySubst
+assume forall (xs:vars) (c:condition) (cs:conditions) 
+               (s0:substitution) (s1:substitution).
+          (HoldsMany xs cs s0) && (HoldsOne s0 xs c s1)
+         => HoldsMany xs (c::cs) s1
+type Holds :: _ = fun (xs:vars) (cs:list condition) (s:substitution) => 
+    ((Includes xs (Domain s)) && (Includes (Domain s) xs) && (HoldsMany xs cs s))
 
 (* -------------------------------------------------------------------------------- *)
 (* Spec: Enabled actions *)
@@ -77,19 +76,20 @@ assume forall (me:principal) (p:principal) (i:infon).
 type rule =
   | Rule : xs:vars 
         -> cs:conditions 
-        -> acts:actions{forall (a:action) (subst:substitution). In a acts && Holds xs cs subst => (Enabled (ActionSubst a subst))}
+        -> acts:list (a:action{forall (subst:substitution). Holds xs cs subst => (Enabled (ActionSubst a subst))})
         -> rule
 
 type rules = list rule
 
 (* ================= Wrapping external functions ===================== *)
-type substholds :: _ = (fun (xs:vars) (c:condition) (s0:substitution) => (s:substitution{HoldsOne xs (CondSubst c s0) s}))
-type substholdsex :: _ = (fun (xs:vars) (c:condition) (sl:substitutions) => (s:substitution{exists (s0:substitution). In s0 sl && HoldsOne xs (CondSubst c s0) s}))
+type substholdsone :: _ = (fun (xs:vars) (c:condition) (s0:substitution) => (s:substitution{HoldsOne s0 xs c s}))
+type substholdsmany :: _ = (fun (xs:vars) (cs:conditions) => (s:substitution{HoldsMany xs cs s}))
+type substholdsex  :: _ = (fun (xs:vars) (c:condition) (sl:substitutions) => (s:substitution{exists (s0:substitution). In s0 sl && HoldsOne s0 xs c s}))
 
 val derive: u:vars
           -> goal:infon
           -> subst0:substitution
-          -> list (substholds u (If goal) subst0)
+          -> list (substholdsone u (If goal) subst0)
 let derive u goal subst0 = 
   let s = State.getSubstrate () in
   let k = State.getInfostrate () in 
@@ -98,9 +98,7 @@ let derive u goal subst0 =
        (includes u (freeVarsPoly goal')) (* TODO: push into pre-condition *)
     then match InfonLogic.deriveQuant u s k subst0 goal with
       | None -> []
-      | Some ((subst, pf)) -> 
-(*           assert (HoldsOne u (CondSubst (If goal) subst0) subst);  *)
-          [subst]
+      | Some ((subst, pf)) -> [subst]
     else []
 (* ================= Process state and messaging ===================== *)
 val comms : Ref (list communication)
@@ -113,7 +111,7 @@ let rec get_communications _unit =
       | Some infon -> comms := infon::(!comms)
       | _ -> get_communications ()
           
-val _dropCommunications: i:infon{Enabled (Drop i)} -> unit
+val dropCommunications: i:infon{Enabled (Drop i)} -> bool
 let dropCommunications i = 
   let changed, comms' = 
     fold_right (fun (j:communication) (changed, out) -> 
@@ -133,7 +131,7 @@ let dispatch p m =
      (Net.send p (Marshall.msg2bytes m));
      true)
 
-val _fwd: p:principal -> i:infon{Enabled (Fwd (Const (PrincipalConstant p)) i)} -> bool 
+val fwd: p:principal -> i:infon{Enabled (Fwd (Const (PrincipalConstant p)) i)} -> bool 
 let fwd p i = 
   let m = Forwarded (me, p, i) in 
     dispatch p m 
@@ -149,7 +147,7 @@ let send p i =
 val matchComm : comm:communication 
              -> xs:vars -> pat:infon 
              -> s0:substitution 
-             -> list (substholds xs (Upon pat) s0)
+             -> list (substholdsone xs (Upon pat) s0)
 let matchComm (comm:communication) xs pat s0 = 
   if includes xs (freeVarsPoly (polysubst pat s0))
   then match Unify.match_pattern comm s0 xs pat with
@@ -159,47 +157,54 @@ let matchComm (comm:communication) xs pat s0 =
 
 let matchComms xs pat s = collect (fun comm -> matchComm comm xs pat s) (!comms)
   
+val evalCondOne: xs:vars -> s0:substitution -> c:condition -> list (substholdsone xs c s0)
+let evalCondOne xs s0 c = match c with 
+  | If pat -> derive xs pat s0
+  | Upon pat -> matchComms xs pat s0
+
 val evalCond: xs:vars -> sl:substitutions -> c:condition -> list (substholdsex xs c sl)
 let evalCond xs sl c = match c with 
-  | If pat -> collect_in sl (fun s0 -> map (fun (x:substholds xs c s0) -> (x:substholdsex xs c sl)) (derive xs pat s0))
-  | Upon pat -> collect_in sl (fun s0 -> map (fun (x:substholds xs c s0) -> (x:substholdsex xs c sl)) (matchComms xs pat s0))
+  | If pat -> collect_in sl (fun s0 -> map (fun (x:substholdsone xs c s0) -> (x:substholdsex xs c sl)) (derive xs pat s0))
+  | Upon pat -> collect_in sl (fun s0 -> map (fun (x:substholdsone xs c s0) -> (x:substholdsex xs c sl)) (matchComms xs pat s0))
 
-val _evalConds: xs:vars -> cs:conditions -> list (s:substitution{Holds xs cs s})      
+val evalConds: xs:vars -> cs:conditions -> list (substholdsmany xs cs)
+let rec evalConds xs cs =
+  match cs with
+    | [] -> ([(emptySubst())]) 
+    | c::cstl ->
+        let sl' = evalConds xs cstl in
+          collect (fun (s0:substitution{HoldsMany xs cstl s0}) ->  (* abbrevs don't work here ... fix *)
+                     map (fun (s1:substitution{HoldsOne s0 xs c s1}) -> (s1:substholdsmany xs (c::cstl)))
+                       (evalCondOne xs s0 c))
+            sl' 
 
-val evalConds: xs:vars -> cs:conditions -> list substitution
-
-(* type holdsmanyex :: _ =  *)
-(*     (fun (xs:vars) (cs:conditions) (sl:substitutions) =>  *)
-(*         (s:substitution{exists (s0:substitution). In s0 sl && HoldsMany s0 xs cs (CondSubst c s0) s})) *)
-
-(* let rec evalConds (xs:vars) (cl:conditions) (sl:substitutions) : list (s:substitution{=  *)
-(*   match cl with  *)
-(*     | [] ->  *)
-(*         fold_left (fun (sl:substitutions) (c:condition) -> map (fun (x:substholdsex xs c sl) -> (x:substitution)) (evalCond xs sl c))  *)
-(*           [(Subst.emptySubst () : substitution)] cs *)
-          
-
-
-(* let evalConds xs cs =  *)
-(*   let initial : substitutions = [(Subst.emptySubst () : substitution)] in  *)
-(*     fold_left (fun (sl:substitutions) (c:condition) -> map (fun (x:substholdsex xs c sl) -> (x:substitution)) (evalCond xs sl c))  *)
-(*       [(Subst.emptySubst () : substitution)] cs *)
-
-val _substAction: substs:substitutions 
+val holds: xs:vars -> cs:conditions -> list (s:substitution{Holds xs cs s})
+let holds xs cs = 
+  mapSome (fun (s:substholdsmany xs cs) -> 
+             let d = domain s in
+               if (includes d xs) && (includes xs d) then Some (s:(s:substitution{Holds xs cs s}))
+               else None)          
+    (evalConds xs cs)
+    
+val substAction: s:substitution
               -> a:action 
-              -> acts:actions{Zip substitution action (fun (subst:substitution) (act:action) => (act=(ActionSubst a subst))) substs acts}
-let substAction substs a =
+              -> act:action{act=(ActionSubst a s)}
+let substAction s a =
   match a with
-    | Learn i -> map (fun s -> Learn (Subst.polysubst i s)) substs
-    | Drop i -> map (fun s -> Drop (Subst.polysubst i s)) substs
-    | Fwd p i -> map (fun s -> Fwd (Subst.subst p s) (Subst.polysubst i s)) substs
-    | Send p i -> map (fun s -> Send (Subst.subst p s) (Subst.polysubst i s)) substs
+    | Learn i -> Learn (Subst.polysubst i s)
+    | Drop i -> Drop (Subst.polysubst i s)
+    | Fwd p i -> Fwd (Subst.subst p s) (Subst.polysubst i s)
+    | Send p i -> Send (Subst.subst p s) (Subst.polysubst i s)
 
-val _enabledActions : r:rule -> list (a:action{Enabled a})
+let crev x f = collect f x
+let cmap x f = map f x 
+
+val enabledActions : r:rule -> list (a:action{Enabled a})
 let enabledActions r = match r with 
-  | Rule xs cs acts ->  collect (substAction (evalConds xs cs)) acts
+  | Rule xs cs acts -> crev acts (fun a -> 
+                                    cmap (holds xs cs)
+                                      (fun s -> let a':(a':action{Enabled a'}) = substAction s a in a'))
 
-val _allEnabledActions : rs:list rule -> list (a:action{Enabled a})
 let allEnabledActions rs = collect enabledActions rs
 
 val asPrincipal: p:term -> q:principal{p=(Const (PrincipalConstant q))}
@@ -207,8 +212,8 @@ let asPrincipal = function
   | Const (PrincipalConstant p) -> p
   | _ -> raise "Unexpected type"
 
-val _applyAction: b:bool -> a:action{Enabled a} -> bool 
-let applyAction b a = assume (Enabled a);
+val applyAction: b:bool -> a:action{Enabled a} -> bool 
+let applyAction b a = 
   match a with 
     | Learn i -> State.addToInfostrate i; true
     | Drop i -> dropCommunications i 
