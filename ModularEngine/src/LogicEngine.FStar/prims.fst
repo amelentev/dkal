@@ -156,13 +156,21 @@ let rec ConcatList sep l = match l with
         if tl="" then hd
         else Concat (Concat hd sep) tl
 
-
+logic function UnicodeStringToBytes: string -> bytes
+extern reference SysTextUnicodeEncoding {language="C#";
+                             dll="mscorlib";
+                             namespace="System.Text";
+                             classname="UnicodeEncoding"}
+extern SysTextUnicodeEncoding val ToUnicodeString: b:bytes -> s:string{(UnicodeStringToBytes s) = b}
+extern SysTextUnicodeEncoding val FromUnicodeString: s:string -> b:bytes{(UnicodeStringToBytes s) = b}
+                            
 extern reference SysConvert {language="C#";
                              dll="mscorlib";
                              namespace="System";
                              classname="Convert"}
 extern SysConvert val ToBase64String : bytes -> string
 extern SysConvert val FromBase64String : string -> bytes
+
 
 extern reference Runtime { language = "F#";
                            dll="runtime";
@@ -190,14 +198,23 @@ extern Runtime val string_of_any_for_coq_afn : 'a -> string
 extern Runtime val writeToFile : string -> 'a -> string
 extern Runtime val writeCertToFile : string -> 'a -> string
 extern Runtime val print_int : int -> bool
-extern Runtime val strcat : string -> string -> string
+
+logic function Strcat : string -> string -> string
+assume forall (str:string). ((Strcat str "") = str)
+assume forall (str:string). ((Strcat "" str) = str)
+assume forall (s1:string) (s2:string) (s3:string).
+  ((Strcat s1 (Strcat s2 s3)) = (Strcat (Strcat s1 s2) s3))
+assume forall (s1:string) (s2:string) (s:string).
+  ((s1=s2) => (Strcat s1 s) = (Strcat s2 s))
+assume forall (s1:string) (s2:string) (s:string).
+  ((s1=s2) => (Strcat s s1) = (Strcat s s2))
+logic function ReprInt: int -> string
+extern Runtime val strcat : s1:string -> s2:string -> r:string{(Strcat s1 s2) = r}
 extern Runtime val strStartsWith: string -> string -> bool
-extern Runtime val strSubstring: string -> int -> int -> string
-extern Runtime val strSubstringNoLength: string -> int -> string
-extern Runtime val strIndexOf: string -> string -> int
-extern Runtime val strLength: string -> int
-extern Runtime val intToString: int -> string
-extern Runtime val stringToInt: string -> int
+extern Runtime val intToString: n:int -> s:string{s=(ReprInt n)}
+extern Runtime val stringToInt: s:string -> n:int{s=(ReprInt n)}
+extern Runtime val strRmPfx: s:string -> pfx:string -> r:string{s=(Strcat pfx r)}
+extern Runtime val strSplitByDelimiter: s:string -> d:string -> (r1:string*r2:string{(Strcat r1 r2)=s})
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool

@@ -47,7 +47,7 @@ let asInfon isq = App AsInfon [(SubstrateQueryTerm isq)]
 
 (* --------- Shorthands to construct infon relations --------- *)
 let rel relInf terms = (App (RelationInfon relInf)) terms
-let ri name argsTyp = { name=name; retType=Infon; argsType=argsTyp; identity=None }
+let ri name argsTyp = { fname=name; retType=Infon; argsType=argsTyp; identity=None }
 
 (* --------- Infon relations used in the clinical trials scenario --------- *)
 let participates site trial = rel (ri "participates" [Principal; Int32]) [site; trial]
