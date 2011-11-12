@@ -165,7 +165,25 @@ let evalCond xs sl c = match c with
   | Upon pat -> collect_in sl (fun s0 -> map (fun (x:substholds xs c s0) -> (x:substholdsex xs c sl)) (matchComms xs pat s0))
 
 val _evalConds: xs:vars -> cs:conditions -> list (s:substitution{Holds xs cs s})      
-let evalConds xs cs = fold_left (fun (sl:substitutions) (c:condition) -> map (fun (x:substholdsex xs c sl) -> (x:substitution)) (evalCond xs sl c)) [(Subst.emptySubst () : substitution)] cs
+
+val evalConds: xs:vars -> cs:conditions -> list substitution
+
+(* type holdsmanyex :: _ =  *)
+(*     (fun (xs:vars) (cs:conditions) (sl:substitutions) =>  *)
+(*         (s:substitution{exists (s0:substitution). In s0 sl && HoldsMany s0 xs cs (CondSubst c s0) s})) *)
+
+(* let rec evalConds (xs:vars) (cl:conditions) (sl:substitutions) : list (s:substitution{=  *)
+(*   match cl with  *)
+(*     | [] ->  *)
+(*         fold_left (fun (sl:substitutions) (c:condition) -> map (fun (x:substholdsex xs c sl) -> (x:substitution)) (evalCond xs sl c))  *)
+(*           [(Subst.emptySubst () : substitution)] cs *)
+          
+
+
+(* let evalConds xs cs =  *)
+(*   let initial : substitutions = [(Subst.emptySubst () : substitution)] in  *)
+(*     fold_left (fun (sl:substitutions) (c:condition) -> map (fun (x:substholdsex xs c sl) -> (x:substitution)) (evalCond xs sl c))  *)
+(*       [(Subst.emptySubst () : substitution)] cs *)
 
 val _substAction: substs:substitutions 
               -> a:action 

@@ -355,71 +355,108 @@ and tryDerive s k g u s1 pref goal infon mkpf_infon =
               in Some (s2, mkpf)
           | _ -> None
 
+(* val deriveQuant: U:vars             (\* Variables available for unification in goal (free in goal) *\) *)
+(*               -> S:substrate  *)
+(*               -> K:infostrate  *)
+(*               -> G:vars *)
+(*               -> s0:substitution{Includes U (Domain s0)} *)
+(*               -> goal:term *)
+(*               -> option (s:substitution{Includes U (Domain s)} * *)
+(*                          polyentails S K [] (ForallT G (Subst (Subst goal s0) s))) *)
+(* let rec deriveQuant u s k g s0 goal =  *)
+(*   match decideWFG g with  *)
+(*     | None -> None *)
+(*     | Some wfg ->  *)
+(*         let goal' = subst goal s0 in  *)
+(*           match doDerive s k g u s0 [] goal' with *)
+(*             | None -> None *)
+(*             | Some ((s1, mkpf)) ->  *)
+(*                 match mkpf s1 with  *)
+(*                   | MkPartial pfs1 ->  *)
+(*                       let res = Entails_Q_Intro s k g (subst goal' s1) wfg pfs1 in  *)
+(*                         if (includes u (domain s1)) (\* TODO: kill *\) *)
+(*                         then Some (s1, res) *)
+(*                         else None *)
+(*                   | _ -> None *)
+
+
 val deriveQuant: U:vars             (* Variables available for unification in goal (free in goal) *)
               -> S:substrate 
               -> K:infostrate 
-              -> G:vars
               -> s0:substitution{Includes U (Domain s0)}
-              -> goal:term
+              -> pgoal:polyterm
               -> option (s:substitution{Includes U (Domain s)} *
-                         polyentails S K [] (ForallT G (Subst (Subst goal s0) s)))
-let rec deriveQuant u s k g s0 goal = 
-  match decideWFG g with 
-    | None -> None
-    | Some wfg -> 
-        let goal' = subst goal s0 in 
-          match doDerive s k g u s0 [] goal' with
+                         polyentails S K [] (PolySubst (PolySubst pgoal s0) s))
+let rec deriveQuant u s k s0 pgoal = 
+  let pgoal' = polysubst pgoal s0 in
+    match pgoal' with 
+      | MonoTerm goal -> 
+          (match doDerive s k [] u s0 [] goal with
+             | None -> None
+             | Some ((s1, mkpf)) -> 
+                 (match mkpf s1 with 
+                    | MkPartial pfs1 -> 
+                        if (includes u (domain s1))
+                        then let res = Entails_Mono s k [] (subst goal s1) pfs1 in 
+                          Some (s1, res)
+                        else None))
+      | ForallT g goal -> 
+          match decideWFG g with 
             | None -> None
-            | Some ((s1, mkpf)) -> 
-                match mkpf s1 with 
-                  | MkPartial pfs1 -> 
-                      let res = Entails_Q_Intro s k g (subst goal' s1) wfg pfs1 in 
-                        if (includes U (domain s1)) (* TODO: kill *)
-                        then Some (s1, res)
-                        else None
-                  | _ -> None
-                      
-(*******************)
-(* Wrappers for F# *)
-(*******************) 
-(* mostly taken from logicEngine.fst *)
+            | Some wfg -> 
+                match doDerive s k g u s0 [] goal with
+                  | None -> None
+                  | Some ((s1, mkpf)) -> 
+                      match mkpf s1 with 
+                        | MkPartial pfs1 -> 
+                            if   (check_disjoint (freeVarsSubst s1) g)
+                              && (includes u (domain s1))  (* TODO: kill *)
+                            then 
+                              let res = Entails_Q_Intro s k g (subst goal s1) wfg pfs1 in 
+                                Some (s1, res)
+                            else None
+                              
+(* (\*******************\) *)
+(* (\* Wrappers for F# *\) *)
+(* (\*******************\)  *)
+(* (\* mostly taken from logicEngine.fst *\) *)
 
-(*   let checkJustification (_signatureProvider : option ISignatureProvider) (evidence: term) =  *)
-(*     failwith "checkJustification not supported in FStar Engine" *)
+(* (\*   let checkJustification (_signatureProvider : option ISignatureProvider) (evidence: term) =  *\) *)
+(* (\*     failwith "checkJustification not supported in FStar Engine" *\) *)
 
-(*   let checkJustificationWrapper (s:option ISignatureProvider) (e:term) = *)
-(*     OptionOfPrimsOption (checkJustification s e) *)
+(* (\*   let checkJustificationWrapper (s:option ISignatureProvider) (e:term) = *\) *)
+(* (\*     OptionOfPrimsOption (checkJustification s e) *\) *)
 
-  val dropProof : 'a::* -> 'b::('a => P) -> (option (x:'a * 'b x) -> list 'a)
-  let dropProof = function
-  | None -> [ ]
-  | Some((a, b)) -> [ a ]
+(*   val dropProof : 'a::* -> 'b::('a => P) -> (option (x:'a * 'b x) -> list 'a) *)
+(*   let dropProof = function *)
+(*   | None -> [ ] *)
+(*   | Some((a, b)) -> [ a ] *)
 
-  (* Obtain a list of Substitution with accompanying side conditions (AsInfon *)
-  (* ITerms) [call to doDerive]. Then return only those Substitutions that    *)
-  (* satisfy all their side conditions [call to substrateDispatcher_solve].   *)
-  let derive (_infostrate: option infostrate) (target: term(*Infon*)) 
-             (substs: list substitution) : list substitution =
-  (* drop the constructive proof to send the substitutions to F#              *)
-    match _infostrate with None -> [] | Some k ->
-      let variables = freeVars target in
-      collect
-        (fun subst ->
-          match (deriveQuant variables (get_substrate ()) k variables subst target) with
-		  | None -> [ ]
-		  | Some((a, b)) -> [ a ])
-      substs
+(*   (\* Obtain a list of Substitution with accompanying side conditions (AsInfon *\) *)
+(*   (\* ITerms) [call to doDerive]. Then return only those Substitutions that    *\) *)
+(*   (\* satisfy all their side conditions [call to substrateDispatcher_solve].   *\) *)
+(*   let derive (_infostrate: option infostrate) (target: term(\*Infon*\))  *)
+(*              (substs: list substitution) : list substitution = *)
+(*   (\* drop the constructive proof to send the substitutions to F#              *\) *)
+(*     match _infostrate with None -> [] | Some k -> *)
+(*       let variables = freeVars target in *)
+(*       collect *)
+(*         (fun subst -> *)
+(*           match (deriveQuant variables (get_substrate ()) k variables subst target) with *)
+(* 		  | None -> [ ] *)
+(* 		  | Some((a, b)) -> [ a ]) *)
+(*       substs *)
       
-(*   let deriveWrapper (_i: option infostrate) (t: term) (s: list substitution)  *)
-(*                     (\*: (TranslationfromFStar.listFS substitution) *\)= *)
-(*     (ListOfPrimsList (derive _i t s))  *)
+(* (\*   let deriveWrapper (_i: option infostrate) (t: term) (s: list substitution)  *\) *)
+(* (\*                     (\\*: (TranslationfromFStar.listFS substitution) *\\)= *\) *)
+(* (\*     (ListOfPrimsList (derive _i t s))  *\) *)
 
-(*   let deriveJustification  *)
-(*       (_infostrate: option IInfostrate) (target: term(\*Infon*\)) (proofTemplate: term(\*Evidence*\)) *)
-(*       (substs: list substitution) : list substitution = *)
-(* 	failwith "deriveJustification not supported in FStar Engine" *)
+(* (\*   let deriveJustification  *\) *)
+(* (\*       (_infostrate: option IInfostrate) (target: term(\\*Infon*\\)) (proofTemplate: term(\\*Evidence*\\)) *\) *)
+(* (\*       (substs: list substitution) : list substitution = *\) *)
+(* (\* 	failwith "deriveJustification not supported in FStar Engine" *\) *)
       
-(*   let deriveJustificationWrapper (_i: option IInfostrate) (i: term)  *)
-(*                                  (p: term) (s: list substitution)  *)
-(*                                  (\*: listFS substitution*\) = *)
-(*     ListOfPrimsList (deriveJustification _i i p s) *)
+(* (\*   let deriveJustificationWrapper (_i: option IInfostrate) (i: term)  *\) *)
+(* (\*                                  (p: term) (s: list substitution)  *\) *)
+(* (\*                                  (\\*: listFS substitution*\\) = *\) *)
+(* (\*     ListOfPrimsList (deriveJustification _i i p s) *\) *)
