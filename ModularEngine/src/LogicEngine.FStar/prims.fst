@@ -233,6 +233,11 @@ val collect : ('a -> list 'b) -> list 'a -> list 'b (* Rk: need of val declarati
 let collect (f: 'a -> list 'b) (l : list 'a) : list 'b =
   fold_right (fun a acc -> append (f a) acc) l []
 
+val collect_in : l:list 'a -> (x:'a{In x l} -> list 'b) -> list 'b 
+let rec collect_in l f = match l with 
+  | [] -> []
+  | hd::tl -> append (f hd) (collect_in tl f)
+
 val filter : ('a -> bool) -> list 'a -> list 'a
 let filter (f: 'a -> bool) (l : list 'a) =
   fold_right (fun a acc -> if (f a) then a :: acc else acc) l []
