@@ -34,7 +34,6 @@ val unify: s1:substitution
         -> i:term    
         -> goal:term 
         -> option (s2:substitution{Extends s2 s1} * list term)
-(* The "Extends s2 s1" condition needs to be relaxed; it's not true *)
 
 val unify_aux: s1:substitution
             -> v2:vars 
@@ -67,17 +66,16 @@ let rec unify_aux s1 v2 v1 t1 t2 : option substitution =
 let unify s1 u xs i goal =
   match unify_aux s1 u xs i goal with
   | Some(s3) ->
-      let s2 = fold_left
-             (fun s x -> 
-			  match lookupVar s3 x with
-			    | None -> raise "impos"
-			    | Some t -> extendSubst s3 x t
-			 ) (emptySubst ()) (domain s3) in
+      let s2 = 
+        fold_left (fun s x -> match lookupVar s3 x with
+		     | None -> raise "impos"
+		     | Some t -> extendSubst s3 x t)
+	  (emptySubst ()) (domain s3) in
       let l = map (fun x -> subst (Var x) s3) xs in
-      if extends s2 s1 then (* This is cheating: the condition is almost never true *)
-        Some(s2, l) else raise "Fix problem in unification"
+        assume (Extends s2 s1);
+        Some(s2, l)
   | None -> None
- 
+      
 (* Spec?? What do we want this to do?
    In particular, do we want to add the variables in the foralls in front of
    p1 and p2 into the unification variables or not? *)

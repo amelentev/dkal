@@ -84,11 +84,25 @@ let rec includes l m = match m with
 type Disjoint :: 'a::* => list 'a => list 'a => E
 assume (forall (xs:list 'a) (ys:list 'a). Disjoint xs ys <=> (forall (x:'a). In x xs => not(In x ys)))
 val check_disjoint: xs:list 'a -> ys:list 'a -> b:bool{b=true <=> Disjoint 'a xs ys}
-(* let rec check_disjoint xs ys = match xs with  *)
-(*   | [] -> true *)
-(*   | x::xtl ->  *)
-(*       if contains x ys then false *)
-(*       else check_disjoint xtl ys *)
+let rec check_disjoint xs ys = match xs with
+  | [] -> 
+      assert (forall (x:'a). not (In x xs));
+      true
+  | x::xtl ->
+      if contains x ys 
+      then false
+      else 
+        if check_disjoint xtl ys 
+        then 
+          (assert (forall (y:'a). In y xs => (x=y) || (In y xtl));
+           assert (forall (y:'a). In y xtl => not(In y ys));
+           assert (not (In x ys));
+           true)
+        else 
+          (assert (forall (y:'a). In y xs => (x=y) || (In y xtl));
+           assert (exists (y:'a). In y xtl && In y ys);
+           assert (forall (y:'a). In y xtl => In y xs);
+           false)
 
 val map: ('a -> 'b) -> list 'a -> list 'b
 let rec map f x = match x with 
@@ -110,16 +124,30 @@ let rec iterate f x = match x with
   | Nil -> ()
   | Cons a tl -> let _ = f a in iterate f tl
                                    
-val assoc: x:'a -> l:list ('a*'b) -> option 'b
-let rec assoc a x = match x with
+val assoc: x:'a -> l:list ('a*'b) -> r:option 'b{((r=None) => forall (y:'b). not (In (x,y) l)) &&
+                                                  (forall (y:'b). (r=(Some y)) => (In (x,y) l))}
+let rec assoc x l = match l with
   | Nil -> None
-  | Cons (a', b) tl -> if a=a' then Some b else assoc a tl
+  | Cons (x', y) tl -> if x=x' then Some y else assoc x tl
 
-val zip: list 'a -> list 'b -> list ('a * 'b)
+(* logic function Zip: (list 'a) -> (list 'b) -> (list ('a*'b)) *)
+(* assume Zip_nil: (Zip (Nil<'a>) (Nil<'b>)) = (Nil<('a*'b)>) *)
+(* assume Zip_cons: forall (x:'a) (xs:list 'a) (y:'b) (ys:list 'b).  *)
+(*                   (Zip (x::xs) (y::ys)) = ((x,y)::(Zip xs ys)) *)
+
+val zip: xs:list 'a -> ys:list 'b -> list ('a * 'b)
+let rec zip xs ys = match xs, ys with 
+  | [], [] -> []
+  | (x::xtl), (y::ytl) -> (x,y)::(zip xtl ytl)
+
 logic function Append : list 'a -> list 'a -> list 'a
 assume forall (y:list 'a). Append Nil y = y
 assume forall (a:'a) (tl:list 'a) (y:list 'a). 
    ((Append (Cons a tl) y) = (Cons a (Append tl y)))
+
+logic function Union : list 'a ->  list 'a -> list 'a
+assume forall (l1:list 'a) (l2:list 'a). (Union l1 l2)=(Append l1 l2)
+
 val append: x:list 'a -> y:list 'a -> z:list 'a{z=(Append x y)} 
 let rec append x y = match x with
   | Nil -> y

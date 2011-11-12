@@ -110,7 +110,7 @@ type entails :: substrate => infostrate => vars => term => P =
        S:substrate -> K:infostrate -> G:vars
     -> xs:vars -> t:term -> is:list term 
     -> polyentails S K G (ForallT xs t)
-    -> Zip term var (fun (i:term) (x:var) => typing G i x.typ) is xs
+    -> ZipP term var (fun (i:term) (x:var) => typing G i x.typ) is xs
     -> entails S K G (Subst t (MkSubst xs is))
 
   | Entails_Poly:
@@ -146,6 +146,7 @@ and polyentails :: substrate => infostrate => vars => polyterm => P =
 (* Derivation algorithm  *)
 (*************************)
 (* prove as lemmas *)
+assume Extends_refl: forall (s1:substitution). Extends s1 s1
 assume Extends_trans: forall (s1:substitution) (s2:substitution) (s3:substitution). 
             Extends s3 s2 && Extends s2 s1 => Extends s3 s1
 assume Prefix_subst_commute: forall (pref:prefix) (t:term) (s:substitution). 
