@@ -61,7 +61,7 @@ module Types
     | PrincipalConstant : principal -> constant
 
   type relationInfon = (* form TreeTerm.fs, def of type Function *)
-    { name : string; 
+    { fname : string; 
       retType: typ; 
       argsType : list typ; 
       identity : option term  }

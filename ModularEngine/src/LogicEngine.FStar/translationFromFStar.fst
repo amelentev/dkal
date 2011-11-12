@@ -70,7 +70,7 @@ let rec FunctionOfFStarFunc (f: Types.func) : Function =
     | Types.ModusPonensEvidence -> option_get(SolveFunctionW(TypeHeaders.EvModusPonens false))
     | Types.AndEvidence -> option_get(SolveFunctionW(TypeHeaders.EvAnd false))
     | Types.AsInfonEvidence -> option_get(SolveFunctionW(TypeHeaders.EvAsInfon false))
-    | Types.RelationInfon f -> (mkFunction f.name 
+    | Types.RelationInfon f -> (mkFunction f.fname 
                                   (ITypeOfFStarTyp f.retType) 
 	                          (map ITypeOfFStarTyp f.argsType)
 	                          (option_map ITermOfFStarTerm f.identity))

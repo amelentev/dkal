@@ -189,6 +189,10 @@ assume forall (str:string). ((Strcat str "") = str)
 assume forall (str:string). ((Strcat "" str) = str)
 assume forall (s1:string) (s2:string) (s3:string).
   ((Strcat s1 (Strcat s2 s3)) = (Strcat (Strcat s1 s2) s3))
+assume forall (s1:string) (s2:string) (s:string).
+  ((s1=s2) => (Strcat s1 s) = (Strcat s2 s))
+assume forall (s1:string) (s2:string) (s:string).
+  ((s1=s2) => (Strcat s s1) = (Strcat s s2))
 logic function ReprInt: int -> string
 extern Runtime val strcat : s1:string -> s2:string -> r:string{(Strcat s1 s2) = r}
 extern Runtime val strStartsWith: string -> string -> bool

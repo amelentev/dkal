@@ -63,7 +63,7 @@ logic function ReprMonos: list term -> string
 assume forall (r:relationInfon). 
    ((ReprRelationInfon r) = 
     (Strcat "RelationInfon("
-    (Strcat (r.name)
+    (Strcat (r.fname)
     (Strcat ","
     (Strcat (ReprTyp (r.retType))
     (Strcat ",["
@@ -213,13 +213,6 @@ let rec printTyps l =
                 (strcat ";"
                 (printTyps tl))
 
-(*val printRelationInfon: r:relationInfon -> string
-val printFunc: f:func -> string
-val printMono: t:term -> string
-val printMonoOption: o:option term -> string
-val printMonos: l:list term -> string
-*)
-
 val printRelationInfon: r:relationInfon -> s:string{(ReprRelationInfon r) = s}
 val printFunc: f:func -> s:string{(ReprFunc f) = s}
 val printMono: t:term -> s:string{(ReprMono t) = s}
@@ -228,7 +221,7 @@ val printMonos: l:list term -> s:string{(ReprMonos l) = s}
 
 let rec printRelationInfon r =
   strcat "RelationInfon("
-  (strcat (r.name)
+  (strcat (r.fname)
   (strcat ","
   (strcat (printTyp r.retType)
   (strcat ",["
@@ -388,31 +381,40 @@ val parseMono: str:string -> (t:term * r1:string * r2:string{(ReprMono t) = r1 &
 val parseMonoOption: str:string -> (t:option term * r1:string * r2:string{(ReprMonoOption t) = r1 && (Strcat r1 r2)=str})
 val parseMonos: str:string -> (ts:list term * r1:string * r2:string{(ReprMonos ts)=r1 && (Strcat r1 r2) = str})
 
-(*let rec parseRelationInfon str = 
+let rec parseRelationInfon str = 
   let rest1 = strRmPfx str "RelationInfon(" in
-  let name, rest2 = strSplitByDelimiter rest1 "," in
+  let _ = assert ((Strcat "RelationInfon(" rest1)=str) in
+  let namer, rest2 = strSplitByDelimiter rest1 "," in
   let rest3 = strRmPfx rest2 "," in
   let retType, r_rt, rest4 = parseTyp rest3 in
-  let r:(rr:string{(ReprTyp retType)=r_rt}) = r_rt in
   let rest5 = strRmPfx rest4 ",[" in
   let argsType, r_argts, rest6 = parseTyps rest5 in
-  
   let rest7 = strRmPfx rest6 "]," in
   let identity, r_id, rest8 = parseMonoOption rest7 in
   let rest9 = strRmPfx rest8 ")" in
-  let r = {name = name; retType = retType; argsType = argsType; identity = identity} in
-  let r_r:(rr:string{(ReprRelationInfon r) = rr}) = 
+  let r = {fname = namer; retType = retType; argsType = argsType; identity = identity} in
+  let _ = assert (namer = r.fname) in
+  let _ = assert ((ReprRelationInfon r) =
+                  (Strcat "RelationInfon(" 
+                   (Strcat (namer)
+                   (Strcat ","
+                   (Strcat (r_rt)
+                   (Strcat ",["
+                   (Strcat (ReprTyps (r.argsType))
+                   (Strcat "],"
+                   (Strcat (ReprMonoOption (r.identity)) ")"))))))))) in
+  let r_r = 
   strcat "RelationInfon("
-   (strcat name 
+   (strcat namer 
    (strcat "," 
    (strcat r_rt 
    (strcat ",["
    (strcat r_argts
    (strcat "],"
-   (strcat r_id ")"))))))) in
+   (strcat r_id ")"))))))) in 
   r, r_r, rest9
- *)
-let rec parseFunc str =
+
+and parseFunc str =
   if strStartsWith str "SeqRule" then (SeqRule, "SeqRule", strRmPfx str "SeqRule")
   else if strStartsWith str "EmptyRule" then (EmptyRule, "EmptyRule", strRmPfx str "EmptyRule")
   else if strStartsWith str "Rule" then (Rule, "Rule", strRmPfx str "Rule")
