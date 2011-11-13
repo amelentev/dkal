@@ -35,7 +35,7 @@ type TypedParser() =
 
     member sp.ParseInfon s = 
       let t = GeneralParser.TryParse (Parser.ITerm Lexer.tokenize) s
-      if t.Type <> Type.Infon then
+      if not (t.Type.IsSubtypeOf Type.AbstractInfon) then
         failwith <| "Expecting infon and found " + t.Type.ToString()
       else
         t
