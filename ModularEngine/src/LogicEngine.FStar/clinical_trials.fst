@@ -23,7 +23,9 @@ let mkIntervalSubstrateQuery = mkSubstrateQuery
 let said ppal infon = App SaidInfon [ppal; infon]
 let And i1 i2 = App AndInfon [i1; i2]   (* and is an F* keyword *)
 let implies i1 i2 = App ImpliesInfon [i1; i2]
-let just i e = App JustifiedInfon [i; e]
+let just p v e = JustifiedPat p (ForallPat v) e
+let justMono p i e = JustifiedPat p (MonoPat i) e
+
 let asInfon isq = App AsInfon [(SubstrateQueryTerm isq)]
 
 (* --------- Shorthands to construct infon relations --------- *)
@@ -83,13 +85,12 @@ let site1Policy =
     let n1 = { name="n1"; typ=Int32 } in
     let n2 = { name="n2"; typ=Int32 } in
     let x1 = { name="x1"; typ=Infon } in
-    let x2 = { name="x2"; typ=Infon } in
-    let vars = [e1; e2; e3; n1; n2; x1; x2] in
+    let vars = [e1; e2; e3; n1; n2; x1] in
     
     (* conditions *)
-    let c1 = Upon (MonoTerm (just (said org (participates me trial)) (Var e1))) in
-    let c2 = Upon (MonoTerm (just (said org (allocatedPatients me (Var n1) (Var n2) trial)) (Var e2))) in
-    let c3 = Upon (MonoTerm (just (implies (Var x1) (Var x2)) (Var e3))) in
+    let c1 = Upon (justMono org (said org (participates me trial)) (Var e1)) in
+    let c2 = Upon (justMono org (said org (allocatedPatients me (Var n1) (Var n2) trial)) (Var e2)) in
+    let c3 = Upon (just org x1 (Var e3)) in
     let conds = [c1; c2; c3] in
   
     (* quantified vars *)
@@ -101,7 +102,7 @@ let site1Policy =
     let a3 = Send phys (ForallT [r] (implies 
                                        (asInfon(mkIntervalSubstrateQuery phys_n1 (Var r) phys_n2)) 
                                        (said me (mayRead phys (Var r))))) in
-    let a4 = Fwd phys (MonoTerm (just (implies (Var x1) (Var x2)) (Var e3))) in
+    let a4 = Fwd phys (just org x1 (Var e3)) in
     let actions = [a1; a2; a3; a4] in
   
       mkRule vars conds actions in
@@ -127,23 +128,21 @@ let phys1Policy =
     let n1 = { name="n1"; typ=Int32 } in
     let n2 = { name="n2"; typ=Int32 } in
     let x1 = { name="x1"; typ=Infon } in
-    let x2 = { name="x2"; typ=Infon } in
     let y1 = { name="y1"; typ=Infon } in
-    let y2 = { name="y2"; typ=Infon } in
-    let vars = [e1; e2; e3; e4; n1; n2; x1; x2; y1; y2] in
+    let vars = [e1; e2; e3; e4; n1; n2; x1; y1] in
     
     (* conditions *)
-    let c1 = Upon (MonoTerm (just (said site (physParticipates me trial site)) (Var e1))) in
-    let c2 = Upon (MonoTerm (just (said site (physAllocatedPatients me (Var n1) (Var n2) trial site)) (Var e2))) in
-    let c3 = Upon (MonoTerm (just (implies (Var x1) (Var x2)) (Var e3))) in
-    let c4 = Upon (MonoTerm (just (implies (Var y1) (Var y2)) (Var e4))) in
+    let c1 = Upon (justMono site (said site (physParticipates me trial site)) (Var e1)) in
+    let c2 = Upon (justMono site (said site (physAllocatedPatients me (Var n1) (Var n2) trial site)) (Var e2)) in
+    let c3 = Upon (just site x1 (Var e3)) in
+    let c4 = Upon (just org y1 (Var e4)) in
     let conds = [c1; c2; c3; c4] in
     
     (* actions *)
-    let a1 = Send keyMgr (MonoTerm (said me (requestToRead me r))) in (* !! just? *)
-    let a2 = Fwd keyMgr (MonoTerm (just (implies (Var x1) (Var x2)) (Var e3))) in
-    let a3 = Fwd keyMgr (MonoTerm (just (implies (Var y1) (Var y2)) (Var e4))) in
-    let a4 = Drop (MonoTerm (just (said site (physParticipates me trial site)) (Var e1))) in
+    let a1 = Send keyMgr (MonoTerm (said me (requestToRead me r))) in 
+    let a2 = Fwd keyMgr (just site x1 (Var e3)) in
+    let a3 = Fwd keyMgr (just org y1 (Var e4)) in
+    let a4 = Drop (justMono site (said site (physParticipates me trial site)) (Var e1)) in
     let actions = [a1; a2; a3; a4] in
     
       mkRule vars conds actions in
@@ -160,16 +159,17 @@ let keyMgrPolicy =
   
   let rule1 = 
     (* unification vars *)
+    let p = { name="p"; typ=Principal } in
     let i = { name="i"; typ=Infon } in
     let e1 = { name="e1"; typ=Evidence } in
-    let vars = [i; e1] in
+    let vars = [p; i; e1] in
   
     (* conditions *)
-    let c1 = Upon (MonoTerm (just (Var i) (Var e1))) in
+    let c1 = Upon (just (Var p) i  (Var e1)) in
     let conds = [c1] in
     
     (* actions *)
-    let a1 = Learn (MonoTerm (just (Var i) (Var e1))) in
+    let a1 = Learn (just (Var p) i (Var e1)) in
     let actions = [a1] in
     
       mkRule vars conds actions in
@@ -182,13 +182,13 @@ let keyMgrPolicy =
     let vars = [e2; e3; p] in
   
     (* conditions *)
-    let c1 = Upon (MonoTerm (just (said (Var p) (requestToRead (Var p) r)) (Var e2))) in 
-    let c2 = If (MonoTerm (just (said org (mayRead (Var p) r)) (Var e3))) in
-    let conds = [c1] in  (* !! [c1; c2] *)
+    let c1 = Upon (justMono (Var p)(said (Var p) (requestToRead (Var p) r)) (Var e2)) in 
+    let c2 = If (justMono org (said org (mayRead (Var p) r)) (Var e3)) in
+    let conds = [c1;c2] in
     
     (* actions *)
     let a1 = Send (Var p) (MonoTerm (said me (keyForRecord k r))) in
-    let a2 = Drop (MonoTerm (just (said (Var p) (requestToRead (Var p) r)) (Var e2))) in
+    let a2 = Drop (justMono (Var p) (said (Var p) (requestToRead (Var p) r)) (Var e2)) in
     let actions = [a1] in
     
       mkRule vars conds actions in
