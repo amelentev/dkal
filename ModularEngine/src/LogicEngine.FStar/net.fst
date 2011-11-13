@@ -7,8 +7,8 @@ assume forall (x:'a) (l:list 'a). In x l && Received l => Received x
 
 val methods: Ref (list (principal * (bool -> bytes) * (bytes -> bool)))
 let methods = newref []
-val suscribe: list (principal * (bool -> bytes) * (bytes -> bool)) -> unit
-let suscribe l = (methods:= l)
+val subscribe: list (principal * (bool -> bytes) * (bytes -> bool)) -> unit
+let subscribe l = (methods:= l)
 
 val findMethod: principal -> list (principal * (bool -> bytes) * (bytes -> bool)) 
     -> ((bool->bytes) * (bytes->bool))

@@ -1,8 +1,6 @@
 module Marshall
 open Types
 
-
-
 logic function ReprTyp: typ -> string
 assume ((ReprTyp Infon) = "Infon")
 assume ((ReprTyp Principal) = "Principal")
@@ -161,6 +159,16 @@ assume forall (xs:vars) (t:term).
 
 assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
 
+assume forall (t:term) (p:polyterm) (d:term).
+  (ReprPoly (JustifiedPoly t p d)) =
+   (Strcat "(JustifiedPoly("
+   (Strcat (ReprMono t)
+   (Strcat ","
+   (Strcat (ReprPoly p)
+   (Strcat ","
+   (Strcat (ReprMono d)
+   "))"))))))
+
 val printTyp: t:typ -> s:string{(ReprTyp t) = s}
 let printTyp ty = match ty with
   | Infon -> "Infon"
@@ -297,7 +305,7 @@ and printQuery q =
   ")")))))
 
 val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
-let printInfon p = 
+let rec printInfon p = 
  match p with
   | MonoTerm t -> printMono t
   | ForallT xs t -> strcat "(Forall [" 
@@ -305,7 +313,14 @@ let printInfon p =
                     (strcat "]"
                     (strcat (printMono t)
                      ")")))
-
+  | JustifiedPoly t p d ->
+    strcat "(JustifiedPoly("
+    (strcat (printMono t)
+    (strcat ","
+    (strcat (printInfon p)
+    (strcat ","
+    (strcat (printMono d)
+    "))")))))
 
 (* ============================ parsing ========================= *)
 
@@ -430,9 +445,7 @@ let rec parseRelationInfon str =
    (strcat r_argts
    (strcat "],"
    (strcat r_id ")"))))))) in 
-   ((*assume ((ReprRelationInfon r)=r_r);
-    assume ((Strcat r_r rest9)=str); *)
-    r, r_r, rest9)
+   (r, r_r, rest9)
 
 and parseFunc str =
   if strStartsWith str "SeqRule" then (SeqRule, "SeqRule", strRmPfx str "SeqRule")
@@ -522,8 +535,8 @@ and parseQuery str =
     (strcat ","
     (strcat r_h ")"))))), rest
 
-val parsePoly: str:string -> (p:polyterm * r1:string * r2:string{(ReprPoly p) = r1 && (Strcat r1 r2)= str})
-let parsePoly str =
+val parseForall: str:string -> (p:polyterm * r1:string * r2:string{(ReprPoly p) = r1 && (Strcat r1 r2)= str})
+let parseForall str =
   let rest = strRmPfx str "(Forall [" in
   let xs, r_xs, rest = parseVars rest in
   let rest = strRmPfx rest "]" in
@@ -531,19 +544,39 @@ let parsePoly str =
   let rest = strRmPfx rest ")" in
   ForallT xs t, strcat "(Forall [" (strcat r_xs (strcat "]" (strcat r_t ")"))), rest
 
+val parseJustified: str:string ->  (p:polyterm * r1:string * r2:string{(ReprPoly p) = r1 && (Strcat r1 r2)= str})
+val parsePoly: str:string ->  (p:polyterm * r1:string * r2:string{(ReprPoly p) = r1 && (Strcat r1 r2)= str})
+
 (* Note: As for the printer, this function is recursive and so not in P. *)
+
+let rec parseJustified b = 
+  let rest = strRmPfx b "(JustifiedPoly(" in
+    let t, r_t, rest = parseMono rest in
+    let rest = strRmPfx rest "," in
+    let p, r_p, rest = parsePoly rest in
+    let rest = strRmPfx rest "," in
+    let d, r_d, rest = parseMono rest in
+    let rest = strRmPfx rest "))" in
+    let r = strcat "(JustifiedPoly("
+            (strcat r_t 
+            (strcat "," 
+            (strcat r_p 
+            (strcat "," 
+            (strcat r_d "))"))))) in
+    JustifiedPoly t p d, r, rest
+
+and parsePoly b = 
+  if strStartsWith b "(Forall" 
+  then parseForall b 
+  else if  strStartsWith b "(JustifiedPoly("
+  then parseJustified b
+  else let t, r_t, rest = parseMono b in
+    MonoTerm t, r_t, rest
+
 val parseInfon: b:string -> option (p:polyterm{(Net.Received b => Net.Received p) &&
                                                (ReprPoly p)=b})
-
-let parseInfon b = 
- if strStartsWith b "(Forall" 
- then let p, r_p, rest = parsePoly b in
-   if r_p = b 
-   then (assume (Net.Received b => Net.Received p); Some p)
-   else raise (strcat "unexpected remaining string: " rest)
- else let t, r_t, rest = parseMono b in
-   if r_t = b 
-   then let p = MonoTerm t in (assume (Net.Received b => Net.Received p); Some p)
-   else raise (strcat "unexpected remaining string: " rest)
-  
-
+let parseInfon b =
+  let p, r_p, rest = parsePoly b in
+  if r_p = b 
+  then Some p
+  else raise (strcat "unexpected remaining string: " rest)
