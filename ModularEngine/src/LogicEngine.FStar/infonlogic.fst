@@ -312,6 +312,9 @@ and tryDeriveAlpha s k g u s1 pref goal infon =
                       then MkPartial (Entails_Hyp_Knowledge s k g infon infon' typing_infon aeq typing_infon')
                       else raise "TODO: prove using Domain(s2) = u, disjoint from (g \union xs)=Vars body"
                   else raise "Substitution domain"
+
+              (* | Justified p i e ->  *)
+              (*     polysubst  *)
                     
               | MonoTerm body -> 
                   let body' = subst body s2 in 
@@ -395,40 +398,17 @@ and tryDerive s k g u s1 pref goal infon mkpf_infon =
                       else raise "Unification error" 
               in Some (s2, mkpf)
           | _ -> 
-              (* (match i with  *)
-              (*    | App JustifiedInfon [p;i';d] ->  *)
-              (*        let mkpf (s3:substitution{Extends s3 s2}) : kresult s k g pref goal s3 =  *)
-              (*          match mkpf_infon s3 with  *)
-              (*            | MkPartial pf_infon -> *)
-                             
-              (*                let  *)
-              (*        tryDerive s k g u s1 pref goal i' *)
-
-              None
-
-(* val deriveQuant: U:vars             (\* Variables available for unification in goal (free in goal) *\) *)
-(*               -> S:substrate  *)
-(*               -> K:infostrate  *)
-(*               -> G:vars *)
-(*               -> s0:substitution{Includes U (Domain s0)} *)
-(*               -> goal:term *)
-(*               -> option (s:substitution{Includes U (Domain s)} * *)
-(*                          polyentails S K [] (ForallT G (Subst (Subst goal s0) s))) *)
-(* let rec deriveQuant u s k g s0 goal =  *)
-(*   match decideWFG g with  *)
-(*     | None -> None *)
-(*     | Some wfg ->  *)
-(*         let goal' = subst goal s0 in  *)
-(*           match doDerive s k g u s0 [] goal' with *)
-(*             | None -> None *)
-(*             | Some ((s1, mkpf)) ->  *)
-(*                 match mkpf s1 with  *)
-(*                   | MkPartial pfs1 ->  *)
-(*                       let res = Entails_Q_Intro s k g (subst goal' s1) wfg pfs1 in  *)
-(*                         if (includes u (domain s1)) (\* TODO: kill *\) *)
-(*                         then Some (s1, res) *)
-(*                         else None *)
-(*                   | _ -> None *)
+              (match i with
+                 | App JustifiedInfon [p;i';d] ->
+                     let mkpf_i' (s2:substitution{Extends s2 s1}) : kpolyresult s k g (MonoTerm i') s2 = 
+                       match mkpf_infon s2 with 
+                         | MkPartial pf_infon ->
+                             MkPartial (Entails_Mono s k g (subst i' s2)
+                                          (Entails_J_Elim s k g (subst p s2) (subst i' s2) (subst d s2) [] 
+                                             (Entails_Poly s k g (subst i s2) pf_infon))) in
+                       tryDerive s k g u s1 pref goal (MonoTerm i') mkpf_i'
+                 | _ -> None)
+                
 
 
 val deriveQuant: U:vars             (* Variables available for unification in goal (free in goal) *)
@@ -452,20 +432,21 @@ let rec deriveQuant u s k s0 pgoal =
                           Some (s1, res)
                         else None))
       | ForallT g goal -> 
-          match decideWFG g with 
-            | None -> None
-            | Some wfg -> 
-                match doDerive s k g u s0 [] goal with
-                  | None -> None
-                  | Some ((s1, mkpf)) -> 
-                      match mkpf s1 with 
-                        | MkPartial pfs1 -> 
-                            if   (check_disjoint (freeVarsSubst s1) g)
-                              && (includes u (domain s1))  (* TODO: kill *)
-                            then 
-                              let res = Entails_Q_Intro s k g (subst goal s1) wfg pfs1 in 
-                                Some (s1, res)
-                            else None
+          (match decideWFG g with 
+             | None -> None
+             | Some wfg -> 
+                 (match doDerive s k g u s0 [] goal with
+                    | None -> None
+                    | Some ((s1, mkpf)) -> 
+                        match mkpf s1 with 
+                          | MkPartial pfs1 -> 
+                              if   (check_disjoint (freeVarsSubst s1) g)
+                                && (includes u (domain s1))  (* TODO: kill *)
+                              then 
+                                let res = Entails_Q_Intro s k g (subst goal s1) wfg pfs1 in 
+                                  Some (s1, res)
+                              else None))
+
                               
 (* (\*******************\) *)
 (* (\* Wrappers for F# *\) *)
