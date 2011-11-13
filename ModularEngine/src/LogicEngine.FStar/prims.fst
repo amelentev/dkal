@@ -247,6 +247,7 @@ extern Runtime val intCheckRange: int -> int -> int -> bool
 
 extern Runtime val createComm: int -> ((bool -> bytes) * (bytes -> bool))
 extern Runtime val stopAllServers: bool -> bool
+extern Runtime val keyGen: bool -> (string * string)
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool

@@ -205,7 +205,11 @@ let _ =
   let site_recv, send_to_site = createComm portNum_site in
   let phys_recv, send_to_phys = createComm portNum_phys in
   let keyMgr_recv, send_to_keyMgr = createComm portNum_keyMgr in
-  suscribe [(org, org_recv, send_to_org);
+  (suscribe [(org, org_recv, send_to_org);
             (site, site_recv, send_to_site);
             (phys, phys_recv, send_to_phys);
-            (keyMgr, keyMgr_recv, send_to_keyMgr)]
+            (keyMgr, keyMgr_recv, send_to_keyMgr)];
+  Keys.addKey org;
+  Keys.addKey site;
+  Keys.addKey phys;
+  Keys.addKey keyMgr)
