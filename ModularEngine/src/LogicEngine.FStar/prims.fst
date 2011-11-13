@@ -109,6 +109,14 @@ let rec map f x = match x with
   | Nil -> Nil
   | Cons a tl -> Cons (f a) (map f tl)
 
+val for_all: 'a::* -> 'P::('a => E) 
+            -> f:(x:'a -> b:bool{b=true => 'P x})
+            -> l:list 'a
+            -> b:bool{b=true => forall (x:'a). In x l => 'P x}
+let rec for_all f = function 
+  | [] -> true
+  | hd::tl -> f hd && (for_all f tl)
+
 val fold_left: ('a -> 'b -> 'a) -> 'a -> list 'b -> 'a
 let rec fold_left f x y = match y with 
   | Nil -> x

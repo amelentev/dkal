@@ -49,6 +49,8 @@ type alphaEquiv :: polyterm => polyterm => P =
     -> alphaEquiv i j 
     -> alphaEquiv (JustifiedPoly p i d) (JustifiedPoly p j d)
 
+assume forall (i:polyterm) (j:polyterm). (CheckedInfon i && alphaEquiv i j) => CheckedInfon j
+
 (* val checkVarsTyEq : xs:vars -> ys:vars -> option (varsTyEq xs ys) *)
 let checkVarsTyEq xs ys = zip_e<var, var, varTyEq> (fun x y -> (x.typ : typ)=y.typ) xs ys
 
@@ -156,8 +158,8 @@ type entails :: substrate => infostrate => vars => term => P =
 and polyentails :: substrate => infostrate => vars => polyterm => P = 
   | Entails_Hyp_Knowledge :
        S:substrate -> K:infostrate -> G:vars
-    -> i:polyterm{In i K}
-    -> i':polyterm{In i K}
+    -> i:infon{In i K}
+    -> i':polyterm
     -> polytyping [] i
     -> alphaEquiv i i'
     -> polytyping G i'
@@ -214,7 +216,7 @@ val tryDeriveAlpha:    S:substrate
                     -> s1:substitution
                     -> pref:prefix
                     -> goal:term
-                    -> infon:polyterm{In infon K}
+                    -> i:infon{In i K}
                     -> option (s2:substitution{Extends s2 s1} *
                                  (s3:substitution{Extends s3 s2} -> Partial (entails S K G (Subst (WithPrefix pref goal) s3))))
 
@@ -225,8 +227,8 @@ val tryDerive:  S:substrate
              -> s1:substitution
              -> pref:prefix
              -> goal:term
-             -> infon:polyterm        (* closed polyterm *)
-             -> mkpf_infon:(s4:substitution{Extends s4 s1} -> kpolyresult S K G infon s4)
+             -> i:polyterm        (* closed polyterm *)
+             -> mkpf_infon:(s4:substitution{Extends s4 s1} -> kpolyresult S K G i s4)
              -> option (s2:substitution{Extends s2 s1} *
                           (s3:substitution{Extends s3 s2} -> Partial (entails S K G (Subst (WithPrefix pref goal) s3))))
 
@@ -298,34 +300,20 @@ let rec doDerive s k g u s1 pref goal =
 
     | _ -> map_one k (tryDeriveAlpha s k g u s1 pref goal)
 
-and tryDeriveAlpha s k g u s1 pref goal infon = 
-  let infon', aeq = alphaConvert infon in 
-    match doPolyTyping [] infon, doPolyTyping g infon' with 
+and tryDeriveAlpha s k g u s1 pref goal xinfon = 
+  let xinfon', aeq = alphaConvert xinfon in 
+    match doPolyTyping [] xinfon, doPolyTyping g xinfon' with 
       | MkPartial typing_infon, MkPartial typing_infon' -> 
-          let mkpf (s2:substitution{Extends s2 s1}) : kpolyresult s k g infon' s2 = 
-            match infon' with 
-              | ForallT xs body -> 
-                  if check_disjoint (freeVarsSubst s2) xs
-                  then 
-                    let body' = subst body s2 in 
-                      if body = body'
-                      then MkPartial (Entails_Hyp_Knowledge s k g infon infon' typing_infon aeq typing_infon')
-                      else raise "TODO: prove using Domain(s2) = u, disjoint from (g \union xs)=Vars body"
-                  else raise "Substitution domain"
-
-              (* | Justified p i e ->  *)
-              (*     polysubst  *)
-                    
-              | MonoTerm body -> 
-                  let body' = subst body s2 in 
-                    if body = body'
-                    then MkPartial (Entails_Hyp_Knowledge s k g infon infon' typing_infon aeq typing_infon') 
-                    else raise "TODO: prove using Domain(s2) = u, disjoint from (g \union xs)=Vars body"
+          let mkpf (s2:substitution{Extends s2 s1}) : kpolyresult s k g xinfon' s2 = 
+            let xinfon'' = polysubst xinfon' s2 in 
+              if xinfon'=xinfon'' 
+              then MkPartial (Entails_Hyp_Knowledge s k g xinfon xinfon' typing_infon aeq typing_infon')
+              else raise "TODO: prove using Domain(s2) = u, disjoint from (g \union xs)=Vars body"
           in 
-            tryDerive s k g u s1 pref goal infon' mkpf
+            tryDerive s k g u s1 pref goal xinfon' mkpf
 
-and tryDerive s k g u s1 pref goal infon mkpf_infon = 
-  match infon with
+and tryDerive s k g u s1 pref goal xinfon mkpf_infon = 
+  match xinfon with
     | ForallT xs body -> 
         let pref_goal = withPrefix pref goal in 
         (match unify s1 u xs body pref_goal with
@@ -346,24 +334,30 @@ and tryDerive s k g u s1 pref goal infon mkpf_infon =
                              then MkPartial (Entails_Q_Elim s k g xs (subst body s3) insts pf_infon typing_insts)
                              else raise "Unification error" (* TODO: prove unification correct *)
                in Some (s2, mkpf))
+
+    | JustifiedPoly p xinfon' e -> 
+        let mkpf_infon' (s2:substitution{Extends s2 s1}) : kpolyresult s k g xinfon' s2 = 
+          match mkpf_infon s2 with
+            | MkPartial pf_infon -> MkPartial (Entails_ElimJust s k g (subst p s2) (polysubst xinfon' s2) (subst e s2) pf_infon) in
+          tryDerive s k g u s1 pref goal xinfon' mkpf_infon'
           
-    | MonoTerm (App AndInfon [infon1; infon2]) ->
-        let monoinfon = App AndInfon [infon1; infon2] in
-        let mkpf_infon1 (s4:substitution{Extends s4 s1}) : kpolyresult s k g (MonoTerm infon1) s4 = 
+    | MonoTerm (App AndInfon [xinfon1; xinfon2]) ->
+        let monoinfon = App AndInfon [xinfon1; xinfon2] in
+        let mkpf_infon1 (s4:substitution{Extends s4 s1}) : kpolyresult s k g (MonoTerm xinfon1) s4 = 
           match mkpf_infon s4 with 
             | MkPartial pf_infon ->
-                MkPartial (Entails_Mono s k g (subst infon1 s4)
-                             (Entails_And_Elim1 s k g (subst infon1 s4) (subst infon2 s4) [] 
+                MkPartial (Entails_Mono s k g (subst xinfon1 s4)
+                             (Entails_And_Elim1 s k g (subst xinfon1 s4) (subst xinfon2 s4) [] 
                                 (Entails_Poly s k g (subst monoinfon s4) pf_infon))) in
-        let mkpf_infon2 (s4:substitution{Extends s4 s1}) : kpolyresult s k g (MonoTerm infon2) s4 = 
+        let mkpf_infon2 (s4:substitution{Extends s4 s1}) : kpolyresult s k g (MonoTerm xinfon2) s4 = 
           match mkpf_infon s4 with 
             | MkPartial pf_infon ->
-                MkPartial (Entails_Mono s k g (subst infon2 s4)
-                             (Entails_And_Elim2 s k g (subst infon1 s4) (subst infon2 s4) [] 
+                MkPartial (Entails_Mono s k g (subst xinfon2 s4)
+                             (Entails_And_Elim2 s k g (subst xinfon1 s4) (subst xinfon2 s4) [] 
                                 (Entails_Poly s k g (subst monoinfon s4) pf_infon))) in
-          (match tryDerive s k g u s1 pref goal (MonoTerm infon1) mkpf_infon1 with
+          (match tryDerive s k g u s1 pref goal (MonoTerm xinfon1) mkpf_infon1 with
              | Some res -> Some res
-             | None -> tryDerive s k g u s1 pref goal (MonoTerm infon2) mkpf_infon2)
+             | None -> tryDerive s k g u s1 pref goal (MonoTerm xinfon2) mkpf_infon2)
     
 	| MonoTerm (App AndInfon _) -> failwith "TODO And for 0, 1, 3 or more terms"
 	        
@@ -446,6 +440,12 @@ let rec deriveQuant u s k s0 pgoal =
                                 let res = Entails_Q_Intro s k g (subst goal s1) wfg pfs1 in 
                                   Some (s1, res)
                               else None))
+
+      | JustifiedPoly p i e -> 
+          map_one k (fun (i:infon{In i k}) -> match i with 
+                       | JustifiedPoly q j f -> raise "NYI: Matching JustifiedPoly"
+                       | _ -> None)
+            
 
                               
 (* (\*******************\) *)

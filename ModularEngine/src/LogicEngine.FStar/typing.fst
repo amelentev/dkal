@@ -301,7 +301,7 @@ let rec doPolyTyping g p = match p with
 type wfK :: infostrate => P  =
   | WFK_Empty : wfK []
   | WFK_Cons : 
-         p:polyterm
+         p:infon
       -> K:infostrate
       -> polytyping [] p
       -> wfK K

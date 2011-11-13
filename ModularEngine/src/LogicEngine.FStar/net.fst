@@ -4,7 +4,7 @@ open Crypto
 
 type Received :: 'a::* => 'a => E
 assume forall (x:'a) (l:list 'a). In x l && Received l => Received x
-
+assume forall (s:string). Received (UnicodeStringToBytes s) => Received s
 val methods: Ref (list (principal * (bool -> bytes) * (bytes -> bool)))
 let methods = newref []
 val subscribe: list (principal * (bool -> bytes) * (bytes -> bool)) -> unit

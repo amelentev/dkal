@@ -6,7 +6,6 @@ open Subst
 open Authenticate 
 open Crypto 
 
-type infon = polyterm
 type communication = i:infon{Net.Received i}
 type communications = list communication
 
@@ -15,10 +14,10 @@ type condition =
   | Upon : polyterm -> condition
 type conditions = list condition
 type WFCond :: vars => condition => P =
-  | WFCond_If: xs:vars -> i:infon 
+  | WFCond_If: xs:vars -> i:polyterm 
             -> Typing.polytyping xs i 
             -> WFCond xs (If i)
-  | WFCond_Upon: xs:vars -> i:infon 
+  | WFCond_Upon: xs:vars -> i:polyterm
             -> Typing.polytyping xs i 
             -> WFCond xs (Upon i)
 logic function Vars : polyterm -> vars 
@@ -40,17 +39,17 @@ type action =
   | Send  : term -> polyterm -> action (* prin, infon *)
 type actions = list action
 type WFAct :: vars => action => P =
-  | WFAct_Learn: xs:vars -> i:infon 
+  | WFAct_Learn: xs:vars -> i:polyterm
               -> Typing.polytyping xs i 
               -> WFAct xs (Learn i)
-  | WFAct_Drop : xs:vars -> i:infon 
+  | WFAct_Drop : xs:vars -> i:polyterm
               -> Typing.polytyping xs i 
               -> WFAct xs (Drop i)
-  | WFAct_Fwd  : xs:vars -> p:term -> i:infon 
+  | WFAct_Fwd  : xs:vars -> p:term -> i:polyterm
               -> Typing.typing xs p Principal
               -> Typing.polytyping xs i 
               -> WFAct xs (Fwd p i)
-  | WFAct_Send : xs:vars -> p:term -> i:infon 
+  | WFAct_Send : xs:vars -> p:term -> i:polyterm
               -> Typing.typing xs p Principal
               -> Typing.polytyping xs i 
               -> WFAct xs (Send p i)
@@ -60,23 +59,23 @@ type WFAct :: vars => action => P =
 (* Spec: Validity of condition(s) *)
 (* -------------------------------------------------------------------------------- *)
 logic function CondSubst : condition -> substitution -> condition
-assume forall (i:infon) (s:substitution). (CondSubst (If i) s) = (If (PolySubst i s))
-assume forall (i:infon) (s:substitution). (CondSubst (Upon i) s) = (Upon (PolySubst i s))
+assume forall (i:polyterm) (s:substitution). (CondSubst (If i) s) = (If (PolySubst i s))
+assume forall (i:polyterm) (s:substitution). (CondSubst (Upon i) s) = (Upon (PolySubst i s))
 
 logic function ActionSubst : action -> substitution -> action
-assume forall (i:infon) (s:substitution). (ActionSubst (Learn i) s) = (Learn (PolySubst i s))
-assume forall (i:infon) (s:substitution). (ActionSubst (Drop i) s) = (Drop (PolySubst i s))
-assume forall (p:term) (i:infon) (s:substitution). (ActionSubst (Fwd p i) s) = (Fwd (Subst p s) (PolySubst i s))
-assume forall (p:term) (i:infon) (s:substitution). (ActionSubst (Send p i) s) = (Send (Subst p s) (PolySubst i s))
+assume forall (i:polyterm) (s:substitution). (ActionSubst (Learn i) s) = (Learn (PolySubst i s))
+assume forall (i:polyterm) (s:substitution). (ActionSubst (Drop i) s) = (Drop (PolySubst i s))
+assume forall (p:term) (i:polyterm) (s:substitution). (ActionSubst (Fwd p i) s) = (Fwd (Subst p s) (PolySubst i s))
+assume forall (p:term) (i:polyterm) (s:substitution). (ActionSubst (Send p i) s) = (Send (Subst p s) (PolySubst i s))
 
 type HoldsOne :: substitution => vars => condition => substitution => E
-assume Holds_if: forall (xs:vars) (i:infon) (substin:substitution) (subst:substitution) 
+assume Holds_if: forall (xs:vars) (i:polyterm) (substin:substitution) (subst:substitution) 
                          (s:substrate) (k:infostrate). 
          ((Includes xs (Domain subst)) && 
           (InfonLogic.polyentails s k [] (PolySubst (PolySubst i substin) subst)))
       => HoldsOne substin xs (If i) subst
 
-assume Holds_upon: forall (xs:vars) (pat:infon) (substin:substitution) (subst:substitution) (c:communication). 
+assume Holds_upon: forall (xs:vars) (pat:polyterm) (substin:substitution) (subst:substitution) (c:communication). 
          ((Includes xs (Domain subst)) &&
           (exists (c':polyterm). InfonLogic.alphaEquiv c c' && ((PolySubst (PolySubst pat substin) subst)=c')))
       => HoldsOne substin xs (Upon pat) subst
@@ -97,8 +96,8 @@ type substholdsmany :: _ = (fun (xs:vars) (cs:conditions) => (s:substitution{Hol
 (* Spec: Enabled actions *)
 (* -------------------------------------------------------------------------------- *)
 type Enabled :: action => E
-assume forall (i:infon). (Enabled (Learn i)) => Knows i
-assume forall (me:principal) (p:principal) (i:infon).
+assume forall (i:polyterm). ((Enabled (Learn i)) && CheckedInfon i) => Knows i
+assume forall (me:principal) (p:principal) (i:polyterm).
           (Enabled (Send (Const (PrincipalConstant p)) i) && IsMe me) 
        => Says me i
 
@@ -150,7 +149,7 @@ let rec match_pattern tm s1 upat pat =
 
 (* ================= InfonLogic entailment ===================== *)
 val derive: u:vars
-          -> goal:infon
+          -> goal:polyterm
           -> subst0:substitution
           -> list (substholdsone u (If goal) subst0)
 let derive u goal subst0 = 
@@ -173,11 +172,11 @@ let rec get_communications _unit =
       | Some infon -> comms := infon::(!comms)
       | _ -> get_communications ()
           
-val dropCommunications: i:infon{Enabled (Drop i)} -> bool
+val dropCommunications: i:polyterm{Enabled (Drop i)} -> bool
 let dropCommunications i = 
   let changed, comms' = 
     fold_right (fun (j:communication) (changed, out) -> 
-                  if (i:infon)=j then (true, out) 
+                  if (i:polyterm)=j then (true, out) 
                   else (changed, j::out)) (!comms) (false, []) in 
     (comms := comms');
     changed
@@ -193,21 +192,21 @@ let dispatch p m =
      (Net.send p (Authenticate.msg2bytes m));
      true)
 
-val fwd: p:principal -> i:infon{Enabled (Fwd (Const (PrincipalConstant p)) i)} -> bool 
+val fwd: p:principal -> i:polyterm{Enabled (Fwd (Const (PrincipalConstant p)) i)} -> bool 
 let fwd p i = 
   let m = Forwarded (me, p, i) in 
     dispatch p m 
   
-val send : p:principal -> i:infon{Enabled (Send (Const (PrincipalConstant p)) i)} -> bool 
+val send : p:principal -> i:polyterm{Enabled (Send (Const (PrincipalConstant p)) i)} -> bool 
 let send p i = 
   let z : principal = me in 
-  let msg : jmessage = ( (z, p, (i: (i:infon{Says z i}))) : (z:principal * p:principal * i:infon{Says z i})) in 
+  let msg : jmessage = ( (z, p, (i: (i:polyterm{Says z i}))) : (z:principal * p:principal * i:polyterm{Says z i})) in 
   let m = Justified msg in 
     dispatch p m 
                                
 (* ========================== Rule engine ==================== *)
 val matchComm : comm:communication 
-             -> xs:vars -> pat:infon 
+             -> xs:vars -> pat:polyterm 
              -> s0:substitution 
              -> list (substholdsone xs (Upon pat) s0)
 let matchComm (comm:communication) xs pat s0 = 
@@ -276,7 +275,10 @@ let asPrincipal = function
 val applyAction: b:bool -> a:action{Enabled a} -> bool 
 let applyAction b a = 
   match a with 
-    | Learn i -> State.addToInfostrate i; true
+    | Learn i -> 
+        if checkInfon i 
+        then (State.addToInfostrate (i:infon); true)
+        else false
     | Drop i -> dropCommunications i 
     | Fwd p i -> fwd (asPrincipal p) i
     | Send p i -> send (asPrincipal p) i

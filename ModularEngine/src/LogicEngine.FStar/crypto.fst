@@ -13,8 +13,6 @@ extern Crypto val rsa_verify_impl: msg:bytes -> ds:bytes -> sk:string -> bool
 type Serialized:: 'a::* => 'a => bytes => E
 
 type dsig = bytes
-
-
 (* read creds from a config file *)
 type IsMe :: principal => E
 assume forall (p:principal) (q:principal). IsMe p && IsMe q => p=q
@@ -66,4 +64,8 @@ val rsa_keyleak:  'a::* -> 'P::('a => E)
              -> p:principal
              -> x:privkey 'a 'P p{forall (x:'a). 'P x}
              -> bytes
+let rsa_keyleak p x = match (x:privkey 'a 'P p) with 
+  | MkPrivKey _ b -> FromUnicodeString b
+      
+
 end

@@ -1,5 +1,4 @@
 module Util
-open Types
 
 (*************)
 (* Utilities *)

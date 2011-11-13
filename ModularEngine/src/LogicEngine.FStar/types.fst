@@ -12,7 +12,7 @@
 *)
 
 module Types
-  open Crypto
+  open Util
   type principal = string
   type substrate = unit
   type ISubstrateUpdateTerm
@@ -121,11 +121,38 @@ module Types
     then (assume (SubstrateSays s q); true)
     else false
 
-  type Knows :: polyterm => E
-  type kpolyterm = i:polyterm{Knows i}
-  type infostrate = list polyterm
-  type prefix = list term
+  type Says :: principal => polyterm => E
+  type CheckedInfon :: polyterm => E
+  type CheckedInfonMono :: term => E
+  assume I_Mono: forall (i:term). 
+                 CheckedInfonMono i 
+              => CheckedInfon (MonoTerm i)
+  assume I_All : forall (xs:vars) (i:term).
+                 CheckedInfonMono i 
+              => CheckedInfon (ForallT xs i)
+  assume I_Just: forall (p:principal) (i:polyterm) (e:term).
+                 Says p i
+              && CheckedInfon i 
+              => CheckedInfon (JustifiedPoly (Const (PrincipalConstant p)) i e)
+  assume IM_Var : forall (x:var). CheckedInfonMono (Var x)
+  assume IM_Con : forall (c:constant). CheckedInfonMono (Const c)
+  assume IM_Just: forall (p:principal) (i:term) (e:term). 
+                  Says p (MonoTerm i)
+               && CheckedInfonMono i
+               => CheckedInfonMono (App JustifiedInfon [(Const (PrincipalConstant p));i;e])
+  assume IM_App : forall (f:func) (tms:list term).
+                  (f<>JustifiedInfon)
+               && (forall (tm:term). In tm tms => CheckedInfonMono tm)
+               => CheckedInfonMono (App f tms)
+  assume IM_SQ  : forall (q:ISubstrateQueryTerm).
+                  CheckedInfonMono (SubstrateQueryTerm q)
 
+  type monoinfon = i:term{CheckedInfonMono i}
+  type infon = i:polyterm{CheckedInfon i}
+  type Knows :: polyterm => E
+  type kinfon = i:infon{Knows i}
+  type infostrate = list infon
+  type prefix = list term
   type substitution = list (var * term)
 
   logic function AsTerms : vars -> list term
