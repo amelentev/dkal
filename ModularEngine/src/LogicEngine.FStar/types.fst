@@ -14,7 +14,7 @@
 module Types
 (* open TypeHeaders *)
   type principal = string
-  type substrate
+  type substrate = unit
   type ISubstrateUpdateTerm
 
   (*val get_substrate : unit -> substrate*)

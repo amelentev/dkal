@@ -11,4 +11,5 @@ val getInfostrate : unit -> infostrate
 let getInfostrate x = !infos
 
 val getSubstrate: unit -> substrate
+let getSubstrate x = ()
 

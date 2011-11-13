@@ -37,13 +37,30 @@ type alphaEquiv :: polyterm => polyterm => P =
   | AEQ_Mono: i:term -> alphaEquiv (MonoTerm i) (MonoTerm i)
 
   | AEQ_Poly: 
-       xs:vars -> t:term -> ys:vars 
+       xs:vars -> t:term -> ys:vars
     -> polytyping [] (ForallT xs t)
     -> wfG ys 
     -> varsTyEq xs ys
     -> alphaEquiv (ForallT xs t) 
                   (ForallT ys (Subst t (MkSubst xs (AsTerms ys))))
 
+(* val checkVarsTyEq : xs:vars -> ys:vars -> option (varsTyEq xs ys) *)
+let checkVarsTyEq xs ys = zip_e<var, var, varTyEq> (fun x y -> (x.typ : typ)=y.typ) xs ys
+
+val alphaConvertWith: i:polyterm -> ys:vars -> option (j:polyterm * alphaEquiv i j)
+let alphaConvertWith i ys = match i with 
+  | MonoTerm t -> Some (i, AEQ_Mono t)
+  | ForallT xs t -> 
+      match doPolyTyping [] i with 
+        | MkPartial ityping -> 
+            match checkVarsTyEq xs ys, decideWFG ys with 
+              | Some pfzip, Some wf_ys -> 
+                  let s = mkSubst xs (asTerms ys) in 
+                  let t' = subst t s in 
+                    Some ((ForallT ys t', AEQ_Poly xs t ys ityping wf_ys pfzip))
+              | _ -> None
+                  
+                  
 val alphaConvert: i:polyterm -> (j:polyterm * alphaEquiv i j)
 let alphaConvert i = match i with 
   | MonoTerm t -> (i, AEQ_Mono t)

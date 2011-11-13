@@ -3,7 +3,7 @@ MY_DKAL_HOME=`cygpath -d $${DKAL_HOME}`
 FSTBIN=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin
 FSTBIN2=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin2
 DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
-FSTAR=fstar --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst
+FSTAR=fstar --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000
 #typeHeaders.fst translationFromFStar.fst 
 SOURCES=types.fst util.fst subst.fst typing.fst unify.fst infonlogic.fst net.fst crypto.fst marshall.fst state.fst interp.fst prog.fst clinical_trials.fst
 

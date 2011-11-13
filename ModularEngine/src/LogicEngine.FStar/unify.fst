@@ -25,16 +25,6 @@ let addSubst s1 x t =
     (emptySubst ())
     (domain s1)
 
-(* ad hoc implementation of unification
-     informally, only variables in u are available for unification. *)
-(* precondition: u and xs must be disjoing *)
-val unify: s1:substitution
-        -> u:vars 
-        -> xs:vars
-        -> i:term    
-        -> goal:term 
-        -> option (s2:substitution{Extends s2 s1} * list term)
-
 val unify_aux: s1:substitution
             -> v2:vars 
             -> v1:vars
@@ -63,6 +53,18 @@ let rec unify_aux s1 v2 v1 t1 t2 : option substitution =
 (* 		                                 (ITermOfFStarTerm t2) ) *)
   | _ -> None
 
+    
+
+
+(* ad hoc implementation of unification
+     informally, only variables in u are available for unification. *)
+(* precondition: u and xs must be disjoing *)
+val unify: s1:substitution
+        -> u:vars 
+        -> xs:vars
+        -> i:term    
+        -> goal:term 
+        -> option (s2:substitution{Extends s2 s1} * list term)
 let unify s1 u xs i goal =
   match unify_aux s1 u xs i goal with
   | Some(s3) ->
@@ -75,13 +77,18 @@ let unify s1 u xs i goal =
         assume (Extends s2 s1);
         Some(s2, l)
   | None -> None
-      
-(* Spec?? What do we want this to do?
-   In particular, do we want to add the variables in the foralls in front of
-   p1 and p2 into the unification variables or not? *)
-val match_pattern: tm:polyterm
-            -> s1:substitution
-            -> upat:vars 
-            -> pattern:polyterm
-            -> option (s2:substitution{Includes upat (Domain s2) && 
-                                      (tm = (PolySubst (PolySubst pattern s1) s2))})
+
+val doMatch :  tm:term
+             -> s0:substitution 
+             -> xs:vars
+             -> pat:term
+             -> option (s1:substitution{Includes xs (Domain s1) &&
+                                        tm=(Subst pat s1)})
+let doMatch tm s0 xs pat = 
+  match unify s0 xs [] tm pat with 
+    | Some ((s1, [])) -> 
+        if ((includes xs (domain s1)) && (* TODO: Kill these and prove directly from unify *)
+            tm=(subst pat s1))
+        then Some s1
+        else None
+    | _ -> None

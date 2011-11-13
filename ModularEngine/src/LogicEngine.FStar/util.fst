@@ -94,6 +94,21 @@ type ZipP :: 'a::* => 'b::* => ('a => 'b => P) => list 'a => list 'b => P =
              -> 'Q x y
              -> ZipP 'a 'b 'Q (x::l1) (y::l2)
 
+val zip_e: 'a::* -> 'b::* -> 'Q::('a => 'b => E)
+      -> f:(x:'a -> y:'b -> b:bool{b=true => 'Q x y})
+      -> l1:list 'a
+      -> l2:list 'b
+      -> option (ZipE 'a 'b 'Q l1 l2)
+let rec zip_e f l1 l2 = match l1, l2 with
+  | [],[] -> Some (ZipE_Nil<'a,'b,'Q>)
+  | (x1::tl1), (x2::tl2) ->
+      if f x1 x2 
+      then match zip_e<'a,'b,'Q> f tl1 tl2 with 
+        | Some pf_tl -> Some (ZipE_Cons<'a,'b,'Q> tl1 tl2 x1 x2 pf_tl)
+        | _ -> None
+      else None
+  | _ -> None
+        
 val zip_p: 'a::* -> 'b::* -> 'Q::('a => 'b => P)
       -> f:(x:'a -> y:'b -> option ('Q x y))
       -> l1:list 'a

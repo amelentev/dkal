@@ -79,7 +79,7 @@ assume Holds_if: forall (xs:vars) (i:infon) (substin:substitution) (subst:substi
 
 assume Holds_upon: forall (xs:vars) (pat:infon) (substin:substitution) (subst:substitution) (c:communication). 
          ((Includes xs (Domain subst)) &&
-          ((PolySubst (PolySubst pat substin) subst)=c))
+          (exists (c':polyterm). InfonLogic.alphaEquiv c c' && ((PolySubst (PolySubst pat substin) subst)=c')))
       => HoldsOne substin xs (Upon pat) subst
 
 type HoldsMany :: vars => list condition => substitution => E
@@ -90,6 +90,10 @@ assume forall (xs:vars) (c:condition) (cs:conditions)
          => HoldsMany xs (c::cs) s1
 type Holds :: _ = fun (xs:vars) (cs:list condition) (s:substitution) => 
     ((Includes xs (Domain s)) && (Includes (Domain s) xs) && (HoldsMany xs cs s))
+
+type substholdsone :: _ = (fun (xs:vars) (c:condition) (s0:substitution) => (s:substitution{HoldsOne s0 xs c s}))
+type substholdsmany :: _ = (fun (xs:vars) (cs:conditions) => (s:substitution{HoldsMany xs cs s}))
+
 (* -------------------------------------------------------------------------------- *)
 (* Spec: Enabled actions *)
 (* -------------------------------------------------------------------------------- *)
@@ -115,11 +119,37 @@ type WFR :: rule => P =
             -> WFR (Rule xs cs acts)
 type wfrule = r:rule{WFR r}
 
-(* ================= Wrapping external functions ===================== *)
-type substholdsone :: _ = (fun (xs:vars) (c:condition) (s0:substitution) => (s:substitution{HoldsOne s0 xs c s}))
-type substholdsmany :: _ = (fun (xs:vars) (cs:conditions) => (s:substitution{HoldsMany xs cs s}))
-(* type substholdsex  :: _ = (fun (xs:vars) (c:condition) (sl:substitutions) => (s:substitution{exists (s0:substitution). In s0 sl && HoldsOne s0 xs c s})) *)
+(* ================= Pattern matching for polyterms ===================== *)
+val match_pattern: tm:polyterm
+            -> s1:substitution
+            -> upat:vars 
+            -> pattern:polyterm
+            -> option (s2:substitution{Includes upat (Domain s2) && 
+                                       (exists (tm':polyterm). InfonLogic.alphaEquiv tm tm' && 
+                                         (tm' = (PolySubst (PolySubst pattern s1) s2)))})
+let rec match_pattern tm s1 upat pat = 
+  let s1pat = polysubst pat s1 in 
+    match tm, s1pat with 
+      | MonoTerm tm', MonoTerm s1pat' -> 
+          (match Unify.doMatch tm' s1 upat s1pat' with 
+             | Some s2 -> 
+                 let _ = InfonLogic.AEQ_Mono tm' in 
+                   Some s2
+             | _ -> None)
+            
+      | ForallT _ _, ForallT ys s1pat' -> 
+          match InfonLogic.alphaConvertWith tm ys with 
+            | Some(((ForallT ys' tm'), aeq)) when ys'=ys -> 
+                (match Unify.doMatch tm' s1 upat s1pat' with 
+                   | Some s2 when check_disjoint (freeVarsSubst s2) ys' -> 
+                       (* assert (InfonLogic.alphaEquiv tm (ForallT ys' tm')); *)
+                       (* assert (tm' = (Subst s1pat' s2)); *)
+                       (* assert ((PolySubst (PolySubst pat s1) s2) = (ForallT ys' tm')); *)
+                       Some s2
+                   | _ -> None)
+            | _ -> None
 
+(* ================= InfonLogic entailment ===================== *)
 val derive: u:vars
           -> goal:infon
           -> subst0:substitution
@@ -182,7 +212,7 @@ val matchComm : comm:communication
              -> s0:substitution 
              -> list (substholdsone xs (Upon pat) s0)
 let matchComm (comm:communication) xs pat s0 = 
-  match Unify.match_pattern comm s0 xs pat with
+  match match_pattern comm s0 xs pat with
     | None -> []
     | Some s1 -> [s1]
 
