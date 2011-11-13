@@ -140,7 +140,7 @@ let phys1Policy =
     let conds = [c1; c2; c3; c4] in
     
     (* actions *)
-    let a1 = Send keyMgr (MonoTerm (said me (requestToRead me r))) in
+    let a1 = Send keyMgr (MonoTerm (said me (requestToRead me r))) in (* !! just? *)
     let a2 = Fwd keyMgr (MonoTerm (just (implies (Var x1) (Var x2)) (Var e3))) in
     let a3 = Fwd keyMgr (MonoTerm (just (implies (Var y1) (Var y2)) (Var e4))) in
     let a4 = Drop (MonoTerm (just (said site (physParticipates me trial site)) (Var e1))) in
@@ -182,9 +182,9 @@ let keyMgrPolicy =
     let vars = [e2; e3; p] in
   
     (* conditions *)
-    let c1 = Upon (MonoTerm (just (said (Var p) (requestToRead (Var p) r)) (Var e2))) in
+    let c1 = Upon (MonoTerm (just (said (Var p) (requestToRead (Var p) r)) (Var e2))) in 
     let c2 = If (MonoTerm (just (said org (mayRead (Var p) r)) (Var e3))) in
-    let conds = [c1] in
+    let conds = [c1] in  (* !! [c1; c2] *)
     
     (* actions *)
     let a1 = Send (Var p) (MonoTerm (said me (keyForRecord k r))) in
