@@ -14,6 +14,7 @@ assume ((ReprTyp RuleT) = "RuleT")
 assume ((ReprTyp Evidence) = "Evidence")
 assume ((ReprTyp Boolean) = "Boolean")
 assume ((ReprTyp Int32) = "Int32")
+assume ((ReprTyp BytesT) = "BytesT")
 assume ((ReprTyp Double) = "Double")
 assume ((ReprTyp String) = "String")
 
@@ -39,6 +40,9 @@ assume forall (i:int).
   ((ReprConst (Int i)) = (Strcat "Int("
                          (Strcat (ReprInt i)
                           ")")))
+assume forall (b:bytes). 
+  ((ReprConst (Bytes b)) = (Strcat "Bytes("
+                              (Strcat (B64 b) ")")))
 assume forall (o:constant).
   ((ReprConst (SubstrateConstant o)) = (Strcat "SubstrateConstant("
                                        (Strcat (ReprConst o)
@@ -157,27 +161,6 @@ assume forall (xs:vars) (t:term).
 
 assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
 
-(* type Star :: P => * = *)
-(*  | MkStar : 'a::P -> Star 'a *)
-
-(* val rep_isa_function:  n:nat  *)
-(* (\*                     -> total n polyterm () *\) *)
-(*                     -> p:polyterm{SizeOf p = n} *)
-(*                     -> s1:string{(ReprPoly p)=s1}  *)
-(*                     -> s2:string{(ReprPoly p) = s2}  *)
-(*                     -> Star (Eq s1 s2) *)
-
-(* val rep_is_injective:   p1:polyterm  *)
-(*                      -> p2:polyterm  *)
-(*                      -> s:string{(ReprPoly p1=s) && (ReprPoly p2=s)} *)
-(*                      -> Star (Eq p1 p2) *)
-
-(* Note: these functions are recursive and so cannot be in P
-         as such, we cannot prove directly that they are total functions. 
-         If we can do this totality proof in some other way, for example, 
-         by providing an explicit ranking function, then we will have proved 
-         that at least ReprPoly is at least a function. *)
-
 val printTyp: t:typ -> s:string{(ReprTyp t) = s}
 let printTyp ty = match ty with
   | Infon -> "Infon"
@@ -190,6 +173,7 @@ let printTyp ty = match ty with
   | Evidence -> "Evidence"
   | Boolean -> "Boolean"
   | Int32 -> "Int32"
+  | BytesT -> "BytesT"
   | Double -> "Double"
   | String -> "String"
 
@@ -213,6 +197,7 @@ let rec printConst c = match c with
   | TrueT -> "TrueT"
   | FalseT -> "FalseT"
   | Int i -> strcat "Int(" (strcat (intToString i) ")")
+  | Bytes b -> strcat "Bytes(" (strcat (ToBase64String b) ")")
   | SubstrateConstant o -> strcat "SubstrateConstant("
                            (strcat (printConst o) ")")
   | PrincipalConstant p ->
@@ -378,22 +363,33 @@ let rec parseVars str =
 val parseConst: str:string -> (c:constant * r1:string * r2:string{(ReprConst c) = r1 && (Strcat r1 r2) = str})
 let rec parseConst str =
   if strStartsWith str "TrueT" then (TrueT, "TrueT", strRmPfx str "TrueT")
+
   else if strStartsWith str "FalseT" then (FalseT, "FalseT", strRmPfx str "FalseT")
+
   else if strStartsWith str "Int(" then 
     let rest = strRmPfx str "Int(" in
     let r_n, rest = strSplitByDelimiter rest ")" in
     let rest = strRmPfx rest ")" in
     (Int (stringToInt r_n)), strcat "Int(" (strcat r_n ")"), rest
+
+  else if strStartsWith str "Bytes(" then 
+    let rest = strRmPfx str "Bytes(" in
+    let r_n, rest = strSplitByDelimiter rest ")" in
+    let rest = strRmPfx rest ")" in
+    (Bytes (FromBase64String r_n)), strcat "Bytes(" (strcat r_n ")"), rest
+
   else if strStartsWith str "SubstrateConstant(" then 
     let rest = strRmPfx str "SubstrateConstant(" in
     let o, r_o, rest = parseConst rest in
     let rest = strRmPfx rest ")" in
     SubstrateConstant o, strcat "SubstrateConstant(" (strcat r_o ")"), rest
+
   else if strStartsWith str "PrincipalConstant(" then
     let rest = strRmPfx str "PrincipalConstant(" in
     let p, rest = strSplitByDelimiter rest ")" in
     let rest = rmPfxStr rest ")" in
     PrincipalConstant p, strcat "PrincipalConstant(" (strcat p ")"), rest
+
   else raise (strcat "unexpected constant: " str)
 
 val parseRelationInfon: str:string -> (r:relationInfon * r1:string * r2:string{(ReprRelationInfon r)=r1 && (Strcat r1 r2) = str})
@@ -551,21 +547,3 @@ let parseInfon b =
    else raise (strcat "unexpected remaining string: " rest)
   
 
-(* -------------------------------------------------------------------------------- *)
-
-type message :: _ =  fun ('P::principal => principal => polyterm => E) => 
-    ((pfrom:principal *
-        pto:principal *
-          i:polyterm{'P pfrom pto i}))
-
-type SaysTo :: principal => principal => polyterm => E
-type trivial :: _ = (fun (p:principal) (q:principal) (i:polyterm) => True)
-
-type msg = 
-  | Forwarded : message trivial -> msg
-  | Justified : message SaysTo -> msg
-
-val concat : list bytes -> bytes
-val unconcat: bytes -> list bytes
-val msg2bytes: msg -> bytes
-val b2s: b:bytes -> s:string{Net.Received b => Net.Received s}

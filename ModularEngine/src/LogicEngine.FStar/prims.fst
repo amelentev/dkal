@@ -196,9 +196,9 @@ extern reference SysConvert {language="C#";
                              dll="mscorlib";
                              namespace="System";
                              classname="Convert"}
-extern SysConvert val ToBase64String : bytes -> string
-extern SysConvert val FromBase64String : string -> bytes
-
+logic function B64 : bytes -> string
+extern SysConvert val ToBase64String : b:bytes -> s:string{(B64 b)=s}
+extern SysConvert val FromBase64String : s:string -> b:bytes{(B64 b)=s}
 
 extern reference Runtime { language = "F#";
                            dll="runtime";

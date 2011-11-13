@@ -56,11 +56,13 @@ let org1Policy =
     (* actions *)
     let a1 = Send site (MonoTerm (said me (participates site trial))) in
     let a2 = Send site (MonoTerm (said me (allocatedPatients site site_n1 site_n2 trial))) in
-    let a3 = Send site (ForallT [p; r] (implies (And (said site (mayRead (Var p) (Var r))) (asInfon(mkIntervalSubstrateQuery site_n1 (Var r) site_n2))) (said me (mayRead (Var p) (Var r))))) in
+    let a3 = Send site (ForallT [p; r] (implies 
+                                          (And (said site (mayRead (Var p) (Var r))) 
+                                             (asInfon(mkIntervalSubstrateQuery site_n1 (Var r) site_n2))) 
+                                          (said me (mayRead (Var p) (Var r))))) in
     let actions = [a1; a2; a3] in
-  
       mkRule [] [] actions in
-
+    
   [rule1]
 
 (* --------- site1 --------- *)
@@ -96,7 +98,9 @@ let site1Policy =
     (* actions *)
     let a1 = Send phys (MonoTerm (said me (physParticipates phys trial me))) in
     let a2 = Send phys (MonoTerm (said me (physAllocatedPatients phys phys_n1 phys_n2 trial me))) in
-    let a3 = Send phys (ForallT [r] (implies (asInfon(mkIntervalSubstrateQuery phys_n1 (Var r) phys_n2)) (said me (mayRead phys (Var r))))) in
+    let a3 = Send phys (ForallT [r] (implies 
+                                       (asInfon(mkIntervalSubstrateQuery phys_n1 (Var r) phys_n2)) 
+                                       (said me (mayRead phys (Var r))))) in
     let a4 = Fwd phys (MonoTerm (just (implies (Var x1) (Var x2)) (Var e3))) in
     let actions = [a1; a2; a3; a4] in
   

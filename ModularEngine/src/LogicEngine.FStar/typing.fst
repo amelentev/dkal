@@ -246,6 +246,7 @@ type polytyping :: vars => polyterm => P =
   | PolyTyping_Mono : 
        G:vars 
     -> i:term
+    -> wfG G
     -> typing G i Infon
     -> polytyping G (MonoTerm i) 
 
@@ -256,22 +257,46 @@ type polytyping :: vars => polyterm => P =
     -> wfG (lconcat xs G)
     -> typing (lconcat xs G) i Infon
     -> polytyping G (ForallT xs i)
+
+  | PolyTyping_Justified : 
+       G:vars
+    -> p:term
+    -> i:polyterm
+    -> d:term
+    -> wfG G
+    -> typing G p Principal
+    -> polytyping G i 
+    -> typing G d BytesT
+    -> polytyping G (JustifiedPoly p i d)
     
 val doPolyTyping: g:vars -> p:polyterm -> Partial (polytyping g p)
 let rec doPolyTyping g p = match p with
   | MonoTerm t -> 
-      (match doTyping g t with 
-         | Infon, pf -> MkPartial (PolyTyping_Mono g t pf)
-         | ty, _ -> terr "Expected Infon type, got " (string_of_any ty))
-        
+      (match decideWFG g with 
+         | None -> terr "ill-formed environment" (string_of_any g)
+         | Some wfg -> 
+             (match doTyping g t with 
+                | Infon, pf -> MkPartial (PolyTyping_Mono g t wfg pf)
+                | ty, _ -> terr "Expected Infon type, got " (string_of_any ty)))
+               
   | ForallT xs t -> 
       let g' = concat xs g in
-        match decideWFG g' with 
-          | None -> terr "PolyTerms must bind distinct names. Repeated names: " xs
-          | Some wf -> 
-              match doTyping g' t with 
-                | Infon, pf -> MkPartial (PolyTyping_ForallT g xs t wf pf)
-                | ty, _ -> terr "Expected Infon type, got " (string_of_any ty)
+        (match decideWFG g' with 
+           | None -> terr "PolyTerms must bind distinct names. Repeated names: " xs
+           | Some wf -> 
+               match doTyping g' t with 
+                 | Infon, pf -> MkPartial (PolyTyping_ForallT g xs t wf pf)
+                 | ty, _ -> terr "Expected Infon type, got " (string_of_any ty))
+          
+  | JustifiedPoly q i d -> 
+      match decideWFG g with 
+        | None -> terr "ill-formed environment: " (string_of_any g)
+        | Some wfg -> 
+            match doTyping g q, doPolyTyping g i, doTyping g d with 
+              | (Principal, wf_q), (MkPartial wf_i), (BytesT, wf_d) -> 
+                  MkPartial (PolyTyping_Justified g q i d wfg wf_q wf_i wf_d)
+              | _ -> terr "Ill-typed justified infon: " (string_of_any p)
+                  
                       
 type wfK :: infostrate => P  =
   | WFK_Empty : wfK []

@@ -22,6 +22,9 @@ assume Subst_dom_upd:forall (s:substitution) (x:var) (t:term).
 (* Axiomatization of substitution on (mono)terms *)
 logic function Subst      : term -> substitution -> term               
 logic function SubstList  : list term -> substitution -> list term 
+assume SubstList0:forall (s:substitution). ((SubstList [] s)=[])
+assume SubstList1:forall (t:term) (tl:list term) (s:substitution). 
+                  (SubstList (t::tl) s) = ((Subst t s)::(SubstList tl s))
 assume Subst_Var1:forall (x:var) (s:substitution). 
                   (In x (Domain s)) => ((Subst (Var x) s)=(Select s x))
 assume Subst_Var2:forall (x:var) (s:substitution). 
@@ -31,10 +34,9 @@ assume Subst_Cnst:forall (c:constant) (s:substitution).
 assume Subst_Appl:forall (f:func) (args:list term) (s:substitution). 
                   ((Subst (App f args) s)=(App f (SubstList args s)))
 assume Subst_QyTm:forall (q:ISubstrateQueryTerm) (s:substitution). 
-                  ((Subst (SubstrateQueryTerm q) s)=(SubstrateQueryTerm ({n=(Subst q.n s); low=(Subst q.low s); hi=(Subst q.hi s)})))
-assume SubstList0:forall (s:substitution). ((SubstList [] s)=[])
-assume SubstList1:forall (t:term) (tl:list term) (s:substitution). 
-                  (SubstList (t::tl) s) = ((Subst t s)::(SubstList tl s))
+                  ((Subst (SubstrateQueryTerm q) s)=(SubstrateQueryTerm ({n=(Subst q.n s); 
+                                                                          low=(Subst q.low s); 
+                                                                          hi=(Subst q.hi s)})))
 
 (* Substitution on polyterms, as a parial function to avoid capture *)
 logic function FreeVars : term -> vars
@@ -51,12 +53,16 @@ assume FreeVarsSubst_Upd: forall (s:substitution) (x:var) (v:term).
                           ((FreeVarsSubst ((x,v)::s)) = (Union [x] (Union (FreeVars v) (FreeVarsSubst s))))
 
 logic function PolySubst : polyterm -> substitution -> polyterm
+assume PolySubst_Mono: forall (s:substitution) (body:term). 
+                       ((PolySubst (MonoTerm body) s)=(MonoTerm (Subst body s)))
 assume PolySubst_All : forall (s:substitution) (xs:vars) (body:term). 
                        Disjoint (FreeVarsSubst s) xs =>
                           ((PolySubst (ForallT xs body) s)=(ForallT xs (Subst body s)))
-assume PolySubst_Mono: forall (s:substitution) (body:term). 
-                       ((PolySubst (MonoTerm body) s)=(MonoTerm (Subst body s)))
-
+assume PolySubst_Just: forall (s:substitution) (p:term) (i:polyterm) (d:term). 
+                          ((PolySubst (JustifiedPoly p i d) s)=(JustifiedPoly 
+                                                                  (Subst p s) 
+                                                                  (PolySubst i s)
+                                                                  (Subst d s)))
 (* Building substitutions *)
 logic function MkSubst: vars -> list term -> substitution
 assume MkSubst_nil :(MkSubst [] []) = []
@@ -190,10 +196,12 @@ and substList ilist s = match ilist with
 and substQuery q s = {n=(subst q.n s); low=(subst q.low s); hi=(subst q.hi s)}
 
 val polysubst: p1:polyterm -> s:substitution -> p2:polyterm{(PolySubst p1 s)=p2}
-let polysubst p1 s = 
+let rec polysubst p1 s = 
   match p1 with 
     | MonoTerm i -> MonoTerm (subst i s)
     | ForallT xs i -> 
         if check_disjoint (freeVarsSubst s) xs
         then ForallT xs (subst i s)
         else raise "polysubst failed: name capture"
+    | JustifiedPoly p i d -> 
+        JustifiedPoly (subst p s) (polysubst i s) (subst d s)

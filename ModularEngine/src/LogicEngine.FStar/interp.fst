@@ -1,11 +1,10 @@
 module Interp
 open Types
 open Util
-open Marshall
 open State
 open Subst
-
-let me = Crypto.lookup_my_credentials () 
+open Authenticate 
+open Crypto 
 
 type infon = polyterm
 type communication = i:infon{Net.Received i}
@@ -100,8 +99,8 @@ type substholdsmany :: _ = (fun (xs:vars) (cs:conditions) => (s:substitution{Hol
 type Enabled :: action => E
 assume forall (i:infon). (Enabled (Learn i)) => Knows i
 assume forall (me:principal) (p:principal) (i:infon).
-          (Enabled (Send (Const (PrincipalConstant p)) i) && Crypto.IsMe me) 
-       => SaysTo me p i
+          (Enabled (Send (Const (PrincipalConstant p)) i) && IsMe me) 
+       => Says me i
 
 type ruleAction :: _ = (fun (xs:vars) (cs:conditions) => 
                         (a:action{forall (subst:substitution). Holds xs cs subst => (Enabled (ActionSubst a subst))}))
@@ -170,7 +169,7 @@ let comms = newref []
 val get_communications: unit -> unit
 let rec get_communications _unit = 
   let message = Net.receive () in
-    match Marshall.parseInfon (b2s message) with 
+    match Authenticate.bytes2infon message with 
       | Some infon -> comms := infon::(!comms)
       | _ -> get_communications ()
           
@@ -191,7 +190,7 @@ let dispatch p m =
   then false
   else
     ((outbuffer := m::(!outbuffer));
-     (Net.send p (Marshall.msg2bytes m));
+     (Net.send p (Authenticate.msg2bytes m));
      true)
 
 val fwd: p:principal -> i:infon{Enabled (Fwd (Const (PrincipalConstant p)) i)} -> bool 
@@ -202,7 +201,7 @@ let fwd p i =
 val send : p:principal -> i:infon{Enabled (Send (Const (PrincipalConstant p)) i)} -> bool 
 let send p i = 
   let z : principal = me in 
-  let msg : message SaysTo = ( (z, p, (i: (i:infon{SaysTo z p i}))) : (z:principal * p:principal * i:infon{SaysTo z p i})) in 
+  let msg : jmessage = ( (z, p, (i: (i:infon{Says z i}))) : (z:principal * p:principal * i:infon{Says z i})) in 
   let m = Justified msg in 
     dispatch p m 
                                

@@ -44,6 +44,11 @@ type alphaEquiv :: polyterm => polyterm => P =
     -> alphaEquiv (ForallT xs t) 
                   (ForallT ys (Subst t (MkSubst xs (AsTerms ys))))
 
+  | AEQ_Justified: 
+      p:term -> i:polyterm -> d:term  -> j:polyterm
+    -> alphaEquiv i j 
+    -> alphaEquiv (JustifiedPoly p i d) (JustifiedPoly p j d)
+
 (* val checkVarsTyEq : xs:vars -> ys:vars -> option (varsTyEq xs ys) *)
 let checkVarsTyEq xs ys = zip_e<var, var, varTyEq> (fun x y -> (x.typ : typ)=y.typ) xs ys
 
@@ -62,18 +67,24 @@ let alphaConvertWith i ys = match i with
                   
                   
 val alphaConvert: i:polyterm -> (j:polyterm * alphaEquiv i j)
-let alphaConvert i = match i with 
+let rec alphaConvert i = match i with 
   | MonoTerm t -> (i, AEQ_Mono t)
   | ForallT xs t -> 
-      match doPolyTyping [] i with 
-        | MkPartial ityping -> 
-            let ys, pfzip = freshVars xs in
-              match decideWFG ys with 
-                | None -> raise "Impos"
-                | Some wf_ys -> 
-                    let s = mkSubst xs (asTerms ys) in 
-                    let t' = subst t s in 
-                      (ForallT ys t', AEQ_Poly xs t ys ityping wf_ys pfzip)
+      (match doPolyTyping [] i with 
+         | MkPartial ityping -> 
+             let ys, pfzip = freshVars xs in
+               match decideWFG ys with 
+                 | None -> raise "Impos"
+                 | Some wf_ys -> 
+                     let s = mkSubst xs (asTerms ys) in 
+                     let t' = subst t s in 
+                       (ForallT ys t', AEQ_Poly xs t ys ityping wf_ys pfzip))
+  | JustifiedPoly p q d -> 
+      let q', pf = alphaConvert q in 
+      let j = JustifiedPoly p q' d in 
+        (j, AEQ_Justified p q d q' pf)
+
+
   
 (*********************************************************************************)
 (* Definition of DKAL entailment *)
@@ -130,6 +141,12 @@ type entails :: substrate => infostrate => vars => term => P =
     -> ZipP term var (fun (i:term) (x:var) => typing G i x.typ) is xs
     -> entails S K G (Subst t (MkSubst xs is))
 
+  | Entails_J_Elim:
+       S:substrate -> K:infostrate -> G:vars
+    -> p:term -> i:term -> d:term -> pref:prefix
+    -> entails S K G (WithPrefix pref (App JustifiedInfon [p;i;d]))
+    -> entails S K G (WithPrefix pref i)
+
   | Entails_Poly:
        S:substrate -> K:infostrate -> G:vars
     -> i:term
@@ -158,6 +175,12 @@ and polyentails :: substrate => infostrate => vars => polyterm => P =
     -> i:term
     -> entails S K G i
     -> polyentails S K G (MonoTerm i)
+
+  | Entails_ElimJust: 
+      S:substrate -> K:infostrate -> G:vars
+    -> p:term -> i:polyterm -> d:term
+    -> polyentails S K G (JustifiedPoly p i d)
+    -> polyentails S K G i
 
 (*************************)
 (* Derivation algorithm  *)
@@ -272,7 +295,7 @@ let rec doDerive s k g u s1 pref goal =
                    else raise "Substrate query failed" 
                in Some (s1, mkpf)
            | _ -> None) (* AsInfon not allowed under prefix *)
-	  
+
     | _ -> map_one k (tryDeriveAlpha s k g u s1 pref goal)
 
 and tryDeriveAlpha s k g u s1 pref goal infon = 
@@ -371,7 +394,17 @@ and tryDerive s k g u s1 pref goal infon mkpf_infon =
                       then MkPartial (Entails_Poly s k g i' pf_infon)
                       else raise "Unification error" 
               in Some (s2, mkpf)
-          | _ -> None
+          | _ -> 
+              (* (match i with  *)
+              (*    | App JustifiedInfon [p;i';d] ->  *)
+              (*        let mkpf (s3:substitution{Extends s3 s2}) : kresult s k g pref goal s3 =  *)
+              (*          match mkpf_infon s3 with  *)
+              (*            | MkPartial pf_infon -> *)
+                             
+              (*                let  *)
+              (*        tryDerive s k g u s1 pref goal i' *)
+
+              None
 
 (* val deriveQuant: U:vars             (\* Variables available for unification in goal (free in goal) *\) *)
 (*               -> S:substrate  *)

@@ -12,11 +12,13 @@ extern Crypto val rsa_verify_impl: msg:bytes -> ds:bytes -> sk:string -> bool
 
 type Serialized:: 'a::* => 'a => bytes => E
 
+type dsig = bytes
+
+
 (* read creds from a config file *)
 type IsMe :: principal => E
-val lookup_my_credentials : unit -> p:principal{IsMe p}
-
-type dsig = bytes
+assume forall (p:principal) (q:principal). IsMe p && IsMe q => p=q
+val me : p:principal{IsMe p}
 
 type pubkey :: 'a::* => ('a => E) => principal => * = 
    | MkPubKey: 'a::* -> 'P::('a => E) -> p:principal -> string -> pubkey 'a 'P p

@@ -1,5 +1,6 @@
 module Net
 open Types
+open Crypto
 
 type Received :: 'a::* => 'a => E
 assume forall (x:'a) (l:list 'a). In x l && Received l => Received x
@@ -19,10 +20,9 @@ let rec findMethod p l = match l with
   
 val receive: unit -> b:bytes{Received b}
 let receive () =
-  let me = Crypto.lookup_my_credentials() in
-  match findMethod me (!methods) with
+  match findMethod (Crypto.me) (!methods) with
     | (recv, _ ) ->
-      let b = recv true in
+        let b = recv true in
       (assume (Received b); b)
     | _ -> raise "Net.receive"
   
