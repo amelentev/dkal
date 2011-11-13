@@ -1,6 +1,7 @@
 module ClinicalTrials
 open Types
 open Interp
+open Net
 
 (* --------- Borrowed from prog.fst --------- *)
 type TrustRule :: _ = 
@@ -190,3 +191,21 @@ let keyMgrPolicy =
 
   [rule1; rule2]
      
+(* ---------------- for communication ------------------ *)
+let _ = 
+  let portNum_org = 9200 in
+  let portNum_site = 9201 in
+  let portNum_phys = 9202 in
+  let portNum_keyMgr = 9203 in
+  let org = "org1" in
+  let site = "site1" in
+  let phys =  "phys1" in
+  let keyMgr = "keyMgr" in
+  let org_recv, send_to_org = createComm portNum_org in
+  let site_recv, send_to_site = createComm portNum_site in
+  let phys_recv, send_to_phys = createComm portNum_phys in
+  let keyMgr_recv, send_to_keyMgr = createComm portNum_keyMgr in
+  suscribe [(org, org_recv, send_to_org);
+            (site, site_recv, send_to_site);
+            (phys, phys_recv, send_to_phys);
+            (keyMgr, keyMgr_recv, send_to_keyMgr)]
