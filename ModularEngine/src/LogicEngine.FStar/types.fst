@@ -63,13 +63,12 @@ module Types
     | AndInfon      : func (* [Infon; ...; Infon] -> Infon *)
     | ImpliesInfon  : func (* [Infon; Infon] -> Infon *)
     | SaidInfon     : func (* [Principal; Infon] -> Infon *)
-    | JustifiedInon : func (* [Principal; Infon; Bytes] -> Infon *)
+    | JustifiedInfon : func (* [Principal; Infon; Bytes] -> Infon *)
     | RelationInfon : relationInfon -> func
 (* --- We should get rid of these remaining ones --- *)
     | SeqRule : func 
     | SeqCondition : func 
     | SeqAction : func
-    | AndInfon : func 
     | AndEvidence : func
     | EmptyRule : func 
     | Rule : func 
@@ -87,11 +86,6 @@ module Types
     | Uninstall : func
     | Apply : func 
     | Drop : func 
-    | EmptyInfon : func
-    | AsInfon : func 
-    | ImpliesInfon : func
-    | SaidInfon : func 
-    | JustifiedInfon : func
     | EmptyEvidence : func 
     | SignatureEvidence : func
     | ModusPonensEvidence : func
