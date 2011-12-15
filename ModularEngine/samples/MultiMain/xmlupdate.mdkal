@@ -1,0 +1,37 @@
+/// Test XML substrate operations: query, insert, update, delete
+/// expected output:
+///  >> From test to test: log("inserted") && log("node")
+///  >> From test to test: log("updated") && log("node")
+///  >> From test to test: log("deleted") && log("node1")
+---test--------------------------
+
+substrate xml("<root></root>")
+    namespaces "x"
+
+relation nodename(X: System.String)
+relation log(X: System.String)
+
+do once
+  learn nodename("node")
+
+with NN: System.String
+  if
+    nodename(NN)
+  do
+    apply {|"x"| insert "/root" | NN, "value" <-> "attr" |}
+    forget nodename(NN)
+    send to Me: log("inserted") && log(NN)
+
+with NN: System.String
+  if
+    asInfon({|"x"| "/root/*[@attr='value']" | NN |})
+  do
+    apply {|"x"| update "/root/$NN" | "node1", "value1" <-> "attr" |}
+    send to Me: log("updated") && log(NN)
+
+with NN: System.String
+  if
+    asInfon({|"x"| "/root/*[@attr='value1']" | NN |})
+  do
+    apply {|"x"| delete "/root/$NN" |}
+    send to Me: log("deleted") && log(NN)

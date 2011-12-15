@@ -50,6 +50,11 @@ rule tokenize = parse
                        string lexbuf;
                        STRING_LITERAL (stringBuf.ToString()) }
 
+// Update keywords
+| "update"    { UPDATE }
+| "insert"    { INSERT }
+| "delete"    { DELETE }
+
 // Identifiers
 | ['a'-'z']+ ['a'-'z''A'-'Z''0'-'9''_']* 		{ LOWER_IDENTIFIER (lexeme lexbuf) }
 | ['A'-'Z']+ ['a'-'z''A'-'Z''0'-'9''_''.']*		{ UPPER_IDENTIFIER (lexeme lexbuf) }

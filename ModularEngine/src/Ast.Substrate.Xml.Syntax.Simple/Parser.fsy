@@ -55,13 +55,16 @@ let varsFromQuery (query: string) =
 // Identifiers
 %token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
 
+// Update keywords
+%token UPDATE INSERT DELETE
+
 // EOF
 %token EOF
 
 // ------------------------------------------------------------------------------------------------------
 // This is the type of the data produced by successful reductions of each 'start' symbol:
 
-%type < XmlSubstrateQueryTerm > XmlSubstrateTerm
+%type < ISubstrateTerm > XmlSubstrateTerm
 
 // ------------------------------------------------------------------------------------------------------
 // These are the rules of the grammar 
@@ -69,25 +72,46 @@ let varsFromQuery (query: string) =
 %%
 
 XmlSubstrateTerm:
+  // query
   | STRING_LITERAL RightSide EOF    
-    { let output = new Dictionary<string,ITerm>() 
-      for (term, att) in $2 do
-        output.[att] <- term
-      let queryWithoutMeVariable = replaceMeInQuery($1)
+    { let queryWithoutMeVariable = replaceMeInQuery($1)
       let vars = varsFromQuery(queryWithoutMeVariable)
-      new XmlSubstrateQueryTerm(Namespace, queryWithoutMeVariable, vars, output) }
+      new XmlSubstrateQueryTerm(Namespace, queryWithoutMeVariable, vars, Map.ofList $2) :> ISubstrateTerm }
+  // insert
+  | INSERT STRING_LITERAL PIPE Mappings
+    { let xpath = replaceMeInQuery($2)
+      let vars = varsFromQuery(xpath)
+      new XmlSubstrateInsertTerm(Namespace, xpath, vars, Map.ofList $4) :> ISubstrateTerm }
+  // update
+  | UPDATE STRING_LITERAL PIPE NodeModify
+    { let xpath = replaceMeInQuery($2)
+      let vars = varsFromQuery(xpath)
+      new XmlSubstrateModifyTerm(Namespace, xpath, vars, Map.ofList $4) :> ISubstrateTerm }
+  // delete
+  | DELETE STRING_LITERAL
+    { let xpath = replaceMeInQuery($2)
+      let vars = varsFromQuery(xpath)
+      new XmlSubstrateModifyTerm(Namespace, xpath, vars, Map.ofList ["", None]) :> ISubstrateTerm }
 
 RightSide:
-  |                                       { [(Var(Context.Value.FreshVar (Type.String)), "")] }
-  | PIPE Outputs                          { $2 }
+  |                                       { [("", Var(Context.Value.FreshVar (Type.String)))] }
+  | PIPE Mappings                         { $2 }
 
-Outputs:
-  | Output                                { [$1] }
-  | Output COMMA Outputs                  { $1 :: $3 }
+Mappings:
+  | Mapping                               { [$1] }
+  | Mapping COMMA Mappings                { $1 :: $3 }
 
-Output:
-  | Term MAPS STRING_LITERAL    { ($1, $3) } 
-  | Term                        { ($1, "") }
+Mapping:
+  | Term MAPS STRING_LITERAL    { ($3, $1) } 
+  | Term                        { ("", $1) }
+
+NodeModify:
+  | AttrModify                    { [$1] }
+  | AttrModify COMMA NodeModify   { $1 :: $3 }
+
+AttrModify:
+  | Mapping                     { (fst $1, Some(snd $1)) }
+  | DELETE STRING_LITERAL       { ($2, None) }
 
 Term:
   | Variable                    { Var($1) }
@@ -97,9 +121,9 @@ Variable:
   | UPPER_IDENTIFIER            { {Name=$1; Type=Context.Value.VariableType($1)} }
 
 Literal:
-	| TRUE									    	{ Const(Constant(true)) }
-	| FALSE									    	{ Const(Constant(false)) }
-	| INT_LITERAL						  		{ Const(Constant($1)) }
-	| FLOAT_LITERAL								{ Const(Constant($1)) }
-	| STRING_LITERAL							{ Const(Constant($1)) }
-	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }
+  | TRUE                        { Const(Constant(true)) }
+  | FALSE                       { Const(Constant(false)) }
+  | INT_LITERAL                 { Const(Constant($1)) }
+  | FLOAT_LITERAL               { Const(Constant($1)) }
+  | STRING_LITERAL              { Const(Constant($1)) }
+  | LOWER_IDENTIFIER            { Const(PrincipalConstant($1)) }
