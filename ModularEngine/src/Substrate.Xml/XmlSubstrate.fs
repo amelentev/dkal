@@ -63,13 +63,46 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
           | Some subst -> yield subst
           | None -> ()
         | :? XAttribute as xa when query.Output.Count=1 ->
-          let output = query.Output.Values.First()
+          let output = query.Output |> Map.pick (fun k v -> Some(v))
           match bind (Some subst) output xa.Value with
           | Some subst -> yield subst
           | None -> ()
         | _ ->
           failwithf "unknown xpath result: %A" elem
     }
+
+  let getTermValue (t:ITerm) = 
+    match t with
+      | :? IConst as c -> c.Value.ToString()
+      | _ as v -> failwithf "unknown attribute value %A" v
+  
+  member x.modify (term: XmlSubstrateModifyTerm) =
+    let nodes = xmldoc.Root.XPathEvaluate(term.XPath) :?> IEnumerable<obj>
+    let mutable found = false
+    for elem in nodes do
+      let xe = elem :?> XElement
+      for kvp in term.Attrs do
+        let v = match kvp.Value with
+                | None -> null
+                | Some(c) -> getTermValue c
+        match kvp.Key, v with
+        | "", null -> xe.Remove()
+        | "", v -> xe.Name <- xn v
+        | _ -> xe.SetAttributeValue(xn kvp.Key, v)
+        found <- true
+    found
+  
+  member x.insert (term: XmlSubstrateInsertTerm) =
+    let nodes = xmldoc.Root.XPathEvaluate(term.XPath) :?> IEnumerable<obj>
+    let mutable found = false
+    for elem in nodes do
+      let xe = elem :?> XElement
+      let newnode = XElement(xn (getTermValue term.NodeName))
+      for attr in (term.Attrs |> Seq.filter (fun a -> a.Key<>"")) do
+        newnode.SetAttributeValue(xn attr.Key, getTermValue attr.Value)
+      xe.Add(newnode)
+      found <- true
+    found
 
   interface ISubstrate with
     member xs.RequiredVars st = 
@@ -83,7 +116,14 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
         substs |> Seq.collect (solve11 query)
       queries |> Seq.fold solve1Many substs
 
-    member xs.Update _ = failwith "XML substrate does not support updates"
+    /// xml updates are in-memory only. no files affected.
+    member xs.Update terms =
+      let update(term : ISubstrateUpdateTerm) =
+        match term with
+        | :? XmlSubstrateModifyTerm as t -> xs.modify t
+        | :? XmlSubstrateInsertTerm as t -> xs.insert t
+        | _ -> failwithf "unknown SubstrateUpdateTerm: %A" term
+      terms |> Seq.map update |> List.ofSeq |> List.exists (fun x -> x)
 
     member xs.AreConsistentUpdates _ = failwith "XML substrate does not support updates"
 

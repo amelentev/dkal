@@ -42,13 +42,16 @@ let mutable Namespace: string = null
 // Identifiers
 %token <System.String> LOWER_IDENTIFIER UPPER_IDENTIFIER
 
+// Update keywords
+%token UPDATE INSERT DELETE
+
 // EOF
 %token EOF
 
 // ------------------------------------------------------------------------------------------------------
 // This is the type of the data produced by successful reductions of each 'start' symbol:
 
-%type < XmlSubstrateQueryTerm > XmlSubstrateTerm
+%type < ISubstrateTerm > XmlSubstrateTerm
 
 // ------------------------------------------------------------------------------------------------------
 // These are the rules of the grammar 
@@ -56,19 +59,34 @@ let mutable Namespace: string = null
 %%
 
 XmlSubstrateTerm:
-  | STRING_LITERAL PIPE Outputs PIPE Vars       
-    { let outputs = new Dictionary<string,ITerm>() 
-      for (term, att) in $3 do
-        outputs.[att] <- term
-      new XmlSubstrateQueryTerm(Namespace, $1, $5, outputs) }
+  //  query
+  | STRING_LITERAL PIPE Mappings PIPE Vars
+    { new XmlSubstrateQueryTerm(Namespace, $1, $5, Map.ofList $3) :> ISubstrateTerm }
+  // insert
+  | INSERT STRING_LITERAL PIPE Mappings PIPE Vars
+    { new XmlSubstrateInsertTerm(Namespace, $2, $6, Map.ofList $4) :> ISubstrateTerm }
+  // update
+  | UPDATE STRING_LITERAL PIPE NodeModify PIPE Vars
+    { new XmlSubstrateModifyTerm(Namespace, $2, $6, Map.ofList $4) :> ISubstrateTerm }
+  // delete
+  | DELETE STRING_LITERAL PIPE Vars
+    { new XmlSubstrateModifyTerm(Namespace, $2, $4, Map.ofList ["", None]) :> ISubstrateTerm }
 
-Outputs:
-  | Output                                { [$1] }
-  | Output COMMA Outputs                  { $1 :: $3 }
+Mappings:
+  | Mapping                                { [$1] }
+  | Mapping COMMA Mappings                 { $1 :: $3 }
 
-Output:
-  | Term MAPS STRING_LITERAL      { ($1, $3) }
-  | Term                          { ($1, "") }
+Mapping:
+  | Term MAPS STRING_LITERAL      { ($3, $1) }
+  | Term                          { ("", $1) }
+
+AttrModify:
+  | Mapping                     { (fst $1, Some(snd $1)) }
+  | DELETE STRING_LITERAL       { ($2, None) }
+
+NodeModify:
+  | AttrModify                    { [$1] }
+  | AttrModify COMMA NodeModify   { $1 :: $3 }
 
 Vars:
   |                             { [] }
@@ -79,16 +97,16 @@ Var:
   | UPPER_IDENTIFIER COLON Type						              			{ { Name = $1; Type = $3 } :> IVar }
 
 Type:
-	| UPPER_IDENTIFIER				{ Type.FromFullName $1 }
+    | UPPER_IDENTIFIER				{ Type.FromFullName $1 }
 
 Term:
   | Var                         { Var($1) }
   | Literal                     { $1 }
 
 Literal:
-	| TRUE									    	{ Const(Constant(true)) }
-	| FALSE									    	{ Const(Constant(false)) }
-	| INT_LITERAL						  		{ Const(Constant($1)) }
-	| FLOAT_LITERAL								{ Const(Constant($1)) }
-	| STRING_LITERAL							{ Const(Constant($1)) }
-	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }
+  | TRUE                        { Const(Constant(true)) }
+  | FALSE                       { Const(Constant(false)) }
+  | INT_LITERAL                 { Const(Constant($1)) }
+  | FLOAT_LITERAL               { Const(Constant($1)) }
+  | STRING_LITERAL              { Const(Constant($1)) }
+  | LOWER_IDENTIFIER            { Const(PrincipalConstant($1)) }

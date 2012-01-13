@@ -76,6 +76,7 @@
       <Link>Lexer.fs</Link>
     </Compile>
     <Compile Include="TypedXmlParser.fs" />
+    <None Include="XmlParserTest.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast.Syntax.Parsing\Ast.Syntax.Parsing.fsproj">

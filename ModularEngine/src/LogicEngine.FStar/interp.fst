@@ -9,9 +9,15 @@ open Crypto
 type communication = i:infon{Net.Received i}
 type communications = list communication
 
+type pat =
+  | MonoPat: term -> pat
+  | ForallPat: var -> pat
+  | JustifiedPat: term -> pat -> term -> pat
+
 type condition =
-  | If   : polyterm -> condition
-  | Upon : polyterm -> condition
+  | If   : pat -> condition
+  | Upon : pat -> condition
+
 type conditions = list condition
 type WFCond :: vars => condition => P =
   | WFCond_If: xs:vars -> i:polyterm 

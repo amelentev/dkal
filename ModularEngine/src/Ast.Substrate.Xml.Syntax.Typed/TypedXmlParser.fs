@@ -37,5 +37,5 @@ type TypedXmlParser() =
       ()
 
     member sp.ParseTerm s = 
-      GeneralParser.TryParse (Parser.XmlSubstrateTerm Lexer.tokenize) s :> ISubstrateTerm
+      GeneralParser.TryParse (Parser.XmlSubstrateTerm Lexer.tokenize) s
 
