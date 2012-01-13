@@ -76,6 +76,13 @@ let rec contains a l = match l with
       if a=hd then true
       else contains a tl
 
+val remove_dups : list 'a -> list 'a
+let rec remove_dups = function 
+  | [] -> []
+  | hd::tl -> 
+      if contains hd tl then remove_dups tl
+      else hd::(remove_dups tl)
+
 val includes : l:list 'a -> m:list 'a -> b:bool{b=true => Includes l m}
 let rec includes l m = match m with 
   | [] -> true
@@ -262,11 +269,11 @@ extern Runtime val addBindings: object -> string -> bool
 (* extern Runtime val lookupBindings: object -> option string *)
 extern Runtime val clearBindings: bool -> bool
 
-extern Runtime val Assume: 'P::E -> unit -> (y:unit{'P})
+extern Runtime val Assume: 'P::E -> unit -> (y:bool{'P})
 extern Runtime val PAssume: 'P::E -> int -> (y:punit{'P})
 extern Runtime val pickle: x:'a -> (b:bytes{Serialized x b})
 extern Runtime val unpickle: b:bytes -> (x:'a{Serialized x b})
-extern Runtime val Assert : 'P::E -> x:unit{'P} -> (y:unit{'P})
+extern Runtime val Assert : 'P::E -> x:unit{'P} -> (y:bool{'P})
 extern Runtime val throw: string -> 'a 
 
 val loop : unit -> 'a
@@ -302,6 +309,13 @@ val collect_in : l:list 'a -> (x:'a{In x l} -> list 'b) -> list 'b
 let rec collect_in l f = match l with 
   | [] -> []
   | hd::tl -> append (f hd) (collect_in tl f)
+
+val coll : l:list 'a -> (x:'a -> list 'b) -> list 'b 
+let coll l f = collect f l
+
+val product : list 'a -> list 'b -> ('a -> 'b -> list 'c) -> list 'c
+let product la lb f = 
+  collect (fun a -> collect (fun b -> f a b) lb) la
 
 val filter : ('a -> bool) -> list 'a -> list 'a
 let filter (f: 'a -> bool) (l : list 'a) =

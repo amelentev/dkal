@@ -162,6 +162,14 @@ let rec map_mapL_p f l = match l with
 type Partial :: P => * = 
   | MkPartial : 'a::P -> 'a -> Partial 'a
 
+val mapP : 'a::P -> 'b::P -> Partial 'a -> ('a -> 'b) -> Partial 'b
+let mapP pa f = match pa with 
+  | MkPartial a -> MkPartial (f a)
+
+val bindP : 'a::P -> 'b::P -> Partial 'a -> ('a -> Partial 'b) -> Partial 'b
+let bindP pa f = match pa with 
+  | MkPartial a -> f a
+
 logic function lconcat : list 'a -> list 'a -> list 'a
 assume (forall (x:list 'a). (lconcat [] x) = x)
 assume (forall (hd:'a) (tl:list 'a) (x:list 'a). (lconcat (hd::tl) x) = (hd::(lconcat tl x)))
