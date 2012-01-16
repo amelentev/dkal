@@ -5,7 +5,10 @@ FSTBIN2=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin2
 DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
 FSTAR=fstar --writePrims --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000
 #typeHeaders.fst translationFromFStar.fst 
-SOURCES=util.fst types.fst subst.fst typing.fst unify.fst infonlogic.fst crypto.fst net.fst keys.fst state.fst marshall.fst authenticate.fst interp.fst prog.fst clinical_trials.fst
+SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst crypto.fst net.fst keys.fst state.fst marshall.fst authenticate.fst 
+
+#NS Jan 16: Leaving out the rule interpreter for now, until we stabilize the semantics
+#interp.fst prog.fst clinical_trials.fst
 
 interp: $(SOURCES)
 	$(FSTAR) --writePrims $^ --o $@
