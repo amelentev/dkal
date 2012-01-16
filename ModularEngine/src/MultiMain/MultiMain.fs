@@ -60,13 +60,14 @@ module MultiMain =
 
   let rec private splitPolicies (s : string) =
     let mutable i = 0
-    while s.[i]='-' do
+    while i < s.Length && s.[i]='-' do
       i <- i + 1
     let ppalName = StringBuilder()
-    while s.[i]<>'-' do
+    while i < s.Length && s.[i]<>'-' do
       ppalName.Append(s.[i]) |> ignore
       i <- i + 1
-    while s.[i]='-' do
+    if ppalName.Length = 0 then failwithf "invalid policy header:\n%s" s
+    while i < s.Length && s.[i]='-' do
       i <- i + 1
     let s = s.Substring(i)
     let j = s.IndexOf("---")
@@ -80,6 +81,7 @@ module MultiMain =
     FactoriesInitializer.Init()
 
     let i = policy.IndexOf("---")
+    if i<0 then failwith "headers not found in policy file"
     let commonPolicy = policy.Substring(0, i) + "\n"
     let ppals = splitPolicies( policy.Substring(i) )
     let routers = RouterFactory.LocalRouters (ppals |> List.unzip |> fst)        

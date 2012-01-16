@@ -58,9 +58,9 @@ module Types
         identity : option term }
         
   and func =
-    | EmptyInfon    : func (* [] -> Infon *)
     | AsInfon       : func (* [SubstrateQuery] -> Infon *)
-    | AndInfon      : func (* [Infon; ...; Infon] -> Infon *)
+    | EmptyInfon    : func (* [] -> Infon *)
+    | AndInfon      : func (* [Infon; Infon] -> Infon *)
     | ImpliesInfon  : func (* [Infon; Infon] -> Infon *)
     | SaidInfon     : func (* [Principal; Infon] -> Infon *)
     | JustifiedInfon : func (* [Principal; Infon; Bytes] -> Infon *)
