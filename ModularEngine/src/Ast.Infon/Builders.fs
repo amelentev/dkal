@@ -86,6 +86,9 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   /// Build a drop mailbox message action
   let DropAction (i: ITerm) = 
     App(Primitives.SolveFunction Primitives.Drop |> Option.get, [i])
+  /// Build a fresh id action
+  let FreshAction (v: ITerm) = 
+    App(Primitives.SolveFunction Primitives.Fresh |> Option.get, [v])
 
   /// Build an empty infon
   let EmptyInfon = 

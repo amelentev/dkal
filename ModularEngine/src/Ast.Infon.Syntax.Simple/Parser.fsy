@@ -55,7 +55,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token AS_INFON SAID
 
 // Delimiters
-%token EQ LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT
+%token EQ LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT GETS
 
 // Wildcards
 %token WILDCARD ME
@@ -73,7 +73,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token MACRO
 
 // Variable declarations
-%token WITH
+%token WITH LET FRESH
 
 // Rules
 %token DO ONCE
@@ -279,7 +279,8 @@ SubstrateTerm:
 Action:
   | Variable        							      { $1, [] }
   | WILDCARD                            { Var(ctxs.Peek().FreshVar(Type.Action)), [] }
-	| LPAR Action RPAR					          { $2 }
+  | LPAR Action RPAR					          { $2 }
+  | LET Variable GETS FRESH				{ primitiveApp(Primitives.Fresh, [$2]), [] }
   | SAY WITH JUSTIFICATION TO Principal COLON Infon
     { let t1, sm1 = normalizeAndApplyMacros $5
       let t2, sm2 = normalizeAndApplyMacros $7
@@ -288,33 +289,33 @@ Action:
     { let t1, sm1 = normalizeAndApplyMacros $5
       let t2, sm2 = normalizeAndApplyMacros $7
       primitiveApp(Primitives.JustifiedSend, [t1; t2]), sm1 @ sm2 }
-	| SEND TO Principal COLON Infon
+  | SEND TO Principal COLON Infon
     { let t1, sm1 = normalizeAndApplyMacros $3
       let t2, sm2 = normalizeAndApplyMacros $5
       primitiveApp(Primitives.Send, [t1; t2]), sm1 @ sm2 }
-	| LEARN Infon
+  | LEARN Infon
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Learn, [t]), sm }
-	| FORGET Infon
+  | FORGET Infon
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Forget, [t]), sm }
-	| INSTALL Rule
+  | INSTALL Rule
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Install, [t]), sm }
-	| UNINSTALL Rule
+  | UNINSTALL Rule
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Uninstall, [t]), sm }
-	| APPLY SubstrateTerm
+  | APPLY SubstrateTerm
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Apply, [t]), sm }
-	| DROP Infon
+  | DROP Infon
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Drop, [t]), sm }
-	| Action Action
+  | Action Action
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $2
       primitiveApp(Primitives.SeqAction, [t1; t2]), sm1 @ sm2 }
-	| LOWER_IDENTIFIER LPAR Terms RPAR		
+  | LOWER_IDENTIFIER LPAR Terms RPAR		
     { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
       if ctxs.Peek().HasMacro($1) then
         let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)

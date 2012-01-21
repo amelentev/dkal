@@ -28,7 +28,7 @@ type SimpleExecutor(router: IRouter,
                     logicEngine: ILogicEngine, 
                     signatureProvider: ISignatureProvider, 
                     infostrate: IInfostrate,
-                    mailbox: IMailBox) = 
+                    mailbox: IMailBox) as se = 
   let log = LogManager.GetLogger("Executor.Simple")
   
   /// The inbox holds the messages that arrive from the router but still
@@ -54,6 +54,9 @@ type SimpleExecutor(router: IRouter,
   /// Flag that's set to true when the executor needs to stop so that the worker
   /// thread will read it and terminate
   let mutable finish: bool = false
+
+  /// To generate pseudo-unique integer identifiers with 'fresh' keyword
+  let random = new System.Random(se.GetHashCode())
 
   // ---- Callbacks ----
 
@@ -177,29 +180,22 @@ type SimpleExecutor(router: IRouter,
     log.Debug("{0}: ------------- round start -------------------", router.Me)
     roundStartCb()
     
-    // To store the changes to be applied at the end of the round
-    let actions = new HashSet<ITerm>()
-
+    // Collects the actions that each rule mandates
     let rec traverse rule = 
       match rule with
       | Rule(condition, action) ->
-        for subst in se.SolveCondition condition [Substitution.Id] do
-          actions.Add (action.Apply subst) |> ignore
+        Seq.map action.Apply (se.SolveCondition condition [Substitution.Id]) |> Seq.toList
       | RuleOnce(condition, action) ->
-        for subst in se.SolveCondition condition [Substitution.Id] do
-          actions.Add (action.Apply subst) |> ignore
-          actions.Add(UninstallAction(rule)) |> ignore // XXX this is removing the rule several times (performance)
-      | EmptyRule -> ()
+        [UninstallAction(rule)] @ (Seq.map action.Apply (se.SolveCondition condition [Substitution.Id]) |> Seq.toList)
+      | EmptyRule -> []
       | SeqRule (rules) ->
-        List.iter traverse rules
+        Seq.collect traverse rules |> Seq.toList
       | _ -> failwithf "Expecting rule when executing round, found %O" rule
 
     // Traverse rules
-    for rule in rules do
-      traverse rule
+    let actions = Seq.toList <| Seq.collect traverse rules
 
     // Check consistency and apply changes
-    let actions = Seq.toList actions
     let changed = if ConsistencyChecker.AreConsistentActions actions then
                     se.ApplyActions actions
                   else
@@ -223,35 +219,57 @@ type SimpleExecutor(router: IRouter,
       | SeqAction(actions) -> List.collect allActions actions
       | _ -> [a]
 
-    let actions = List.collect allActions actions
+//    let actions = List.toArray <| List.collect allActions actions
 
-    for action in actions do
-      actionCb(action)
-      let changes = 
-        match action with
-        | Learn(infon) -> infostrate.Learn infon
-        | Forget(infon) -> infostrate.Forget infon
-        | Send(ppal, infon) -> 
-          let infon = match infon with 
-                      | JustifiedInfon(infon, ev) -> JustifiedInfon(ForallMany(infon.Vars, infon), ev)
-                      | infon -> ForallMany(infon.Vars, infon)
-          messagesToSend.Add (infon, ppal) |> ignore; false
-        | JustifiedSend(ppal, infon) ->
-          let infon = ForallMany(infon.Vars, infon)
-          let evidence = SignatureEvidence(PrincipalConstant(router.Me), infon, Constant(signatureProvider.ConstructSignature infon router.Me))
-          messagesToSend.Add (JustifiedInfon(infon, evidence), ppal) |> ignore; false
-        | JustifiedSay(ppal, infon) ->
-          let infon = ForallMany(infon.Vars, infon)
-          let said = SaidInfon(PrincipalConstant(router.Me), infon)
-          let evidence = SignatureEvidence(PrincipalConstant(router.Me), said, Constant(signatureProvider.ConstructSignature said router.Me))
-          messagesToSend.Add (JustifiedInfon(said, evidence), ppal) |> ignore; false
-        | Install(rule) -> (se :> IExecutor).InstallRule rule
-        | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
-        | Drop(i) -> mailbox.Remove i; false
-        | Apply(su) -> 
-          substrateUpdates.Add su |> ignore; false
-        | _ -> failwithf "Unrecognized action %O" action
-      changed <- changed || changes        
+    let rec instantiateFresh a =
+      match a with
+      | SeqAction actions -> 
+        let actions = List.toArray actions
+        for i in [0..actions.Length-1] do
+          match actions.[i] with
+          | Fresh(v) ->
+            match v with
+            | Var(v) -> 
+              let s = Substitution.Id.Extend(v, Const(Constant(random.Next())))
+              for j in [i+1..actions.Length-1] do
+                actions.[j] <- actions.[j].Apply(s)
+            | _ -> failwithf "Expecting variable in fresh expression, found %O" v
+          | _ -> ()
+        SeqAction <| Seq.toList actions
+      | _ -> a
+
+    let applyOne a =
+      match a with
+      | Learn(infon) -> infostrate.Learn infon
+      | Forget(infon) -> infostrate.Forget infon
+      | Send(ppal, infon) -> 
+        let infon = match infon with 
+                    | JustifiedInfon(infon, ev) -> JustifiedInfon(ForallMany(infon.Vars, infon), ev)
+                    | infon -> ForallMany(infon.Vars, infon)
+        messagesToSend.Add (infon, ppal) |> ignore; false
+      | JustifiedSend(ppal, infon) ->
+        let infon = ForallMany(infon.Vars, infon)
+        let evidence = SignatureEvidence(PrincipalConstant(router.Me), infon, Constant(signatureProvider.ConstructSignature infon router.Me))
+        messagesToSend.Add (JustifiedInfon(infon, evidence), ppal) |> ignore; false
+      | JustifiedSay(ppal, infon) ->
+        let infon = ForallMany(infon.Vars, infon)
+        let said = SaidInfon(PrincipalConstant(router.Me), infon)
+        let evidence = SignatureEvidence(PrincipalConstant(router.Me), said, Constant(signatureProvider.ConstructSignature said router.Me))
+        messagesToSend.Add (JustifiedInfon(said, evidence), ppal) |> ignore; false
+      | Install(rule) -> (se :> IExecutor).InstallRule rule
+      | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
+      | Drop(i) -> mailbox.Remove i; false
+      | Apply(su) -> 
+        substrateUpdates.Add su |> ignore; false
+      | Fresh(v) -> false // it is already instantiated, so no action needed
+      | _ -> failwithf "Unrecognized action %O" a
+
+    for a in actions do
+      let a = instantiateFresh a
+      for a in allActions a do
+        actionCb(a)
+        let changes = applyOne a
+        changed <- changed || changes        
 
     let changedFromSubstrateUpdates = SubstrateDispatcher.Update substrateUpdates
     let changedFromMessages = se.Send messagesToSend

@@ -57,6 +57,7 @@ rule tokenize = parse
 | ";"				{ SEMICOLON }
 | ","				{ COMMA }
 | "."				{ DOT }
+| "<-"				{ GETS }
 
 // Wildcards
 | "_"                 { WILDCARD }
@@ -77,6 +78,8 @@ rule tokenize = parse
 
 // Variable declarations
 | "with"			{ WITH }
+| "let"             { LET }
+| "fresh"			{ FRESH }
 
 // Rules
 | "do"			  { DO }

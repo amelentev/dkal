@@ -1,0 +1,27 @@
+/// Fresh identifiers
+/// Alice sends to Bob a random number and Bob replies with another one
+
+// common declarations
+type Int = System.Int32
+
+// used to carry the random numbers
+relation r(X: Int)
+
+---alice--------------------------
+// alice's policy
+
+with F1: Int
+	do once
+		let F1 <- fresh
+		send to bob: r(F1)
+
+---bob--------------------------
+// bob's policy
+
+with X: Int, F2: Int
+    upon
+        alice said r(X)
+    do 
+		let F2 <- fresh
+        send to alice:
+            r(F2)
