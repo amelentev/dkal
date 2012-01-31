@@ -174,7 +174,7 @@ let comms = newref []
 val get_communications: unit -> unit
 let rec get_communications _unit = 
   let message = Net.receive () in
-    match Authenticate.bytes2infon message with 
+    match Net.bytes2infon message with 
       | Some infon -> comms := infon::(!comms)
       | _ -> get_communications ()
           
@@ -195,7 +195,7 @@ let dispatch p m =
   then false
   else
     ((outbuffer := m::(!outbuffer));
-     (Net.send p (Authenticate.msg2bytes m));
+     (Net.send p (Net.msg2bytes m));
      true)
 
 val fwd: p:principal -> i:polyterm{Enabled (Fwd (Const (PrincipalConstant p)) i)} -> bool 

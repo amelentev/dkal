@@ -1,81 +1,78 @@
 module Authenticate
 open Types
 open Crypto
-open Marshall
-
-type message :: _ =  fun ('P::principal => principal => polyterm => E) => 
-    ((pfrom:principal *
-        pto:principal *
-          i:polyterm{'P pfrom pto i}))
-
-type trivial :: _ = (fun (p:principal) (q:principal) (i:polyterm) => True)
-type jmessage = message (fun (p:principal) (q:principal) (i:polyterm) => (Says p i)) 
-type msg = 
-  | Forwarded : message trivial -> msg
-  | Justified : jmessage -> msg
 
 type pk :: _ = (fun (p:principal) => pubkey polyterm (Says p) p)
 type sk :: _ = (fun (p:principal) => privkey polyterm (Says p) p)
 
+type recvSig = bool -> bytes
+type sendSig = int -> bytes -> bool  (* port number of the receiver, buf *)
+
+val config: Ref (option(p:principal{IsMe p} * pk p * sk p * recvSig * sendSig * list (q:principal * pk q * int)))
+let config = newref None
+
+val readOthersInfo: StreamReader -> int -> list (q:principal * pk q * int) -> list (q:principal * pk q * int)
+let rec readOthersInfo stream c pks = 
+   if (c = 0) then pks 
+   else let p = StreamReaderReadLine stream in
+        let k: pk p = MkPubKey p (StreamReaderReadLine stream) in 
+        let portNum = stringToInt(StreamReaderReadLine stream) in
+        let other: (q:principal * pk q * int) = (p, k, portNum) in
+        let pks': list (q:principal * pk q * int) =  other :: pks in
+        let c' = c - 1 in
+        readOthersInfo stream c' pks'
+
+(* read a configuration file: me, public key for me, private key for me, portNumber, number of principal-pubkey-portNumber tuples, list of (principal * pub keys * port number) *)
+val readConfig: string -> unit
+let readConfig fileName =
+  let stream = StreamReaderCtor fileName in
+  let me = StreamReaderReadLine stream in
+  let pubKey: pk me = MkPubKey me (StreamReaderReadLine stream) in
+  let privKey: sk me = MkPrivKey me (StreamReaderReadLine stream) in
+  let _ = assume (IsMe me) in
+  let portNumber = stringToInt(StreamReaderReadLine stream) in
+  let recv, send = createComm portNumber in
+  let othersCount = stringToInt(StreamReaderReadLine stream) in
+  config := Some(me, pubKey, privKey, recv, send, readOthersInfo stream othersCount [])
+
 val lookup_my_credentials : unit -> (p:principal{IsMe p} * pk p * sk p)
-val lookup_pubkey: p:principal -> option (pk p)
-let myKeys = lookup_my_credentials ()
+let lookup_my_credentials() =
+  match (!config) with
+    | Some c -> (match c with (p, pk, sk, _, _, _) -> (p, pk, sk))
+    | _ -> raise "No configuration"
 
-val polyterm2bytes: i:polyterm -> b:bytes{Serialized i b}
-let polyterm2bytes i =
-  let str = printInfon i in
-    FromUnicodeString str
+val myReceive : unit -> bool -> bytes
+let myReceive () =
+  match (!config) with
+    | Some c -> (match c with (_, _, _, recv, _, _) -> recv)
+    | None -> raise "myReceive: no configuration"
 
-val msg2bytes: msg -> bytes
-let msg2bytes m =
-  let (me, pkey, skey) = myKeys in
-    match m with
-      | Forwarded ((p,q,i)) -> polyterm2bytes i
+val mySend: int -> bytes -> bool
+let mySend portNum =
+  match (!config) with
+    | Some c -> (match c with (_, _, _, _, send, _) -> send portNum)
+    | None -> raise "mySend: no configuration"
 
-      | Justified((p, q, i)) when p=me ->
-          assert (Says me i);
-          let b = polyterm2bytes i in
-          let dsig = rsa_sign me skey i b in
-          let ji = JustifiedPoly (Const (PrincipalConstant p)) i (Const (Bytes dsig)) in 
-            polyterm2bytes ji
+val findKey: list (q:principal * pk q * int) -> p:principal -> pk p
+let rec findKey l p =
+  match l with
+    | [] -> raise (strcat "cannot find key for " p)
+    | (p', k, _) :: rest -> if (p = p') then k else findKey rest p
 
-val checkMono : i:term -> b:bool{b=true => CheckedInfonMono i}
-let rec checkMono i = match i with 
-  | Var x -> true
-  | Const c -> true
-  | SubstrateQueryTerm _ -> true
-  | App f tms -> 
-      if f=JustifiedInfon then 
-        match tms with 
-          | [(Const (PrincipalConstant p)); i; (Const (Bytes ds))] -> 
-              (match lookup_pubkey p with 
-                 | None -> false
-                 | Some pubk -> 
-                     let bi = polyterm2bytes (MonoTerm i) in 
-                       (rsa_verify p pubk (MonoTerm i) bi ds) && checkMono i)
-          | _ -> false
-      else for_all<term, CheckedInfonMono> checkMono tms 
-        
-val checkInfon : p:polyterm -> b:bool{b=true => CheckedInfon p}
-let rec checkInfon p = match p with
-  | MonoTerm i -> checkMono i
-  | ForallT xs i -> checkMono i
-  | JustifiedPoly (Const (PrincipalConstant p)) i (Const (Bytes ds)) -> 
-      (match lookup_pubkey p with 
-         | None -> false
-         | Some pubk -> 
-             let bi = polyterm2bytes i in 
-               (rsa_verify p pubk i bi ds) && checkInfon i)
-  | _ -> false
+val lookup_pubkey: p:principal -> pk p
+let lookup_pubkey p =
+  match (!config) with
+    | Some c -> (match c with (_, _, _, _, _, keys) -> findKey keys p)
+    | None -> raise "lookup_pubkey: no configuration"
 
-val bytes2infon: b:bytes -> option (i:infon{(Net.Received b => Net.Received i)})
-let bytes2infon b = 
-  let s = ToUnicodeString b in 
-    assert (Net.Received b => Net.Received s); 
-    match parseInfon s with 
-      | Some poly when checkInfon poly -> 
-          assert ((ReprPoly poly)=s);
-          assert (Net.Received s => Net.Received poly);
-            Some poly
-      | _ -> None
-    
+val findPortNum: list (q:principal * pk q * int) -> p:principal -> int
+let rec findPortNum l p =
+  match l with
+    | [] -> raise (strcat "cannot find port number for " p)
+    | (p', _, num) :: rest -> if (p = p') then num else findPortNum rest p
+
+val lookup_portNum: principal -> int
+let lookup_portNum p =
+  match (!config) with
+    | Some c -> (match c with (_, _, _, _, _, keys) -> findPortNum keys p)
+    | None -> raise "lookup_portNum: no configuaration"

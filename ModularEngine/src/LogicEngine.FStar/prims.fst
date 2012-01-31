@@ -227,6 +227,10 @@ extern Runtime val newref : 'a -> Ref 'a
 extern Runtime val read : Ref 'a -> 'a
 extern Runtime val write : Ref 'a -> 'a -> unit
 
+extern Runtime type StreamReader :: *
+extern Runtime val StreamReaderCtor : string -> StreamReader
+extern Runtime val StreamReaderReadLine : StreamReader -> string
+
 extern Runtime type punit :: P
 extern Runtime val freshname : bool -> string
 extern Runtime val debug_println : string -> bool
@@ -260,9 +264,8 @@ extern Runtime val strRmPfx: s:string -> pfx:string -> r:string{s=(Strcat pfx r)
 extern Runtime val strSplitByDelimiter: s:string -> d:string -> (r1:string*r2:string{(Strcat r1 r2)=s})
 extern Runtime val intCheckRange: int -> int -> int -> bool
 
-extern Runtime val createComm: int -> ((bool -> bytes) * (bytes -> bool))
+extern Runtime val createComm: int -> ((bool -> bytes) * (int -> bytes -> bool))
 extern Runtime val stopAllServers: bool -> bool
-extern Runtime val keyGen: bool -> (string * string)
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool

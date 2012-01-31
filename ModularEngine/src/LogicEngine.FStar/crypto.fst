@@ -16,7 +16,6 @@ type dsig = bytes
 (* read creds from a config file *)
 type IsMe :: principal => E
 assume forall (p:principal) (q:principal). IsMe p && IsMe q => p=q
-val me : p:principal{IsMe p}
 
 type pubkey :: 'a::* => ('a => E) => principal => * = 
    | MkPubKey: 'a::* -> 'P::('a => E) -> p:principal -> string -> pubkey 'a 'P p

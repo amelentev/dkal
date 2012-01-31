@@ -148,7 +148,6 @@ assume forall (hd:term) (tl:list term).
 logic function ReprPoly : polyterm -> string
 
 assume forall (p:polyterm). (Crypto.Serialized p (UnicodeStringToBytes (ReprPoly p)))
-assume forall (p:polyterm). (Net.Received (ReprPoly p) => Net.Received p)
 
 assume forall (xs:vars) (t:term). 
            (ReprPoly (ForallT xs t)) = (Strcat "(Forall ["
@@ -573,8 +572,7 @@ and parsePoly b =
   else let t, r_t, rest = parseMono b in
     MonoTerm t, r_t, rest
 
-val parseInfon: b:string -> option (p:polyterm{(Net.Received b => Net.Received p) &&
-                                               (ReprPoly p)=b})
+val parseInfon: b:string -> option (p:polyterm{(ReprPoly p)=b})
 let parseInfon b =
   let p, r_p, rest = parsePoly b in
   if r_p = b 
