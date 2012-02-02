@@ -30,3 +30,6 @@ prepare:
 
 run:
 	DkalMulti.exe ../../samples/MultiMain/clinical_trials.mdkal 1000 1000 -FStarLogicEngine
+
+test:
+	fsc -g -O --warn:0 -o $(FSTBIN)/test.exe -r FSharp.PowerPack.dll -r FSharp.PowerPack.Compatibility.dll -r bin/runtime.dll -r bin/Prims.dll -r bin/ProofLib.dll -r bin/interp.dll test.fs

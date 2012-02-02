@@ -225,7 +225,7 @@ type Serialized :: 'a::* => 'a => bytes => E
 extern Runtime type Ref :: * => *
 extern Runtime val newref : 'a -> Ref 'a
 extern Runtime val read : Ref 'a -> 'a
-extern Runtime val write : Ref 'a -> 'a -> unit
+extern Runtime val write : Ref 'a -> 'a -> bool
 
 extern Runtime type StreamReader :: *
 extern Runtime val StreamReaderCtor : string -> StreamReader
@@ -264,7 +264,8 @@ extern Runtime val strRmPfx: s:string -> pfx:string -> r:string{s=(Strcat pfx r)
 extern Runtime val strSplitByDelimiter: s:string -> d:string -> (r1:string*r2:string{(Strcat r1 r2)=s})
 extern Runtime val intCheckRange: int -> int -> int -> bool
 
-extern Runtime val createComm: int -> ((bool -> bytes) * (int -> bytes -> bool))
+extern Runtime val createComm: int -> bool -> bytes
+extern Runtime val getSend: int -> bytes -> bool
 extern Runtime val stopAllServers: bool -> bool
 
 extern Runtime val boxToObject: 'a -> object

@@ -31,9 +31,17 @@ let readConfig fileName =
   let privKey: sk me = MkPrivKey me (StreamReaderReadLine stream) in
   let _ = assume (IsMe me) in
   let portNumber = stringToInt(StreamReaderReadLine stream) in
-  let recv, send = createComm portNumber in
+  let recv = createComm portNumber in
+  let send = getSend in
   let othersCount = stringToInt(StreamReaderReadLine stream) in
-  config := Some(me, pubKey, privKey, recv, send, readOthersInfo stream othersCount [])
+  let _ = config := Some(me, pubKey, privKey, recv, send, readOthersInfo stream othersCount []) in
+  ()
+
+val lookup_me: unit -> (p:principal{IsMe p})
+let lookup_me () =
+ match (!config) with
+    | Some c -> (match c with (p, _, _, _, _, _) -> p)
+    | _ -> raise "No configuration"
 
 val lookup_my_credentials : unit -> (p:principal{IsMe p} * pk p * sk p)
 let lookup_my_credentials() =
