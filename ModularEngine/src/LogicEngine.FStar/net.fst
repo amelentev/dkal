@@ -11,7 +11,7 @@ assume forall (p:polyterm). (Received (ReprPoly p) => Received p)
 
 val receive: unit -> b:bytes{Received b}
 let receive () =
-  let b = myReceive () true in
+  let b = myReceive () in
   (assume (Received b); b)
   
 val send: principal -> bytes -> unit
