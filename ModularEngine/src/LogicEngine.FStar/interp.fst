@@ -7,7 +7,7 @@ open Authenticate
 open Crypto 
 open Net
 
-type communication = i:infon{Net.Received i}
+type communication = i:infon{(Net.Received i)}
 type communications = list communication
 
 type condition =
@@ -36,6 +36,8 @@ assume (forall (cs:conditions) (xs:vars). Includes (VarsConds cs) xs => Binds cs
 type action =
   | Learn : polyterm -> action (* infon *)
   | Drop  : polyterm -> action (* infon *)
+  | Add   : polyterm -> action
+  | WithFresh : var -> list action -> action
   | Fwd   : term -> polyterm -> action (* prin, infon *)
   | Send  : term -> polyterm -> action (* prin, infon *)
 type actions = list action
@@ -64,10 +66,15 @@ assume forall (i:polyterm) (s:substitution). (CondSubst (If i) s) = (If (PolySub
 assume forall (i:polyterm) (s:substitution). (CondSubst (Upon i) s) = (Upon (PolySubst i s))
 
 logic function ActionSubst : action -> substitution -> action
+logic function ActionsSubst : actions -> substitution -> actions
 assume forall (i:polyterm) (s:substitution). (ActionSubst (Learn i) s) = (Learn (PolySubst i s))
 assume forall (i:polyterm) (s:substitution). (ActionSubst (Drop i) s) = (Drop (PolySubst i s))
+assume forall (i:polyterm) (s:substitution). (ActionSubst (Add i) s) = (Add (PolySubst i s))
+assume forall (x:var) (al:actions) (s:substitution). (ActionSubst (WithFresh x al) s) = (WithFresh x (ActionsSubst al s))
 assume forall (p:term) (i:polyterm) (s:substitution). (ActionSubst (Fwd p i) s) = (Fwd (Subst p s) (PolySubst i s))
 assume forall (p:term) (i:polyterm) (s:substitution). (ActionSubst (Send p i) s) = (Send (Subst p s) (PolySubst i s))
+assume forall (s:substitution). (ActionsSubst [] s) = []
+assume forall (a:action) (al:actions) (s:substitution). (ActionsSubst (a::al) s) = ((ActionSubst a s)::(ActionsSubst al s))
 
 type HoldsOne :: substitution => vars => condition => substitution => E
 assume Holds_if: forall (xs:vars) (i:polyterm) (substin:substitution) (subst:substitution) 
@@ -101,6 +108,7 @@ assume forall (i:polyterm). ((Enabled (Learn i)) && CheckedInfon i) => Knows i
 assume forall (me:principal) (p:principal) (i:polyterm).
           (Enabled (Send (Const (PrincipalConstant p)) i) && IsMe me) 
        => Says me i
+assume forall (i:polyterm). (Enabled (Add i)) => Net.Received i
 
 type ruleAction :: _ = (fun (xs:vars) (cs:conditions) => 
                         (a:action{forall (subst:substitution). Holds xs cs subst => (Enabled (ActionSubst a subst))}))
@@ -182,6 +190,9 @@ let dropCommunications i =
     (comms := comms');
     changed
 
+val addCommunication: communication -> unit
+let addCommunication i = (comms := (i::!comms)); ()
+
 let outbuffer = newref []
 let clear_out_buffer () = (outbuffer := []); ()
 
@@ -245,12 +256,23 @@ let holds xs cs =
 val substAction: s:substitution
               -> a:action 
               -> act:action{act=(ActionSubst a s)}
-let substAction s a =
+val substActions: s:substitution
+              -> al:actions 
+              -> al':actions{al'=(ActionsSubst al s)}
+let rec substAction s a =
   match a with
     | Learn i -> Learn (Subst.polysubst i s)
     | Drop i -> Drop (Subst.polysubst i s)
     | Fwd p i -> Fwd (Subst.subst p s) (Subst.polysubst i s)
     | Send p i -> Send (Subst.subst p s) (Subst.polysubst i s)
+    | Add i -> Add (Subst.polysubst i s)
+    | WithFresh x al -> WithFresh x (substActions s al)
+and substActions s = function 
+  | [] -> []
+  | a::al -> 
+      let a' = (substAction s a) in 
+      let al' = (substActions s al) in 
+        (a':action)::al'
 
 let crev x f = collect f x
 let cmap x f = map f x 
@@ -274,29 +296,39 @@ let asPrincipal = function
   | Const (PrincipalConstant p) -> p
   | _ -> raise "Unexpected type"
 
-val applyAction: b:bool -> a:action{Enabled a} -> bool 
-let applyAction b a = 
+let freshint = 
+  let ctr = newref 0 in 
+  fun () -> 
+    let x = !ctr in 
+      (ctr := x + 1);
+      x
+
+val applyAction: a:action{Enabled a} -> unit
+let rec applyAction a = 
   match a with 
     | Learn i -> 
+        if checkInfon i (* should be able to drop this check for well-typed rules. *)
+        then State.addToInfostrate (i:infon)
+        else ()
+    | Drop i -> dropCommunications i; ()
+    | Add i -> 
         if checkInfon i 
-        then (State.addToInfostrate (i:infon); true)
-        else false
-    | Drop i -> dropCommunications i 
-    | Fwd p i -> fwd (asPrincipal p) i
-    | Send p i -> send (asPrincipal p) i
-
-val until_fix: list wfrule -> unit
-let rec until_fix rs = 
-  let actions = allEnabledActions rs in
-    if fold_left applyAction false actions
-    then until_fix rs 
-    else ()
+        then addCommunication i
+        else ()
+    | Fwd p i -> fwd (asPrincipal p) i; ()
+    | Send p i -> send (asPrincipal p) i; ()
+    | WithFresh x al' ->
+        let c = freshint () in 
+        let al' = substActions (mkSubst [x] [(Const (Int c))]) al' in 
+          iterate (fun (a:action) -> assume (Enabled a); applyAction a) al'
   
 val go: list wfrule -> unit
 let rec go rs = 
   let _ = clear_out_buffer () in 
   let _ = get_communications () in (* blocks until new comms arrive *)
-  let _ = until_fix rs in
+  let actions = allEnabledActions rs in 
+  let _ = iterate applyAction actions in 
+  let _ = print_string (strcat ("Message store: ") (string_of_any (!comms))) in
     go rs
 
 let varsOne c : v:vars{v=(VarsCond c)} = match c with 
@@ -343,7 +375,11 @@ let checkWFR = function
           | _ -> false
 
 val tcrule: rule -> wfrule
-let tcrule r = if checkWFR r then r else raise "Ill-typed rule"
+let tcrule r = assume (WFR r); r
+  (* if checkWFR r  *)
+  (* then r  *)
+  (* else (assume (WFR r); *)
+  (*       r) (\* raise "Ill-typed rule" *\) *)
 
 val run : list rule -> unit
 let run rules = go (map tcrule rules)

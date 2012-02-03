@@ -12,6 +12,9 @@ let mkRule xs cs acts =
                     (a:(a:action{TrustRule xs cs a}))) acts in
     Rule xs cs acts
 
+let rel relInf terms = (App (RelationInfon relInf)) terms
+let ri name argsTyp = { fname=name; retType=Infon; argsType=argsTyp; identity=None }
+
 let rule1 = 
   let vx = {name="x"; typ=Principal} in 
   let vars = [vx] in
@@ -20,5 +23,10 @@ let rule1 =
   let actions = [(Learn (MonoTerm (App EmptyInfon [])))] in
     mkRule vars conditions actions
 
+let rule2 = 
+  mkRule [] [] [(Add (MonoTerm (rel (ri "Test" [Int32]) [(Const (Int 17))])))]
+
+;;
+let _ = run [rule1;rule2] in  ()
 
 end
