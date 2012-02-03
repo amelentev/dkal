@@ -5,19 +5,14 @@ open State
 open Subst
 open Authenticate 
 open Crypto 
+open Net
 
 type communication = i:infon{Net.Received i}
 type communications = list communication
 
-type pat =
-  | MonoPat: term -> pat
-  | ForallPat: var -> pat
-  | JustifiedPat: term -> pat -> term -> pat
-
 type condition =
-  | If   : pat -> condition
-  | Upon : pat -> condition
-
+  | If   : polyterm -> condition
+  | Upon : polyterm -> condition
 type conditions = list condition
 type WFCond :: vars => condition => P =
   | WFCond_If: xs:vars -> i:polyterm 
@@ -78,12 +73,12 @@ type HoldsOne :: substitution => vars => condition => substitution => E
 assume Holds_if: forall (xs:vars) (i:polyterm) (substin:substitution) (subst:substitution) 
                          (s:substrate) (k:infostrate). 
          ((Includes xs (Domain subst)) && 
-          (InfonLogic.polyentails s k [] (PolySubst (PolySubst i substin) subst)))
+          (HilbertianQIL.polyentails s k [] (PolySubst (PolySubst i substin) subst)))
       => HoldsOne substin xs (If i) subst
 
 assume Holds_upon: forall (xs:vars) (pat:polyterm) (substin:substitution) (subst:substitution) (c:communication). 
          ((Includes xs (Domain subst)) &&
-          (exists (c':polyterm). InfonLogic.alphaEquiv c c' && ((PolySubst (PolySubst pat substin) subst)=c')))
+          (exists (c':polyterm). HilbertianQIL.alphaEquiv c c' && ((PolySubst (PolySubst pat substin) subst)=c')))
       => HoldsOne substin xs (Upon pat) subst
 
 type HoldsMany :: vars => list condition => substitution => E
@@ -129,7 +124,7 @@ val match_pattern: tm:polyterm
             -> upat:vars 
             -> pattern:polyterm
             -> option (s2:substitution{Includes upat (Domain s2) && 
-                                       (exists (tm':polyterm). InfonLogic.alphaEquiv tm tm' && 
+                                       (exists (tm':polyterm). HilbertianQIL.alphaEquiv tm tm' && 
                                          (tm' = (PolySubst (PolySubst pattern s1) s2)))})
 let rec match_pattern tm s1 upat pat = 
   let s1pat = polysubst pat s1 in 
@@ -137,7 +132,7 @@ let rec match_pattern tm s1 upat pat =
       | MonoTerm tm', MonoTerm s1pat' -> 
           (match Unify.doMatch tm' s1 upat s1pat' with 
              | Some s2 -> 
-                 let _ = InfonLogic.AEQ_Mono tm' in 
+                 let _ = HilbertianQIL.AEQ_Mono tm' in 
                    Some s2
              | _ -> None)
             
@@ -175,7 +170,7 @@ val get_communications: unit -> unit
 let rec get_communications _unit = 
   let message = Net.receive () in
     match Net.bytes2infon message with 
-      | Some infon -> comms := infon::(!comms)
+      | Some infon -> (comms := infon::(!comms)); ()
       | _ -> get_communications ()
           
 val dropCommunications: i:polyterm{Enabled (Drop i)} -> bool
@@ -188,7 +183,7 @@ let dropCommunications i =
     changed
 
 let outbuffer = newref []
-let clear_out_buffer () = outbuffer := []
+let clear_out_buffer () = (outbuffer := []); ()
 
 let dispatch p m = 
   if List_exists (fun (m':msg) -> m'=m) (!outbuffer)
@@ -200,12 +195,13 @@ let dispatch p m =
 
 val fwd: p:principal -> i:polyterm{Enabled (Fwd (Const (PrincipalConstant p)) i)} -> bool 
 let fwd p i = 
+  let me = lookup_me () in 
   let m = Forwarded (me, p, i) in 
     dispatch p m 
   
 val send : p:principal -> i:polyterm{Enabled (Send (Const (PrincipalConstant p)) i)} -> bool 
 let send p i = 
-  let z : principal = me in 
+  let z = lookup_me() in 
   let msg : jmessage = ( (z, p, (i: (i:polyterm{Says z i}))) : (z:principal * p:principal * i:polyterm{Says z i})) in 
   let m = Justified msg in 
     dispatch p m 
