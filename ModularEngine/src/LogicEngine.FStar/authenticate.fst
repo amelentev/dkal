@@ -5,10 +5,7 @@ open Crypto
 type pk :: _ = (fun (p:principal) => pubkey polyterm (Says p) p)
 type sk :: _ = (fun (p:principal) => privkey polyterm (Says p) p)
 
-type recvSig = bool -> bytes
-type sendSig = int -> bytes -> bool  (* port number of the receiver, buf *)
-
-val config: Ref (option(p:principal{IsMe p} * pk p * sk p * recvSig * sendSig * list (q:principal * pk q * int)))
+val config: Ref (option(p:principal{IsMe p} * pk p * sk p * TCPListener * list (q:principal * pk q * int)))
 let config = newref None
 
 val readOthersInfo: StreamReader -> int -> list (q:principal * pk q * int) -> list (q:principal * pk q * int)
@@ -18,6 +15,7 @@ let rec readOthersInfo stream c pks =
         let k: pk p = MkPubKey p (StreamReaderReadLine stream) in 
         let portNum = stringToInt(StreamReaderReadLine stream) in
         let other: (q:principal * pk q * int) = (p, k, portNum) in
+		let _ = println (strcat "got the other principal " p) in
         let pks': list (q:principal * pk q * int) =  other :: pks in
         let c' = c - 1 in
         readOthersInfo stream c' pks'
@@ -31,34 +29,31 @@ let readConfig fileName =
   let privKey: sk me = MkPrivKey me (StreamReaderReadLine stream) in
   let _ = assume (IsMe me) in
   let portNumber = stringToInt(StreamReaderReadLine stream) in
-  let recv, send = createComm portNumber in
+  let listener = createComm portNumber in
   let othersCount = stringToInt(StreamReaderReadLine stream) in
-  let _ = config := Some(me, pubKey, privKey, recv, send, readOthersInfo stream othersCount []) in
+  let _ = config := Some(me, pubKey, privKey, listener, readOthersInfo stream othersCount []) in
   ()
 
 val lookup_me: unit -> (p:principal{IsMe p})
 let lookup_me () =
  match (!config) with
-    | Some c -> (match c with (p, _, _, _, _, _) -> p)
+    | Some c -> (match c with (p, _, _, _, _) -> p)
     | _ -> raise "No configuration"
 
 val lookup_my_credentials : unit -> (p:principal{IsMe p} * pk p * sk p)
 let lookup_my_credentials() =
   match (!config) with
-    | Some c -> (match c with (p, pk, sk, _, _, _) -> (p, pk, sk))
+    | Some c -> (match c with (p, pk, sk, _, _) -> (p, pk, sk))
     | _ -> raise "No configuration"
 
-val myReceive : unit -> bool -> bytes
+val myReceive : unit -> bytes
 let myReceive () =
   match (!config) with
-    | Some c -> (match c with (_, _, _, recv, _, _) -> recv)
+    | Some c -> (match c with (_, _, _, listener, _) -> getRecv listener)
     | None -> raise "myReceive: no configuration"
 
 val mySend: int -> bytes -> bool
-let mySend portNum =
-  match (!config) with
-    | Some c -> (match c with (_, _, _, _, send, _) -> send portNum)
-    | None -> raise "mySend: no configuration"
+let mySend portNum b = getSend portNum b
 
 val findKey: list (q:principal * pk q * int) -> p:principal -> pk p
 let rec findKey l p =
@@ -69,7 +64,7 @@ let rec findKey l p =
 val lookup_pubkey: p:principal -> pk p
 let lookup_pubkey p =
   match (!config) with
-    | Some c -> (match c with (_, _, _, _, _, keys) -> findKey keys p)
+    | Some c -> (match c with (_, _, _, _, keys) -> findKey keys p)
     | None -> raise "lookup_pubkey: no configuration"
 
 val findPortNum: list (q:principal * pk q * int) -> p:principal -> int
@@ -81,5 +76,5 @@ let rec findPortNum l p =
 val lookup_portNum: principal -> int
 let lookup_portNum p =
   match (!config) with
-    | Some c -> (match c with (_, _, _, _, _, keys) -> findPortNum keys p)
+    | Some c -> (match c with (_, _, _, _, keys) -> findPortNum keys p)
     | None -> raise "lookup_portNum: no configuaration"
