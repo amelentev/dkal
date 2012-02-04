@@ -34,6 +34,14 @@ type string
 type bytes
 val op_Equality : x:'a -> y:'a -> z:bool { z=true <=> x=y}
 
+type option :: * => * =
+  | None : option 'a
+  | Some : 'a -> option 'a
+
+type list :: * => * =
+  | Nil : list 'a
+  | Cons : 'a -> list 'a -> list 'a
+
 val id : 'a::* -> 'a -> 'a
 let id x = x
 
@@ -46,19 +54,11 @@ let apply f x = f x
 val idint: int -> int
 let idint x = id x
 
-type option :: * => * =
-  | None : option 'a
-  | Some : 'a -> option 'a
-
 val bind_opt: ('a -> 'b) -> option 'a -> option 'b
 let bind_opt f x = match x with
   | None -> None
   | Some x -> Some (f x)
   
-type list :: * => * =
-  | Nil : list 'a
-  | Cons : 'a -> list 'a -> list 'a
-
 type In :: 'a::* => 'a => list 'a => P
 assume In_hd: forall (hd:'a) (tl:list 'a). (In hd (Cons hd tl))
 assume In_tl: forall (hd:'a) (x:'a) (tl:list 'a). (In x tl) => (In x (Cons hd tl))
@@ -200,13 +200,6 @@ let rec ConcatList sep l = match l with
         else Concat (Concat hd sep) tl
 
 logic function UnicodeStringToBytes: string -> bytes
-extern reference SysTextUnicodeEncoding {language="C#";
-                             dll="mscorlib";
-                             namespace="System.Text";
-                             classname="UnicodeEncoding"}
-extern SysTextUnicodeEncoding val ToUnicodeString: b:bytes -> s:string{(UnicodeStringToBytes s) = b}
-extern SysTextUnicodeEncoding val FromUnicodeString: s:string -> b:bytes{(UnicodeStringToBytes s) = b}
-                            
 extern reference SysConvert {language="C#";
                              dll="mscorlib";
                              namespace="System";
@@ -219,6 +212,9 @@ extern reference Runtime { language = "F#";
                            dll="runtime";
                            namespace="Microsoft.FStar.Runtime";
                            classname="Pickler"}
+
+extern Runtime val ToUnicodeString: b:bytes -> s:string{(UnicodeStringToBytes s) = b}
+extern Runtime val FromUnicodeString: s:string -> b:bytes{(UnicodeStringToBytes s) = b}
 
 type Serialized :: 'a::* => 'a => bytes => E
 
@@ -264,13 +260,11 @@ extern Runtime val strRmPfx: s:string -> pfx:string -> r:string{s=(Strcat pfx r)
 extern Runtime val strSplitByDelimiter: s:string -> d:string -> (r1:string*r2:string{(Strcat r1 r2)=s})
 extern Runtime val intCheckRange: int -> int -> int -> bool
 
-extern Runtime val createComm: int -> bool -> bytes
-extern Runtime val getSend: int -> bytes -> bool
+extern Runtime val createComm: int -> ((bool -> bytes) * (int -> bytes -> bool))
 extern Runtime val stopAllServers: bool -> bool
 
 extern Runtime val boxToObject: 'a -> object
 extern Runtime val addBindings: object -> string -> bool
-(* extern Runtime val lookupBindings: object -> option string *)
 extern Runtime val clearBindings: bool -> bool
 
 extern Runtime val Assume: 'P::E -> unit -> (y:bool{'P})
@@ -351,3 +345,4 @@ val _dummy_op_Addition           : int -> int -> int
 val _dummy_op_GreaterThanOrEqual : int -> int -> bool
 val _dummy_op_Negation           : x:bool -> y:bool { (y=true => x=false) && (y=false => x=true)}
 
+end

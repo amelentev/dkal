@@ -10,8 +10,11 @@ SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlo
 #NS Jan 16: Leaving out the rule interpreter for now, until we stabilize the semantics
 #prog.fst clinical_trials.fst
 
-interp: $(SOURCES)
-	$(FSTAR) --writePrims $^ 
+bin/interp.dll: crypto.dll $(SOURCES)
+	$(FSTAR) --writePrims $(SOURCES) --odir bin 
+
+bin/crypto.dll: crypto.fs
+	fsc -a -o bin/crypto.dll crypto.fs
 
 qil: util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst qil.fst testqil.fst
 	$(FSTAR) $^ 
@@ -23,7 +26,6 @@ clean:
 	rm -f $(FSTBIN)/Types.dll $(FSTBIN)/Builders.dll $(FSTBIN)/Subst.dll $(FSTBIN)/TranslationtoFStar.dll $(FSTBIN)/TranslationfromFStar.dll $(FSTBIN)/Utilities.dll $(FSTBIN)/Term.dll $(FSTBIN)/FStarLogicEngineImpl.dll $(FSTBIN)/FStarLogicEngine.dll
 
 prepare:
-	rm -rf $(FSTBIN)
 	mkdir -p $(FSTBIN)
 	cp -r $(MY_FSTAR_HOME)/bin/*.dll $(FSTBIN)/
 	$(FSTAR) --writePrims

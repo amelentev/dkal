@@ -31,8 +31,7 @@ let readConfig fileName =
   let privKey: sk me = MkPrivKey me (StreamReaderReadLine stream) in
   let _ = assume (IsMe me) in
   let portNumber = stringToInt(StreamReaderReadLine stream) in
-  let recv = createComm portNumber in
-  let send = getSend in
+  let recv, send = createComm portNumber in
   let othersCount = stringToInt(StreamReaderReadLine stream) in
   let _ = config := Some(me, pubKey, privKey, recv, send, readOthersInfo stream othersCount []) in
   ()
