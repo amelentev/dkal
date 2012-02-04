@@ -10,7 +10,7 @@ SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlo
 #NS Jan 16: Leaving out the rule interpreter for now, until we stabilize the semantics
 #prog.fst clinical_trials.fst
 
-bin/interp.dll: crypto.dll $(SOURCES)
+bin/interp.dll: bin/crypto.dll $(SOURCES)
 	$(FSTAR) --writePrims $(SOURCES) --odir bin 
 
 bin/crypto.dll: crypto.fs
