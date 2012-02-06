@@ -83,5 +83,21 @@ let bytes2infon b =
           assert (Received s => Received poly);
             Some poly
       | _ -> None
-    
 
+val sendForTest: string -> string -> bytes -> unit
+let sendForTest me p bytes =
+  let message = Forwarded(me, p, MonoTerm(Const (Bytes bytes))) in
+  send p (msg2bytes message) 
+
+
+val recvForTest: bytes -> bytes
+let recvForTest bytes =
+  let bytesForEmpty = FromUnicodeString "" in
+  match (bytes2infon bytes) with
+    | None -> bytesForEmpty
+	| Some i ->
+	  (match i with
+	    | MonoTerm t ->
+		  (match t with | Const c -> (match c with | Bytes b -> b | _ -> bytesForEmpty)
+		                | _ -> bytesForEmpty)
+		| _ -> bytesForEmpty)

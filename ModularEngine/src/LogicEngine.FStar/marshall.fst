@@ -302,7 +302,7 @@ and printQuery q =
   (strcat ","
   (strcat (printMono (q.hi))
   ")")))))
-
+   
 val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
 let rec printInfon p = 
  match p with
@@ -575,6 +575,12 @@ and parsePoly b =
 val parseInfon: b:string -> option (p:polyterm{(ReprPoly p)=b})
 let parseInfon b =
   let p, r_p, rest = parsePoly b in
-  if r_p = b 
+  if (b = r_p)
   then Some p
-  else raise (strcat "unexpected remaining string: " rest)
+  else raise (strcat "unexpected remaining string: b = " 
+			  (strcat b 
+			  (strcat ", p = "
+			  (strcat r_p
+			  (strcat", rest = "
+			  (strcat rest
+			  "!"))))))
