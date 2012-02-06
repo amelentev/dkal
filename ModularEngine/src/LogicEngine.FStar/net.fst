@@ -86,7 +86,9 @@ let bytes2infon b =
 
 val sendForTest: string -> string -> bytes -> unit
 let sendForTest me p bytes =
-  let message = Forwarded(me, p, MonoTerm(Const (Bytes bytes))) in
+  let i = MonoTerm(Const (Bytes bytes)) in
+  let _ = assume (Says me i) in
+  let message = Justified(me, p, i) (*Forwarded(me, p, i)*) in
   send p (msg2bytes message) 
 
 
@@ -97,7 +99,10 @@ let recvForTest bytes =
     | None -> bytesForEmpty
 	| Some i ->
 	  (match i with
-	    | MonoTerm t ->
-		  (match t with | Const c -> (match c with | Bytes b -> b | _ -> bytesForEmpty)
-		                | _ -> bytesForEmpty)
+	    | JustifiedPoly p inf dsig ->
+		  (match inf with
+		     | MonoTerm t ->
+		       (match t with | Const c -> (match c with | Bytes b -> b | _ -> bytesForEmpty)
+		                     | _ -> bytesForEmpty)
+			 | _ -> bytesForEmpty)
 		| _ -> bytesForEmpty)

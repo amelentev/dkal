@@ -2,7 +2,7 @@ module Crypto
 open Types
 
 extern reference Crypto { language = "F#";
-                          dll="crypto";
+                          dll="FSCrypto";
                           namespace="Microsoft.FStar";
                           classname="Crypto"}
 

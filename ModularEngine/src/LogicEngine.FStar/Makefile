@@ -10,11 +10,11 @@ SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlo
 #NS Jan 16: Leaving out the rule interpreter for now, until we stabilize the semantics
 #prog.fst clinical_trials.fst
 
-bin/interp.dll: bin/crypto.dll $(SOURCES)
+bin/interp.dll: bin/FSCrypto.dll $(SOURCES)
 	$(FSTAR) --writePrims $(SOURCES) --odir bin 
 
-bin/crypto.dll: crypto.fs
-	fsc -a -o bin/crypto.dll crypto.fs
+bin/FSCrypto.dll: crypto.fs
+	fsc -a -o bin/FSCrypto.dll crypto.fs
 
 qil: util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst qil.fst testqil.fst
 	$(FSTAR) $^ 
@@ -34,4 +34,4 @@ run:
 	DkalMulti.exe ../../samples/MultiMain/clinical_trials.mdkal 1000 1000 -FStarLogicEngine
 
 test:
-	fsc -g -O --warn:0 -o $(FSTBIN)/test.exe -r FSharp.PowerPack.dll -r FSharp.PowerPack.Compatibility.dll -r bin/runtime.dll -r bin/Prims.dll -r bin/ProofLib.dll -r bin/Crypto.dll -r bin/Authenticate.dll -r bin/Net.dll -r bin/interp.dll test.fs
+	fsc -g -O --warn:0 -o $(FSTBIN)/test.exe -r FSharp.PowerPack.dll -r FSharp.PowerPack.Compatibility.dll -r bin/runtime.dll -r bin/Prims.dll -r bin/ProofLib.dll -r bin/Crypto.dll -r bin/Authenticate.dll -r bin/Net.dll -r bin/crypto.dll -r bin/interp.dll test.fs
