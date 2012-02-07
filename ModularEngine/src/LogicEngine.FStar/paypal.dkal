@@ -1,0 +1,33 @@
+(* Customer C's policy *)
+upon Click(i, n) as m then 
+send _W_ Buy(i, n)
+add Init(_W_, i, n) 
+
+upon Init(w, i, n) as m2
+upon (w said Pay(_C_, oid, i, n)) as m1 
+then send _P_ (Auth(w, oid, n))
+fwd _P_ m1
+
+(* PAYPAL's (P) policy *)
+upon c said Auth(w, oid, n) as m1
+upon w said Pay(c, oid, i, n) as m2
+if   CustomerDB(c, n) then 
+send w Paid(c, oid, n)
+
+(* Website's (W) policy *)
+learn forall p, oid, n. 
+=>(_P_ said Paid(p, oid, n),
+   Paid(p, oid, n))
+
+upon c said Buy(i, n) as m
+if   PriceDB(i,n) then 
+with fresh oid 
+   (send c Pay(c, oid, i, n)
+    add (_W_ said Pay(c, oid, i, n)))
+
+upon _P_ said x as i then
+learn i 
+
+upon _W_ said Pay(c,oid,i,n) as m
+if   Paid(c, oid, n) then 
+send c Confirm(oid, i, n)

@@ -384,3 +384,12 @@ let tcrule r = assume (WFR r); r
 val run : list rule -> unit
 let run rules = go (map tcrule rules)
 
+type TrustRule :: _ = 
+    (fun (xs:vars) (cs:conditions) (a:action) => 
+        (forall (subst:substitution). Holds xs cs subst => (Enabled (ActionSubst a subst))))
+
+val mkRule : vars -> conditions -> list action -> rule
+let mkRule xs cs acts = 
+  let acts = map (fun a -> assume (TrustRule xs cs a);
+                    (a:(a:action{TrustRule xs cs a}))) acts in
+    Rule xs cs acts

@@ -5,10 +5,7 @@ FSTBIN2=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin2
 DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
 FSTAR=fstar --writePrims --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000
 #typeHeaders.fst translationFromFStar.fst 
-SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst crypto.fst authenticate.fst marshall.fst net.fst state.fst interp.fst prog.fst
-
-#NS Jan 16: Leaving out the rule interpreter for now, until we stabilize the semantics
-#prog.fst clinical_trials.fst
+SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst crypto.fst authenticate.fst marshall.fst net.fst state.fst interp.fst paypal.fst
 
 bin/interp.dll: bin/FSCrypto.dll $(SOURCES)
 	$(FSTAR) --writePrims $(SOURCES) --odir bin 
@@ -18,6 +15,12 @@ bin/FSCrypto.dll: crypto.fs
 
 qil: util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst qil.fst testqil.fst
 	$(FSTAR) $^ 
+
+bin/parseDkal.exe:  parseDkal.fs
+	fsc  --warn:0 -g -O --mlcompatibility  -o $@ -r FSharp.PowerPack.dll -r FSharp.PowerPack.Compatibility.dll -r bin/FParsecCS.dll -r bin/FParsec.dll parseDkal.fs
+
+%.fst: parseDkal.exe %.dkal
+	parseDkal.exe $*.dkal > $@
 
 wc: $(SOURCES)
 	wc -l prims.fst $^
