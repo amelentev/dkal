@@ -38,6 +38,7 @@ module Types
     | BytesT          : typ
     | Double          : typ
     | String          : typ
+    | Unknown         : typ
 
   type var = (* IVar *)
       { name : string; typ : typ }
@@ -47,6 +48,7 @@ module Types
     | TrueT             : constant
     | FalseT            : constant
     | Int               : int -> constant
+    | Str               : string -> constant
     | Bytes             : bytes -> constant
     | SubstrateConstant : constant -> constant
     | PrincipalConstant : principal -> constant
