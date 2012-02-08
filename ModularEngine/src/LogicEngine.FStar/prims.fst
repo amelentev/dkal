@@ -69,6 +69,12 @@ type Includes :: 'a::* => list 'a => list 'a => E
 assume Includes_nil: forall (l:list 'a). Includes l []
 assume Includes_cons: forall (l:list 'a) (l':list 'a) (x:'a). In x l && Includes l l' => Includes l (x::l') 
 
+val remove: 'a -> list 'a -> list 'a 
+let rec remove x = function
+  | [] -> []
+  | hd::tl when hd=x -> remove x tl
+  | hd::tl -> hd::(remove x tl)
+
 val contains : a:'a -> l:list 'a -> b:bool{((b=true) <=> (In 'a a l))}
 let rec contains a l = match l with 
   | [] -> false
@@ -178,11 +184,11 @@ let rec concatMap f = function
   | a::tl -> append (f a) (concatMap f tl)
 
 val mapSome : (x:'a -> option 'b) -> list 'a -> list 'b
-(* let rec mapSome f l = match l with  *)
-(*   | [] -> [] *)
-(*   | hd::tl -> match f hd with  *)
-(*       | None -> mapSome f tl *)
-(*       | Some x -> x::(mapSome f tl) *)
+let rec mapSome f l = match l with
+  | [] -> []
+  | hd::tl -> match f hd with
+      | None -> mapSome f tl
+      | Some x -> x::(mapSome f tl)
 
 extern reference String {language="C#";
                          dll="mscorlib";

@@ -1,0 +1,20 @@
+upon Init(x) as m 
+then send _PONGER_ (_PINGER_ said Ping(x))
+     drop Init(x)
+
+upon justified _PONGER_ said Pong(x) as n 
+then send _PONGER_ (_PINGER_ said Ping(x))
+
+
+where _PINGER_ =
+    {privkey=<RSAKeyValue><Modulus>5oriCVszTYWL3NEXAriyAuie+49LfKwZgNBs1EOgf+QU0ioleDIEufy4fVJ9+82uacRNb50rTMWwhlW7iWDBNC+y4sWbNNLmplg8tBWOq3nd+KMAPecTcvo6t6OCfX5TgGNQ4mbzldiCOTTWZ5cBzyLSSVS3XS4C0bd7TokOzHc=</Modulus><Exponent>AQAB</Exponent><P>/rEL5XxETzzYLznPHnFOOHCH+q/61GyB5XY/rWO5kEQygx+wOJNpwZ4F453/v8dTg5epedz4DDlAeJ23LUNjiQ==</P><Q>57oTxICOcOQ6Y0Poaw6vyBwcCHViQMZBBuJH34rUeAmkaG/EG44M51dZ1Y7ictYVI8uoU7d+/59KiGeRhcSv/w==</Q><DP>idQyBeyr4t2geF4mcekLVYvAaq+VZCOcYBsP9rtDDol5dHBPoy5TSw5DTZyRbK1nyozmkCY+rg7FjwB6wqn3UQ==</DP><DQ>ISX2M/Lr7WxIifCp676jGK4kuHUKRBfYL4LpIyo58J34fdQXKpXsdJ+DQ1B4RlMnnQJCJw+lxC1mPRMLtyYGww==</DQ><InverseQ>JChw7RjvCI7B9w1XBEvEoO+87RX4n/uuAnHFa2deRLLht7HN9XAibConnUcSWuHl1CJnCmhsqniR7ds90oigeQ==</InverseQ><D>kC90Rx2+7FEFtEkg9xbEXoVWSUbJk2OfX6z7I5ZYHyRq0TaC0LWXtyqTx+171axB1Oxs8c1+czmAucOM0tKsgeLK+v+fAv9yioU2eYSu+VfSwfZoUgtxVyqXuDOmujE6QU8grtMej1qR4MMytrafBGlWcYEXFo9vmWIsVmIROkE=</D></RSAKeyValue>;
+     pubkey=<RSAKeyValue><Modulus>5oriCVszTYWL3NEXAriyAuie+49LfKwZgNBs1EOgf+QU0ioleDIEufy4fVJ9+82uacRNb50rTMWwhlW7iWDBNC+y4sWbNNLmplg8tBWOq3nd+KMAPecTcvo6t6OCfX5TgGNQ4mbzldiCOTTWZ5cBzyLSSVS3XS4C0bd7TokOzHc=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>;
+     port=6303}
+
+and  _PONGER_ =
+    {pubkey=<RSAKeyValue><Modulus>w82NXJIdeCJnm9vNadVHErCaRkoCfU8pap6LDw6N27yHRTTcQcTYZD27D20Nsji21cljjhhpefocP3sa6zeI+VjgtWBB16axdh3eROyyC/1vpS8Q2TIraBrp6Ew8ld51/p35tu5HZhuzN2gltgSTrzsMOvNGfz4HIVUt+DjuDDk=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>;
+     port=6302}
+
+and   Ping of int
+and   Pong of int
+and   Init of int

@@ -38,7 +38,6 @@ module Types
     | BytesT          : typ
     | Double          : typ
     | String          : typ
-    | Unknown         : typ
 
   type var = (* IVar *)
       { name : string; typ : typ }
@@ -123,6 +122,7 @@ module Types
     then (assume (SubstrateSays s q); true)
     else false
 
+  (* This definition of checkedinfon is broken *)
   type Says :: principal => polyterm => E
   type CheckedInfon :: polyterm => E
   type CheckedInfonMono :: term => E

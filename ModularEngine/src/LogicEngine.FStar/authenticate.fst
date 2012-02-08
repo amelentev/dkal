@@ -8,6 +8,33 @@ type sk :: _ = (fun (p:principal) => privkey polyterm (Says p) p)
 val config: Ref (option(p:principal{IsMe p} * pk p * sk p * TCPListener * list (q:principal * pk q * int)))
 let config = newref None
 
+type config = {prin:string; pubkey:string; privkey:option string; port:int}
+
+val initOthers : list config -> list (q:principal * pk q * int)
+let rec initOthers = function 
+  | [] -> []
+  | cfg::rest -> 
+      let p = cfg.prin in
+      let tl = initOthers rest in 
+      let k: pk p = MkPubKey p (cfg.pubkey) in
+      let other: (q:principal * pk q * int) = (p, k, cfg.port) in
+        other::tl
+
+val initialize : list config -> unit
+let initialize = function
+  | mycfg::others -> 
+      let priv = match mycfg.privkey with 
+        | None -> raise "Incorrect config: no privkey for local prin"
+        | Some priv -> priv in 
+      let me = mycfg.prin in 
+      let pubKey: pk me = MkPubKey me (mycfg.pubkey) in
+      let privKey: sk me = MkPrivKey me priv in
+      let _ = assume (IsMe me) in
+      let listener = createComm (mycfg.port) in 
+      let _ = config := Some(me, pubKey, privKey, listener, initOthers others) in 
+        ()
+  | _ -> raise "Incorrect config: no me"
+
 val readOthersInfo: StreamReader -> int -> list (q:principal * pk q * int) -> list (q:principal * pk q * int)
 let rec readOthersInfo stream c pks = 
    if (c = 0) then pks 

@@ -105,6 +105,7 @@ let str s = skipString s >>. ws
 
 let keywords = ["upon";
                 "as";
+                "of";
                 "then";
                 "if";
                 "said";
@@ -114,7 +115,11 @@ let keywords = ["upon";
                 "learn";
                 "with";
                 "fresh";
-                "Ev"]
+                "Ev";
+                "where";
+                "pubkey";
+                "privkey";
+                "port"]
 
 let keywordSet = System.Collections.Generic.HashSet<_> keywords
 
@@ -161,6 +166,7 @@ let THEN      st = tok "then"  st
 let TRUE      st = tok "true"  st 
 let WITH      st = tok "with"  st 
 let UPON      st = tok "upon"  st 
+let JUSTIFIED st = tok "justified"  st 
 let SAID      st = tok "said"  st 
 let SEND      st = tok "send"  st 
 let FWD       st = tok "fwd"  st 
@@ -168,13 +174,26 @@ let ADD       st = tok "add"  st
 let DROP      st = tok "drop"  st 
 let LEARN     st = tok "learn"  st 
 let FRESH     st = tok "fresh"  st 
-let EVIDENCE  st = tok "Ev"  st 
+let EVIDENCE st = tok "Ev"  st 
+let WHERE     st = tok "where"  st 
+let OF        st = tok "of"  st 
+let PUBKEY    st = tok "pubkey"  st 
+let PRIVKEY   st = tok "privkey"  st 
+let PORT      st = tok "port"  st 
+let INT       st = tok "int"  st 
+let BOOL      st = tok "bool"  st 
+let STRING_T  st = tok "string"  st 
+let PRINCIPAL st = tok "prin"  st 
+let INFON     st = tok "infon"  st 
+let EVIDENCE_T st = tok "ev"  st 
 
 let DOUBLE_QUOTE st = skipString "\"" st 
 let QUOTE     st = skipString "'"  st 
 
 type stok<'a> = Parser<string,'a>
 let stok s : stok<'a> = pstring s .>> ws
+let LBRACE    st = stok "{"  st 
+let RBRACE    st = stok "}"  st 
 let LPAREN    st = stok "("  st 
 let RPAREN    st = stok ")"  st 
 let COMMA     st = stok ","  st 
@@ -182,6 +201,8 @@ let RARROW    st = stok "->"  st
 let RRARROW   st = stok "=>"  st 
 let RQUOTE    st = stok "'"  st
 let DOT       st = stok "."  st
+let EQUALS    st = stok "="  st 
+let SEMICOLON st = stok ";"  st 
 
 let STRING : Parser<string, 'a> = fun s ->
     let isStringChar x = not (x = '\n' || x= '\r' || x='"' || x='\\') in
@@ -271,7 +292,8 @@ let rec tokenize : Parser<list<token>, 'a> = fun s ->
 
 type qinfon =
   | MonoTerm of infon
-  | PolyTerm of string list * infon
+  | PolyTerm of (string * typ) list * infon
+  | JustifiedPoly of (term * qinfon * term)
 
 and infon = 
   | True 
@@ -283,14 +305,25 @@ and infon =
   | Evidence of term * infon
 
 and term = 
-  | TermVar of string 
+  | TermVar of (string * typ)
   | Integer of int
   | Str of string
   | Principal of string
 
+and typ = 
+  | Int
+  | Bool
+  | String
+  | Infon
+  | Prin
+  | Ev
+  | Uvar of (typ option) ref
+
+let unknown_typ () = Uvar (ref None)
+
 let term = fun s -> s |>
     begin
-      (varIdent |>> (fun i -> TermVar i))
+      (varIdent |>> (fun i -> TermVar(i, unknown_typ ())))
  <|>  (STRING   |>> (fun s -> Str s))
  <|>  (pint32   |>> (fun i -> Integer i))
  <|>  (principalIdent |>> (fun i -> Principal i))
@@ -356,15 +389,16 @@ let qinfon = fun s -> s |>
       (FORALL >>. 
       (sequence COMMA varIdent) >>= (fun vars -> 
        DOT >>.
-       infon |>> (fun i -> PolyTerm(vars, i))))
+       infon |>> (fun i -> PolyTerm(List.map (fun x -> (x, unknown_typ())) vars, i))))
 <|>   
       (infon |>> MonoTerm)
     end
 
 (* -------------------------------------------------------------------------------- *)
 type condition =
-  | If   of qinfon
-  | Upon of (qinfon * string)
+  | If    of qinfon
+  | Upon  of (qinfon * string)
+  | UponJ of (qinfon * string)
 type conditions = condition list
 
 type action =
@@ -377,16 +411,22 @@ type action =
 type actions = action list
 
 type rule =
-  | Rule of conditions * actions
+  | Rule of (string * typ) list * conditions * actions
+
+type idconf = {prin:string; pubkey:string; privkey:string option; port:int}
+type config = 
+  | IdCfg of idconf
+  | RelCfg of string * typ list
 
 let firstCondition = fun s -> s |> (IF <|> UPON)
 
 let uponCondition = fun s -> s |>
     begin
       UPON >>.
+      (opt JUSTIFIED) >>= (fun jopt -> 
       qinfon >>= (fun i -> 
       AS >>.
-      varIdent |>> (fun x -> Upon(i, x)))
+      varIdent |>> (fun x -> match jopt with None -> Upon(i, x) | Some _ -> UponJ(i,x))))
     end
 
 let ifCondition = fun s -> s |>
@@ -454,17 +494,74 @@ and actions = fun s -> s |>
 
 let oneRule = fun s -> s |>
     begin
-      conditions >>= (fun conds -> 
-      THEN  >>. 
-      actions |>> (fun actions ->  Rule(conds, actions)))
+      (opt (conditions >>= (fun conds -> 
+            THEN  >>. preturn conds))) >>= (fun condsOpt -> 
+      actions |>> (fun actions ->  match condsOpt with None -> Rule([], [], actions) | Some conds -> Rule([], conds, actions)))
     end
 
-let rules = fun s -> s |> 
+let rules = fun s -> s |> sequence (wsUntil firstCondition) oneRule
+
+let key = fun s -> s |> 
     begin
-      (sequence (wsUntil firstCondition) oneRule) >>= (fun rules -> 
-       EOF >>. preturn rules)                                                       
+      (manyTill anyChar SEMICOLON) >>= (fun pk ->
+                                       preturn (new System.String(pk |> Array.of_list)))
+      (* RBRACE >>. preturn (new System.String(pk |> Array.of_list))) *)
+end
+
+let identityConfig = fun s -> s |>
+    begin
+      principalIdent >>= (fun p -> 
+      EQUALS >>. 
+      LBRACE >>.
+      opt (PRIVKEY >>. EQUALS >>. key ) >>= (fun pkopt -> 
+      (PUBKEY >>. EQUALS >>. key) >>= (fun pubkey -> 
+      PORT >>. EQUALS >>. pint32 >>= (fun port -> 
+      RBRACE >>.  preturn (IdCfg {prin=p; privkey=pkopt; pubkey=pubkey; port=port}))))) 
+    end 
+
+let onetype = fun s -> s |>
+    begin
+      (INT >>. preturn Int) 
+<|>   (BOOL >>. preturn Bool)
+<|>   (STRING_T >>. preturn String)
+<|>   (INFON >>. preturn Infon)
+<|>   (PRINCIPAL >>. preturn Prin)
+<|>   (EVIDENCE_T >>. preturn Ev)
     end
 
+let types = fun s -> s |>
+    begin 
+      (onetype |>> (fun t -> [t]))
+<|>   
+      (LPAREN >>.
+      (sequence COMMA onetype) .>>
+       RPAREN)
+    end
+
+let relationConfig = fun s -> s |>
+    begin
+      relationIdent >>= (fun r -> 
+      OF >>.
+      types |>> (fun tl -> RelCfg(r, tl)))
+    end
+
+let config = identityConfig <|> relationConfig
+
+let rec configs = fun s -> s |> 
+    begin 
+      config >>= (fun c -> 
+      opt (AND >>. configs) >>= (function None -> preturn [c] | Some cs -> preturn (c::cs)))
+    end 
+
+let rulesAndConfig = fun s -> s |> 
+    begin
+      rules >>= (fun rules -> 
+      WHERE >>.
+      configs >>= (fun cfg ->
+      EOF >>. preturn (rules, cfg)))
+    end
+
+(* Printer *)
 let pr = Printf.printf 
 let spr = Printf.sprintf 
 
@@ -480,75 +577,249 @@ let printManyIndex delim s l =
     | hd::(_::_ as tl) -> spr "%s %s %s" (s ix hd) delim (aux (ix+1) tl) in 
     aux 0 l
 
-let printVar t x = match t with
-  | None -> spr "({name=\"%s\"; typ=Unknown})" x
-  | Some s -> spr "({name=\"%s\"; typ=%s})" x s
+exception Failure of string
 
-let rec printQinfon = function 
-  | MonoTerm i -> spr "(MonoTerm %s)" (printInfon i)
-  | PolyTerm(xs, i) -> spr "(ForallT [%s] %s)" (printMany "; " (printVar None) xs) (printInfon i)
+let rec printTyp = function 
+  | Int -> "Int32"
+  | Bool -> "Boolean"
+  | Infon -> "Infon"
+  | String -> "String"
+  | Ev -> "Evidence"
+  | Prin -> "Principal"
+  | Uvar r -> (match !r with 
+                 | None -> raise (Failure "Unknown type")
+                 | Some t -> printTyp t)
+and printTyps tl = spr "[ %s ]" (printMany "; " printTyp tl)
+  
+let printVar (x,t) = spr "({name=\"%s\"; typ=%s})" x (printTyp t)
 
-and printInfon = function
+let rec printQinfon relations = function 
+  | MonoTerm i -> spr "(MonoTerm %s)" (printInfon relations i)
+  | PolyTerm(xs, i) -> spr "(ForallT [%s] %s)" (printMany "; " printVar xs) (printInfon relations i)
+  | JustifiedPoly(p, i, dsig) -> spr "(JustifiedPoly %s %s %s)" 
+      (printTerm p) (printQinfon relations i) (printTerm dsig)
+
+and printInfon relations = function
   | True -> spr "(App EmptyInfon [])" 
-  | Var x -> spr "(Var %s)" (printVar (Some "Infon") x)
+  | Var x -> spr "(Var %s)" (printVar (x, Infon))
   | Relation(r, tl) -> 
-      let rel = spr "(RelationInfon ({fname=\"%s\"; retType=Infon; argsType=[]; identity=None}))" r in 
-        spr "(App %s\n %s)" rel (printTerms tl)
-  | Said(p, i) -> spr "(App SaidInfon\n [%s;\n %s])" (printTerm p) (printInfon i)
-  | Implies(i, j) -> spr "(App ImpliesInfon\n [%s;\n %s])" (printInfon i) (printInfon j)
-  | And(i, j) -> spr "(App AndInfon\n [%s; %s])" (printInfon i) (printInfon j)
+      spr "(App %s\n %s)" (printRelation relations r) (printTerms tl)
+  | Said(p, i) -> spr "(App SaidInfon\n [%s;\n %s])" (printTerm p) (printInfon relations i)
+  | Implies(i, j) -> spr "(App ImpliesInfon\n [%s;\n %s])" (printInfon relations i) (printInfon relations j)
+  | And(i, j) -> spr "(App AndInfon\n [%s; %s])" (printInfon relations i) (printInfon relations j)
   | Evidence(t,i) -> "(Evidence XXX XXX)"
 
+and printRelation relations r = 
+  match List.find (function RelCfg(r',_) -> r=r' | _ -> false) relations with 
+    | RelCfg(r, tl) -> 
+        spr "(RelationInfon ({fname=\"%s\"; retType=Infon; argsType=%s; identity=None}))" r (printTyps tl) 
+          
 and printTerm = function 
-  | TermVar s -> spr "(Var %s)" (printVar None s)
+  | TermVar x -> spr "(Var %s)" (printVar x)
   | Integer i -> spr "(Const (Int %d))" i
   | Str s -> spr "(Const (Str \"%s\"))" s
   | Principal p -> spr "(Const (PrincipalConstant \"%s\"))" p
 
 and printTerms s = spr "[ %s ]" (printMany ";\n" printTerm s)
  
-let rec printRule i (Rule (cl, al)) = 
+let rec printRule relations i (Rule (ctx, cl, al)) = 
   spr "let rule_%d = \n\t \
          let conditions = %s in \n\t \
          let actions = %s in \n\t \
-           mkRule [] conditions actions\n" 
-    i (printConditions cl) (printActions al)
+           mkRule [%s] conditions actions\n" 
+    i 
+    (printConditions relations cl) 
+    (printActions relations al)
+    (printMany "; " printVar ctx)
+    
 
-and printCondition = function 
-  | If   qi      -> spr "(If (%s) )" (printQinfon qi) 
-  | Upon (qi, s) -> spr "(Upon (%s) (* %s *))" (printQinfon qi) (printVar None s)
+and printCondition relations = function 
+  | If   qi      -> spr "(If (%s) )" (printQinfon relations qi) 
+  | UponJ (qi, s) 
+  | Upon (qi, s) -> spr "(Upon (%s) (* %s *))" (printQinfon relations qi) (printVar (s, Infon))
 
-and printConditions conds = spr "[ %s ]" (printMany ";\n" printCondition conds)
 
-and printAction = function
-  | Learn qi -> spr "(Learn %s)" (printQinfon qi)
-  | Drop  qi -> spr "(Drop %s)" (printQinfon qi)
-  | Add   qi -> spr "(Add %s)" (printQinfon qi)
-  | WithFresh (x, al) -> spr "(WithFresh %s %s)" (printVar (Some "Int32") x) (printActions al)
-  | Fwd  (p, qi) -> spr "(Fwd %s %s)" (printTerm p) (printQinfon qi)
-  | Send  (p, qi) -> spr "(Send %s %s)" (printTerm p) (printQinfon qi)
+and printConditions relations conds = spr "[ %s ]" (printMany ";\n" (printCondition relations) conds)
 
-and printActions actions = spr "[ %s ]" (printMany ";\n" printAction actions)
+and printAction relations = function
+  | Learn qi -> spr "(Learn %s)" (printQinfon relations qi)
+  | Drop  qi -> spr "(Drop %s)" (printQinfon relations qi)
+  | Add   qi -> spr "(Add %s)" (printQinfon relations qi)
+  | WithFresh (x, al) -> spr "(WithFresh %s %s)" (printVar (x, Int)) (printActions relations al)
+  | Fwd  (p, qi) -> spr "(Fwd %s %s)" (printTerm p) (printQinfon relations qi)
+  | Send  (p, qi) -> spr "(Send %s %s)" (printTerm p) (printQinfon relations qi)
 
-let printRules (fn:string) rules = 
+and printActions relations actions = spr "[ %s ]" (printMany ";\n" (printAction relations) actions)
+
+let printConfig = function 
+  | RelCfg _ -> ""
+  | IdCfg cfg ->
+      spr "({prin=\"%s\"; pubkey=\"%s\"; privkey=%s; port=%d})" 
+        cfg.prin 
+        cfg.pubkey 
+        (match cfg.privkey with 
+           | None -> "None"
+           | Some s -> spr "(Some \"%s\")" s)
+        cfg.port
+        
+let printConfigs cl = spr "[ %s ]" (printMany ";\n" printConfig cl)
+
+let printRulesAndConfig relations (fn:string) (rules, configs) = 
   let mname = fn.Split('.').(0) in 
-  pr "module %s\n" (mname.ToUpper());
+  let mname = mname.ToUpper() in
+  pr "module %s\n" mname;
   pr "open Types\n";
-  pr "open Interp\n\n";
-  pr "%s\n" (printManyIndex "\n\n" printRule rules);
-  pr ";;\n let _ = run [%s] in ()" (printManyIndex "; " (fun ix _ -> spr "rule_%d" ix) rules)
+  pr "open Interp\n";
+  pr "open Authenticate\n\n";
+  pr "%s\n" (printManyIndex "\n\n" (printRule relations) rules);
+  pr ";;\n let _ = initialize (%s) in \n let _ = run [%s] in ()" 
+    (printConfigs configs)
+    (printManyIndex "; " (fun ix _ -> spr "rule_%d" ix) rules)
 
-exception Failure 
+let newvar = 
+  let x = ref 0 in 
+    fun () -> 
+      let i = !x in 
+        incr x;
+        spr "x_%d" i
+
+let annotate relations rules = 
+  let findRelation r = 
+    try 
+      match List.find (function RelCfg(r',_) -> r=r' | _ -> false) relations with 
+        | RelCfg(r, tl) -> Some tl
+    with _ -> None 
+  in
+    
+  let extendCtx ctx (x,t) = 
+    if List.exists (fun (x',_) -> x=x') ctx 
+    then failwith "Variable shadowing not allowed"
+    else (x,t)::ctx in
+    
+  let lookup ctx x = 
+    try 
+      Some (snd (List.find (fun (x',_) -> x=x') ctx))
+    with _ -> None in
+    
+  let rec annotRule ctx = function
+    | Rule (_, c, a) -> 
+        let c, ctx = annotConditions ctx c in
+        let a = List.map (annotAction ctx) a in 
+          Rule(ctx, c, a)
+
+  and annotConditions ctx cl =
+    let ctx, out = List.fold_left (fun (ctx, out) c -> 
+                                     let c', ctx = annotCondition ctx c in 
+                                       (ctx, c'::out)) (ctx, []) cl in
+      List.rev out, ctx
+
+  and annotCondition ctx = function 
+    | If qi -> 
+        let qi, ctx = annotQinfon ctx qi in 
+          (If qi), ctx
+            
+    | Upon (qi, m) -> 
+        let qi, ctx = annotQinfon ctx qi in 
+        (* let ctx' = extendCtx ctx (m, Infon) in  *)
+        let ctx' = ctx in 
+          Upon(qi, m), ctx
+            
+    | UponJ (qi, m) -> 
+        let qi, ctx = annotQinfon ctx qi in 
+          (* let ctx' = extendCtx ctx (m, Infon) in  *)
+        let ctx' = ctx in 
+        let ev_var = newvar(), Ev in 
+        let p_var = newvar(), Prin in 
+        let qi' = JustifiedPoly(TermVar p_var, qi, TermVar ev_var) in 
+          Upon(qi', m), (extendCtx (extendCtx ctx' ev_var) p_var)
+
+  and annotAction ctx = function 
+    | Learn qi -> Learn (typeQinfon ctx qi)
+    | Drop qi -> Drop (typeQinfon ctx qi)
+    | Add qi -> Add (typeQinfon ctx qi)
+    | WithFresh (x, al) -> WithFresh(x, List.map (annotAction ctx) al)
+    | Fwd(p, qi) -> Fwd((typeTerm ctx p Prin), typeQinfon ctx qi)
+    | Send(p, qi) -> Send((typeTerm ctx p Prin), typeQinfon ctx qi)
+
+  and annotQinfon = checkQinfon true
+  and typeQinfon ctx qi = fst (checkQinfon false ctx qi)
+  and typeTerm ctx t typ = fst (checkTerm false ctx t typ)
+  and checkQinfon extendflag ctx = function 
+    | MonoTerm i -> let i, ctx = checkInfon extendflag ctx i in MonoTerm i, ctx
+    | PolyTerm (xl, i) -> 
+        let ctx' = List.fold_left (fun ctx x -> extendCtx ctx x) ctx xl in 
+        let i, _ = checkInfon extendflag ctx' i in
+          PolyTerm(xl, i), ctx
+
+  and checkInfon extflag ctx = function
+    | True -> True, ctx
+    | Var x -> 
+        (match lookup ctx x with
+           | None when extflag -> Var x, extendCtx ctx (x,Infon)
+           | Some t -> Var x, ctx
+           | _ -> failwith (spr "Failed to type variable %s" x))
+        
+    | Relation (r, terms) -> 
+        (match findRelation r with 
+           | Some types -> 
+               let ctx, terms = 
+                 List.fold_left (fun (ctx, terms) (term, typ) -> 
+                                   let term', ctx' = checkTerm extflag ctx term typ in 
+                                     (ctx', term'::terms)) 
+                   (ctx, [])
+                   (List.zip terms types) in 
+                 Relation(r, List.rev terms), ctx
+           | None -> failwith (spr "Failed to type relation %s" r))
+        
+    | Said(x, i) -> 
+        let x', ctx = checkTerm extflag ctx x Prin in 
+        let i', ctx = checkInfon extflag ctx i in 
+          Said(x', i'), ctx
+
+    | Implies(i, j) -> 
+        let i, ctx = checkInfon extflag ctx i in 
+        let j, ctx = checkInfon extflag ctx j in 
+          Implies(i,j), ctx
+
+    | And(i, j) -> 
+        let i, ctx = checkInfon extflag ctx i in 
+        let j, ctx = checkInfon extflag ctx j in 
+          And(i,j), ctx
+
+    | Evidence(t, i) ->
+        let t, ctx = checkTerm extflag ctx t Ev in 
+        let i, ctx = checkInfon extflag ctx i in 
+          Evidence(t,i), ctx
+
+  and checkTerm extflag ctx tm typ = match tm with
+    | TermVar(x,_) -> 
+        (match lookup ctx x with 
+           | None when extflag -> 
+               let ctx = extendCtx ctx (x, typ) in
+                 TermVar(x,typ), ctx
+          | Some t -> TermVar(x,t), ctx
+          | None -> failwith (spr "Failed to type variable %s" x))
+        
+    | Integer i when typ=Int -> tm, ctx
+    | Str s when typ = String -> tm, ctx
+    | Principal p when typ=Prin -> tm, ctx
+    | _ -> failwith (spr "Failed to type constant %A; expected %A" tm typ) in
+    
+    List.map (annotRule []) rules
 
 let parse fn = 
   let stream = new System.IO.FileStream(fn, System.IO.FileMode.Open, System.IO.FileAccess.Read) in
   let reader = new System.IO.StreamReader(stream) in
   let fileAsString = reader.ReadToEnd() in
     stream.Close(); 
-    let ast = runParserOnString rules () fn fileAsString in 
+    let ast = runParserOnString rulesAndConfig () fn fileAsString in 
       match ast with 
-        | Success(rules, _, _) -> printRules fn rules
-        | _ -> raise Failure  
+        | Success((rules, config), _, _) -> 
+            let relations, identities = 
+              List.partition (function RelCfg _ -> true | _ -> false) config in
+            let rules' = annotate relations rules in 
+              printRulesAndConfig relations fn (rules', identities)
+        | _ -> (pr "%A" ast); raise (Failure (spr "%A" ast))
 ;; 
 
 

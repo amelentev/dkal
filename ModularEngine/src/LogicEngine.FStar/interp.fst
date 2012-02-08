@@ -138,24 +138,45 @@ let rec match_pattern tm s1 upat pat =
   let s1pat = polysubst pat s1 in 
     match tm, s1pat with 
       | MonoTerm tm', MonoTerm s1pat' -> 
-          (match Unify.doMatch tm' s1 upat s1pat' with 
-             | Some s2 -> 
-                 let _ = HilbertianQIL.AEQ_Mono tm' in 
-                   Some s2
-             | _ -> None)
+          let _ = println (strcat "Trying to match message with pat: " (strcat (string_of_any_for_coq tm') (strcat " --- " (string_of_any_for_coq s1pat')))) in
+            (match Unify.doMatch tm' s1 upat s1pat' with 
+               | Some s2 when (includes upat (domain s2)) -> 
+                   let _ = HilbertianQIL.AEQ_Mono tm' in 
+                   let _ = println "Match message with pat succeeded!" in 
+                     Some s2
+               | _ -> 
+                   let _ = println "Match message with pat failed!" in 
+                     None)
             
       | ForallT _ _, ForallT ys s1pat' -> 
-          match InfonLogic.alphaConvertWith tm ys with 
-            | Some(((ForallT ys' tm'), aeq)) when ys'=ys -> 
-                (match Unify.doMatch tm' s1 upat s1pat' with 
-                   | Some s2 when check_disjoint (freeVarsSubst s2) ys' -> 
-                       (* assert (InfonLogic.alphaEquiv tm (ForallT ys' tm')); *)
-                       (* assert (tm' = (Subst s1pat' s2)); *)
-                       (* assert ((PolySubst (PolySubst pat s1) s2) = (ForallT ys' tm')); *)
-                       Some s2
-                   | _ -> None)
-            | _ -> None
+          (match InfonLogic.alphaConvertWith tm ys with 
+             | Some(((ForallT ys' tm'), aeq)) when ys'=ys -> 
+                 (match Unify.doMatch tm' s1 upat s1pat' with 
+                    | Some s2 when (check_disjoint (freeVarsSubst s2) ys') &&
+                                   (includes upat (domain s2))-> 
+                        (* assert (InfonLogic.alphaEquiv tm (ForallT ys' tm')); *)
+                        (* assert (tm' = (Subst s1pat' s2)); *)
+                        (* assert ((PolySubst (PolySubst pat s1) s2) = (ForallT ys' tm')); *)
+                        Some s2
+                    | _ -> None)
+             | _ -> None)
 
+      | (JustifiedPoly p i dsig), (JustifiedPoly x j y) -> 
+            (match match_pattern i s1 upat j with 
+               | None -> None
+               | Some s2 -> 
+                   (match Unify.doMatch p s2 upat x with
+                      | None -> None
+                      | Some s3 -> 
+                          (match Unify.doMatch dsig s3 upat y with 
+                             | Some s4 when includes upat (domain s2) -> 
+                                 assume (Includes upat (Domain s4));
+                                 assume (exists (tm':polyterm). HilbertianQIL.alphaEquiv tm tm' &&
+                                           (tm' = (PolySubst (PolySubst pat s1) s4)));
+                                 Some s4
+                             | _ -> None)))
+      | _ -> None
+          
 (* ================= InfonLogic entailment ===================== *)
 val derive: u:vars
           -> goal:polyterm
@@ -172,7 +193,11 @@ let derive u goal subst0 =
     else []
 (* ================= Process state and messaging ===================== *)
 val comms : Ref (list communication)
-let comms = newref []
+let comms = 
+  let init = 
+    MonoTerm (App (RelationInfon ({fname="Init"; retType=Infon; argsType=[Int32]; identity=None})) [(Const (Int 17))]) in 
+  let _ = assume (Net.Received init) in 
+    newref [init]
 
 val get_communications: unit -> unit
 let rec get_communications _unit = 
@@ -247,6 +272,7 @@ let rec evalConds xs cs =
 
 val holds: xs:vars -> cs:conditions -> list (s:substitution{Holds xs cs s})
 let holds xs cs = 
+  let _ = println (strcat "Trying holds for conditions: " (string_of_any cs)) in
   mapSome (fun (s:substholdsmany xs cs) -> 
              let d = domain s in
                if (includes d xs) && (includes xs d) then Some (s:(s:substitution{Holds xs cs s}))
@@ -324,11 +350,13 @@ let rec applyAction a =
   
 val go: list wfrule -> unit
 let rec go rs = 
+  let _ = println "Calling allEnabledActions" in
+  let actions = allEnabledActions rs in 
+  let _ = println (strcat "Got actions: " (string_of_any actions)) in 
+  let _ = iterate applyAction actions in 
+  let _ = print_string (strcat ("Message store: ") (string_of_any_for_coq (!comms))) in
   let _ = clear_out_buffer () in 
   let _ = get_communications () in (* blocks until new comms arrive *)
-  let actions = allEnabledActions rs in 
-  let _ = iterate applyAction actions in 
-  let _ = print_string (strcat ("Message store: ") (string_of_any (!comms))) in
     go rs
 
 let varsOne c : v:vars{v=(VarsCond c)} = match c with 

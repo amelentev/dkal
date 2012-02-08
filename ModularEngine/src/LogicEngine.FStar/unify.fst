@@ -1,8 +1,6 @@
 module Unify
-(* open TypeHeaders *)
 open Types
 open Subst
-(* open TranslationFromFStar *)
 
 val fold_left2 : ('a -> 'b -> 'c -> option 'a) 
               -> option 'a -> list 'b -> list 'c -> option 'a
@@ -13,16 +11,16 @@ let rec fold_left2 f a lb lc =
   | (Some(a), ((b::tb), (c::tc))) -> fold_left2 f (f a b c) tb tc
   | (_, _) -> raise "Error in fold_left2, lists are not the same size"
 
-val addSubst : s:substitution -> x:var -> t:term -> substitution
 (* composes s with {x -> t} *)
+val addSubst : s:substitution -> x:var -> t:term -> substitution
 let addSubst s1 x t =
   let substxt = extendSubst (emptySubst ()) x t in
   fold_left
     (fun s y -> 
-	   match lookupVar s1 y with
-	   | None -> raise "impos"
-	   | Some(ty) -> extendSubst s y (subst ty substxt))
-    (emptySubst ())
+       match lookupVar s1 y with
+	 | None -> raise "impos"
+	 | Some(ty) -> extendSubst s y (subst ty substxt))
+    substxt
     (domain s1)
 
 val unify_aux: s1:substitution
@@ -34,24 +32,32 @@ val unify_aux: s1:substitution
 
 let rec unify_aux s1 v2 v1 t1 t2 : option substitution =
   match subst t1 s1, subst t2 s1 with
-  | t1', t2' when (t1':term) = (t2':term) -> Some s1
-  | Var x1, t2' when not(contains x1 (freeVars t2')) && contains x1 v1 ->
-      Some (addSubst s1 x1 t2')
-  | t1', Var x2 when not(contains x2 (freeVars t1')) && contains x2 v2 ->
-      Some (addSubst s1 x2 t1')
-  | App f1 tlist1, App f2 tlist2 
-      when ((f1 = f2) && (length tlist1 = length tlist2)) ->
-	  fold_left2 (fun s t1' t2' -> unify_aux s v2 v1 t1' t2')
-	    (Some(s1)) tlist1 tlist2
-  | SubstrateQueryTerm t0, _ -> None
-(*       option_map FStarSubstitutionOfISubstitution *)
-(*         (substrateQueryTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1) *)
-(* 		                                 (ITermOfFStarTerm t2) ) *)
-  | SubstrateUpdateTerm t0, _ -> None
-(*       option_map FStarSubstitutionOfISubstitution *)
-(*         (substrateUpdateTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1) *)
-(* 		                                 (ITermOfFStarTerm t2) ) *)
-  | _ -> None
+    | t1', t2' when (t1':term) = (t2':term) -> Some s1
+    | Var x1, t2' when not(contains x1 (freeVars t2')) && contains x1 v1 ->
+        Some (addSubst s1 x1 t2')
+    | t1', Var x2 when not(contains x2 (freeVars t1')) && contains x2 v2 ->
+        Some (addSubst s1 x2 t1')
+    | App f1 tlist1, App f2 tlist2 -> 
+        if ((f1 = f2) && (length tlist1 = length tlist2)) 
+        then 
+          let _ = println (strcat "Success Compared f1 = "  (strcat (string_of_any_for_coq f1) (strcat " with f2" (string_of_any_for_coq f2)))) in
+	    fold_left2 
+              (fun s t1' t2' -> unify_aux s v2 v1 t1' t2')
+ 	      (Some s1) 
+              tlist1 
+              tlist2
+        else
+          let _ = println (strcat "Failed Compared f1 = "  (strcat (string_of_any_for_coq f1) (strcat " with f2" (string_of_any_for_coq f2)))) in
+            None
+    | SubstrateQueryTerm t0, _ -> None
+        (*       option_map FStarSubstitutionOfISubstitution *)
+        (*         (substrateQueryTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1) *)
+        (* 		                                 (ITermOfFStarTerm t2) ) *)
+    | SubstrateUpdateTerm t0, _ -> None
+        (*       option_map FStarSubstitutionOfISubstitution *)
+        (*         (substrateUpdateTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1) *)
+        (* 		                                 (ITermOfFStarTerm t2) ) *)
+    | _ -> None
 
     
 
@@ -82,13 +88,16 @@ val doMatch :  tm:term
              -> s0:substitution 
              -> xs:vars
              -> pat:term
-             -> option (s1:substitution{Includes xs (Domain s1) &&
+             -> option (s1:substitution{(* Includes xs (Domain s1) && *)
                                         tm=(Subst pat s1)})
 let doMatch tm s0 xs pat = 
   match unify s0 xs [] tm pat with 
     | Some ((s1, [])) -> 
-        if ((includes xs (domain s1)) && (* TODO: Kill these and prove directly from unify *)
-            tm=(subst pat s1))
+        if (tm=(subst pat s1)) (* TODO: Kill these and prove directly from unify *)            
         then Some s1
-        else None
+        else let _ = println (strcat "Got bad subst for unifier " (strcat (string_of_any_for_coq tm) 
+                                                                     (strcat " ... " 
+                                                                        (strcat (string_of_any_for_coq pat) 
+                                                                           (strcat "..." (string_of_any_for_coq s1)))))) in 
+          None
     | _ -> None
