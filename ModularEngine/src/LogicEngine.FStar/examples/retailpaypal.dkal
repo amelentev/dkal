@@ -1,0 +1,11 @@
+upon Init(x) as m
+then learn CustomerDB(_CUSTOMER_, 10)
+     drop m
+
+upon justified (c said Auth(w, oid, n)) as m1
+upon justified (w said Pay(c, oid, i, n)) as m2
+if   CustomerDB(c, n) 
+then send w (_PAYPAL_ said Paid(c, oid, n))
+     drop m2
+
+using "retail.cfg" as _PAYPAL_

@@ -8,6 +8,10 @@ open FParsec.Error
 open FParsec.Primitives
 open FParsec.CharParsers
 
+let pr = Printf.printf 
+let spr = Printf.sprintf 
+let dir = ref ""
+
 let curpos : Parser<Position, 'a> = fun s -> 
     Reply(s.Position, s)
 
@@ -104,6 +108,7 @@ let ch  c = skipChar c >>. ws
 let str s = skipString s >>. ws
 
 let keywords = ["upon";
+                "using";
                 "as";
                 "of";
                 "then";
@@ -176,6 +181,7 @@ let LEARN     st = tok "learn"  st
 let FRESH     st = tok "fresh"  st 
 let EVIDENCE st = tok "Ev"  st 
 let WHERE     st = tok "where"  st 
+let USING     st = tok "using"  st 
 let OF        st = tok "of"  st 
 let PUBKEY    st = tok "pubkey"  st 
 let PRIVKEY   st = tok "privkey"  st 
@@ -294,6 +300,7 @@ type qinfon =
   | MonoTerm of infon
   | PolyTerm of (string * typ) list * infon
   | JustifiedPoly of (term * qinfon * term)
+  | PolyVar of string
 
 and infon = 
   | True 
@@ -320,6 +327,11 @@ and typ =
   | Uvar of (typ option) ref
 
 let unknown_typ () = Uvar (ref None)
+let rec compress typ = match typ with
+  | Uvar t -> (match !t with 
+                 | None -> typ 
+                 | Some t -> compress t)
+  | _ -> typ
 
 let term = fun s -> s |>
     begin
@@ -390,15 +402,18 @@ let qinfon = fun s -> s |>
       (sequence COMMA varIdent) >>= (fun vars -> 
        DOT >>.
        infon |>> (fun i -> PolyTerm(List.map (fun x -> (x, unknown_typ())) vars, i))))
-<|>   
-      (infon |>> MonoTerm)
+
+<|>   (varIdent |>> (fun r -> PolyVar r))
+
+<|>   (infon |>> MonoTerm)
+
     end
 
 (* -------------------------------------------------------------------------------- *)
 type condition =
   | If    of qinfon
-  | Upon  of (qinfon * string)
-  | UponJ of (qinfon * string)
+  | Upon  of (qinfon * string option)
+  | UponJ of (qinfon * string option)
 type conditions = condition list
 
 type action =
@@ -425,8 +440,10 @@ let uponCondition = fun s -> s |>
       UPON >>.
       (opt JUSTIFIED) >>= (fun jopt -> 
       qinfon >>= (fun i -> 
-      AS >>.
-      varIdent |>> (fun x -> match jopt with None -> Upon(i, x) | Some _ -> UponJ(i,x))))
+      (opt (AS >>. varIdent)) |>> (fun xopt -> 
+          match jopt with 
+            | None -> Upon(i, xopt) 
+            | Some _ -> UponJ(i,xopt))))
     end
 
 let ifCondition = fun s -> s |>
@@ -553,18 +570,30 @@ let rec configs = fun s -> s |>
       opt (AND >>. configs) >>= (function None -> preturn [c] | Some cs -> preturn (c::cs)))
     end 
 
+let parseFile fn pars =
+  let stream = new System.IO.FileStream(fn, System.IO.FileMode.Open, System.IO.FileAccess.Read) in
+  let reader = new System.IO.StreamReader(stream) in
+  let fileAsString = reader.ReadToEnd() in
+    stream.Close(); 
+    let ast = runParserOnString pars () fn fileAsString in 
+      match ast with 
+        | Success(r, _, _) -> r
+        | _ -> pr "%A" ast; failwith (spr "failed to parse file %s" fn)
+
+
 let rulesAndConfig = fun s -> s |> 
     begin
       rules >>= (fun rules -> 
-      WHERE >>.
-      configs >>= (fun cfg ->
+      ((USING >>. STRING >>= (fun s -> AS >>. principalIdent |>> (fun p -> 
+                                                                    let cfgs = parseFile (spr "%s/%s" !dir s) configs in 
+                                                                    let [mine], rest = List.partition (function (IdCfg {prin=q}) when p=q -> true | _ -> false) cfgs in 
+                                                                      mine::rest)))
+       <|> 
+           (WHERE >>. configs)) >>= (fun cfg -> 
       EOF >>. preturn (rules, cfg)))
     end
 
 (* Printer *)
-let pr = Printf.printf 
-let spr = Printf.sprintf 
-
 let rec printMany delim s l = match l with 
   | [] -> ""
   | [hd] -> s hd
@@ -579,16 +608,15 @@ let printManyIndex delim s l =
 
 exception Failure of string
 
-let rec printTyp = function 
+let rec printTyp t = match compress t with 
   | Int -> "Int32"
   | Bool -> "Boolean"
   | Infon -> "Infon"
   | String -> "String"
   | Ev -> "Evidence"
   | Prin -> "Principal"
-  | Uvar r -> (match !r with 
-                 | None -> raise (Failure "Unknown type")
-                 | Some t -> printTyp t)
+  | Uvar r -> raise (Failure "Unknown type")
+
 and printTyps tl = spr "[ %s ]" (printMany "; " printTyp tl)
   
 let printVar (x,t) = spr "({name=\"%s\"; typ=%s})" x (printTyp t)
@@ -636,7 +664,7 @@ let rec printRule relations i (Rule (ctx, cl, al)) =
 and printCondition relations = function 
   | If   qi      -> spr "(If (%s) )" (printQinfon relations qi) 
   | UponJ (qi, s) 
-  | Upon (qi, s) -> spr "(Upon (%s) (* %s *))" (printQinfon relations qi) (printVar (s, Infon))
+  | Upon (qi, s) -> spr "(Upon (%s))" (printQinfon relations qi)
 
 
 and printConditions relations conds = spr "[ %s ]" (printMany ";\n" (printCondition relations) conds)
@@ -665,16 +693,16 @@ let printConfig = function
 let printConfigs cl = spr "[ %s ]" (printMany ";\n" printConfig cl)
 
 let printRulesAndConfig relations (fn:string) (rules, configs) = 
-  let mname = fn.Split('.').(0) in 
+  let mname = System.IO.Path.GetFileNameWithoutExtension(fn) in 
   let mname = mname.ToUpper() in
-  pr "module %s\n" mname;
-  pr "open Types\n";
-  pr "open Interp\n";
-  pr "open Authenticate\n\n";
-  pr "%s\n" (printManyIndex "\n\n" (printRule relations) rules);
-  pr ";;\n let _ = initialize (%s) in \n let _ = run [%s] in ()" 
-    (printConfigs configs)
-    (printManyIndex "; " (fun ix _ -> spr "rule_%d" ix) rules)
+    pr "module %s\n" mname;
+    pr "open Types\n";
+    pr "open Interp\n";
+    pr "open Authenticate\n\n";
+    pr "%s\n" (printManyIndex "\n\n" (printRule relations) rules);
+    pr ";;\n let _ = initialize (%s) in \n let _ = run [%s] in ()" 
+      (printConfigs configs)
+      (printManyIndex "; " (fun ix _ -> spr "rule_%d" ix) rules)
 
 let newvar = 
   let x = ref 0 in 
@@ -683,6 +711,8 @@ let newvar =
         incr x;
         spr "x_%d" i
 
+type env = (string * typ) list * (string * qinfon) list
+
 let annotate relations rules = 
   let findRelation r = 
     try 
@@ -690,78 +720,102 @@ let annotate relations rules =
         | RelCfg(r, tl) -> Some tl
     with _ -> None 
   in
+
+  let binds x  = List.exists (fun (x',_) -> x=x') in
+
+  let ctxContains x (ctx, subst) = 
+    List.exists (fun (x',_) -> x=x') ctx ||
+      List.exists (fun (x',_) -> x=x') subst in 
     
-  let extendCtx ctx (x,t) = 
-    if List.exists (fun (x',_) -> x=x') ctx 
+  let extendCtx ((ctx, subst) as env) (x,t) = 
+    if ctxContains x env 
     then failwith "Variable shadowing not allowed"
-    else (x,t)::ctx in
+    else ((x,t)::ctx, subst) in
+
+  let addSubst ((ctx, subst) as env) (x,qi) = 
+    if ctxContains x env 
+    then failwith "Variable shadowing not allowed"
+    else (ctx, (x,qi)::subst) in
     
-  let lookup ctx x = 
+  let lookup x env =
     try 
-      Some (snd (List.find (fun (x',_) -> x=x') ctx))
+      Some (snd (List.find (fun (x',_) -> x=x') env))
     with _ -> None in
     
   let rec annotRule ctx = function
     | Rule (_, c, a) -> 
         let c, ctx = annotConditions ctx c in
         let a = List.map (annotAction ctx) a in 
-          Rule(ctx, c, a)
+          Rule(fst ctx, c, a)
 
-  and annotConditions ctx cl =
+  and annotConditions (ctx:env) cl : condition list * env =
     let ctx, out = List.fold_left (fun (ctx, out) c -> 
                                      let c', ctx = annotCondition ctx c in 
                                        (ctx, c'::out)) (ctx, []) cl in
       List.rev out, ctx
 
-  and annotCondition ctx = function 
+  and annotCondition (ctx : env) : condition -> condition * env = function 
     | If qi -> 
         let qi, ctx = annotQinfon ctx qi in 
           (If qi), ctx
             
     | Upon (qi, m) -> 
         let qi, ctx = annotQinfon ctx qi in 
-        (* let ctx' = extendCtx ctx (m, Infon) in  *)
-        let ctx' = ctx in 
+        let ctx = match m with 
+          | None -> ctx
+          | Some m -> addSubst ctx (m, qi) in 
           Upon(qi, m), ctx
             
     | UponJ (qi, m) -> 
         let qi, ctx = annotQinfon ctx qi in 
-          (* let ctx' = extendCtx ctx (m, Infon) in  *)
         let ctx' = ctx in 
         let ev_var = newvar(), Ev in 
         let p_var = newvar(), Prin in 
         let qi' = JustifiedPoly(TermVar p_var, qi, TermVar ev_var) in 
-          Upon(qi', m), (extendCtx (extendCtx ctx' ev_var) p_var)
+        let ctx = extendCtx (extendCtx ctx' ev_var) p_var in 
+        let ctx = match m with 
+          | None -> ctx
+          | Some m -> addSubst ctx (m, qi') in 
+          Upon(qi', m), ctx
 
-  and annotAction ctx = function 
+  and annotAction (ctx:env) = function 
     | Learn qi -> Learn (typeQinfon ctx qi)
     | Drop qi -> Drop (typeQinfon ctx qi)
     | Add qi -> Add (typeQinfon ctx qi)
-    | WithFresh (x, al) -> WithFresh(x, List.map (annotAction ctx) al)
+    | WithFresh (x, al) -> 
+        let ctx = extendCtx ctx (x, Int) in 
+          WithFresh(x, List.map (annotAction ctx) al)
     | Fwd(p, qi) -> Fwd((typeTerm ctx p Prin), typeQinfon ctx qi)
     | Send(p, qi) -> Send((typeTerm ctx p Prin), typeQinfon ctx qi)
 
   and annotQinfon = checkQinfon true
-  and typeQinfon ctx qi = fst (checkQinfon false ctx qi)
-  and typeTerm ctx t typ = fst (checkTerm false ctx t typ)
-  and checkQinfon extendflag ctx = function 
+  and typeQinfon (ctx:env) qi = fst (checkQinfon false ctx qi)
+  and typeTerm (ctx:env) t typ = fst (checkTerm false ctx t typ)
+  and checkQinfon extendflag (ctx:env) : qinfon -> qinfon * env = function 
     | MonoTerm i -> let i, ctx = checkInfon extendflag ctx i in MonoTerm i, ctx
     | PolyTerm (xl, i) -> 
         let ctx' = List.fold_left (fun ctx x -> extendCtx ctx x) ctx xl in 
         let i, _ = checkInfon extendflag ctx' i in
           PolyTerm(xl, i), ctx
+    | PolyVar x -> 
+        let (_, subst) = ctx in 
+          match lookup x subst with 
+            | None -> raise (Failure (spr "Failed to eliminate polyvar %s\n" x))
+            | Some tm -> tm, ctx
 
   and checkInfon extflag ctx = function
     | True -> True, ctx
-    | Var x -> 
-        (match lookup ctx x with
-           | None when extflag -> Var x, extendCtx ctx (x,Infon)
-           | Some t -> Var x, ctx
-           | _ -> failwith (spr "Failed to type variable %s" x))
-        
+
+    | Var x when binds x (fst ctx) -> 
+        let ty = lookup x (fst ctx) in 
+          Var x, ctx
+
+    | Var x when (not (binds x (snd ctx))) && extflag -> 
+        Var x, extendCtx ctx (x,Infon)
+          
     | Relation (r, terms) -> 
         (match findRelation r with 
-           | Some types -> 
+           | Some types when List.length terms = List.length types -> 
                let ctx, terms = 
                  List.fold_left (fun (ctx, terms) (term, typ) -> 
                                    let term', ctx' = checkTerm extflag ctx term typ in 
@@ -769,7 +823,7 @@ let annotate relations rules =
                    (ctx, [])
                    (List.zip terms types) in 
                  Relation(r, List.rev terms), ctx
-           | None -> failwith (spr "Failed to type relation %s" r))
+           | _ -> failwith (spr "Failed to type relation %s" r))
         
     | Said(x, i) -> 
         let x', ctx = checkTerm extflag ctx x Prin in 
@@ -791,35 +845,36 @@ let annotate relations rules =
         let i, ctx = checkInfon extflag ctx i in 
           Evidence(t,i), ctx
 
-  and checkTerm extflag ctx tm typ = match tm with
-    | TermVar(x,_) -> 
-        (match lookup ctx x with 
+    | i -> failwith (spr "Failed to type infon %A" i)
+
+  and checkTerm extflag (ctx:env) tm typ : term * env = match tm with
+    | TermVar(x,_) when not (binds x (snd ctx)) -> 
+        (match lookup x (fst ctx) with 
            | None when extflag -> 
                let ctx = extendCtx ctx (x, typ) in
                  TermVar(x,typ), ctx
-          | Some t -> TermVar(x,t), ctx
-          | None -> failwith (spr "Failed to type variable %s" x))
-        
+           | Some t -> 
+               (match compress t with 
+                  | Uvar t -> (t := Some typ; 
+                               TermVar(x,typ), ctx)
+                  | t' when t'=typ -> TermVar(x,typ), ctx
+                  | _ -> failwith (spr "Failed to type variable %s" x))
+           | _ -> failwith (spr "Failed to type variable %s" x))
+          
     | Integer i when typ=Int -> tm, ctx
     | Str s when typ = String -> tm, ctx
     | Principal p when typ=Prin -> tm, ctx
-    | _ -> failwith (spr "Failed to type constant %A; expected %A" tm typ) in
+    | _ -> failwith (spr "Failed to type term %A; expected %A" tm typ) in
     
-    List.map (annotRule []) rules
+    List.map (annotRule ([],[])) rules
 
 let parse fn = 
-  let stream = new System.IO.FileStream(fn, System.IO.FileMode.Open, System.IO.FileAccess.Read) in
-  let reader = new System.IO.StreamReader(stream) in
-  let fileAsString = reader.ReadToEnd() in
-    stream.Close(); 
-    let ast = runParserOnString rulesAndConfig () fn fileAsString in 
-      match ast with 
-        | Success((rules, config), _, _) -> 
-            let relations, identities = 
-              List.partition (function RelCfg _ -> true | _ -> false) config in
-            let rules' = annotate relations rules in 
-              printRulesAndConfig relations fn (rules', identities)
-        | _ -> (pr "%A" ast); raise (Failure (spr "%A" ast))
+  dir := System.IO.Path.GetDirectoryName(fn);
+  let rules, config = parseFile fn rulesAndConfig in
+  let relations, identities = List.partition (function RelCfg _ -> true | _ -> false) config in
+  let rules' = annotate relations rules in 
+    printRulesAndConfig relations fn (rules', identities)
+      
 ;; 
 
 

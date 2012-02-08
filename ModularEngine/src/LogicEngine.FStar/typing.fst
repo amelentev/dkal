@@ -179,6 +179,21 @@ type typing :: vars => term => typ => P =
        G:vars 
     -> typing G (Const FalseT) Boolean
 
+  | Typing_ConstInt : 
+       G:vars 
+    -> x:int
+    -> typing G (Const (Int x)) Int32
+
+  | Typing_ConstStr : 
+       G:vars 
+    -> x:string
+    -> typing G (Const (Str x)) String
+
+  | Typing_ConstBytes : 
+       G:vars 
+    -> x:bytes
+    -> typing G (Const (Bytes x)) BytesT
+
   | Typing_ConstPrincipalConstant : 
        G:vars 
     -> p:principal
@@ -209,6 +224,9 @@ val constantTyping: g:vars -> c:constant -> (ty:typ * typing g (Const c) ty)
 let constantTyping g c = match c with 
   | TrueT -> (Boolean, Typing_ConstTrueT g)
   | FalseT -> (Boolean, Typing_ConstFalseT g)
+  | Int x -> (Int32, Typing_ConstInt g x)
+  | Str x -> (String, Typing_ConstStr g x)
+  | Bytes x -> (BytesT, Typing_ConstBytes g x)            
   | SubstrateConstant _ -> raise "NYI: SubstrateConstant typing"
   | PrincipalConstant p -> (Principal, Typing_ConstPrincipalConstant g p)
 

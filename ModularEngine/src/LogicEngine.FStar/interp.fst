@@ -14,24 +14,6 @@ type condition =
   | If   : polyterm -> condition
   | Upon : polyterm -> condition
 type conditions = list condition
-type WFCond :: vars => condition => P =
-  | WFCond_If: xs:vars -> i:polyterm 
-            -> Typing.polytyping xs i 
-            -> WFCond xs (If i)
-  | WFCond_Upon: xs:vars -> i:polyterm
-            -> Typing.polytyping xs i 
-            -> WFCond xs (Upon i)
-logic function Vars : polyterm -> vars 
-assume forall (xs:vars) (i:term). (Vars (ForallT xs i))=(FreeVars i)
-assume forall (xs:vars) (i:term). (Vars (MonoTerm i))=(FreeVars i)
-logic function VarsCond : condition -> vars
-assume forall (i:polyterm). (VarsCond (If i)) = (Vars i)
-assume forall (i:polyterm). (VarsCond (Upon i)) = (Vars i)
-logic function VarsConds : conditions -> vars
-assume Vars_nil: (VarsConds [])=[]
-assume Vars_cons: forall (c:condition) (cs:conditions). (VarsConds (c::cs))=(Append (VarsCond c) (VarsConds cs))
-type Binds :: conditions => vars => E
-assume (forall (cs:conditions) (xs:vars). Includes (VarsConds cs) xs => Binds cs xs)
 
 type action =
   | Learn : polyterm -> action (* infon *)
@@ -41,21 +23,6 @@ type action =
   | Fwd   : term -> polyterm -> action (* prin, infon *)
   | Send  : term -> polyterm -> action (* prin, infon *)
 type actions = list action
-type WFAct :: vars => action => P =
-  | WFAct_Learn: xs:vars -> i:polyterm
-              -> Typing.polytyping xs i 
-              -> WFAct xs (Learn i)
-  | WFAct_Drop : xs:vars -> i:polyterm
-              -> Typing.polytyping xs i 
-              -> WFAct xs (Drop i)
-  | WFAct_Fwd  : xs:vars -> p:term -> i:polyterm
-              -> Typing.typing xs p Principal
-              -> Typing.polytyping xs i 
-              -> WFAct xs (Fwd p i)
-  | WFAct_Send : xs:vars -> p:term -> i:polyterm
-              -> Typing.typing xs p Principal
-              -> Typing.polytyping xs i 
-              -> WFAct xs (Send p i)
 
 
 (* -------------------------------------------------------------------------------- *)
@@ -83,9 +50,10 @@ assume Holds_if: forall (xs:vars) (i:polyterm) (substin:substitution) (subst:sub
           (HilbertianQIL.polyentails s k [] (PolySubst (PolySubst i substin) subst)))
       => HoldsOne substin xs (If i) subst
 
-assume Holds_upon: forall (xs:vars) (pat:polyterm) (substin:substitution) (subst:substitution) (c:communication). 
+assume Holds_upon: forall (xs:vars) (pat:polyterm) (substin:substitution) (subst:substitution) (c:communication) (c':communication). 
          ((Includes xs (Domain subst)) &&
-          (exists (c':polyterm). HilbertianQIL.alphaEquiv c c' && ((PolySubst (PolySubst pat substin) subst)=c')))
+          (HilbertianQIL.alphaEquiv c c') &&
+          ((PolySubst (PolySubst pat substin) subst)=c'))
       => HoldsOne substin xs (Upon pat) subst
 
 type HoldsMany :: vars => list condition => substitution => E
@@ -119,19 +87,14 @@ type rule =
         -> cs:conditions 
         -> list (ruleAction xs cs)
         -> rule
-type WFR :: rule => P = 
-  | WFR_Rule : xs:vars -> cs:conditions{Binds cs xs} -> acts:ruleActions xs cs
-            -> ForallL condition cs  (WFCond xs) 
-            -> ForallL (ruleAction xs cs) acts (WFAct xs)
-            -> WFR (Rule xs cs acts)
-type wfrule = r:rule{WFR r}
+type wfrule = rule
 
 (* ================= Pattern matching for polyterms ===================== *)
 val match_pattern: tm:polyterm
             -> s1:substitution
             -> upat:vars 
             -> pattern:polyterm
-            -> option (s2:substitution{Includes upat (Domain s2) && 
+                    -> option (s2:substitution{Includes upat (Domain s2) && 
                                        (exists (tm':polyterm). HilbertianQIL.alphaEquiv tm tm' && 
                                          (tm' = (PolySubst (PolySubst pattern s1) s2)))})
 let rec match_pattern tm s1 upat pat = 
@@ -203,7 +166,9 @@ val get_communications: unit -> unit
 let rec get_communications _unit = 
   let message = Net.receive () in
     match Net.bytes2infon message with 
-      | Some infon -> (comms := infon::(!comms)); ()
+      | Some infon -> 
+          let _ = println (strcat "VVVVVV RECEIVED MESSAGES VVVVV : " (string_of_any_for_coq infon)) in 
+            (comms := infon::(!comms)); ()
       | _ -> get_communications ()
           
 val dropCommunications: i:polyterm{Enabled (Drop i)} -> bool
@@ -272,12 +237,14 @@ let rec evalConds xs cs =
 
 val holds: xs:vars -> cs:conditions -> list (s:substitution{Holds xs cs s})
 let holds xs cs = 
-  let _ = println (strcat "Trying holds for conditions: " (string_of_any cs)) in
-  mapSome (fun (s:substholdsmany xs cs) -> 
-             let d = domain s in
-               if (includes d xs) && (includes xs d) then Some (s:(s:substitution{Holds xs cs s}))
-               else None)          
-    (evalConds xs cs)
+  let result = mapSome (fun (s:substholdsmany xs cs) -> 
+                          let d = domain s in
+                            if (includes d xs) && (includes xs d) then Some (s:(s:substitution{Holds xs cs s}))
+                            else None)          
+    (evalConds xs cs) in
+  let _ = println (strcat "Tried holds for conditions: " (string_of_any_for_coq cs)) in
+  let _ = println (strcat "Got results " (string_of_any_for_coq result)) in
+    result
     
 val substAction: s:substitution
               -> a:action 
@@ -348,69 +315,16 @@ let rec applyAction a =
         let al' = substActions (mkSubst [x] [(Const (Int c))]) al' in 
           iterate (fun (a:action) -> assume (Enabled a); applyAction a) al'
   
-val go: list wfrule -> unit
-let rec go rs = 
+val run: list wfrule -> unit
+let rec run rs = 
   let _ = println "Calling allEnabledActions" in
   let actions = allEnabledActions rs in 
-  let _ = println (strcat "Got actions: " (string_of_any actions)) in 
+  let _ = println (strcat "^^^^^^^^ GOT ACTIONS ^^^^^^^^^: " (string_of_any_for_coq actions)) in 
   let _ = iterate applyAction actions in 
   let _ = print_string (strcat ("Message store: ") (string_of_any_for_coq (!comms))) in
   let _ = clear_out_buffer () in 
   let _ = get_communications () in (* blocks until new comms arrive *)
-    go rs
-
-let varsOne c : v:vars{v=(VarsCond c)} = match c with 
-  | If (MonoTerm i) -> freeVars i
-  | If (ForallT xs i) -> freeVars i
-  | Upon (MonoTerm i) -> freeVars i
-  | Upon (ForallT xs i) -> freeVars i 
-
-val vars: c:conditions -> v:vars{v=(VarsConds c)}
-let rec vars = function 
-  | [] -> []
-  | c::rest ->  append (varsOne c) (vars rest)
-        
-val checkWFR: r:rule -> b:bool{b=true => WFR r}
-let checkWFR = function 
-  | Rule xs cs acts -> 
-      let wfCond ys c : option (WFCond ys c) = match c with 
-        | If i -> (match Typing.doPolyTyping ys i with 
-                     | MkPartial pf -> Some (WFCond_If ys i pf))
-        | Upon i -> (match Typing.doPolyTyping ys i with 
-                       | MkPartial pf -> Some (WFCond_Upon ys i pf)) in
-      let wfAct ys a : option (WFAct ys a) = match a with 
-        | Learn i -> (match Typing.doPolyTyping ys i with 
-                        | MkPartial pf -> Some (WFAct_Learn ys i pf))
-        | Drop i -> (match Typing.doPolyTyping ys i with 
-                       | MkPartial pf -> Some (WFAct_Drop ys i pf))
-        | Fwd p i -> 
-            let (tp, pfp) = Typing.doTyping ys p in 
-              if tp=Principal
-              then match Typing.doPolyTyping ys i with
-                | MkPartial pf -> Some (WFAct_Fwd ys p i pfp pf)
-              else None            
-        | Send p i -> 
-            let (tp, pfp) = Typing.doTyping ys p in 
-              if tp=Principal
-              then match Typing.doPolyTyping ys i with
-                | MkPartial pf -> Some (WFAct_Send ys p i pfp pf)
-              else None in
-      let wfconds = mapL_p<condition, (WFCond xs)> (wfCond xs) cs in 
-      let wfacts = mapL_p<(ruleAction xs cs), (WFAct xs)> (wfAct xs) acts in 
-        match wfconds, wfacts with 
-          | Some pf1, Some pf2 when includes (vars cs) xs -> 
-              let pf = WFR_Rule xs cs acts pf1 pf2 in true
-          | _ -> false
-
-val tcrule: rule -> wfrule
-let tcrule r = assume (WFR r); r
-  (* if checkWFR r  *)
-  (* then r  *)
-  (* else (assume (WFR r); *)
-  (*       r) (\* raise "Ill-typed rule" *\) *)
-
-val run : list rule -> unit
-let run rules = go (map tcrule rules)
+    run rs
 
 type TrustRule :: _ = 
     (fun (xs:vars) (cs:conditions) (a:action) => 

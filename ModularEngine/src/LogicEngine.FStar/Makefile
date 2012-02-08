@@ -7,7 +7,9 @@ FSTAR=fstar --writePrims --UNSAFE --genIL --dotnet4 --odir bin --prims prims.fst
 #typeHeaders.fst translationFromFStar.fst 
 SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst crypto.fst authenticate.fst marshall.fst net.fst state.fst interp.fst 
 
-bin/%.exe: $(SOURCES) %.fst
+retail: bin/retailcustomer.exe bin/retailwebsite.exe bin/retailpaypal.exe
+
+bin/%.exe: $(SOURCES) examples/%.fst
 	$(FSTAR) --writePrims $^ --odir bin 
 
 bin/interp.dll: bin/FSCrypto.dll $(SOURCES)
@@ -22,8 +24,8 @@ qil: util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst qil.fst te
 bin/parseDkal.exe:  parseDkal.fs
 	fsc  --warn:0 -g -O --mlcompatibility  -o $@ -r FSharp.PowerPack.dll -r FSharp.PowerPack.Compatibility.dll -r bin/FParsecCS.dll -r bin/FParsec.dll parseDkal.fs
 
-%.fst: bin/parseDkal.exe %.dkal
-	bin/parseDkal.exe $*.dkal > $@
+examples/%.fst: bin/parseDkal.exe examples/%.dkal
+	bin/parseDkal.exe examples/$*.dkal > examples/$*.fst
 
 wc: $(SOURCES)
 	wc -l prims.fst $^

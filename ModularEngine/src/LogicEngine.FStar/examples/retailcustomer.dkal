@@ -1,0 +1,13 @@
+upon Init(i) as m 
+then send _WEBSITE_ (_CUSTOMER_ said Buy(i, 10))
+     send _CUSTOMER_ (_CUSTOMER_ said InitTrans(_WEBSITE_, i, 10))
+     drop m 
+
+upon justified _CUSTOMER_ said InitTrans(w, i, n) as m1
+upon justified (w said Pay(_CUSTOMER_, oid, i, n)) as m2
+then send _PAYPAL_ (_CUSTOMER_ said Auth(w, oid, n))
+     fwd _PAYPAL_ m2
+     drop m1
+
+using "retail.cfg" as _CUSTOMER_
+
