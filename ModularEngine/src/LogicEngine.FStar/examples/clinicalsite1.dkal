@@ -1,0 +1,34 @@
+(* common to all principals *)
+upon Init(x) as m
+then learn Record(101, 1005, 42, "ala ma kota")
+     learn Record(102, 1015, 42, "kot ma ale")
+     learn Record(103, 1016, 42, "abecadlo")
+     learn Record(104, 1100, 42, "z pieca spadlo")
+     (* id, patient, trial, data *)
+     learn Trial(42, _ORG1_, "highly classified trial")
+     (* id, organizer, name *)
+     learn BasicLeq(1000, 1005, 1250)
+     learn BasicLeq(1000, 1015, 1250)
+     learn BasicLeq(1000, 1016, 1250)
+     learn BasicLeq(1000, 1100, 1250)
+
+(* specific to site1 *)
+upon Init(x) as mthe 
+then learn PhysAssignment("phys1", 42, 1010, 1050)
+
+upon (org said SiteParticipates(_SITE1_, trial))
+upon (org said SiteAllocatedPatients(_SITE1_, n1, n2, trial))
+if and(Trial(trial, org, d),
+       PhysAssignment(trial, phys, n1, n2),
+       BasicLeq(n1, p1, n2))
+upon =>(x,
+        org said MayRead(phys, r))
+then send phys PhysParticipates(phys, trial, _ORG1_)
+     send phys PhysAllocatedPatients(phys, p1, p2, trial, _ORG1_)
+     send phys forall number, d.
+                 (=>(and(Record(r, number, trial, d),
+                         Basic(p1, number, p2)),
+                     _ORG1_ said MayRead(phys, r)))
+     fwd phys (=>(x, MayRead(phys, r)))
+
+using "clinical.cfg" as _ORG1_
