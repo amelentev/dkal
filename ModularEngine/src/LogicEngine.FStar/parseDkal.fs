@@ -109,6 +109,7 @@ let str s = skipString s >>. ws
 
 let keywords = ["upon";
                 "using";
+                "and";
                 "as";
                 "of";
                 "then";
@@ -152,7 +153,7 @@ let IDENT startChar restChar : Parser<string, 'a> = fun state ->
 let ANYIDENT s = IDENT isIdentStartChar isIdentChar s
 let varIdent = IDENT isLower isIdentChar
 let relationIdent = IDENT isUpper isIdentChar
-let principalIdent = IDENT (fun x -> x='_') (fun x -> isUpper x || (x = '_'))
+let principalIdent = IDENT (fun x -> x='_') (fun x -> isUpper x || (x = '_') || isDigit x)
 
 type tok<'a> = Parser<unit,'a>
 let tok s : tok<'a> = fun st -> st |> 
@@ -575,7 +576,7 @@ let parseFile fn pars =
   let reader = new System.IO.StreamReader(stream) in
   let fileAsString = reader.ReadToEnd() in
     stream.Close(); 
-    let ast = runParserOnString pars () fn fileAsString in 
+    let ast = runParserOnString (ws >>. pars) () fn fileAsString in 
       match ast with 
         | Success(r, _, _) -> r
         | _ -> pr "%A" ast; failwith (spr "failed to parse file %s" fn)
@@ -858,7 +859,7 @@ let annotate relations rules =
                   | Uvar t -> (t := Some typ; 
                                TermVar(x,typ), ctx)
                   | t' when t'=typ -> TermVar(x,typ), ctx
-                  | _ -> failwith (spr "Failed to type variable %s" x))
+                  | t' -> failwith (spr "Failed to type variable %s. Expected %s got %s\n" x (printTyp typ) (printTyp t')))
            | _ -> failwith (spr "Failed to type variable %s" x))
           
     | Integer i when typ=Int -> tm, ctx
