@@ -1,0 +1,12 @@
+upon Init(i) as m
+then learn CanAccess("readme.txt", _JOHN_, "read")
+     learn CanAccess("holidays.jpg", _JOHN_, "read")
+     learn CanAccess("holidays.jpg", _JOHN_, "write")
+     drop m
+
+upon justified (u said Ask(f, u, o)) as m
+if CanAccess(f, u, o) 
+then send u (_FILESYSTEM_ said Allowed(f, u, o))
+     drop m
+
+using "filesystem.cfg" as _FILESYSTEM_

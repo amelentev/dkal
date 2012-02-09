@@ -38,6 +38,10 @@ assume forall (i:int).
   ((ReprConst (Int i)) = (Strcat "Int("
                          (Strcat (ReprInt i)
                           ")")))
+assume forall (s:string).
+  ((ReprConst (Str s)) = (Strcat "Str("
+                         (Strcat s
+						 ")")))
 assume forall (b:bytes). 
   ((ReprConst (Bytes b)) = (Strcat "Bytes("
                               (Strcat (B64 b) ")")))
@@ -204,6 +208,7 @@ let rec printConst c = match c with
   | TrueT -> "TrueT"
   | FalseT -> "FalseT"
   | Int i -> strcat "Int(" (strcat (intToString i) ")")
+  | Str s -> strcat "Str(" (strcat s ")")
   | Bytes b -> strcat "Bytes(" (strcat (ToBase64String b) ")")
   | SubstrateConstant o -> strcat "SubstrateConstant("
                            (strcat (printConst o) ")")
@@ -385,6 +390,12 @@ let rec parseConst str =
     let r_n, rest = strSplitByDelimiter rest ")" in
     let rest = strRmPfx rest ")" in
     (Int (stringToInt r_n)), strcat "Int(" (strcat r_n ")"), rest
+
+  else if strStartsWith str "Str(" then
+    let rest = strRmPfx str "Str(" in
+	let r_n, rest = strSplitByDelimiter rest ")" in
+	let rest = strRmPfx rest ")" in
+	Str r_n, strcat "Str(" (strcat r_n ")"), rest
 
   else if strStartsWith str "Bytes(" then 
     let rest = strRmPfx str "Bytes(" in

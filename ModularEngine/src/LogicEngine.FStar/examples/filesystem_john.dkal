@@ -1,0 +1,8 @@
+upon Init(i) as m
+then send _FILESYSTEM_ (_JOHN_ said Ask("readme.txt", _JOHN_, "read"))
+     send _FILESYSTEM_ (_JOHN_ said Ask("readme.txt", _JOHN_, "write"))
+     send _FILESYSTEM_ (_JOHN_ said Ask("secret_file.txt", _JOHN_, "read"))
+     send _FILESYSTEM_ (_JOHN_ said Ask("holidays.jpg", _JOHN_, "write"))
+     drop m
+
+ using "filesystem.cfg" as _JOHN_
