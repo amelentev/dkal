@@ -5,10 +5,14 @@ then learn Record(101, 1005, 42, "ala ma kota")
      learn Record(103, 1016, 42, "abecadlo")
      learn Record(104, 1100, 42, "z pieca spadlo")      (* id, organizer, name *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
-     learn BasicLeq(1000, 1005, 1250)
-     learn BasicLeq(1000, 1015, 1250)
-     learn BasicLeq(1000, 1016, 1250)
-     learn BasicLeq(1000, 1100, 1250)
+     learn BasicLeq(1000, 1005)
+     learn BasicLeq(1005, 1250)
+     learn BasicLeq(1000, 1015)
+     learn BasicLeq(1015, 1250)
+     learn BasicLeq(1000, 1016)
+     learn BasicLeq(1016, 1250)
+     learn BasicLeq(1000, 1100)
+     learn BasicLeq(1016, 1250)
 
 (* specific to org1 *)
 upon Init(x) as m
@@ -24,7 +28,8 @@ then send site SiteParticipates(site, trial)
                  (_ORG1_ said
                    (=>(and(site said (MayRead(person, rec)), 
                            Record(rec, number, trial, data), 
-                           BasicLeq(n1, number, n2)),
+                           BasicLeq(n1, number),
+                           BasicLeq(number, n2)),
                        _ORG1_ said (MayRead(person, rec)))))
 
 using "clinical.cfg" as _ORG1_
