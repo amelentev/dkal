@@ -12,9 +12,8 @@ then send site (_ORG1_ said SiteParticipates(site, trial))
      send site (_ORG1_ said SiteAllocatedPatients(site, n1, n2, trial))
      send site forall person, rec, number, data.
                  (=>(and(site said (MayRead(person, rec)), 
-                           Record(rec, number, trial, data), 
-                           BasicLeq(n1, number),
-                           BasicLeq(number, n2)),
+                           Record(rec, number, trial, data),
+						   InRange(number, n1, n2)),
                        _ORG1_ said (MayRead(person, rec))))
 
 using "clinical.cfg" as _ORG1_

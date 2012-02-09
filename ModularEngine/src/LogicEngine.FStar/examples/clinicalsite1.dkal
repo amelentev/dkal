@@ -8,8 +8,8 @@ then learn Record(101, 1010, 42, "ala ma kota")    (* id, patient, trial *)
 upon justified (org said SiteParticipates(_SITE1_, trial)) as m1
 upon justified (org said SiteAllocatedPatients(_SITE1_, n1, n2, trial)) as m2
 if and(Trial(trial, org, datatrial),
-       PhysAssignment(phys, trial, p1, p2),
-	   eval$checkRange "p1" "n1" "p1"$,
+       PhysAssignment(phys, trial, p1, p2))
+if and(eval$checkRange "p1" "n1" "p1"$,
 	   eval$checkRange "n2" "p2" "n2"$)
 (*upon justified forall person, r, (number:int), (data:string) *)
 (*(=>(x,
@@ -18,8 +18,7 @@ then send phys (_SITE1_ said PhysParticipates(phys, trial, _SITE1_))
      send phys (_SITE1_ said PhysAllocatedPatients(phys, p1, p2, trial, _SITE1_))
      send phys forall r, number, datarecord.
                  (=>(and(Record(r, number, trial, datarecord),
-                         BasicLeq(p1, number),
-                         BasicLeq(number, p2)),
+                         InRange(number, p1, p2)),
                      _SITE1_ said MayRead(phys, r)))
      (*fwd phys m3 *)
 	 drop m1

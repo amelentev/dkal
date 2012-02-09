@@ -11,6 +11,7 @@ retail: bin/retailcustomer.exe bin/retailwebsite.exe bin/retailpaypal.exe
 
 calc: bin/alice.exe bin/bob.exe
 
+clinical: bin/clinicalorg1.exe bin/clinicalsite1.exe bin/clinicalphys1.exe bin/clinicalkeymgr.exe
 bin/%.exe: $(SOURCES) examples/%.fst
 	$(FSTAR) --writePrims $^ --odir bin 
 

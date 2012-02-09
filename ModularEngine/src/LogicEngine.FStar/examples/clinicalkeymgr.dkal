@@ -3,6 +3,8 @@ upon Init(x) as m
 then learn Record(101, 1010, 42, "ala ma kota")   (* id, patient, trial *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
      learn Key(101, 13)
+	 (*learn forall n, n1, n2. (=> (eval$checkRange "n" "n1" "n2"$,
+	                              InRange(n, n1, n2)))*)
      drop m
 
 upon justified (phys said RequestToRead(phys, r)) as m
@@ -18,8 +20,6 @@ upon justified forall r, (number:int), (data:string). (=>(x, p said MayRead(phys
 then (*learn forall r, number, data. (=>(x, p said MayRead(phys, r)))*)
      learn m
      drop m
-
-(* if eval$checkRange then BasicLeq *)
 
 if (person said RequestToRead(person, r))
 if and(Record(r, patient, trial, recorddata),

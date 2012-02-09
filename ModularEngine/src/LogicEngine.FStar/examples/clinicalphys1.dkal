@@ -8,8 +8,8 @@ then learn Record(101, 1010, 42, "ala ma kota")  (* id, patient, trial *)
 upon justified (site said PhysParticipates(_PHYS1_, trial, site)) as m1
 upon justified (site said
                  PhysAllocatedPatients(_PHYS1_, p1, p2, trial, site)) as m2
-if and(PhysPatients(number, "true"),
-       eval$checkRange "number" "p1" "p2",
+if PhysPatients(number, "true")
+if and(eval$checkRange "number" "p1" "p2"$,
        Record(r, number, trial, datarecord),
        Trial(trial, org, datatrial))
 (*upon justified forall phys, rec, (n:int), (data:string). (=>(x,
