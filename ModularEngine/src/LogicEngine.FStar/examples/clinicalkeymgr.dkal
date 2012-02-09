@@ -2,7 +2,6 @@
 upon Init(x) as m   
 then learn Record(101, 1010, 42, "ala ma kota")   (* id, patient, trial *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
-     learn BasicLeq(1000, 1005)
      learn Key(101, 13)
      drop m
 
@@ -20,12 +19,13 @@ then (*learn forall r, number, data. (=>(x, p said MayRead(phys, r)))*)
      learn m
      drop m
 
+(* if eval$checkRange then BasicLeq *)
+
 if (person said RequestToRead(person, r))
 if and(Record(r, patient, trial, recorddata),
        Trial(trial, org, trialdata))
-if (org said MayRead(person, r)) (* should be justified? *)
+(*if (org said MayRead(person, r)) *)
 if Key(r, k)
-then send person (_KEYMGR_ said KeyForRecord(person, r))
-    
+then send person (_KEYMGR_ said KeyForRecord(person, r, k))
 
 using "clinical.cfg" as _KEYMGR_
