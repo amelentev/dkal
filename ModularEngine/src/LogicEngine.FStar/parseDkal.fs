@@ -108,6 +108,7 @@ let ch  c = skipChar c >>. ws
 let str s = skipString s >>. ws
 
 let keywords = ["upon";
+                "eval";
                 "using";
                 "and";
                 "as";
@@ -193,6 +194,7 @@ let STRING_T  st = tok "string"  st
 let PRINCIPAL st = tok "prin"  st 
 let INFON     st = tok "infon"  st 
 let EVIDENCE_T st = tok "ev"  st 
+let EVAL      st = tok "eval"  st 
 
 let DOUBLE_QUOTE st = skipString "\"" st 
 let QUOTE     st = skipString "'"  st 
@@ -209,6 +211,7 @@ let RRARROW   st = stok "=>"  st
 let RQUOTE    st = stok "'"  st
 let DOT       st = stok "."  st
 let EQUALS    st = stok "="  st 
+let DOLLAR    st = stok "$"  st 
 let SEMICOLON st = stok ";"  st 
 
 let STRING : Parser<string, 'a> = fun s ->
@@ -311,12 +314,14 @@ and infon =
   | Implies of infon * infon
   | And of infon * infon
   | Evidence of term * infon
+  | Eval of string
 
 and term = 
   | TermVar of (string * typ)
   | Integer of int
   | Str of string
   | Principal of string
+  | EvalTerm of typ * string
 
 and typ = 
   | Int
@@ -326,6 +331,7 @@ and typ =
   | Prin
   | Ev
   | Uvar of (typ option) ref
+exception Failure of string
 
 let unknown_typ () = Uvar (ref None)
 let rec compress typ = match typ with
@@ -333,6 +339,16 @@ let rec compress typ = match typ with
                  | None -> typ 
                  | Some t -> compress t)
   | _ -> typ
+let set_uvar u typ : unit = match compress u with 
+  | Uvar t -> t := Some typ
+  | _ -> raise (Failure "Uvar already set")
+
+let eval = fun s -> s |> 
+    begin
+      (EVAL >>.
+       DOLLAR >>.
+      (manyTill anyChar DOLLAR) |>> (fun s -> new String(s |> Array.of_list)))
+    end
 
 let term = fun s -> s |>
     begin
@@ -340,6 +356,7 @@ let term = fun s -> s |>
  <|>  (STRING   |>> (fun s -> Str s))
  <|>  (pint32   |>> (fun i -> Integer i))
  <|>  (principalIdent |>> (fun i -> Principal i))
+ <|>  (eval |>> (fun code -> (EvalTerm(unknown_typ(), code))))
     end
 
 let sequenceMod delim p = 
@@ -356,14 +373,16 @@ let terms = fun s -> s |> (sequence COMMA term)
 
 let rec infon = fun s -> s |>
     begin
+      (eval |>> Eval)
+<|>                                       
       (relationIdent >>= (fun r -> 
        opt (LPAREN >>.
             terms >>= (fun args -> 
             RPAREN >>. preturn args)) >>= (function None -> preturn (Relation(r, [])) 
                                      | Some args ->  preturn (Relation(r, args)))))
 <|>
-      (bt "said" 
-         (term >>= (fun p -> 
+    (bt "said" 
+       (term >>= (fun p -> 
           SAID >>. 
           infon |>> (fun i -> Said(p, i)))))
 
@@ -433,6 +452,7 @@ type idconf = {prin:string; pubkey:string; privkey:string option; port:int}
 type config = 
   | IdCfg of idconf
   | RelCfg of string * typ list
+  | Prelude of string
 
 let firstCondition = fun s -> s |> (IF <|> UPON)
 
@@ -563,7 +583,14 @@ let relationConfig = fun s -> s |>
       types |>> (fun tl -> RelCfg(r, tl)))
     end
 
-let config = identityConfig <|> relationConfig
+let preludeConfig = fun s -> s |>
+    begin 
+      (DOLLAR >>.
+      (manyTill anyChar DOLLAR) |>> 
+      (fun s -> Prelude (new String(s |> Array.of_list))))
+    end
+
+let config = identityConfig <|> relationConfig <|> preludeConfig
 
 let rec configs = fun s -> s |> 
     begin 
@@ -607,7 +634,6 @@ let printManyIndex delim s l =
     | hd::(_::_ as tl) -> spr "%s %s %s" (s ix hd) delim (aux (ix+1) tl) in 
     aux 0 l
 
-exception Failure of string
 
 let rec printTyp t = match compress t with 
   | Int -> "Int32"
@@ -636,6 +662,7 @@ and printInfon relations = function
   | Said(p, i) -> spr "(App SaidInfon\n [%s;\n %s])" (printTerm p) (printInfon relations i)
   | Implies(i, j) -> spr "(App ImpliesInfon\n [%s;\n %s])" (printInfon relations i) (printInfon relations j)
   | And(i, j) -> spr "(App AndInfon\n [%s; %s])" (printInfon relations i) (printInfon relations j)
+  | Eval(code) -> spr "(Eval Infon (%s))" code
   | Evidence(t,i) -> "(Evidence XXX XXX)"
 
 and printRelation relations r = 
@@ -648,6 +675,7 @@ and printTerm = function
   | Integer i -> spr "(Const (Int %d))" i
   | Str s -> spr "(Const (Str \"%s\"))" s
   | Principal p -> spr "(Const (PrincipalConstant \"%s\"))" p
+  | EvalTerm(typ, code) -> spr "(Eval %s (%s))" (printTyp typ) code
 
 and printTerms s = spr "[ %s ]" (printMany ";\n" printTerm s)
  
@@ -690,16 +718,18 @@ let printConfig = function
            | None -> "None"
            | Some s -> spr "(Some \"%s\")" s)
         cfg.port
-        
+
+let printPrelude ps = printMany "\n\n" (function (Prelude code) -> code) ps
 let printConfigs cl = spr "[ %s ]" (printMany ";\n" printConfig cl)
 
-let printRulesAndConfig relations (fn:string) (rules, configs) = 
+let printRulesAndConfig prelude relations (fn:string) (rules, configs) = 
   let mname = System.IO.Path.GetFileNameWithoutExtension(fn) in 
   let mname = mname.ToUpper() in
     pr "module %s\n" mname;
     pr "open Types\n";
     pr "open Interp\n";
     pr "open Authenticate\n\n";
+    pr "%s\n" (printPrelude prelude);
     pr "%s\n" (printManyIndex "\n\n" (printRule relations) rules);
     pr ";;\n let _ = initialize (%s) in \n let _ = run [%s] in ()" 
       (printConfigs configs)
@@ -846,6 +876,8 @@ let annotate relations rules =
         let i, ctx = checkInfon extflag ctx i in 
           Evidence(t,i), ctx
 
+    | Eval code -> Eval code, ctx
+
     | i -> failwith (spr "Failed to type infon %A" i)
 
   and checkTerm extflag (ctx:env) tm typ : term * env = match tm with
@@ -865,6 +897,7 @@ let annotate relations rules =
     | Integer i when typ=Int -> tm, ctx
     | Str s when typ = String -> tm, ctx
     | Principal p when typ=Prin -> tm, ctx
+    | EvalTerm(t, _) -> set_uvar t typ; tm, ctx
     | _ -> failwith (spr "Failed to type term %A; expected %A" tm typ) in
     
     List.map (annotRule ([],[])) rules
@@ -872,9 +905,10 @@ let annotate relations rules =
 let parse fn = 
   dir := System.IO.Path.GetDirectoryName(fn);
   let rules, config = parseFile fn rulesAndConfig in
-  let relations, identities = List.partition (function RelCfg _ -> true | _ -> false) config in
+  let relations, identities_and_prelude = List.partition (function RelCfg _ -> true | _ -> false) config in
+  let prelude, identities = List.partition (function Prelude _ -> true | _ -> false) identities_and_prelude in 
   let rules' = annotate relations rules in 
-    printRulesAndConfig relations fn (rules', identities)
+    printRulesAndConfig prelude relations fn (rules', identities)
       
 ;; 
 
@@ -885,5 +919,7 @@ let _ =
     then Printf.printf "Usage: parseDkal <filename>.dkal\n"
     else 
       let filename = Sys.argv.(1) in 
-        parse filename
+        try 
+          parse filename
+        with Failure msg -> pr "%s" msg
   

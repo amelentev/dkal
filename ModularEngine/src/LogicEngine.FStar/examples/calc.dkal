@@ -18,14 +18,12 @@ drop m
 (* BOB's policy *)
 upon (p said NeedSum(x, y)) as m
 then 
-   fwd p (_BOB_ said Sum(x, y, x))
-   (* fwd p (_BOB_ said Sum(x, y, (x+y))) *)
+   fwd p (_BOB_ said Sum(x, y, eval$(add "x" "y")$))
    drop m
             
 upon (p said NeedProduct(x, y)) as m
 then  
-  send p (_BOB_ said Product(x, y, y))
-  (* send p (_BOB_ said Product(x, y, (x*y))) *)
+  send p (_BOB_ said Product(x, y, eval$(prod "x" "y")$))
   drop m
 
 where _ALICE_ =
@@ -44,3 +42,14 @@ and NeedProduct of (int, int)
 and KnowsMath of prin
 and Sum of (int, int, int)
 and Product of (int, int, int)
+and $let add x y (env:subst) : term = 
+       match (lookup env x), (lookup env y) with 
+         | Some (Const (Int i)), Some (Const (Int j)) -> Const (Int (i + j))
+         | _ -> raise "Impos"
+    $
+
+and $let prod x y (env:subst) : term = 
+    match (lookup env x), (lookup env y) with 
+      | Some (Const (Int i)), Some (Const (Int j)) -> Const (Int (i * j))
+      | _ -> raise "Impos")
+    $

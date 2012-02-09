@@ -22,7 +22,7 @@ then learn Key(101, 13)
      learn Key(104, 13131313)
 
 (* TODO: restrict to x justified *)
-upon justified x as m
+upon justified (x)
 then learn x
 
 upon (person said RequestToRead(person, r)) as m
