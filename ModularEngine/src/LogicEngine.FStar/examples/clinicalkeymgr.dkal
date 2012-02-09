@@ -21,14 +21,22 @@ then learn Key(101, 13)
      learn Key(103, 131313)
      learn Key(104, 13131313)
 
+<<<<<<< local
 (* TODO: restrict to x justified *)
 upon justified (x)
 then learn x
+=======
+upon justified RequestToRead(phys, r) as m
+then learn RequestToRead(phys, r)
+>>>>>>> other
 
-upon (person said RequestToRead(person, r)) as m
+upon justified (=>(x, p said MayRead(phys, r))) as m
+then learn (=>(x, p said MayRead(phys, r)))
+
+upon justified (person said RequestToRead(person, r)) as m
 if and(Record(r, patient, trial, recorddata),
        Trial(trial, org, trialdata))
-if (org said MayRead(person, r))
+if (org said MayRead(person, r)) (* should be justified? *)
 if Key(r, k)
 then send person (KeyForRecord(person, r))
      drop m

@@ -18,14 +18,14 @@ then learn Record(101, 1005, 42, "ala ma kota")
 upon Init(x) as m
 then learn PhysAssignment(_SITE1_, 42, 1010, 1050)
 
-upon (org said SiteParticipates(_SITE1_, trial)) as m1
-upon (org said SiteAllocatedPatients(_SITE1_, n1, n2, trial)) as m2
+upon justified (org said SiteParticipates(_SITE1_, trial)) as m1
+upon justified (org said SiteAllocatedPatients(_SITE1_, n1, n2, trial)) as m2
 if and(Trial(trial, org, datatrial),
        PhysAssignment(phys, trial, n1, n2),
        BasicLeq(n1, p1),
        BasicLeq(p2, n2))
-upon =>(x,
-        org said MayRead(phys, r)) as m3
+upon justified =>(x,
+                  org said MayRead(phys, r)) as m3
 then send phys PhysParticipates(phys, trial, _ORG1_)
      send phys PhysAllocatedPatients(phys, p1, p2, trial, _ORG1_)
      send phys forall number, datarecord.
