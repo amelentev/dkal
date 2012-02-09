@@ -20,11 +20,11 @@ if Trial(trial, _ORG1_, n)
 if SiteAssignment(site, trial, n1, n2)
 then send site SiteParticipates(site, trial)
      send site SiteAllocatedPatients(site, n1, n2, trial)
-     send site (_ORG1_ said
-                 (forall person, rec, number.
+     send site forall person, rec, number, data.
+                 (_ORG1_ said
                    (=>(and(site said (MayRead(person, rec)), 
-                           Record(rec, number, trial), 
+                           Record(rec, number, trial, data), 
                            BasicLeq(n1, number, n2)),
-                       _ORG1_ said (MayRead(person, rec))))))
+                       _ORG1_ said (MayRead(person, rec)))))
 
 using "clinical.cfg" as _ORG1_
