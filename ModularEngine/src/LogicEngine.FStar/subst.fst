@@ -107,6 +107,9 @@ let rec lookupVar s x = match s with
          assert ((Select s x) = (Select s' x));
          lookupVar s' x)
 
+val lookupInt: substitution -> string -> option term
+let lookupInt s x = lookupVar s ({name =x; typ = Int32})
+
 val intFunc: string -> string -> (int -> int -> int) -> (substitution -> term)
 let intFunc x y f =
   let makeIntVar (n:string) : var = {name = n; typ = Int32} in
@@ -147,7 +150,7 @@ let rec freeVars t = match t with
   | App f (h::t) -> append (freeVars h) (freeVars (App f t))
   | SubstrateQueryTerm s -> append (freeVars s.n) (append (freeVars s.low) (freeVars s.hi))
   | SubstrateUpdateTerm s -> raise "NYI: substrateUpdateTerm_Vars s"
-  | EvalTerm _ _ -> []
+  | Eval _ _ -> []
 
 val freeVarsSubst: s:substitution -> f:vars{(f = (FreeVarsSubst s))}
 let rec freeVarsSubst s = match s with
@@ -197,7 +200,7 @@ let rec subst i s = match i with
   | App f tl -> App f (substList tl s)
   | SubstrateQueryTerm q -> SubstrateQueryTerm({n=(subst q.n s); low=(subst q.low s); hi=(subst q.hi s)})
   | SubstrateUpdateTerm _ -> raise "NYI: Substrate updates"
-  | EvalTerm _ evalFunc -> 
+  | Eval _ evalFunc -> 
     let t = evalFunc s in
 	(assume ((Subst i s)=t); t)
 

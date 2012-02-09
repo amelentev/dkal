@@ -102,7 +102,7 @@ module Types
     | App                 : func -> list term -> term
     | SubstrateQueryTerm  : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
-	| EvalTerm            : typ -> (substitution -> term) -> term
+	| Eval                : typ -> (substitution -> term) -> term
 
   and polyterm = 
     | MonoTerm      : term -> polyterm

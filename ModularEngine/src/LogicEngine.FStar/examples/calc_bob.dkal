@@ -1,0 +1,11 @@
+upon (p said NeedSum(x, y)) as m
+then 
+   fwd p (_BOB_ said Sum(x, y, eval$(add "x" "y")$))
+   drop m
+            
+upon (p said NeedProduct(x, y)) as m
+then  
+  send p (_BOB_ said Product(x, y, eval$(prod "x" "y")$))
+  drop m
+
+using "calc.cfg" as _BOB_
