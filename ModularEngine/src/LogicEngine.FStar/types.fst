@@ -61,6 +61,7 @@ module Types
   and func =
     | AsInfon       : func (* [SubstrateQuery] -> Infon *)
     | EmptyInfon    : func (* [] -> Infon *)
+	| FalseInfon    : func
     | AndInfon      : func (* [Infon; Infon] -> Infon *)
     | ImpliesInfon  : func (* [Infon; Infon] -> Infon *)
     | SaidInfon     : func (* [Principal; Infon] -> Infon *)

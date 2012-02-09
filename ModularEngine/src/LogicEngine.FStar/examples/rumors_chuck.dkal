@@ -1,0 +1,11 @@
+upon justified (q said IsTheNextBigStar(p)) as m1
+upon justified (r said IsTheNextBigStar(p)) as m2 
+if eval$(neq "q" "r")$ then
+  learn IsTheNextBigStar(p)
+  drop m1
+  drop m2
+
+if IsTheNextBigStar(p) then
+send _PRESS_ (IsTheNextBigStar(p))
+
+using "rumors.cfg" as _CHUCK_

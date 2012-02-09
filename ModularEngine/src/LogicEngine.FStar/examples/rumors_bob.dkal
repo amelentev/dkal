@@ -1,0 +1,5 @@
+upon justified (p said IsTheNextBigStar(p)) as m then
+  send _CHUCK_ (_BOB_ said IsTheNextBigStar(p))
+  drop m
+
+using "rumors.cfg" as _BOB_

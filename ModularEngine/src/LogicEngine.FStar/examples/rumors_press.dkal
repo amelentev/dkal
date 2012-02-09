@@ -1,0 +1,4 @@
+upon Init(i) as m then
+drop m
+
+using "rumors.cfg" as _PRESS_

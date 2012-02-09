@@ -107,8 +107,8 @@ let rec lookupVar s x = match s with
          assert ((Select s x) = (Select s' x));
          lookupVar s' x)
 
-val lookupInt: substitution -> string -> option term
-let lookupInt s x = lookupVar s ({name =x; typ = Int32})
+val lookupName: substitution -> string -> typ -> option term
+let lookupName s x t = lookupVar s ({name =x; typ = t})
 
 val intFunc: string -> string -> (int -> int -> int) -> (substitution -> term)
 let intFunc x y f =

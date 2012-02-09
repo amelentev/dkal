@@ -685,7 +685,7 @@ let rec printRule relations i (Rule (ctx, cl, al)) =
          let actions = %s in \n\t \
            mkRule [%s] conditions actions\n" 
     i 
-    (printConditions relations cl) 
+    (printConditions relations (List.rev cl)) 
     (printActions relations al)
     (printMany "; " printVar ctx)
     
