@@ -1,0 +1,6 @@
+upon Init(i) as m
+then
+  send _P2_ (_P1_ said HelloWorldFrom(_P1_))
+  drop m
+
+using "hello_world.cfg" as _P1_

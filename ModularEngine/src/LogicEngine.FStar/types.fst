@@ -61,6 +61,7 @@ module Types
   and func =
     | AsInfon       : func (* [SubstrateQuery] -> Infon *)
     | EmptyInfon    : func (* [] -> Infon *)
+	| FalseInfon    : func
     | AndInfon      : func (* [Infon; Infon] -> Infon *)
     | ImpliesInfon  : func (* [Infon; Infon] -> Infon *)
     | SaidInfon     : func (* [Principal; Infon] -> Infon *)
@@ -102,7 +103,7 @@ module Types
     | App                 : func -> list term -> term
     | SubstrateQueryTerm  : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
-	| EvalTerm            : (substitution -> term) -> term
+	| Eval                : typ -> (substitution -> term) -> term
 
   and polyterm = 
     | MonoTerm      : term -> polyterm

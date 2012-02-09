@@ -42,6 +42,7 @@ assume Subst_QyTm:forall (q:ISubstrateQueryTerm) (s:substitution).
 logic function FreeVars : term -> vars
 assume FreeVars_Var  : forall (x:var). (FreeVars(Var x) = [x])
 assume FreeVars_Const: forall (c:constant). (FreeVars(Const c) = [])
+
 assume FreeVars_App1 : forall (f:func). (FreeVars(App f []) = [])
 assume FreeVars_App2 : forall (f:func) (t:term) (tl:list term).
                        ((FreeVars(App f (t::tl))) = (Append (FreeVars t) (FreeVars(App f tl))))
@@ -107,6 +108,21 @@ let rec lookupVar s x = match s with
          assert ((Select s x) = (Select s' x));
          lookupVar s' x)
 
+val lookupName: substitution -> string -> typ -> option term
+let lookupName s x t = lookupVar s ({name =x; typ = t})
+
+val intFunc: string -> string -> (int -> int -> int) -> (substitution -> term)
+let intFunc x y f =
+  let makeIntVar (n:string) : var = {name = n; typ = Int32} in
+  let getInt (t:term) : int =
+    match t with
+	  | Const c -> (match c with Int i -> i | _ -> raise "plusFunc: not an int")
+	  | _ -> raise "plusFunc: not a const" in
+  fun (s:substitution) ->
+    match (lookupVar s (makeIntVar x), lookupVar s (makeIntVar y)) with
+	  | Some t1, Some t2 -> Const (Int (f (getInt t1) (getInt t2)))
+	  | _ -> raise "cannot find var"
+
 val extendSubst : s:substitution -> x:var
                -> t:term(*{(Subst t s)=t && not(In x (Domain s))}*) (* TODO *)
                -> s':substitution{s'=((x,t)::s)}
@@ -135,7 +151,7 @@ let rec freeVars t = match t with
   | App f (h::t) -> append (freeVars h) (freeVars (App f t))
   | SubstrateQueryTerm s -> append (freeVars s.n) (append (freeVars s.low) (freeVars s.hi))
   | SubstrateUpdateTerm s -> raise "NYI: substrateUpdateTerm_Vars s"
-  | EvalTerm _ -> []
+  | Eval _ _ -> assume ([] = (FreeVars t)); []
 
 val freeVarsSubst: s:substitution -> f:vars{(f = (FreeVarsSubst s))}
 let rec freeVarsSubst s = match s with
@@ -185,7 +201,7 @@ let rec subst i s = match i with
   | App f tl -> App f (substList tl s)
   | SubstrateQueryTerm q -> SubstrateQueryTerm({n=(subst q.n s); low=(subst q.low s); hi=(subst q.hi s)})
   | SubstrateUpdateTerm _ -> raise "NYI: Substrate updates"
-  | EvalTerm evalFunc -> 
+  | Eval _ evalFunc -> 
     let t = evalFunc s in
 	(assume ((Subst i s)=t); t)
 

@@ -1,0 +1,18 @@
+upon Init(i) as m
+then 
+   add NeedSum(1, 2)
+   add NeedProduct(11, 22)
+   add KnowsMath(_BOB_)
+   drop m
+
+upon NeedSum(x, y) as m
+upon KnowsMath(p) 
+ then fwd p (_ALICE_ said NeedSum(x, y))
+      drop m
+
+upon NeedProduct(x, y) as m
+upon KnowsMath(p) then
+fwd p (_ALICE_ said NeedProduct(x, y))
+drop m
+
+using "calc.cfg" as _ALICE_
