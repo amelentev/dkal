@@ -1,0 +1,36 @@
+(* common to all principals *)
+upon Init(x) as m   
+then learn Record(101, 1005, 42, "ala ma kota")
+     learn Record(102, 1015, 42, "kot ma ale")
+     learn Record(103, 1016, 42, "abecadlo")
+     learn Record(104, 1100, 42, "z pieca spadlo")      (* id, patient, trial *)
+     learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
+     learn BasicLeq(1000, 1005)
+     learn BasicLeq(1005, 1250)
+     learn BasicLeq(1000, 1015)
+     learn BasicLeq(1015, 1250)
+     learn BasicLeq(1000, 1016)
+     learn BasicLeq(1016, 1250)
+     learn BasicLeq(1000, 1100)
+     learn BasicLeq(1016, 1250)
+
+(* specific to keymgr *)
+upon Init(x) as m
+then learn Key(101, 13)
+     learn Key(102, 1313)
+     learn Key(103, 131313)
+     learn Key(104, 13131313)
+
+(* TODO: restrict to x justified *)
+upon justified x as m
+then learn x
+
+upon (person said RequestToRead(person, r)) as m
+if and(Record(r, patient, trial, recorddata),
+       Trial(trial, org, trialdata))
+if (org said MayRead(person, r))
+if Key(r, k)
+then send person (KeyForRecord(person, r))
+     drop m
+
+using "clinical.cfg" as _KEYMGR_
