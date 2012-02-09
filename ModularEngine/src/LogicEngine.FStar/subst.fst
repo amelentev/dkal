@@ -42,6 +42,7 @@ assume Subst_QyTm:forall (q:ISubstrateQueryTerm) (s:substitution).
 logic function FreeVars : term -> vars
 assume FreeVars_Var  : forall (x:var). (FreeVars(Var x) = [x])
 assume FreeVars_Const: forall (c:constant). (FreeVars(Const c) = [])
+
 assume FreeVars_App1 : forall (f:func). (FreeVars(App f []) = [])
 assume FreeVars_App2 : forall (f:func) (t:term) (tl:list term).
                        ((FreeVars(App f (t::tl))) = (Append (FreeVars t) (FreeVars(App f tl))))
@@ -150,7 +151,7 @@ let rec freeVars t = match t with
   | App f (h::t) -> append (freeVars h) (freeVars (App f t))
   | SubstrateQueryTerm s -> append (freeVars s.n) (append (freeVars s.low) (freeVars s.hi))
   | SubstrateUpdateTerm s -> raise "NYI: substrateUpdateTerm_Vars s"
-  | Eval _ _ -> []
+  | Eval _ _ -> assume ([] = (FreeVars t)); []
 
 val freeVarsSubst: s:substitution -> f:vars{(f = (FreeVarsSubst s))}
 let rec freeVarsSubst s = match s with
