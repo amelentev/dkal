@@ -260,6 +260,7 @@ let rec substAction s a =
     | Send p i -> Send (Subst.subst p s) (Subst.polysubst i s)
     | Add i -> Add (Subst.polysubst i s)
     | WithFresh x al -> WithFresh x (substActions s al)
+
 and substActions s = function 
   | [] -> []
   | a::al -> 
@@ -296,35 +297,35 @@ let freshint =
       (ctr := x + 1);
       x
 
-val applyAction: a:action{Enabled a} -> unit
+val applyAction: a:action{Enabled a} -> bool
 let rec applyAction a = 
   match a with 
     | Learn i -> 
         if checkInfon i (* should be able to drop this check for well-typed rules. *)
-        then State.addToInfostrate (i:infon)
-        else ()
-    | Drop i -> dropCommunications i; ()
+        then State.addToInfostrate (i:infon); true
+        else false
+    | Drop i -> dropCommunications i; false
     | Add i -> 
         if checkInfon i 
-        then addCommunication i
-        else ()
-    | Fwd p i -> fwd (asPrincipal p) i; ()
-    | Send p i -> send (asPrincipal p) i; ()
+        then addCommunication i; true
+        else false
+    | Fwd p i -> fwd (asPrincipal p) i; false
+    | Send p i -> send (asPrincipal p) i; false
     | WithFresh x al' ->
         let c = freshint () in 
         let al' = substActions (mkSubst [x] [(Const (Int c))]) al' in 
-          iterate (fun (a:action) -> assume (Enabled a); applyAction a) al'
+          fold_left (fun b (a:action) -> assume (Enabled a); if (applyAction a) then true else b) false al'
   
 val run: list wfrule -> unit
 let rec run rs = 
   let _ = println "Calling allEnabledActions" in
   let actions = allEnabledActions rs in 
   let _ = println (strcat "^^^^^^^^ GOT ACTIONS ^^^^^^^^^: " (string_of_any_for_coq actions)) in 
-  let _ = iterate applyAction actions in 
+  let changed = fold_left (fun b a -> if (applyAction a) then true else b) false actions in 
   let _ = print_string (strcat ("Message store: ") (string_of_any_for_coq (!comms))) in
   let _ = clear_out_buffer () in 
-  let _ = get_communications () in (* blocks until new comms arrive *)
-    run rs
+  let _ = if changed then () else get_communications () in (* blocks until new comms arrive *)
+  run rs
 
 type TrustRule :: _ = 
     (fun (xs:vars) (cs:conditions) (a:action) => 

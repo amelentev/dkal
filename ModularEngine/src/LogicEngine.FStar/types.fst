@@ -94,12 +94,15 @@ module Types
 
   and ISubstrateQueryTerm::* = {n:term; low: term; hi: term}
 
+  and substitution :: * = list (var * term)
+
   and term = (* ITerm *)
     | Var                 : var -> term
     | Const               : constant -> term
     | App                 : func -> list term -> term
     | SubstrateQueryTerm  : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
+	| EvalTerm            : (substitution -> term) -> term
 
   and polyterm = 
     | MonoTerm      : term -> polyterm
@@ -155,7 +158,7 @@ module Types
   type kinfon = i:infon{Knows i}
   type infostrate = list infon
   type prefix = list term
-  type substitution = list (var * term)
+  
 
   logic function AsTerms : vars -> list term
   assume (AsTerms [] = [])         

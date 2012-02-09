@@ -135,6 +135,7 @@ let rec freeVars t = match t with
   | App f (h::t) -> append (freeVars h) (freeVars (App f t))
   | SubstrateQueryTerm s -> append (freeVars s.n) (append (freeVars s.low) (freeVars s.hi))
   | SubstrateUpdateTerm s -> raise "NYI: substrateUpdateTerm_Vars s"
+  | EvalTerm _ -> []
 
 val freeVarsSubst: s:substitution -> f:vars{(f = (FreeVarsSubst s))}
 let rec freeVarsSubst s = match s with
@@ -184,6 +185,9 @@ let rec subst i s = match i with
   | App f tl -> App f (substList tl s)
   | SubstrateQueryTerm q -> SubstrateQueryTerm({n=(subst q.n s); low=(subst q.low s); hi=(subst q.hi s)})
   | SubstrateUpdateTerm _ -> raise "NYI: Substrate updates"
+  | EvalTerm evalFunc -> 
+    let t = evalFunc s in
+	(assume ((Subst i s)=t); t)
 
 and substList ilist s = match ilist with
   | [] -> []

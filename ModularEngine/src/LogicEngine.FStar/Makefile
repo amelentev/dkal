@@ -9,6 +9,8 @@ SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlo
 
 retail: bin/retailcustomer.exe bin/retailwebsite.exe bin/retailpaypal.exe
 
+calc: bin/alice.exe bin/bob.exe
+
 bin/%.exe: $(SOURCES) examples/%.fst
 	$(FSTAR) --writePrims $^ --odir bin 
 
