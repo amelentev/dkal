@@ -859,7 +859,7 @@ let annotate relations rules =
                   | Uvar t -> (t := Some typ; 
                                TermVar(x,typ), ctx)
                   | t' when t'=typ -> TermVar(x,typ), ctx
-                  | _ -> failwith (spr "Failed to type variable %s" x))
+                  | t' -> failwith (spr "Failed to type variable %s. Expected %s got %s\n" x (printTyp typ) (printTyp t')))
            | _ -> failwith (spr "Failed to type variable %s" x))
           
     | Integer i when typ=Int -> tm, ctx
