@@ -21,14 +21,8 @@ then learn Key(101, 13)
      learn Key(103, 131313)
      learn Key(104, 13131313)
 
-<<<<<<< local
-(* TODO: restrict to x justified *)
-upon justified (x)
-then learn x
-=======
 upon justified RequestToRead(phys, r) as m
 then learn RequestToRead(phys, r)
->>>>>>> other
 
 upon justified (=>(x, p said MayRead(phys, r))) as m
 then learn (=>(x, p said MayRead(phys, r)))
