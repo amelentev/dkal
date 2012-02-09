@@ -1,0 +1,9 @@
+upon Init(i) as m1
+upon justified (p said HelloWorldFrom(p)) as m2 
+then
+  send p (_P2_ said HelloWorldFrom(_P2_))
+  drop m1 
+  drop m2
+
+using "hello_world.cfg" as _P2_
+

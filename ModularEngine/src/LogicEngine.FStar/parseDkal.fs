@@ -728,6 +728,7 @@ let printRulesAndConfig prelude relations (fn:string) (rules, configs) =
     pr "module %s\n" mname;
     pr "open Types\n";
     pr "open Interp\n";
+    pr "open Subst\n";
     pr "open Authenticate\n\n";
     pr "%s\n" (printPrelude prelude);
     pr "%s\n" (printManyIndex "\n\n" (printRule relations) rules);
