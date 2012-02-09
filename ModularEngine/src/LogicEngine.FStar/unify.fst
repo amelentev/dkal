@@ -40,14 +40,14 @@ let rec unify_aux s1 v2 v1 t1 t2 : option substitution =
     | App f1 tlist1, App f2 tlist2 -> 
         if ((f1 = f2) && (length tlist1 = length tlist2)) 
         then 
-          let _ = println (strcat "Success Compared f1 = "  (strcat (string_of_any_for_coq f1) (strcat " with f2" (string_of_any_for_coq f2)))) in
+          (* let _ = println (strcat "Success Compared f1 = "  (strcat (string_of_any_for_coq f1) (strcat " with f2" (string_of_any_for_coq f2)))) in *)
 	    fold_left2 
               (fun s t1' t2' -> unify_aux s v2 v1 t1' t2')
  	      (Some s1) 
               tlist1 
               tlist2
         else
-          let _ = println (strcat "Failed Compared f1 = "  (strcat (string_of_any_for_coq f1) (strcat " with f2" (string_of_any_for_coq f2)))) in
+          (* let _ = println (strcat "Failed Compared f1 = "  (strcat (string_of_any_for_coq f1) (strcat " with f2" (string_of_any_for_coq f2)))) in *)
             None
     | SubstrateQueryTerm t0, _ -> None
         (*       option_map FStarSubstitutionOfISubstitution *)
@@ -57,7 +57,9 @@ let rec unify_aux s1 v2 v1 t1 t2 : option substitution =
         (*       option_map FStarSubstitutionOfISubstitution *)
         (*         (substrateUpdateTerm_unifyFrom t0 (ISubstitutionOfFStarSubstitution s1) *)
         (* 		                                 (ITermOfFStarTerm t2) ) *)
-    | _ -> None
+    | t1',t2' -> 
+        (* let _ = println (strcat "Failed to unify t1 = "  (strcat (string_of_any_for_coq t1') (strcat " with t2" (string_of_any_for_coq t2')))) in *)
+          None
 
     
 
@@ -94,10 +96,14 @@ let doMatch tm s0 xs pat =
   match unify s0 xs [] tm pat with 
     | Some ((s1, [])) -> 
         if (tm=(subst pat s1)) (* TODO: Kill these and prove directly from unify *)            
-        then Some s1
-        else let _ = println (strcat "Got bad subst for unifier " (strcat (string_of_any_for_coq tm) 
-                                                                     (strcat " ... " 
-                                                                        (strcat (string_of_any_for_coq pat) 
-                                                                           (strcat "..." (string_of_any_for_coq s1)))))) in 
+        then 
+          (* let _ = println (strcat "Unifying tm= " (string_of_any_for_coq tm)) in  *)
+          (* let _ = println (strcat "With pat =  " (string_of_any_for_coq pat)) in  *)
+          (* let _ = println (strcat "Got unifier = " (string_of_any_for_coq s1)) in  *)
+            Some s1
+        else (* let _ = println (strcat "Got bad subst for unifier " (strcat (string_of_any_for_coq tm)  *)
+             (*                                                         (strcat " ... "  *)
+          (*                                                            (strcat (string_of_any_for_coq pat)  *)
+             (*                                                               (strcat "..." (string_of_any_for_coq s1)))))) in  *)
           None
     | _ -> None
