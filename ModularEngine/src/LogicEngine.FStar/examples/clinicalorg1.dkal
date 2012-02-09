@@ -1,35 +1,20 @@
 (* common to all principals *)
 upon Init(x) as m   
-then learn Record(101, 1005, 42, "ala ma kota")
-     learn Record(102, 1015, 42, "kot ma ale")
-     learn Record(103, 1016, 42, "abecadlo")
-     learn Record(104, 1100, 42, "z pieca spadlo")      (* id, patient, trial *)
+then learn Record(101, 1010, 42, "ala ma kota")      (* id, patient, trial *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
-     learn BasicLeq(1000, 1005)
-     learn BasicLeq(1005, 1250)
-     learn BasicLeq(1000, 1015)
-     learn BasicLeq(1015, 1250)
-     learn BasicLeq(1000, 1016)
-     learn BasicLeq(1016, 1250)
-     learn BasicLeq(1000, 1100)
-     learn BasicLeq(1016, 1250)
-
-(* specific to org1 *)
-upon Init(x) as m
-then learn SiteAssignment(_SITE1_, 42, 1000, 1250)
+	 learn SiteAssignment(_SITE1_, 42, 1000, 1250)
+	 drop m
                          (* site, trial, n1, n2 *)
 
-upon Init(x) as m
 if Trial(trial, _ORG1_, n)
 if SiteAssignment(site, trial, n1, n2)
-then send site SiteParticipates(site, trial)
-     send site SiteAllocatedPatients(site, n1, n2, trial)
+then send site (_ORG1_ said SiteParticipates(site, trial))
+     send site (_ORG1_ said SiteAllocatedPatients(site, n1, n2, trial))
      send site forall person, rec, number, data.
-                 (_ORG1_ said
-                   (=>(and(site said (MayRead(person, rec)), 
+                 (=>(and(site said (MayRead(person, rec)), 
                            Record(rec, number, trial, data), 
                            BasicLeq(n1, number),
                            BasicLeq(number, n2)),
-                       _ORG1_ said (MayRead(person, rec)))))
+                       _ORG1_ said (MayRead(person, rec))))
 
 using "clinical.cfg" as _ORG1_
