@@ -3,7 +3,7 @@ upon Init(x) as m
 then learn Record(101, 1005, 42, "ala ma kota")
      learn Record(102, 1015, 42, "kot ma ale")
      learn Record(103, 1016, 42, "abecadlo")
-     learn Record(104, 1100, 42, "z pieca spadlo")      (* id, organizer, name *)
+     learn Record(104, 1100, 42, "z pieca spadlo")      (* id, patient, trial *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
      learn BasicLeq(1000, 1005)
      learn BasicLeq(1005, 1250)
