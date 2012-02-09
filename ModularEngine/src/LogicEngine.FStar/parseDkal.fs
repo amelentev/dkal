@@ -211,6 +211,7 @@ let RRARROW   st = stok "=>"  st
 let RQUOTE    st = stok "'"  st
 let DOT       st = stok "."  st
 let EQUALS    st = stok "="  st 
+let COLON     st = stok ":"  st 
 let DOLLAR    st = stok "$"  st 
 let SEMICOLON st = stok ";"  st 
 
@@ -343,6 +344,35 @@ let set_uvar u typ : unit = match compress u with
   | Uvar t -> t := Some typ
   | _ -> raise (Failure "Uvar already set")
 
+let sequenceMod delim p = 
+  p >>= (fun first -> 
+           let pp = (delim >>.  p) in 
+           many pp  |>> (fun rest -> first::rest))
+
+let sequence delim p = 
+  p >>= (fun first -> 
+           let pp = (delim >>. p) in 
+           many pp  |>> (fun rest -> first::rest))
+
+let onetype = fun s -> s |>
+    begin
+      (INT >>. preturn Int) 
+<|>   (BOOL >>. preturn Bool)
+<|>   (STRING_T >>. preturn String)
+<|>   (INFON >>. preturn Infon)
+<|>   (PRINCIPAL >>. preturn Prin)
+<|>   (EVIDENCE_T >>. preturn Ev)
+    end
+
+let types = fun s -> s |>
+    begin 
+      (onetype |>> (fun t -> [t]))
+<|>   
+      (LPAREN >>.
+      (sequence COMMA onetype) .>>
+       RPAREN)
+    end
+
 let eval = fun s -> s |> 
     begin
       (EVAL >>.
@@ -359,15 +389,6 @@ let term = fun s -> s |>
  <|>  (eval |>> (fun code -> (EvalTerm(unknown_typ(), code))))
     end
 
-let sequenceMod delim p = 
-  p >>= (fun first -> 
-           let pp = (delim >>.  p) in 
-           many pp  |>> (fun rest -> first::rest))
-
-let sequence delim p = 
-  p >>= (fun first -> 
-           let pp = (delim >>. p) in 
-           many pp  |>> (fun rest -> first::rest))
 
 let terms = fun s -> s |> (sequence COMMA term)
 
@@ -416,12 +437,23 @@ let rec infon = fun s -> s |>
 
 and infons = fun s -> s |> (sequence COMMA infon)
 
+let bvar = fun s -> s |>
+    begin
+      (varIdent |>> (fun var -> (var, unknown_typ())))
+<|>
+      (LPAREN >>.
+       varIdent >>= (fun v -> 
+       COLON >>.
+       onetype >>= (fun t -> 
+       RPAREN >>. preturn (v,t))))
+    end
+
 let qinfon = fun s -> s |> 
     begin
       (FORALL >>. 
-      (sequence COMMA varIdent) >>= (fun vars -> 
+      (sequence COMMA bvar) >>= (fun vars -> 
        DOT >>.
-       infon |>> (fun i -> PolyTerm(List.map (fun x -> (x, unknown_typ())) vars, i))))
+       infon |>> (fun i -> PolyTerm(vars, i))))
 
 <|>   (varIdent |>> (fun r -> PolyVar r))
 
@@ -557,25 +589,6 @@ let identityConfig = fun s -> s |>
       RBRACE >>.  preturn (IdCfg {prin=p; privkey=pkopt; pubkey=pubkey; port=port}))))) 
     end 
 
-let onetype = fun s -> s |>
-    begin
-      (INT >>. preturn Int) 
-<|>   (BOOL >>. preturn Bool)
-<|>   (STRING_T >>. preturn String)
-<|>   (INFON >>. preturn Infon)
-<|>   (PRINCIPAL >>. preturn Prin)
-<|>   (EVIDENCE_T >>. preturn Ev)
-    end
-
-let types = fun s -> s |>
-    begin 
-      (onetype |>> (fun t -> [t]))
-<|>   
-      (LPAREN >>.
-      (sequence COMMA onetype) .>>
-       RPAREN)
-    end
-
 let relationConfig = fun s -> s |>
     begin
       relationIdent >>= (fun r -> 
@@ -646,7 +659,9 @@ let rec printTyp t = match compress t with
 
 and printTyps tl = spr "[ %s ]" (printMany "; " printTyp tl)
   
-let printVar (x,t) = spr "({name=\"%s\"; typ=%s})" x (printTyp t)
+let printVar (x,t) =   
+  try spr "({name=\"%s\"; typ=%s})" x (printTyp t)
+  with Failure msg -> raise (Failure (spr "Variable %s has unknown type: %s" x msg))
 
 let rec printQinfon relations = function 
   | MonoTerm i -> spr "(MonoTerm %s)" (printInfon relations i)
