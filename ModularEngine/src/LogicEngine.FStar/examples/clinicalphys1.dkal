@@ -19,17 +19,18 @@ upon Init(x) as m
 then learn PhysPatients(1015, "true")
      learn PhysPatients(1100, "true")
 
-upon (site said PhysParticipates(_PHYS1_, trial, site)) as m1
-upon (site said PhysAllocatedPatients(_PHYS1_, p1, p2, trial, site)) as m2
+upon justified (site said PhysParticipates(_PHYS1_, trial, site)) as m1
+upon justified (site said
+                 PhysAllocatedPatients(_PHYS1_, p1, p2, trial, site)) as m2
 if and(PhysPatients(number, "true"),
        BasicLeq(p1, number),
        BasicLeq(number, p2),
        Record(r, number, trial, datarecord),
        Trial(trial, org, datatrial))
-upon =>(x,
-        org said MayRead(_PHYS1_, r)) as m3
-upon =>(y,
-        site said MayRead(_PHYS1_, r)) as m4
+upon justified =>(x,
+                  org said MayRead(_PHYS1_, r)) as m3
+upon justified =>(y,
+                  site said MayRead(_PHYS1_, r)) as m4
 then send _KEYMGR_ RequestToRead(_PHYS1_, r)
      send _KEYMGR_ (_PHYS1_ said
                       =>(x, org said MayRead(_PHYS1_, r)))
