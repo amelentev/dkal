@@ -68,6 +68,7 @@ assume FreeVars_App2 : forall (f:func) (t:term) (tl:list term).
                        ((FreeVars(App f (t::tl))) = (Append (FreeVars t) (FreeVars(App f tl))))
 assume FreeVars_SubQ : forall (s:ISubstrateQueryTerm). 
                        ((FreeVars (SubstrateQueryTerm s))) = (Append (FreeVars (s.n)) (Append (FreeVars (s.low)) (FreeVars (s.hi))))
+
 logic function FreeVarsSubst : substitution -> vars 
 assume FreeVarsSubst_Emp: FreeVarsSubst [] = []
 assume FreeVarsSubst_Upd: forall (s:substitution) (x:var) (v:term).

@@ -76,14 +76,9 @@ val unify: s1:substitution
 let unify s1 u xs i goal =
   match unify_aux s1 u xs i goal with
   | Some(s3) ->
-      let s2 = 
-        fold_left (fun s x -> match lookupVar s3 x with
-		     | None -> raise "impos"
-		     | Some t -> extendSubst s3 x t)
-	  (emptySubst ()) (domain s3) in
       let l = map (fun x -> subst (Var x) s3) xs in
-        assume (Extends s2 s1);
-        Some(s2, l)
+        assume (Extends s3 s1);
+        Some(s3, l)
   | None -> None
 
 val doMatch :  tm:term
