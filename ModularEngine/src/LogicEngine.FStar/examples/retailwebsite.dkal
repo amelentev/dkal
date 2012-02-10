@@ -1,6 +1,6 @@
 upon Init(x) as m 
 then learn forall p, oid, n. 
-         =>(_P_ said Paid(p, oid, n),
+         =>(_PAYPAL_ said Paid(p, oid, n),
             Paid(p, oid, n))
      drop m
 
@@ -18,18 +18,18 @@ upon justified (_PAYPAL_ said x) as i
 then learn i 
      drop i
 
-upon justified (_WEBSITE_ said Pay(c,oid,i,n)) as m1
-upon justified (_PAYPAL_ said Paid(c,oid,n)) as m2
-then send c (_WEBSITE_ said Confirm(oid, i, n))
-     drop m1
+(* upon justified (_WEBSITE_ said Pay(c,oid,i,n)) as m1 *)
+(* upon justified (_PAYPAL_ said Paid(c,oid,n)) as m2 *)
+(* then send c (_WEBSITE_ said Confirm(oid, i, n)) *)
+(*      drop m1 *)
 
 (* upon justified (_PAYPAL_ said x) as i  *)
 (* then learn i  *)
 (*      drop i *)
 
-(* upon justified (_WEBSITE_ said Pay(c,oid,i,n)) as m *)
-(* if   Paid(c, oid, n)  *)
-(* then send c (_WEBSITE_ said Confirm(oid, i, n)) *)
-(*      drop m *)
+upon justified (_WEBSITE_ said Pay(c,oid,i,n)) as m
+if   Paid(c, oid, n)
+then send c (_WEBSITE_ said Confirm(oid, i, n))
+     drop m
 
 using "retail.cfg" as _WEBSITE_

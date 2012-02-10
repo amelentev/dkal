@@ -153,6 +153,7 @@ let IDENT startChar restChar : Parser<string, 'a> = fun state ->
 
 let ANYIDENT s = IDENT isIdentStartChar isIdentChar s
 let varIdent = IDENT isLower isIdentChar
+(* let polyvarIdent = IDENT (fun x -> x='\'') isIdentChar *)
 let relationIdent = IDENT isUpper isIdentChar
 let principalIdent = IDENT (fun x -> x='_') (fun x -> isUpper x || (x = '_') || isDigit x)
 
@@ -329,6 +330,7 @@ and typ =
   | Bool
   | String
   | Infon
+  | QInfon
   | Prin
   | Ev
   | Uvar of (typ option) ref
@@ -464,8 +466,8 @@ let qinfon = fun s -> s |>
 (* -------------------------------------------------------------------------------- *)
 type condition =
   | If    of qinfon
-  | Upon  of (qinfon * string option)
-  | UponJ of (qinfon * string option)
+  | Upon  of (qinfon * string)
+  | UponJ of (qinfon * string)
 type conditions = condition list
 
 type action =
@@ -486,6 +488,13 @@ type config =
   | RelCfg of string * typ list
   | Prelude of string
 
+let newvar = 
+  let x = ref 0 in 
+    fun () -> 
+      let i = !x in 
+        incr x;
+        spr "x_%d" i
+
 let firstCondition = fun s -> s |> (IF <|> UPON)
 
 let uponCondition = fun s -> s |>
@@ -494,9 +503,10 @@ let uponCondition = fun s -> s |>
       (opt JUSTIFIED) >>= (fun jopt -> 
       qinfon >>= (fun i -> 
       (opt (AS >>. varIdent)) |>> (fun xopt -> 
+        let x = match xopt with None -> newvar() | Some x -> x in
           match jopt with 
-            | None -> Upon(i, xopt) 
-            | Some _ -> UponJ(i,xopt))))
+            | None -> Upon(i, x)
+            | Some _ -> UponJ(i, x))))
     end
 
 let ifCondition = fun s -> s |>
@@ -652,6 +662,7 @@ let rec printTyp t = match compress t with
   | Int -> "Int32"
   | Bool -> "Boolean"
   | Infon -> "Infon"
+  | QInfon -> "QInfon"
   | String -> "String"
   | Ev -> "Evidence"
   | Prin -> "Principal"
@@ -667,6 +678,7 @@ let printVars = printMany  ", " printVar
 let printVarNames = printMany  ", " fst 
 
 let rec printQinfon relations = function 
+  | PolyVar x -> spr "(PolyVar %s)" (printVar (x, QInfon))
   | MonoTerm i -> spr "(MonoTerm %s)" (printInfon relations i)
   | PolyTerm(xs, i) -> spr "(ForallT [%s] %s)" (printMany "; " printVar xs) (printInfon relations i)
   | JustifiedPoly(p, i, dsig) -> spr "(JustifiedPoly %s %s %s)" 
@@ -711,8 +723,7 @@ let rec printRule relations i (Rule (ctx, cl, al)) =
 and printCondition relations = function 
   | If   qi      -> spr "(If (%s) )" (printQinfon relations qi) 
   | UponJ (qi, s) 
-  | Upon (qi, s) -> spr "(Upon (%s))" (printQinfon relations qi)
-
+  | Upon (qi, s) -> spr "(Upon (%s) %s)" (printQinfon relations qi) (printVar (s, QInfon))
 
 and printConditions relations conds = spr "[ %s ]" (printMany ";\n" (printCondition relations) conds)
 
@@ -753,13 +764,6 @@ let printRulesAndConfig prelude relations (fn:string) (rules, configs) =
     pr ";;\n let _ = initialize (%s) in \n let _ = run [%s] in ()" 
       (printConfigs configs)
       (printManyIndex "; " (fun ix _ -> spr "rule_%d" ix) rules)
-
-let newvar = 
-  let x = ref 0 in 
-    fun () -> 
-      let i = !x in 
-        incr x;
-        spr "x_%d" i
 
 type env = {gamma:(string * typ) list;
             subst:(string * qinfon) list;
@@ -825,9 +829,10 @@ let annotate relations rules =
             
     | Upon (qi, m) -> 
         let qi, env = annotQinfon env qi in 
-        let env = match m with 
-          | None -> env
-          | Some m -> addSubst env (m, qi) in 
+        let env = extendCtx env (m, QInfon) in 
+        (* let env = match m with  *)
+        (*   | None -> env *)
+        (*   | Some m -> addSubst env (m, qi) in  *)
           Upon(qi, m), env
             
     | UponJ (qi, m) -> 
@@ -835,10 +840,10 @@ let annotate relations rules =
         let ev_var = newvar(), Ev in 
         let p_var = newvar(), Prin in 
         let qi' = JustifiedPoly(TermVar p_var, qi, TermVar ev_var) in 
-        let env = extendCtx (extendCtx env ev_var) p_var in 
-        let env = match m with 
-          | None -> env
-          | Some m -> addSubst env (m, qi') in 
+        let env = extendCtx (extendCtx (extendCtx env ev_var) p_var) (m, QInfon) in 
+          (* let env = match m with  *)
+          (*   | None -> env *)
+          (*   | Some m -> addSubst env (m, qi') in  *)
           Upon(qi', m), env
 
   and annotAction env = function 
@@ -864,17 +869,18 @@ let annotate relations rules =
           let i, envi = checkInfon extendflag envxl i in
             PolyTerm(xl, i), {env with patvars=envi.patvars; bvars=(xl@env.bvars)}
     | PolyVar x -> 
-        match lookupSubst x env with 
-          | None -> raise (Failure (spr "Failed to eliminate polyvar %s\n" x))
-          | Some tm -> tm, env
+        match lookupVar x env with 
+          | Some QInfon -> (PolyVar x), env
+          | _ -> raise (Failure (spr "Ill-typed variable %s; expected Infon" x))
 
   and checkInfon extflag env = function
     | True -> True, env
 
     | Var x when binds x env.gamma -> 
-        let ty = lookupVar x env in 
-          Var x, env
-
+        (match lookupVar x env with 
+           | Some Infon -> Var x, env
+           | _ -> raise (Failure (spr "Ill-typed variable %s; expected Infon" x)))
+               
     | Var x when (not (binds x env.gamma)) && extflag -> 
         Var x, extendCtx env (x,Infon)
           

@@ -6,6 +6,7 @@ DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
 FSTAR=fstar --writePrims --UNSAFE --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000
 #typeHeaders.fst translationFromFStar.fst 
 SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst crypto.fst authenticate.fst marshall.fst net.fst state.fst interp.fst 
+SOURCES_INFONLOGIC=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst 
 
 retail: bin/retailcustomer.exe bin/retailwebsite.exe bin/retailpaypal.exe
 
@@ -35,6 +36,9 @@ wc: $(SOURCES)
 
 clean:
 	rm -f $(FSTBIN)/Types.dll $(FSTBIN)/Builders.dll $(FSTBIN)/Subst.dll $(FSTBIN)/TranslationtoFStar.dll $(FSTBIN)/TranslationfromFStar.dll $(FSTBIN)/Utilities.dll $(FSTBIN)/Term.dll $(FSTBIN)/FStarLogicEngineImpl.dll $(FSTBIN)/FStarLogicEngine.dll
+
+infonlogic:
+	fstar --writePrims --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000 $(SOURCES_INFONLOGIC)
 
 prepare:
 	mkdir -p $(FSTBIN)
