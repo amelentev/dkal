@@ -38,7 +38,7 @@ clean:
 	rm -f $(FSTBIN)/Types.dll $(FSTBIN)/Builders.dll $(FSTBIN)/Subst.dll $(FSTBIN)/TranslationtoFStar.dll $(FSTBIN)/TranslationfromFStar.dll $(FSTBIN)/Utilities.dll $(FSTBIN)/Term.dll $(FSTBIN)/FStarLogicEngineImpl.dll $(FSTBIN)/FStarLogicEngine.dll
 
 infonlogic:
-	fstar --writePrims --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000 $(SOURCES_INFONLOGIC)
+	fstar --writePrims --UNSAFE_skip_target_checker --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000 $(SOURCES_INFONLOGIC) testinfonlogic.fst
 
 prepare:
 	mkdir -p $(FSTBIN)

@@ -201,14 +201,14 @@ and tryDerive s k g u s1 pref goal xinfon mkpf_infon =
                                     | Some((s3, mkpf3)) ->
                                         let mkpf (s4:substitution{Extends s4 s3}) : kresult s k g pref goal s4 =
                                           let insts = map (fun i -> subst i s4) insts in 
-                                            if not (check_disjoint (freeVarsSubst s4) xs)
+                                          let imp = App ImpliesInfon [lhs; rhs] in
+                                            if not (check_disjoint (freeVarsSubst (restrictN s4 (freeVars imp))) xs)
                                             then raise "TODO: Substitution domain" 
                                             else
                                               (match doTypingList g insts xs, mkpf3 s4, mkpf_infon s4 with
                                                  | None, _ -> raise "Ill-typed unification"
                                                  | Some typing_insts, MkPartial pf_lhs, MkPartial pf_infon -> 
                                                      let sinst = mkSubst xs insts in
-                                                     let imp = App ImpliesInfon [lhs; rhs] in
                                                      let imp' = subst (subst imp s4) sinst in 
                                                      let rhs' = subst rhs s4 in
                                                      let lhs'' = subst lhs' s4 in                                  
@@ -223,7 +223,7 @@ and tryDerive s k g u s1 pref goal xinfon mkpf_infon =
              | Some((s2, insts)) -> 
                  let mkpf (s3:substitution{Extends s3 s2}) : kresult s k g pref goal s3 = 
                    let insts = map (fun i -> subst i s3) insts in 
-                     if not (check_disjoint (freeVarsSubst s3) xs)
+                     if not (check_disjoint (freeVarsSubst (restrictN s3 (freeVars body))) xs)
 		     then raise "TODO: Substitution domain" 
                      else
                        match doTypingList g insts xs, mkpf_infon s3 with
@@ -336,7 +336,7 @@ let rec deriveQuant u s k s0 pgoal =
                     | Some ((s1, mkpf)) -> 
                         match mkpf s1 with 
                           | MkPartial pfs1 -> 
-                              if   (check_disjoint (freeVarsSubst s1) g)
+                              if   (check_disjoint (freeVarsSubst (restrictN s1 (freeVars goal))) g)
                                 && (includes u (domain s1))  (* TODO: kill *)
                               then 
                                 let res = Entails_Q_Intro s k g (subst goal s1) wfg pfs1 in 
