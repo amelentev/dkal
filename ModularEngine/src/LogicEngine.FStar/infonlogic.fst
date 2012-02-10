@@ -221,35 +221,6 @@ and tryDerive s k g u s1 pref goal xinfon mkpf_infon =
                                       else raise "Unification error")
           in Some (s3, mkpf) ) ) )
 
-
-(*
-             (match body with
-              | App ImpliesInfon [i; j] -> 
-                 (match unify s1 u xs j pref_goal with 
-                  | None -> None
-                  | Some((s2, insts)) -> 
-                     let imp = subst (App ImpliesInfon [i; j]) s2 in
-                     let mkpf_imp (s3:substitution{Extends s3 s1}) : kpolyresult s k g (MonoTerm imp) s3 =
-                       let insts = map (fun i -> subst i s3) insts in
-                       if not (check_disjoint (freeVarsSubst s3) xs)
-                       then raise "TODO: Substitution domain" 
-                       else
-                         (match doTypingList g insts xs, mkpf_infon s3 with
-                           | None, _ -> raise "Ill-typed unification"
-                           | Some typing_insts, MkPartial pf_infon -> 
-                               let sinst = mkSubst xs insts in 
-                               let body' = subst (subst body s3) sinst in 
-                               let imp' = subst imp s3 in 
-                                 if (imp':term)=body' 
-                                 then let body'' = subst body s3 in
-                                   MkPartial (Entails_Mono s k g body' (Entails_Q_Elim s k g xs body'' insts pf_infon typing_insts))
-                                 else raise "Unification error") (* TODO: prove unification correct *)
-                     in
-                       match tryDerive s k g u s1 pref goal (MonoTerm imp) mkpf_imp with
-                        | None -> None
-                        | Some((s4, mkpf)) -> Some (s4, mkpf)
-              ))
-*)
            | Some((s2, insts)) -> 
                let mkpf (s3:substitution{Extends s3 s2}) : kresult s k g pref goal s3 = 
                  let insts = map (fun i -> subst i s3) insts in 
