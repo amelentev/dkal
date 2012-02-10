@@ -190,6 +190,40 @@ and tryDerive s k g u s1 pref goal xinfon mkpf_infon =
          (match unify s1 u xs body pref_goal with
            | None -> 
              (match body with
+              | App ImpliesInfon [lhs; rhs] -> 
+                 (match unify s1 u xs rhs pref_goal with 
+                  | None -> None
+                  | Some((s2, insts)) -> 
+                     let lhs' = subst lhs s2 in
+                     let uvars_for_subgoal = freeVars lhs' in
+                       (match doDerive s k g uvars_for_subgoal s2 [] lhs' with
+                         | None -> None
+                         | Some((s3, mkpf3)) ->
+                            let mkpf (s4:substitution{Extends s4 s3}) : kresult s k g pref goal s4 =
+                               let insts = map (fun i -> subst i s4) insts in 
+                               if not (check_disjoint (freeVarsSubst s4) xs)
+                               then raise "TODO: Substitution domain" 
+                               else
+                                (match doTypingList g insts xs, mkpf3 s4, mkpf_infon s4 with
+                                | None, _ -> raise "Ill-typed unification"
+                                | Some typing_insts, MkPartial pf_lhs, MkPartial pf_infon -> 
+                                    let sinst = mkSubst xs insts in
+                                    let imp = App ImpliesInfon [lhs; rhs] in
+                                    let imp' = subst (subst imp s4) sinst in 
+                                    let rhs' = subst rhs s4 in
+                                    let lhs'' = subst lhs' s4 in                                  
+                                    let pref_goal' = subst pref_goal s4 in 
+                                      if (((pref_goal':term) = rhs') &&
+                                          ((imp':term) = App ImpliesInfon [lhs''; rhs'])) (* needed? *)
+                                      then (let pf_imp = 
+               Entails_Q_Elim s k g xs (subst imp s4) insts pf_infon typing_insts
+            in MkPartial (Entails_Imp_Elim s k g lhs'' rhs' [] pf_lhs pf_imp) )
+                                      else raise "Unification error")
+          in Some (s3, mkpf) ) ) )
+
+
+(*
+             (match body with
               | App ImpliesInfon [i; j] -> 
                  (match unify s1 u xs j pref_goal with 
                   | None -> None
@@ -215,11 +249,12 @@ and tryDerive s k g u s1 pref goal xinfon mkpf_infon =
                         | None -> None
                         | Some((s4, mkpf)) -> Some (s4, mkpf)
               ))
+*)
            | Some((s2, insts)) -> 
                let mkpf (s3:substitution{Extends s3 s2}) : kresult s k g pref goal s3 = 
                  let insts = map (fun i -> subst i s3) insts in 
                    if not (check_disjoint (freeVarsSubst s3) xs)
-                   then raise "TODO: Substitution domain" 
+		                      then raise "TODO: Substitution domain" 
                    else
                      match doTypingList g insts xs, mkpf_infon s3 with
                        | None, _ -> raise "Ill-typed unification"
