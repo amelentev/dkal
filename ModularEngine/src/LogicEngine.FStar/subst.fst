@@ -37,6 +37,26 @@ assume Subst_QyTm:forall (q:ISubstrateQueryTerm) (s:substitution).
                   ((Subst (SubstrateQueryTerm q) s)=(SubstrateQueryTerm ({n=(Subst q.n s); 
                                                                           low=(Subst q.low s); 
                                                                           hi=(Subst q.hi s)})))
+(* Restriction of a substitution to a domain *)
+logic function Restrict : substitution -> var -> substitution
+assume forall x. (Restrict [] x) = []
+assume forall x tm tlsub. (Restrict ((x,tm)::tlsub) x) = ((x,tm)::(Restrict tlsub x))
+assume forall x y tm tlsub. (x<>y) => (Restrict ((y,tm)::tlsub) x) = (Restrict tlsub x)
+val restrict : s:substitution -> x:var -> s':substitution{s'=(Restrict s x)}
+let rec restrict s x = match s with 
+  | [] -> []
+  | (y,tm)::tlsub -> 
+      if x=y then (y,tm)::(restrict tlsub x)
+      else (restrict tlsub x)
+
+logic function RestrictN : substitution -> vars -> substitution
+assume forall s. (RestrictN s []) = s
+assume forall s x tl. (RestrictN s (x::tl)) = (RestrictN (Restrict s x) tl)
+val restrictN : s:substitution -> x:vars -> s':substitution{s'=(RestrictN s x)}
+let rec restrictN s x = match x with 
+  | [] -> s
+  | hd::tl -> restrictN (restrict s hd) tl
+
 
 (* Substitution on polyterms, as a parial function to avoid capture *)
 logic function FreeVars : term -> vars
@@ -58,7 +78,7 @@ logic function PolySubst : polyterm -> substitution -> polyterm
 assume PolySubst_Mono: forall (s:substitution) (body:term). 
                        ((PolySubst (MonoTerm body) s)=(MonoTerm (Subst body s)))
 assume PolySubst_All : forall (s:substitution) (xs:vars) (body:term). 
-                       Disjoint (FreeVarsSubst s) xs =>
+                       Disjoint (FreeVarsSubst (RestrictN s (FreeVars body))) xs =>
                           ((PolySubst (ForallT xs body) s)=(ForallT xs (Subst body s)))
 assume PolySubst_Just: forall (s:substitution) (p:term) (i:polyterm) (d:term). 
                           ((PolySubst (JustifiedPoly p i d) s)=(JustifiedPoly 
@@ -221,7 +241,7 @@ let rec polysubst p1 s =
   match p1 with 
     | MonoTerm i -> MonoTerm (subst i s)
     | ForallT xs i -> 
-        if check_disjoint (freeVarsSubst s) xs
+        if check_disjoint (freeVarsSubst (restrictN s (freeVars i))) xs
         then ForallT xs (subst i s)
         else raise "polysubst failed: name capture"
     | JustifiedPoly p i d -> 

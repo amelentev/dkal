@@ -1,30 +1,30 @@
 (* common to all principals *)
-upon Init(x) as m   
+upon Init(x) as m
 then learn Record(101, 1010, 42, "ala ma kota")    (* id, patient, trial *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
-     learn PhysAssignment(_SITE1_, 42, 1010, 1050)
-	 learn BasicLeq(1000, 1010)
-	 learn BasicLeq(1050, 1250)
+     learn PhysAssignment(_PHYS1_, 42, 1010, 1050)
 	 drop m
 
 upon justified (org said SiteParticipates(_SITE1_, trial)) as m1
 upon justified (org said SiteAllocatedPatients(_SITE1_, n1, n2, trial)) as m2
-if and(Trial(trial, org, datatrial),
-       PhysAssignment(phys, trial, p1, p2),
-       BasicLeq(n1, p1),
-       BasicLeq(p2, n2))
-(*upon justified forall person, r, (number:int), (data:string). (=>(x,
-                  org said MayRead(person, r))) as m3 *)
-then send phys (_SITE1_ said PhysParticipates(phys, trial, _ORG1_))
-     send phys (_SITE1_ said PhysAllocatedPatients(phys, p1, p2, trial, _ORG1_))
-     send phys forall r, number, datarecord.
-                 (=>(and(Record(r, number, trial, datarecord),
+if Trial(trial, org, datatrial)
+if PhysAssignment(phys, trial, p1, p2)
+if eval$checkRange "p1" "n1" "p1"$
+if eval$checkRange "n2" "p2" "n2"$
+upon justified 
+     forall person', s', (number':int), (data':string).
+       (=>(x, org said MayRead(person', s'))) as m3
+then send phys (_SITE1_ said PhysParticipates(phys, trial, _SITE1_))
+     send phys (_SITE1_ said PhysAllocatedPatients(phys, p1, p2, trial, _SITE1_))
+     send phys forall t, number, datarecord.
+                 (=>(and(Record(t, number, trial, datarecord),
                          BasicLeq(p1, number),
                          BasicLeq(number, p2)),
-                     _SITE1_ said MayRead(phys, r)))
-  (*   fwd phys m3 *)
+                     _SITE1_ said MayRead(phys, t)))
+     fwd phys m3
 	 drop m1
 	 drop m2
- (*	 drop m3 *)
+ 	 drop m3
 
 using "clinical.cfg" as _SITE1_
+ 
