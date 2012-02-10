@@ -26,6 +26,7 @@ module Types
 
   type typ =  (* IType *)  (* from Types.fs, see also Ast/ActivePatterns.fs *)
     | Infon           : typ
+    | QInfon          : typ
     | Principal       : typ
     | SubstrateUpdate : typ (* see ISubstrateUpdate.fs *)
     | SubstrateQuery  : typ (* see ISubstrateQuery.fs *)
@@ -103,12 +104,13 @@ module Types
     | App                 : func -> list term -> term
     | SubstrateQueryTerm  : ISubstrateQueryTerm -> term
     | SubstrateUpdateTerm : ISubstrateUpdateTerm -> term
-	| Eval                : typ -> (substitution -> term) -> term
+    | Eval                : typ -> (substitution -> term) -> term
 
   and polyterm = 
     | MonoTerm      : term -> polyterm
     | ForallT       : vars -> term -> polyterm
     | JustifiedPoly : term -> polyterm -> term -> polyterm
+    | PolyVar       : var -> polyterm (* Used only in the rule language; untypeable in infons *)
 
   type SubstrateSays :: substrate => ISubstrateQueryTerm => E
   val mkSubstrateQuery: term -> term -> term -> ISubstrateQueryTerm

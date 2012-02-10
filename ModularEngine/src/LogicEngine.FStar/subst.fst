@@ -73,17 +73,6 @@ assume FreeVarsSubst_Emp: FreeVarsSubst [] = []
 assume FreeVarsSubst_Upd: forall (s:substitution) (x:var) (v:term).
                           ((FreeVarsSubst ((x,v)::s)) = (Union [x] (Union (FreeVars v) (FreeVarsSubst s))))
 
-logic function PolySubst : polyterm -> substitution -> polyterm
-assume PolySubst_Mono: forall (s:substitution) (body:term). 
-                       ((PolySubst (MonoTerm body) s)=(MonoTerm (Subst body s)))
-assume PolySubst_All : forall (s:substitution) (xs:vars) (body:term). 
-                       Disjoint (FreeVarsSubst (RestrictN s (FreeVars body))) xs =>
-                          ((PolySubst (ForallT xs body) s)=(ForallT xs (Subst body s)))
-assume PolySubst_Just: forall (s:substitution) (p:term) (i:polyterm) (d:term). 
-                          ((PolySubst (JustifiedPoly p i d) s)=(JustifiedPoly 
-                                                                  (Subst p s) 
-                                                                  (PolySubst i s)
-                                                                  (Subst d s)))
 (* Building substitutions *)
 logic function MkSubst: vars -> list term -> substitution
 assume MkSubst_nil :(MkSubst [] []) = []
@@ -235,13 +224,51 @@ and substList ilist s = match ilist with
 
 and substQuery q s = {n=(subst q.n s); low=(subst q.low s); hi=(subst q.hi s)}
 
-val polysubst: p1:polyterm -> s:substitution -> p2:polyterm{(PolySubst p1 s)=p2}
-let rec polysubst p1 s = 
+(* ******************************************************************************** *)
+
+type polysubst = {substmono:substitution; substpoly:list (var * polyterm)}
+
+logic function AsPoly : substitution -> polysubst
+assume forall (s:substitution). (AsPoly s) = ({substmono=s; substpoly=[]})
+
+val asPoly : s:substitution -> p:polysubst{p=(AsPoly s)}
+let asPoly (s:substitution) = {substmono=s; substpoly=[]}
+
+logic function PolySubst : polyterm -> polysubst -> polyterm
+assume PolySubst_Mono: forall (s:polysubst) (body:term). 
+                       ((PolySubst (MonoTerm body) s)=(MonoTerm (Subst body s.substmono)))
+assume PolySubst_All : forall (s:polysubst) (xs:vars) (body:term). 
+                       Disjoint (FreeVarsSubst (RestrictN s.substmono (FreeVars body))) xs =>
+                          ((PolySubst (ForallT xs body) s)=(ForallT xs (Subst body s.substmono)))
+assume PolySubst_Just: forall (s:polysubst) (p:term) (i:polyterm) (d:term). 
+                          ((PolySubst (JustifiedPoly p i d) s)=(JustifiedPoly 
+                                                                  (Subst p s.substmono) 
+                                                                  (PolySubst i s)
+                                                                  (Subst d s.substmono)))
+
+val applyPolysubst: p1:polyterm -> s:polysubst -> p2:polyterm{(PolySubst p1 s)=p2}
+let rec applyPolysubst p1 s = 
   match p1 with 
-    | MonoTerm i -> MonoTerm (subst i s)
+    | MonoTerm i -> MonoTerm (subst i s.substmono)
     | ForallT xs i -> 
-        if check_disjoint (freeVarsSubst (restrictN s (freeVars i))) xs
-        then ForallT xs (subst i s)
+        if check_disjoint (freeVarsSubst (restrictN s.substmono (freeVars i))) xs
+        then ForallT xs (subst i s.substmono)
         else raise "polysubst failed: name capture"
     | JustifiedPoly p i d -> 
-        JustifiedPoly (subst p s) (polysubst i s) (subst d s)
+        JustifiedPoly (subst p s.substmono) (applyPolysubst i s) (subst d s.substmono)
+    | PolyVar x -> 
+        let result = match assoc x s.substpoly with
+          | None -> PolyVar x
+          | Some t -> t in 
+          assume ((PolySubst p1 s)=result);
+          result
+
+logic function DomainPoly : polysubst -> vars
+assume forall (s:substitution) (t:list (var*polyterm)) (x:var) (m:polyterm). 
+        (DomainPoly ({substmono=s; substpoly=((x,m)::t)})) = (x::(DomainPoly ({substmono=s; substpoly=t})))
+assume forall (s:substitution). (DomainPoly ({substmono=s; substpoly=[]})) = (Domain s)
+
+val domainPoly : p:polysubst -> xs:vars{(DomainPoly p) = xs}
+let rec domainPoly p = match p.substpoly with 
+  | [] -> domain p.substmono
+  | (x,m)::tl -> (x::(domainPoly ({p with substpoly=tl})))

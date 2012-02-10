@@ -68,7 +68,7 @@ assume Prefix_subst_commute: forall (pref:prefix) (t:term) (s:substitution).
 type kresult :: _ = (fun (s:substrate) (k:infostrate) (g:vars) (pref:prefix) (goal:term) (s2:substitution) => 
     Partial (entails s k g (Subst (WithPrefix pref goal) s2)))
 type kpolyresult :: _ = (fun (s:substrate) (k:infostrate) (g:vars) (goal:polyterm) (s2:substitution) => 
-    Partial (polyentails s k g (PolySubst goal s2)))
+    Partial (polyentails s k g (PolySubst goal (AsPoly s2))))
 		
 val doDerive:   S:substrate 
              -> K:infostrate 
@@ -176,7 +176,7 @@ and tryDeriveAlpha s k g u s1 pref goal xinfon =
     match doPolyTyping [] xinfon, doPolyTyping g xinfon' with 
       | MkPartial typing_infon, MkPartial typing_infon' -> 
           let mkpf (s2:substitution{Extends s2 s1}) : kpolyresult s k g xinfon' s2 = 
-            let xinfon'' = polysubst xinfon' s2 in 
+            let xinfon'' = applyPolysubst xinfon' (asPoly s2) in 
               if xinfon'=xinfon'' 
               then MkPartial (Entails_Hyp_Knowledge s k g xinfon xinfon' typing_infon aeq typing_infon')
               else raise "TODO: prove using Domain(s2) = u, disjoint from (g \union xs)=Vars body"
@@ -188,7 +188,7 @@ and tryDerive s k g u s1 pref goal xinfon mkpf_infon =
     | ForallT xs body -> 
         let pref_goal = withPrefix pref goal in 
         (match unify s1 u xs body pref_goal with
-           | None -> None 
+           | None -> None
            | Some((s2, insts)) -> 
                let mkpf (s3:substitution{Extends s3 s2}) : kresult s k g pref goal s3 = 
                  let insts = map (fun i -> subst i s3) insts in 
@@ -209,7 +209,7 @@ and tryDerive s k g u s1 pref goal xinfon mkpf_infon =
     | JustifiedPoly p xinfon' e -> 
         let mkpf_infon' (s2:substitution{Extends s2 s1}) : kpolyresult s k g xinfon' s2 = 
           match mkpf_infon s2 with
-            | MkPartial pf_infon -> MkPartial (Entails_ElimJust s k g (subst p s2) (polysubst xinfon' s2) (subst e s2) pf_infon) in
+            | MkPartial pf_infon -> MkPartial (Entails_ElimJust s k g (subst p s2) (applyPolysubst xinfon' (asPoly s2)) (subst e s2) pf_infon) in
           tryDerive s k g u s1 pref goal xinfon' mkpf_infon'
           
     | MonoTerm (App AndInfon [xinfon1; xinfon2]) ->
@@ -282,9 +282,9 @@ val deriveQuant: U:vars             (* Variables available for unification in go
               -> s0:substitution{Includes U (Domain s0)}
               -> pgoal:polyterm
               -> option (s:substitution{Includes U (Domain s)} *
-                         polyentails S K [] (PolySubst (PolySubst pgoal s0) s))
+                         polyentails S K [] (PolySubst (PolySubst pgoal (AsPoly s0)) (AsPoly s)))
 let rec deriveQuant u s k s0 pgoal = 
-  let pgoal' = polysubst pgoal s0 in
+  let pgoal' = applyPolysubst pgoal (asPoly s0) in
     match pgoal' with 
       | MonoTerm goal -> 
           (match doDerive s k [] u s0 [] goal with
