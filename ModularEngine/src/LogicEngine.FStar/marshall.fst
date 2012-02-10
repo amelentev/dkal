@@ -160,7 +160,10 @@ assume forall (xs:vars) (t:term).
                                        (Strcat (ReprMono t)
                                                ")"))))
 
-assume forall (t:term). (ReprPoly (MonoTerm t)) = (ReprMono t)
+assume forall (t:term). (ReprPoly (MonoTerm t)) = 
+  (Strcat "(Mono("
+  (Strcat (ReprMono t)
+  "))"))
 
 assume forall (t:term) (p:polyterm) (d:term).
   (ReprPoly (JustifiedPoly t p d)) =
@@ -172,6 +175,11 @@ assume forall (t:term) (p:polyterm) (d:term).
    (Strcat (ReprMono d)
    "))"))))))
 
+assume forall (v:var). (ReprPoly (PolyVar v)) =
+  (Strcat "(PolyVar("
+  (Strcat (ReprVar v)
+  "))"))
+                                  
 val printTyp: t:typ -> s:string{(ReprTyp t) = s}
 let printTyp ty = match ty with
   | Infon -> "Infon"
@@ -311,7 +319,9 @@ and printQuery q =
 val printInfon: p:polyterm -> b:string{(ReprPoly p)=b}
 let rec printInfon p = 
  match p with
-  | MonoTerm t -> printMono t
+  | MonoTerm t -> strcat "(Mono("
+                  (strcat (printMono t)
+				  "))")
   | ForallT xs t -> strcat "(Forall [" 
                     (strcat (printVars xs)
                     (strcat "]"
@@ -325,7 +335,9 @@ let rec printInfon p =
     (strcat ","
     (strcat (printMono d)
     "))")))))
-
+  | PolyVar v -> strcat "(PolyVar("
+                 (strcat (printVar v)
+				 "))")
 (* ============================ parsing ========================= *)
 
 (* remove the prefix of a string *)
@@ -578,10 +590,19 @@ let rec parseJustified b =
 and parsePoly b = 
   if strStartsWith b "(Forall" 
   then parseForall b 
-  else if  strStartsWith b "(JustifiedPoly("
+  else if strStartsWith b "(JustifiedPoly("
   then parseJustified b
-  else let t, r_t, rest = parseMono b in
-    MonoTerm t, r_t, rest
+  else if strStartsWith b "(PolyVar("
+  then let rest = strRmPfx b "(PolyVar(" in
+    let v, r_v, rest = parseVar rest in
+    let rest = strRmPfx rest "))" in
+    PolyVar v, strcat "(PolyVar(" (strcat r_v "))"), rest
+  else if strStartsWith b "(Mono("
+  then let rest = strRmPfx b "(Mono(" in
+    let t, r_t, rest = parseMono rest in
+    let rest = strRmPfx rest "))" in
+    MonoTerm t, strcat "(Mono(" (strcat r_t "))"), rest
+  else raise (strcat "unexpected Poly" b)
 
 val parseInfon: b:string -> option (p:polyterm{(ReprPoly p)=b})
 let parseInfon b =

@@ -311,7 +311,7 @@ let freshint =
 
 val applyAction: a:action{Enabled a} -> bool
 let rec applyAction a =
-  let _ = println (strcat "applying action ... " (string_of_any_for_coq a)) in
+  let _ = println (strcat ">>>>>applying action ... " (string_of_any_for_coq a)) in
   match a with
     | Learn i ->
         if checkInfon i (* should be able to drop this check for well-typed rules. *)

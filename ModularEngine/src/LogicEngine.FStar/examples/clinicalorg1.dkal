@@ -2,8 +2,8 @@
 upon Init(x) as m
 then learn Record(101, 1010, 42, "ala ma kota")      (* id, patient, trial *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
-	 learn SiteAssignment(_SITE1_, 42, 1000, 1250)
-	 drop m
+     learn SiteAssignment(_SITE1_, 42, 1000, 1250)
+     drop m
                          (* site, trial, n1, n2 *)
 
 if Trial(trial, _ORG1_, n)
