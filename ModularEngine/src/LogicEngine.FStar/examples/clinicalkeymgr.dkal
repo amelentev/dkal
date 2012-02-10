@@ -24,7 +24,7 @@ then (*learn forall r, number, data. (=>(x, p said MayRead(phys, r)))*)
 if (person said RequestToRead(person, r))
 if and(Record(r, patient, trial, recorddata),
        Trial(trial, org, trialdata))
-(*if (org said MayRead(person, r)) *)
+if (org said MayRead(person, r)) 
 if Key(r, k)
 then send person (_KEYMGR_ said KeyForRecord(person, r, k))
 

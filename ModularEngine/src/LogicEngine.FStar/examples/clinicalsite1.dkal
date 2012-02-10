@@ -22,9 +22,9 @@ then send phys (_SITE1_ said PhysParticipates(phys, trial, _SITE1_))
                          BasicLeq(number, p2)),
                      _SITE1_ said MayRead(phys, t)))
      fwd phys m3
-	 drop m1
-	 drop m2
- 	 drop m3
+     drop m1
+     drop m2
+     drop m3
 
 using "clinical.cfg" as _SITE1_
  
