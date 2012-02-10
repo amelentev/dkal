@@ -131,7 +131,7 @@ let keywords = ["upon";
 let keywordSet = System.Collections.Generic.HashSet<_> keywords
 
 let isIdentStartChar x = isLower x || isUpper x || (x ='_') 
-let isIdentChar x = isLower x || isUpper x || isDigit x || (x = '_') || (x = '\'') 
+let isIdentChar x = isLower x || isUpper x || isDigit x || (x = '_') || (x = '\'') || (x = '\'')
 let firstIDENT = fun s -> s |> ((satisfy isIdentStartChar) >>= (fun c -> preturn (String.of_char c)))
 
 let IDENT startChar restChar : Parser<string, 'a> = fun state ->
@@ -663,6 +663,9 @@ let printVar (x,t) =
   try spr "({name=\"%s\"; typ=%s})" x (printTyp t)
   with Failure msg -> raise (Failure (spr "Variable %s has unknown type: %s" x msg))
 
+let printVars = printMany  ", " printVar
+let printVarNames = printMany  ", " fst 
+
 let rec printQinfon relations = function 
   | MonoTerm i -> spr "(MonoTerm %s)" (printInfon relations i)
   | PolyTerm(xs, i) -> spr "(ForallT [%s] %s)" (printMany "; " printVar xs) (printInfon relations i)
@@ -758,7 +761,10 @@ let newvar =
         incr x;
         spr "x_%d" i
 
-type env = (string * typ) list * (string * qinfon) list
+type env = {gamma:(string * typ) list;
+            subst:(string * qinfon) list;
+            patvars:(string * typ) list;
+            bvars:(string * typ) list}
 
 let annotate relations rules = 
   let findRelation r = 
@@ -770,153 +776,165 @@ let annotate relations rules =
 
   let binds x  = List.exists (fun (x',_) -> x=x') in
 
-  let ctxContains x (ctx, subst) = 
-    List.exists (fun (x',_) -> x=x') ctx ||
-      List.exists (fun (x',_) -> x=x') subst in 
-    
-  let extendCtx ((ctx, subst) as env) (x,t) = 
-    if ctxContains x env 
-    then failwith "Variable shadowing not allowed"
-    else ((x,t)::ctx, subst) in
+  let ctxContains x env = 
+    List.exists (fun (x',_) -> x=x') env.gamma ||
+    List.exists (fun (x',_) -> x=x') env.subst ||
+    List.exists (fun (x',_) -> x=x') env.patvars in
 
-  let addSubst ((ctx, subst) as env) (x,qi) = 
+  let extendGamma env (x,t) = 
     if ctxContains x env 
     then failwith "Variable shadowing not allowed"
-    else (ctx, (x,qi)::subst) in
+    else {env with gamma=(x,t)::env.gamma} in
     
-  let lookup x env =
+  let extendCtx env (* ((ctx, subst) as env)  *)(x,t) = 
+    if ctxContains x env 
+    then failwith "Variable shadowing not allowed"
+    else {env with gamma=(x,t)::env.gamma; patvars=(x,t)::env.patvars} in
+    
+  let addSubst env (x,qi) = 
+    if ctxContains x env 
+    then failwith "Variable shadowing not allowed"
+    else {env with subst=(x,qi)::env.subst} in 
+    
+  let lookupSubst x env =
     try 
-      Some (snd (List.find (fun (x',_) -> x=x') env))
+      Some (snd (List.find (fun (x',_) -> x=x') env.subst))
+    with _ -> None in
+
+  let lookupVar x env =
+    try 
+      Some (snd (List.find (fun (x',_) -> x=x') env.gamma))
     with _ -> None in
     
-  let rec annotRule ctx = function
+  let rec annotRule env = function
     | Rule (_, c, a) -> 
-        let c, ctx = annotConditions ctx c in
-        let a = List.map (annotAction ctx) a in 
-          Rule(fst ctx, c, a)
+        let c, env = annotConditions env c in
+        let a = List.map (annotAction env) a in 
+          Rule(env.patvars, c, a)
 
-  and annotConditions (ctx:env) cl : condition list * env =
-    let ctx, out = List.fold_left (fun (ctx, out) c -> 
-                                     let c', ctx = annotCondition ctx c in 
-                                       (ctx, c'::out)) (ctx, []) cl in
-      List.rev out, ctx
+  and annotConditions env cl : condition list * env =
+    let env, out = List.fold_left (fun (env, out) c -> 
+                                     let c', env = annotCondition env c in 
+                                       (env, c'::out)) (env, []) cl in
+      List.rev out, env
 
-  and annotCondition (ctx : env) : condition -> condition * env = function 
+  and annotCondition env : condition -> condition * env = function 
     | If qi -> 
-        let qi, ctx = annotQinfon ctx qi in 
-          (If qi), ctx
+        let qi, env = annotQinfon env qi in 
+          (If qi), env
             
     | Upon (qi, m) -> 
-        let qi, ctx = annotQinfon ctx qi in 
-        let ctx = match m with 
-          | None -> ctx
-          | Some m -> addSubst ctx (m, qi) in 
-          Upon(qi, m), ctx
+        let qi, env = annotQinfon env qi in 
+        let env = match m with 
+          | None -> env
+          | Some m -> addSubst env (m, qi) in 
+          Upon(qi, m), env
             
     | UponJ (qi, m) -> 
-        let qi, ctx = annotQinfon ctx qi in 
-        let ctx' = ctx in 
+        let qi, env = annotQinfon env qi in 
         let ev_var = newvar(), Ev in 
         let p_var = newvar(), Prin in 
         let qi' = JustifiedPoly(TermVar p_var, qi, TermVar ev_var) in 
-        let ctx = extendCtx (extendCtx ctx' ev_var) p_var in 
-        let ctx = match m with 
-          | None -> ctx
-          | Some m -> addSubst ctx (m, qi') in 
-          Upon(qi', m), ctx
+        let env = extendCtx (extendCtx env ev_var) p_var in 
+        let env = match m with 
+          | None -> env
+          | Some m -> addSubst env (m, qi') in 
+          Upon(qi', m), env
 
-  and annotAction (ctx:env) = function 
-    | Learn qi -> Learn (typeQinfon ctx qi)
-    | Drop qi -> Drop (typeQinfon ctx qi)
-    | Add qi -> Add (typeQinfon ctx qi)
+  and annotAction env = function 
+    | Learn qi -> Learn (typeQinfon env qi)
+    | Drop qi -> Drop (typeQinfon env qi)
+    | Add qi -> Add (typeQinfon env qi)
     | WithFresh (x, al) -> 
-        let ctx = extendCtx ctx (x, Int) in 
-          WithFresh(x, List.map (annotAction ctx) al)
-    | Fwd(p, qi) -> Fwd((typeTerm ctx p Prin), typeQinfon ctx qi)
-    | Send(p, qi) -> Send((typeTerm ctx p Prin), typeQinfon ctx qi)
+        let env = extendCtx env (x, Int) in 
+          WithFresh(x, List.map (annotAction env) al)
+    | Fwd(p, qi) -> Fwd((typeTerm env p Prin), typeQinfon env qi)
+    | Send(p, qi) -> Send((typeTerm env p Prin), typeQinfon env qi)
 
   and annotQinfon = checkQinfon true
-  and typeQinfon (ctx:env) qi = fst (checkQinfon false ctx qi)
-  and typeTerm (ctx:env) t typ = fst (checkTerm false ctx t typ)
-  and checkQinfon extendflag (ctx:env) : qinfon -> qinfon * env = function 
-    | MonoTerm i -> let i, ctx = checkInfon extendflag ctx i in MonoTerm i, ctx
+  and typeQinfon env qi = fst (checkQinfon false env qi)
+  and typeTerm env t typ = fst (checkTerm false env t typ)
+  and checkQinfon extendflag env : qinfon -> qinfon * env = function 
+    | MonoTerm i -> let i, env = checkInfon extendflag env i in MonoTerm i, env
     | PolyTerm (xl, i) -> 
-        let ctx' = List.fold_left (fun ctx x -> extendCtx ctx x) ctx xl in 
-        let i, _ = checkInfon extendflag ctx' i in
-          PolyTerm(xl, i), ctx
+        if List.exists (fun (x,_) -> binds x env.bvars) xl
+        then raise (Failure (spr "Bound variables in set {%s} clash with other bound variables; rename!" (printVarNames xl)))
+        else
+          let envxl = List.fold_left (fun env x -> extendGamma env x) env xl in 
+          let i, envi = checkInfon extendflag envxl i in
+            PolyTerm(xl, i), {env with patvars=envi.patvars; bvars=(xl@env.bvars)}
     | PolyVar x -> 
-        let (_, subst) = ctx in 
-          match lookup x subst with 
-            | None -> raise (Failure (spr "Failed to eliminate polyvar %s\n" x))
-            | Some tm -> tm, ctx
+        match lookupSubst x env with 
+          | None -> raise (Failure (spr "Failed to eliminate polyvar %s\n" x))
+          | Some tm -> tm, env
 
-  and checkInfon extflag ctx = function
-    | True -> True, ctx
+  and checkInfon extflag env = function
+    | True -> True, env
 
-    | Var x when binds x (fst ctx) -> 
-        let ty = lookup x (fst ctx) in 
-          Var x, ctx
+    | Var x when binds x env.gamma -> 
+        let ty = lookupVar x env in 
+          Var x, env
 
-    | Var x when (not (binds x (snd ctx))) && extflag -> 
-        Var x, extendCtx ctx (x,Infon)
+    | Var x when (not (binds x env.gamma)) && extflag -> 
+        Var x, extendCtx env (x,Infon)
           
     | Relation (r, terms) -> 
         (match findRelation r with 
            | Some types when List.length terms = List.length types -> 
-               let ctx, terms = 
-                 List.fold_left (fun (ctx, terms) (term, typ) -> 
-                                   let term', ctx' = checkTerm extflag ctx term typ in 
-                                     (ctx', term'::terms)) 
-                   (ctx, [])
+               let env, terms = 
+                 List.fold_left (fun (env, terms) (term, typ) -> 
+                                   let term', env' = checkTerm extflag env term typ in 
+                                     (env', term'::terms)) 
+                   (env, [])
                    (List.zip terms types) in 
-                 Relation(r, List.rev terms), ctx
+                 Relation(r, List.rev terms), env
            | _ -> failwith (spr "Failed to type relation %s" r))
         
     | Said(x, i) -> 
-        let x', ctx = checkTerm extflag ctx x Prin in 
-        let i', ctx = checkInfon extflag ctx i in 
-          Said(x', i'), ctx
+        let x', env = checkTerm extflag env x Prin in 
+        let i', env = checkInfon extflag env i in 
+          Said(x', i'), env
 
     | Implies(i, j) -> 
-        let i, ctx = checkInfon extflag ctx i in 
-        let j, ctx = checkInfon extflag ctx j in 
-          Implies(i,j), ctx
+        let i, env = checkInfon extflag env i in 
+        let j, env = checkInfon extflag env j in 
+          Implies(i,j), env
 
     | And(i, j) -> 
-        let i, ctx = checkInfon extflag ctx i in 
-        let j, ctx = checkInfon extflag ctx j in 
-          And(i,j), ctx
+        let i, env = checkInfon extflag env i in 
+        let j, env = checkInfon extflag env j in 
+          And(i,j), env
 
     | Evidence(t, i) ->
-        let t, ctx = checkTerm extflag ctx t Ev in 
-        let i, ctx = checkInfon extflag ctx i in 
-          Evidence(t,i), ctx
+        let t, env = checkTerm extflag env t Ev in 
+        let i, env = checkInfon extflag env i in 
+          Evidence(t,i), env
 
-    | Eval code -> Eval code, ctx
+    | Eval code -> Eval code, env
 
     | i -> failwith (spr "Failed to type infon %A" i)
 
-  and checkTerm extflag (ctx:env) tm typ : term * env = match tm with
-    | TermVar(x,_) when not (binds x (snd ctx)) -> 
-        (match lookup x (fst ctx) with 
+  and checkTerm extflag env tm typ : term * env = match tm with
+    | TermVar(x,_) when not (binds x env.subst) ->
+        (match lookupVar x env with
            | None when extflag -> 
-               let ctx = extendCtx ctx (x, typ) in
-                 TermVar(x,typ), ctx
+               let env = extendCtx env (x, typ) in
+                 TermVar(x,typ), env
            | Some t -> 
                (match compress t with 
                   | Uvar t -> (t := Some typ; 
-                               TermVar(x,typ), ctx)
-                  | t' when t'=typ -> TermVar(x,typ), ctx
+                               TermVar(x,typ), env)
+                  | t' when t'=typ -> TermVar(x,typ), env
                   | t' -> failwith (spr "Failed to type variable %s. Expected %s got %s\n" x (printTyp typ) (printTyp t')))
            | _ -> failwith (spr "Failed to type variable %s" x))
           
-    | Integer i when typ=Int -> tm, ctx
-    | Str s when typ = String -> tm, ctx
-    | Principal p when typ=Prin -> tm, ctx
-    | EvalTerm(t, _) -> set_uvar t typ; tm, ctx
+    | Integer i when typ=Int -> tm, env
+    | Str s when typ = String -> tm, env
+    | Principal p when typ=Prin -> tm, env
+    | EvalTerm(t, _) -> set_uvar t typ; tm, env
     | _ -> failwith (spr "Failed to type term %A; expected %A" tm typ) in
     
-    List.map (annotRule ([],[])) rules
+    List.map (annotRule {gamma=[]; patvars=[]; subst=[]; bvars=[]}) rules
 
 let parse fn = 
   dir := System.IO.Path.GetDirectoryName(fn);
@@ -937,5 +955,5 @@ let _ =
       let filename = Sys.argv.(1) in 
         try 
           parse filename
-        with Failure msg -> pr "%s" msg
+        with Failure msg when (pr "%s" msg;false) -> ()
   

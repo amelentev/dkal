@@ -115,8 +115,7 @@ let rec match_pattern tm s1 upat pat =
           (match InfonLogic.alphaConvertWith tm ys with 
              | Some(((ForallT ys' tm'), aeq)) when ys'=ys -> 
                  (match Unify.doMatch tm' s1 upat s1pat' with 
-                    | Some s2 when (check_disjoint (freeVarsSubst s2) ys') &&
-                                   (includes upat (domain s2))-> 
+                    | Some s2 when includes upat (domain s2) -> 
                         (* assert (InfonLogic.alphaEquiv tm (ForallT ys' tm')); *)
                         (* assert (tm' = (Subst s1pat' s2)); *)
                         (* assert ((PolySubst (PolySubst pat s1) s2) = (ForallT ys' tm')); *)
