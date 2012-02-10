@@ -1,0 +1,41 @@
+(* TM's policy *)
+
+upon Init(i) as m 
+then learn CurrentState(0)
+     learn CurrentPosition(0)
+     learn Tape(0, "0")
+     learn Tape(1, "0")
+     learn Tape(2, "0")
+     learn Tape(3, "")
+     learn NonFinalState(0)
+     learn Transition(0, "0", 0, "1", "right")
+     learn Transition(0, "", 1, "end", "right")
+	 drop m
+
+if CurrentState(s1) 
+if CurrentPosition(p1) 
+if Tape(p1, sy1)
+if NonFinalState(s1)
+if Transition(s1, sy1, s2, sy2, "left")
+then (*  drop m1
+     drop m2
+	 drop m3 *)
+     learn CurrentState(s2)
+     learn CurrentPosition(eval$sub1 "p1"$)
+     learn Tape(p1, sy2)
+     add (Step(p1, eval$sub1 "p1"$, s1, s2, sy1, sy2))
+    
+if CurrentState(s1) 
+if CurrentPosition(p1) 
+if Tape(p1, sy1) 
+if NonFinalState(s1)
+if Transition(s1, sy1, s2, sy2, "right")
+then (* drop m1
+     drop m2
+	 drop m3 *)
+     learn CurrentState(s2)
+     learn CurrentPosition(eval$add1 "p1"$)
+     learn Tape(p1, sy2)
+     add (Step(p1, eval$add1 "p1"$, s1, s2, sy1, sy2))
+
+using "turing_machine.cfg" as _TM_
