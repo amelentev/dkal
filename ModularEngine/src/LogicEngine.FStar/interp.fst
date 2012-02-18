@@ -53,7 +53,7 @@ assume Holds_upon: forall (xs:vars) (pat:polyterm) (x:var) (substin:polysubst) (
          ((Includes xs (DomainPoly subst)) &&
           (HilbertianQIL.alphaEquiv c c') &&
           ((PolySubst (PolySubst pat substin) subst)=c'))
-      => HoldsOne substin xs (Upon pat x) ({subst with substpoly=((x,(c':polyterm))::subst.substpoly)})
+      => HoldsOne substin xs (Upon pat x) ({subst with substpoly=((x,(c:polyterm))::subst.substpoly)})
 
 type HoldsMany :: vars => list condition => polysubst => E
 assume forall (xs:vars). HoldsMany xs [] ({substmono=[]; substpoly=[]})
@@ -177,11 +177,12 @@ let comms =
 val get_communications: unit -> unit
 let rec get_communications _unit =
   let message = Net.receive () in
+  let _ = println ("____________ received") in
     match Net.bytes2infon message with
       | Some infon ->
           let _ = println (strcat "VVVVVV RECEIVED MESSAGES VVVVV : " (string_of_any_for_coq infon)) in
             (comms := infon::(!comms)); ()
-      | _ -> get_communications ()
+      | _ -> let _ = println ("_____________ failed bytes2infon") in get_communications ()
           
 val dropCommunications: i:polyterm{Enabled (Drop i)} -> bool
 let dropCommunications i =
@@ -227,7 +228,7 @@ val matchComm : comm:communication
 let matchComm (comm:communication) xs pat asVar s0 =
   match match_pattern comm s0 xs pat with
     | None -> []
-    | Some ((tm', s1)) -> [({s1 with substpoly=((asVar,tm')::s1.substpoly)})]
+    | Some ((tm', s1)) -> [({s1 with substpoly=((asVar,(comm:polyterm))::s1.substpoly)})]
 
 let matchComms xs pat asVar s = collect (fun comm -> matchComm comm xs pat asVar s) (!comms)
   

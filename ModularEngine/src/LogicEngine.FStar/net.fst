@@ -70,7 +70,17 @@ let rec checkInfon p = match p with
   | JustifiedPoly (Const (PrincipalConstant p)) i (Const (Bytes ds)) -> 
       let pubk = lookup_pubkey p in
       let bi = polyterm2bytes i in 
-      (rsa_verify p pubk i bi ds) && checkInfon i
+	  let _ = println (strcat "#### p = " (string_of_any_for_coq p)) in
+	  let _ = println (strcat "#### pubk = " (string_of_any_for_coq pubk)) in
+	  let _ = println (strcat "#### i = " (string_of_any_for_coq i)) in
+	  let _ = println (strcat "#### bi = " (string_of_any_for_coq bi)) in
+	  let _ = println (strcat "#### ds = " (string_of_any_for_coq ds)) in
+	  let b1 = rsa_verify p pubk i bi ds in
+	  let b2 = checkInfon i in
+	  let _ = if (b1) then println "rsa_verified" else false in
+	  let _ = if (b2) then println "checkInfon done" else false in
+	  b1 && b2
+      (*(rsa_verify p pubk i bi ds) && checkInfon i*)
   | _ -> false
 
 val bytes2infon: b:bytes -> option (i:infon{(Received b => Received i)})

@@ -1,25 +1,20 @@
 (* common to all principals *)
 upon Init(x) as m   
+upon justified (phys said RequestToRead(phys, r)) as m1
+upon justified forall person, rec, (number:int), (data:string). (=>(x1, org said MayRead(person, rec))) as m2
+upon justified forall t, (num:int), (datarecord:string). (=>(x2, site said MayRead(phys, t))) as m3
 then learn Record(101, 1010, 42, "ala ma kota")   (* id, patient, trial *)
      learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
      learn Key(101, 13)
-	 (*learn forall n, n1, n2. (=> (eval$checkRange "n" "n1" "n2"$,
-	                              InRange(n, n1, n2)))*)
+	 learn InRange(1010, 1000, 1250)
+	 learn InRange(1010, 1010, 1050)
      drop m
-
-upon justified (phys said RequestToRead(phys, r)) as m
-then learn (phys said RequestToRead(phys, r))
-     drop m 
-
-upon justified forall phys, r, (number:int), (data:string). (=>(x, p said MayRead(phys, r))) as m
-then (*learn forall phys, r, number, data. (=>(x, p said MayRead(phys, r)))*)
-     learn m
-     drop m
-
-upon justified forall r, (number:int), (data:string). (=>(x, p said MayRead(phys, r))) as m
-then (*learn forall r, number, data. (=>(x, p said MayRead(phys, r)))*)
-     learn m
-     drop m
+	 learn (phys said RequestToRead(phys, r))
+     drop m1 
+     learn m2
+     drop m2
+     learn m3
+     drop m3
 
 if (person said RequestToRead(person, r))
 if and(Record(r, patient, trial, recorddata),

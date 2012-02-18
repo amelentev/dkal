@@ -1,27 +1,20 @@
 (* common to all principals *)
-upon Init(x) as m   
-then learn Record(101, 1010, 42, "ala ma kota")  (* id, patient, trial *)
-     learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
-	 learn PhysPatients(1010, "true")
-	 drop m
-	 
-upon justified (site said PhysParticipates(_PHYS1_, trial, site)) as m1
-upon justified (site said
-                PhysAllocatedPatients(_PHYS1_, p1, p2, trial, site)) as m2
-if PhysPatients(number, "true")
-if and(eval$checkRange "number" "p1" "p2"$,
-       Record(r, number, trial, datarecord),
-       Trial(trial, org, datatrial))
-upon justified forall phys, rec, (n:int), (data:string). (=>(x,
-                  org said MayRead(phys, rec))) as m3
-upon justified forall recd, (nm:int), (dt:string). (=>(y,
-                  site said MayRead(_PHYS1_, recd))) as m4
-then send _KEYMGR_ (_PHYS1_ said RequestToRead(_PHYS1_, r))
-     drop m1
-     drop m2
+upon Init(x) as m
+upon justified forall t, (num:int), (datarecord:string). (=>(y,
+                  _SITE1_ said MayRead(_PHYS1_, t))) as m4
+upon justified forall person, rec, (number:int), (data:string). (=>(z,
+                  _ORG1_ said MayRead(person, rec))) as m3
+then 
+     send _KEYMGR_ (_PHYS1_ said RequestToRead(_PHYS1_, 101))
      fwd _KEYMGR_ m3
      drop m3
      fwd _KEYMGR_ m4
      drop m4
+	 drop m
 
 using "clinical.cfg" as _PHYS1_
+
+
+(*upon justified (site said PhysParticipates(_PHYS1_, trial, site)) as m1
+upon justified (site said
+                PhysAllocatedPatients(_PHYS1_, p1, p2, trial, site)) as m2*)
