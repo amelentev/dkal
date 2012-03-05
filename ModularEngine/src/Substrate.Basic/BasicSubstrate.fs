@@ -38,9 +38,8 @@ type BasicSubstrate() =
     | BasicPrimitives.Plus, args ->
       let (a: seq<int>) = args |> Seq.cast
       box (a |> Seq.sum)
-    | BasicPrimitives.Minus, args ->
-      let (a: list<int>) = args |> Seq.cast |> Seq.toList
-      box (a.Head - List.sum a)
+    | BasicPrimitives.Minus, [a; b] ->
+      box ((a:?>int) - (b:?>int))
     | BasicPrimitives.Uminus, [a] ->
       box -(a :?> int)
     | BasicPrimitives.Eq, [a; b] ->
