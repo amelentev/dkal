@@ -65,11 +65,11 @@ do
 // proceed to perform checkin, by forwarding his certificate to the cautious 
 // airline
 with F: Flight, N: Passport, E: Evidence
+    upon
+        pa1 said issuedPassport(Me, N) [E]
     if
         asInfon({| "itineraries" | "//itinerary[@airline='ca']/@flight" | F |}) &&
         noBoardingPass(ca, F)
-    upon
-        pa1 said issuedPassport(Me, N) [E]
     do
         say with justification to ca:
             checkinNeeded(Me, F)
@@ -117,21 +117,32 @@ datasource xml("<flights>
                     </flight>
                 </flights>") 
     namespaces "flights"
-    
-with P: Principal, F: Flight, S: Seat, PA: Principal, N: Passport
-    upon 
-        P said checkinNeeded(P, F) [_]
-    upon
-        PA said issuedPassport(P, N) [_]
+
+with PA: Principal, I: Infon, E: Evidence
+	upon
+		PA said I [E]
     if
         asInfon({| "agencies" | "//agency[@name='$PA']" |})
+	do
+		learn PA said I [E]
+
+with P: Principal, F: Flight, E: Evidence
+	upon 
+		P said checkinNeeded(P, F) [E]
+	do
+		learn
+			P said checkinNeeded(P, F) [E]
+		
+with P: Principal, F: Flight, S: Seat, PA: Principal, N: Passport
+    if 
+        P said checkinNeeded(P, F) [_]
+    if
+        PA said issuedPassport(P, N) [_]
     if
         asInfon({| "flights" | "//flight[@number='$F']/passenger[@name='$P']/@seat" | S |})
     do
         say with justification to P:
             boardingPass(P, F, S)
-        drop
-            P said checkinNeeded(P, F)
     
     
     

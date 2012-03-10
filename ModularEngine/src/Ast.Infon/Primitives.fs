@@ -61,8 +61,6 @@ module Primitives =
   [<Literal>] 
   let Apply = "apply"
   [<Literal>] 
-  let Drop = "drop"
-  [<Literal>] 
   let Fresh = "fresh"
 
   // Infons
@@ -139,8 +137,6 @@ module Primitives =
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Rule]; Identity = None}
     | Apply -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.SubstrateUpdate]; Identity = None}
-    | Drop -> 
-      Some {Name = f; RetType = Type.Action; ArgsType = [Type.AbstractInfon]; Identity = None}
     | Fresh -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Int32]; Identity = None}
     

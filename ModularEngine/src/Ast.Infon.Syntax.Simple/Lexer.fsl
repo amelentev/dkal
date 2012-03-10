@@ -100,7 +100,6 @@ rule tokenize = parse
 | "install"			      { INSTALL }
 | "uninstall"		      { UNINSTALL }
 | "apply"		          { APPLY }
-| "drop"		          { DROP }
 
 // Evidence
 | "and"               { EV_AND }

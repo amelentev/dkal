@@ -95,25 +95,35 @@ datasource xml("<physAssignments>
                 </physAssignments>") 
     namespaces "physAssignments"
     
+// rules to accept messages from org1
+with I: Infon, E: Evidence
+	upon
+		org1 said I [E]
+	do
+		learn org1 said I [E]
+with I1: Infon, I2: Infon, E: Evidence
+	upon
+		I1 -> org1 said I2 [E]
+	do
+		learn I1 -> org1 said I2 [E]
+	
 // rule to trigger for each physician working on a trial at site1
 with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E: Evidence
-    upon 
-        // some organized ORG says that site1 is executing TRIAL
+    if
+        // ORG gave us permission to delegate his authority on granting access 
+        // to records, provided that X holds
+        X -> ORG said mayRead(PHYS, R) [E]
+    if
+		// some organized ORG says that site1 is executing TRIAL
         ORG said siteParticipates(Me, TRIAL) [_]
-    upon 
+	if
         // ORG says that site1 has patients [N1,...,N2] in TRIAL
         ORG said siteAllocatedPatients(Me, N1, N2, TRIAL) [_]
-    if
-        // check that ORG is effectively the organizer of TRIAL
-        asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |}) &&
+	if
         // PHYS is a physician working at TRIAL in site1 on patients [P1,...,P2]
         asInfon({| "physAssignments" | "//physAssignment[@trial='$TRIAL']" | PHYS <-> "phys", P1 <-> "n1", P2 <-> "n2" |}) &&
         // check that [P1,...,P2] is a subset of [N1,...,N2]
         asInfon({| "basic" | N1 <= P1 && P2 <= N2 |})
-    upon
-        // ORG gave us permission to delegate his authority on granting access 
-        // to records, provided that X holds
-        X -> ORG said mayRead(PHYS, R) [E]
     do
         // inform PHYS that he/she participates in TRIAL
         say with justification to PHYS:
@@ -144,14 +154,31 @@ datasource xml("<physPatients>
                 </physPatients>") 
     namespaces "physPatients"
 
+// rules to accept messages from site1
+with I: Infon, E: Evidence
+	upon
+		site1 said I [E]
+	do
+		learn site1 said I [E]
+with I1: Infon, I2: Infon, E: Evidence
+	upon
+		I1 -> site1 said I2 [E]
+	do
+		learn I1 -> site1 said I2 [E]
+with I1: Infon, I2: Infon, E: Evidence
+	upon
+		I1 -> org1 said I2 [E]
+	do
+		learn I1 -> org1 said I2 [E]		
+		
 // rule to trigger for each record that phys1 wants to read
-with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence
-    upon 
+with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence, E3: Dkal.Evidence
+    if 
         // SITE said that phys1 participates in TRIAL at SITE
         SITE said physParticipates(Me, TRIAL, SITE) [_]
-    upon 
+    if 
         // SITE said that phys1 has patients [P1,...,P2] in TRIAL at SITE
-        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [_]
+        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [E3]
     if
         // phys1 wants to read the record for patient NUMBER
         asInfon({| "physPatients" | "//physPatient[@needInfo='true']/@id" | NUMBER |}) &&
@@ -161,10 +188,10 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER
         asInfon({| "records" | "//record[@patient='$NUMBER' and @trial='$TRIAL']/@id" | R |}) &&
         // ORG is the organizer of TRIAL
         asInfon({| "trials" | "//trial[@id='$TRIAL']/@organizer" | ORG |})
-    upon 
+    if 
         // ORG is delegating access to R under conditions X
         X -> ORG said mayRead(Me, R) [E1]
-    upon
+    if
         // SITE is delegating access to R under conditions Y
         Y -> SITE said mayRead(Me, R) [E2]
     do
@@ -177,9 +204,9 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER
         // send keyMgr the delegation of access by SITE
         send to keyMgr:
             Y -> SITE said mayRead(Me, R) [E2]
-        // drop the message, in order to keep the rule from firing several times
-        drop
-            SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
+        // forget the message, in order to keep the rule from firing several times
+        forget
+            SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [E3]
             
 ---keyMgr--------------------------
 // keyMgr's policy
@@ -201,7 +228,7 @@ with X: Infon, E: Evidence
 
 // rule to serve key requests        
 with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
-    upon 
+    if 
         // PERSON is requesting the key for R
         PERSON said requestToRead(PERSON, R) [_]
     if
@@ -219,6 +246,3 @@ with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
         // send K to PERSON
         say with justification to PERSON:
             keyForRecord(K, R)
-        // drop the request, to prevent the rule from firing several times
-        drop 
-            PERSON said requestToRead(PERSON, R)

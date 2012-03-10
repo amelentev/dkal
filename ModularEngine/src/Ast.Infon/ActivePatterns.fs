@@ -96,10 +96,6 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                             | :? ISubstrateUpdateTerm as su -> Some su
                             | _ -> failwith "Expecting ISubstrateUpdateTerm in AsInfon"
                         | _ -> None
-  /// Active pattern for the drop from mailbox action
-  let (|Drop|_|) mt = match mt with
-                      | App({Name=Primitives.Drop}, [i]) -> Some i
-                      | _ -> None
   /// Active pattern for the fresh id action
   let (|Fresh|_|) mt = match mt with
                        | App({Name=Primitives.Fresh}, [v]) -> Some v

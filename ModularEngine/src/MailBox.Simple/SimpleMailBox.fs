@@ -68,10 +68,9 @@ type SimpleMailBox(logicEngine: ILogicEngine) =
       | _ -> 
         msgs.Remove(PrefixedInfon(prefix, msg)) |> ignore
 
-    /// Called at the end of each round to eliminate "old" messages
+    /// Called at the end of each round to eliminate messages
     member smb.Prune () = 
-      // TODO: implement some algorithm to remove unnecessary/old messages
-      () 
+      msgs.Clear()
 
     /// Match a wire condition (infon) to messages in the mailbox. It returns a 
     /// subset of (possibly specialized) substitutions. 

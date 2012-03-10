@@ -67,8 +67,6 @@ with P: Principal, SUBJECT: Subject, CONTENTS: String
     do
         send to P:
             examContents(SUBJECT, CONTENTS)
-        drop
-            P said asksForExamContents(P, SUBJECT)
             
 ---suresh--------------------------
 // prof. suresh's policy

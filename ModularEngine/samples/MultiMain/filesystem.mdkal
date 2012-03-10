@@ -46,6 +46,3 @@ with U: User, F: File, O: Operation
         send to U:
             allowed(F, U, O)
 
-        // we drop the request to avoid serving it several times
-        drop
-            U said ask(F, U, O)

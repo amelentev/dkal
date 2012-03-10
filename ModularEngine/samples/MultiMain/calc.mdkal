@@ -60,8 +60,6 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
     do
         send to P:
             sum(X, Y, Z)
-        drop
-            P said needSum(X, Y)
             
 // general rule to help someone asking for products
 with X: Int, Y: Int, Z: Int, P: Dkal.Principal
@@ -72,5 +70,3 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
     do
         send to P:
             product(X, Y, Z)
-        drop
-            P said needProduct(X, Y)

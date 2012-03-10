@@ -29,9 +29,6 @@ with X: Int, Y: Int
         // send that new number back to pong
         send to pong:
             number(Y)
-        // drop the original message
-        drop
-            pong said number(X)
 
 ---pong-----------------------------
 // pong's policy
@@ -48,6 +45,3 @@ with X: Int, Y: Int
         // send that new number back to ping
         send to ping:
             number(Y)
-        // drop the original message
-        drop 
-            ping said number(X)

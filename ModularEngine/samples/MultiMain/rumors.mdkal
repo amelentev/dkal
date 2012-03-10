@@ -17,17 +17,22 @@ with P: Dkal.Principal, Q: Dkal.Principal
         send to chuck: isTheNextBigStar(Q)
 
 ---chuck-----------------------------
+// chuck learns everything he hears
+with P: Dkal.Principal, I: Dkal.Infon
+    upon 
+        P said I
+	do
+		learn P said I
+
 // chuck is a good journalist and he needs two different sources
 // before he accepts something as valid
 with P: Dkal.Principal, Q: Dkal.Principal, R: Dkal.Principal
-    upon 
-        Q said isTheNextBigStar(P)
-    upon
-        R said isTheNextBigStar(P)
-    if
-        asInfon({| "basic" | Q != R |})
-    do
-        learn isTheNextBigStar(P)
+    do once
+        learn 
+			(Q said isTheNextBigStar(P)) &&
+			(R said isTheNextBigStar(P)) &&
+			asInfon({| "basic" | Q != R |}) -> 
+			isTheNextBigStar(P)
 
 // if chuck knows about a coming big star it will publish it
 with P: Dkal.Principal
