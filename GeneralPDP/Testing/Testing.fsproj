@@ -38,7 +38,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DkalEngine">
-      <HintPath>..\DkalEngine.dll</HintPath>
+      <HintPath>..\..\DkalEngine\bin\Debug\DkalEngine.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />

@@ -33,7 +33,7 @@ attribute [16] req {int} by {principal} has {text} attribute double {text} value
   let singleCommRuleDkalAssertions dkal pap = 
     dkal + " knows\n" + 
       // trust the PAP
-      "  " + pap + " tdonI req R1 by PEP1 decision D1\n" +
+      "  " + pap + " tdonS req R1 by PEP1 decision D1\n" +
 
       // send responses back to PEP
       "if " + dkal + " knows\n" +

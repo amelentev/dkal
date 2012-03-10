@@ -64,7 +64,7 @@ module XacmlPolicyTranslator =
       
       let guard = unfold ([reqPresent] @ attributes @ asInfons)
       let decisionInfon = translator.DecisionInfon reqId pep decision
-      let impliedDecision = App(pctx.LookupFunction("implied"), [pap; decisionInfon])
+      let impliedDecision = App(pctx.LookupFunction("said"), [pap; decisionInfon])
 
       App(pctx.LookupFunction("follows"), [guard; impliedDecision])
 
