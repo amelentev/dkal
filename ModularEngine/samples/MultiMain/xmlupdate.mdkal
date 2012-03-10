@@ -1,11 +1,11 @@
-/// Test XML substrate operations: query, insert, update, delete
+/// Test XML datasource operations: query, insert, update, delete
 /// expected output:
 ///  >> From test to test: log("inserted") && log("node")
 ///  >> From test to test: log("updated") && log("node")
 ///  >> From test to test: log("deleted") && log("node1")
 ---test--------------------------
 
-substrate xml("<root></root>")
+datasource xml("<root></root>")
     namespaces "x"
 
 relation nodename(X: System.String)

@@ -26,7 +26,7 @@ do once
 // filesystem's policy
 
 // permissions are defined on an XML document
-substrate xml("<permissions>
+datasource xml("<permissions>
                     <permission user='john' file='readme.txt' read='true' write='false' execute='false' />
                     <permission user='john' file='holidays.jpg' read='true' write='true' execute='false' />
                 </permissions>") 

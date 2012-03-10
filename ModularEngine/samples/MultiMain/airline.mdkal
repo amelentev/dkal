@@ -30,8 +30,8 @@ relation boardingPass(P: Principal, F: Flight, S: Seat)
 ---john--------------------------
 // john's policy
 
-// substrate that indicates itineraries for john
-substrate xml("<itineraries>
+// datasource with itineraries for john
+datasource xml("<itineraries>
                     <itinerary flight='984' to='SEA' from='EZE' airline='ca' />
                 </itineraries>") 
     namespaces "itineraries"
@@ -81,8 +81,8 @@ with F: Flight, N: Passport, E: Evidence
 ---pa1--------------------------
 // passport agency 1's policy
 
-// substrate that indicates passports issued by this agency
-substrate xml("<passports>
+// datasource with passports issued by this agency
+datasource xml("<passports>
                     <passport number='948823' name='john' />
                     <passport number='924875' name='jane' />
                 </passports>") 
@@ -102,15 +102,15 @@ with P: Principal, N: Passport
 ---ca--------------------------
 // cautious airline's policy
 
-// substrate to keep track of trusted passport agencies
-substrate xml("<agencies>
+// datasource to keep track of trusted passport agencies
+datasource xml("<agencies>
                     <agency name='pa1' />
                     <agency name='pa23' />
                 </agencies>") 
     namespaces "agencies"
 
-// substrate to keep track of flights
-substrate xml("<flights>
+// datasource to keep track of flights
+datasource xml("<flights>
                     <flight number='984'>
                         <passenger name='john' seat='34' />
                         <passenger name='carl' seat='20' />

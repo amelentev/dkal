@@ -36,9 +36,9 @@ relation mayRead(P: Principal, R: Record)
 // K is the key to unlock/decrypt record R
 relation keyForRecord(K: Int, R: Record)
 
-// substrate available to all principals that holds patient records. 
+// datasource available to all principals that holds patient records. 
 // the data field is "encrypted" and can only be unlocked with the proper key.
-substrate xml("<records>
+datasource xml("<records>
                     <record id='101' patient='1005' trial='42' data='ala ma kota' />
                     <record id='102' patient='1015' trial='42' data='kot ma ale' />
                     <record id='103' patient='1016' trial='42' data='abecadlo' />
@@ -46,8 +46,8 @@ substrate xml("<records>
                 </records>") 
     namespaces "records"
     
-// substrate available to all principals that holds trials information
-substrate xml("<trials>
+// datasource available to all principals that holds trials information
+datasource xml("<trials>
                     <trial id='42' organizer='org1' name='highly classified trial' />
                 </trials>") 
     namespaces "trials"
@@ -55,8 +55,8 @@ substrate xml("<trials>
 ---org1--------------------------
 // org1's policy
 
-// substrate that indicates which sites are executing the trials organized by org1
-substrate xml("<siteAssignments>
+// datasource that indicates which sites are executing the trials organized by org1
+datasource xml("<siteAssignments>
                     <siteAssignment site='site1' trial='42' n1='1000' n2='1250' />
                 </siteAssignments>") 
     namespaces "siteAssignments"
@@ -89,8 +89,8 @@ with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
 ---site1--------------------------
 // site1's policy
 
-// substrate that indicates which physicians work in which trials at site1
-substrate xml("<physAssignments>
+// datasource that indicates which physicians work in which trials at site1
+datasource xml("<physAssignments>
                     <physAssignment phys='phys1' trial='42' n1='1010' n2='1050' />
                 </physAssignments>") 
     namespaces "physAssignments"
@@ -137,8 +137,8 @@ with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal
 ---phys1--------------------------
 // phys1's policy
 
-// substrate to keep track of which patients phys1 wants to read their records
-substrate xml("<physPatients>
+// datasource to keep track of which patients phys1 wants to read their records
+datasource xml("<physPatients>
                     <physPatient id='1015' needInfo='true' />
                     <physPatient id='1100' needInfo='true' />
                 </physPatients>") 
@@ -184,8 +184,8 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, NUMBER
 ---keyMgr--------------------------
 // keyMgr's policy
 
-// substrate to store the keys for each record
-substrate xml("<keys>
+// datasource to store the keys for each record
+datasource xml("<keys>
                     <key record='101' key='13' />
                     <key record='102' key='1313' />
                     <key record='103' key='131313' />

@@ -64,7 +64,7 @@ rule tokenize = parse
 | "Me"                { ME }
 
 // Substrate declarations
-| "substrate"		  { SUBSTRATE } 
+| "datasource"		{ SUBSTRATE } 
 | "namespaces"		{ NAMESPACES } 
 
 // Types

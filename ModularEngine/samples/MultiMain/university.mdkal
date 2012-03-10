@@ -19,9 +19,9 @@ relation asksForExamContents(PERSON: Principal, SUBJECT: Subject)
 // the contents of the exam for SUBJECT are CONTENTS
 relation examContents(SUBJECT: Subject, CONTENTS: String)
 
-// a substrate known to all the principals, contains basic information on
+// a datasource known to all the principals, contains basic information on
 // each subject: assigned professors and enrolled students 
-substrate xml("<subjects>
+datasource xml("<subjects>
                     <subject name='calculus'>
                         <professor name='smith' />
                     </subject>
@@ -52,7 +52,7 @@ macro enrolledIn(STUDENT: Principal, SUBJECT: Subject) : Boolean
 ---smith--------------------------
 // prof. smith's policy
 
-substrate xml("<exams>
+datasource xml("<exams>
                     <exam subject='calculus' contents='what is the derivative of e^x?' />
                     <exam subject='programming' contents='is quicksort better than mergesort?' />
                 </exams>") 
