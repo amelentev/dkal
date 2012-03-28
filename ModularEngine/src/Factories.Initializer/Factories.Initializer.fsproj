@@ -75,6 +75,11 @@
       <Project>{ee794861-066f-4a91-92b8-08e3ce8a6b9f}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Ast.Substrate.Rdf\Ast.Substrate.Rdf.Syntax.fsproj">
+      <Name>Ast.Substrate.Rdf.Syntax</Name>
+      <Project>{6222aa65-fd9a-43e0-9e13-0d45171a15fa}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast.Substrate.Sql.Syntax.Simple\Ast.Substrate.Sql.Syntax.Simple.fsproj">
       <Name>Ast.Substrate.Sql.Syntax.Simple</Name>
       <Project>{9c31b572-9dbc-49fd-86ec-33a448825420}</Project>
@@ -113,6 +118,11 @@
     <ProjectReference Include="..\Substrate.Factories\Substrate.Factories.fsproj">
       <Name>Substrate.Factories</Name>
       <Project>{82b5dc81-f8ea-4d29-b717-77b4a623d6f4}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate.Rdf\Substrate.Rdf.fsproj">
+      <Name>Substrate.Rdf</Name>
+      <Project>{0979ddbc-7c0f-488d-90ab-31bc6b89c823}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Substrate.Sql\Substrate.Sql.fsproj">

@@ -1,0 +1,16 @@
+datasource rdf("http://dbpedia.org/sparql") namespaces "dbpedia"
+
+type String = System.String
+relation wantGoTo(Conf: String)
+relation canGoTo(Conf: String)
+
+---student-----------------------------
+with Conf: String
+	if asInfon({|"dbpedia"|" select ?Conf where { ?Conf  dcterms:subject  category:Programming_languages_conferences }"|})
+	do once  send to supervisor: wantGoTo(Conf)
+
+---supervisor---------------
+with Conf: String
+	upon student said wantGoTo(Conf)
+	if asInfon({|"dbpedia"|" select ?Conf where { ?Conf  dcterms:subject  category:Logic_conferences filter (?Conf = @Conf) }"|})
+	do  send to student: canGoTo(Conf)
