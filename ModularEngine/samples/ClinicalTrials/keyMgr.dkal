@@ -1,6 +1,6 @@
-substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
+datasource sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
 	namespaces "ct"
-substrate xml("keys.xml")
+datasource xml("keys.xml")
 	namespaces "keys"
 
 type Int = System.Int32
@@ -25,14 +25,20 @@ macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
                 Ret == trials.organizer |}
 
-with X: Infon, E: Evidence
-    upon X [E]
+with X: Infon, P: Principal, E: Evidence
+    upon
+        P said X [E]
     do
-        learn X [E]                
-                
-with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
-	upon 
-		PERSON said requestToRead(PERSON, R) [_]
+        learn P said X [E]
+with I1: Infon, I2: Infon, P: Principal, E: Evidence
+    upon
+        I1 -> P said I2 [E]
+    do
+        learn I1 -> P said I2 [E]
+
+with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int, E: Evidence
+    if
+		PERSON said requestToRead(PERSON, R) [E]
     if
 		ORG said mayRead(PERSON, R) [_]
 	if
@@ -47,4 +53,5 @@ with PERSON: Principal, ORG: Principal, TRIAL: Trial, R: Record, K: Int, N: Int
 	do
 		say with justification to PERSON:
 			keyForRecord(K, R)
-            
+    forget
+        PERSON said requestToRead(PERSON, R) [E]

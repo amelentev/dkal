@@ -1,4 +1,4 @@
-substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
+datasource sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
 	namespaces "ct"
 
 type Int = System.Int32
@@ -29,10 +29,21 @@ macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
                 Ret == trials.organizer |}
 
+with P: Principal, I: Infon, E: Evidence
+    upon
+        P said I [E]
+    do
+        learn P said I [E]
+with P: Principal, I1: Infon, I2: Infon, E: Evidence
+    upon
+        I1 -> P said I2 [E]
+    do
+        learn I1 -> P said I2 [E]
+
 with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence
-	upon 
-		SITE said physParticipates(Me, TRIAL, SITE) [_]
-    upon 
+    if 
+        SITE said physParticipates(Me, TRIAL, SITE) [_]
+    if
         SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [_]
     if
 		asInfon({|"ct"|
@@ -41,9 +52,9 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int
 			ppalName(ORG) == org(TRIAL) &&
 			R == record(N, TRIAL)
 		|})
-    upon
+    if
         X -> ORG said mayRead(Me, R) [E1]
-    upon
+    if
         Y -> SITE said mayRead(Me, R) [E2]
 	do
 		say with justification to keyMgr:
@@ -51,8 +62,4 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int
         send to keyMgr:
 			X -> ORG said mayRead(Me, R) [E1]
         send to keyMgr:
-			Y -> SITE said mayRead(Me, R) [E2]
-        drop
-            SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE)
-            
-            
+			Y -> SITE said mayRead(Me, R) [E2]          

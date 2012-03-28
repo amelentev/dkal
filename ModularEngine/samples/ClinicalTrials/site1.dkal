@@ -1,4 +1,4 @@
-substrate sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
+datasource sql("Server=localhost,1136;Database=ClinicalTrials;User ID=dkal;Password=dkal;Trusted_Connection=True;Encrypt=False;MultipleActiveResultSets=True;", "schema.dbml")
 	namespaces "ct"
 
 type Int = System.Int32
@@ -38,18 +38,29 @@ macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
                 Ret == trials.organizer |}
 
-with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E: Evidence
-    upon 
-        ORG said participates(Me, TRIAL) [_]
+with ORG: Principal, I: Infon, E: Evidence
     upon
+        ORG said I [E]
+    do
+        learn ORG said I [E]
+with ORG: Principal, I1: Infon, I2: Infon, E: Evidence
+    upon
+        I1 -> ORG said I2 [E]
+    do
+        learn I1 -> ORG said I2 [E]
+
+with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E: Evidence
+    if
+        ORG said participates(Me, TRIAL) [_]
+    if
         ORG said allocatedPatients(Me, N1, N2, TRIAL) [_]
-	if 
+    if
         asInfon({|"ct"| org(TRIAL) == ppalName(ORG) |}) &&
 		asInfon({|"ct"|
 			physUnnotified(PHYS, TRIAL) && physPatients(PHYS, TRIAL, P1, P2)
 			&& N1 <= P1 && P2 <= N2 
 		|})
-    upon
+    if
         X -> ORG said mayRead(PHYS, R) [E]
     do
 		say with justification to PHYS:
