@@ -68,7 +68,6 @@ module TranslationToFStar =
     | Primitives.Install -> new Types.Install () :> Types.func 
     | Primitives.Uninstall -> new Types.Uninstall () :> Types.func 
     | Primitives.Apply -> new Types.Apply () :> Types.func 
-    | Primitives.Drop -> new Types.Drop () :> Types.func 
     | Primitives.EmptyInfon -> new Types.EmptyInfon () :> Types.func 
     | Primitives.AsInfon -> new Types.AsInfon () :> Types.func 
     | Primitives.And when f.RetType = Type.Infon -> new Types.AndInfon () :> Types.func 

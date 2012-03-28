@@ -258,7 +258,6 @@ type SimpleExecutor(router: IRouter,
         messagesToSend.Add (JustifiedInfon(said, evidence), ppal) |> ignore; false
       | Install(rule) -> (se :> IExecutor).InstallRule rule
       | Uninstall(rule) -> (se :> IExecutor).UninstallRule rule
-      | Drop(i) -> mailbox.Remove i; false
       | Apply(su) -> 
         substrateUpdates.Add su |> ignore; false
       | Fresh(v) -> false // it is already instantiated, so no action needed

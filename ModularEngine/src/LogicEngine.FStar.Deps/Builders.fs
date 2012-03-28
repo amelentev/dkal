@@ -42,7 +42,6 @@ module Builders =
   let Install (b:bool) : string = Primitives.Install 
   let Uninstall (b:bool) : string = Primitives.Uninstall 
   let Apply (b:bool) : string = Primitives.Apply 
-  let Drop (b:bool) : string = Primitives.Drop 
   let EmptyInfon (b:bool) : string = Primitives.EmptyInfon 
   let AsInfon (b:bool) : string = Primitives.AsInfon 
   let And (b:bool) : string = Primitives.And 

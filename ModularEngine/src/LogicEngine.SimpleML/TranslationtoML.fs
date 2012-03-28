@@ -64,7 +64,6 @@ module TranslationtoML =
     | Primitives.Install -> MLType.Install
     | Primitives.Uninstall -> MLType.Uninstall
     | Primitives.Apply -> MLType.Apply
-    | Primitives.Drop -> MLType.Drop
     | Primitives.EmptyInfon -> MLType.EmptyInfon
     | Primitives.AsInfon -> MLType.AsInfon
     | Primitives.And when f.RetType = Type.Infon -> MLType.AndInfon

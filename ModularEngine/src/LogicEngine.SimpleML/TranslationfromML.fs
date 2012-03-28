@@ -79,8 +79,6 @@ module TranslationfromML =
       Primitives.Uninstall |> Primitives.SolveFunction |> Option.get
     | MLType.Apply -> 
       Primitives.Apply |> Primitives.SolveFunction |> Option.get
-    | MLType.Drop -> 
-      Primitives.Drop |> Primitives.SolveFunction |> Option.get
     | MLType.EmptyInfon -> 
       Primitives.EmptyInfon |> Primitives.SolveFunction |> Option.get
     | MLType.AsInfon -> 
