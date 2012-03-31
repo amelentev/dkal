@@ -89,8 +89,12 @@ module MultiMain =
       let parser = ParserFactory.InfonParser("simple", routers.[fst x].Me)
       try
         (fst x, parser.ParseAssembly (commonPolicy + snd x))
-      with ParseException(msg, text, line, col) -> 
+      with 
+      | ParseException(msg, text, line, col) -> 
         log.Error("{0}.dkal({1},{2}): error {3}: {4}", fst x, line, col, errorParsing, msg)
+        Environment.Exit(1); failwith ""
+      | SemanticCheckException(desc, o) ->
+        log.Error("{0}.dkal(0,0): error {1}: {2} at {3}", fst x, errorSemanticCheck, desc, o)
         Environment.Exit(1); failwith ""
     )
     let fixedPointCounter = new CountdownEvent(assemblies.Length)

@@ -15,3 +15,6 @@ namespace Microsoft.Research.Dkal.Utils.Exceptions
   /// column on which the error was produced, an informative text and the full
   /// text with the context on which the error occured
   exception ParseException of string * string * int * int
+
+  // Raise when something goes wrong during semantic checks phase
+  exception SemanticCheckException of string * string

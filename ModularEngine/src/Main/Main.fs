@@ -73,6 +73,8 @@ module Main =
       with 
       | ParseException(msg, text, line, col) -> 
         log.Error("{0}({1},{2}): error {3}: {4}", policyFile, line, col, errorParsing, msg)
+      | SemanticCheckException(desc, o) ->
+        log.Error("{0}(0,0): error {1}: {2} at {3}", policyFile, errorSemanticCheck, desc, o)
       | e -> 
         log.ErrorException("Something went wrong", e)
     | _ -> log.Fatal("Wrong number of parameters, expecting: routing file, policy file, step\r\nWhere step must be one of 'step' or 'noStep'")

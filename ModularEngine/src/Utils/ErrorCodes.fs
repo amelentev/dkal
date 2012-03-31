@@ -12,3 +12,4 @@
 module Microsoft.Research.Dkal.Utils.ErrorCodes
 
   let errorParsing = "D001"
+  let errorSemanticCheck = "D002"

@@ -24,8 +24,8 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
-    <StartWorkingDirectory>C:\Users\t-jejean\Documents\dkal\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>clinical_trials.mdkal 100000000 10000 -MLLogicEngine</StartArguments>
+    <StartWorkingDirectory>C:\Users\Guido\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
+    <StartArguments>clinical_trials.mdkal 10000 10000</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>

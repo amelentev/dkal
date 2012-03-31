@@ -17,20 +17,65 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Syntax.Parsing
+open Microsoft.Research.Dkal.Utils.Exceptions
 
 /// The SimpleParser parses from the simple concrete syntax, which uses declared 
 /// typed variables. It must be initialized with a Context that holds variable 
 /// type information, relation declarations, etc.
 type SimpleParser() = 
 
+  let pp = new SimplePrettyPrinter() :> IInfonPrettyPrinter
+
   let checkMacrosAndType (t: ITerm, solvedMacros: ISubstrateQueryTerm list) (typ: IType option) =
     if not solvedMacros.IsEmpty then
-      failwithf "Unresolved macros in %O" t
+      raise(SemanticCheckException("unresolved macros", pp.PrintTerm(t))) 
     elif typ.IsSome && typ.Value <> t.Type then
-      failwithf "Incorrect type, expecting %O, found: %O in %O" typ.Value.FullName t.Type.FullName t
+      raise(SemanticCheckException(sprintf "Incorrect type, expecting %O, found %O" typ.Value.FullName t.Type.FullName, pp.PrintTerm(t))) 
     else
       t      
 
+  let rec checkConditionSanity (c: ITerm) = 
+    match c with
+    | SeqCondition(cs) -> 
+      let rec wireConds c = 
+        match c with
+        | WireCondition(_) -> [c]
+        | SeqCondition(cs) -> List.collect wireConds cs
+        | _ -> []
+      if List.length (wireConds c) > 1 then
+        raise(SemanticCheckException("Rule condition presents more than one 'upon' construct", pp.PrintTerm(c)))
+      List.iter checkConditionSanity cs
+    | EmptyCondition -> ()
+    | WireCondition(i,p) -> ()
+    | KnownCondition(i) -> ()
+    | _ -> raise(SemanticCheckException("Expecting condition when checking sanity", pp.PrintTerm(c)))
+
+  and checkActionSanity (a: ITerm) = 
+    match a with
+    | SeqAction(aa) -> List.iter checkActionSanity aa
+    | EmptyAction -> ()
+    | Send(_)
+    | JustifiedSend(_) 
+    | JustifiedSay(_) 
+    | Learn(_) 
+    | Forget(_) 
+    | Apply(_) 
+    | Fresh(_) -> ()
+    | Install(r) 
+    | Uninstall(r) -> checkRuleSanity(r)
+    | _ -> raise(SemanticCheckException("Expecting action when checking sanity", pp.PrintTerm(a)))
+
+  and checkRuleSanity (r: ITerm) = 
+    match r with
+    | SeqRule(rs) -> List.iter checkRuleSanity rs
+    | EmptyRule -> ()
+    | RuleOnce(c,a) | Rule(c,a) -> checkConditionSanity(c); checkActionSanity(a)
+    | Forall(_,r) -> checkRuleSanity(r)
+    | _ -> raise(SemanticCheckException("Expecting rule when checking sanity", pp.PrintTerm(r)))
+
+  and checkPolicySanity (p: Policy) =
+    List.iter checkRuleSanity p.Rules
+  
   interface IInfonParser with
     member sp.SetParsingContext (parsingContext: IParsingContext) = 
       Parser.ctxs.Push parsingContext
@@ -48,13 +93,19 @@ type SimpleParser() =
       
     member sp.ParseRule s = 
       let t = GeneralParser.TryParse (Parser.Term Lexer.tokenize) s 
-      checkMacrosAndType t (Some Type.Rule)
+      let r = checkMacrosAndType t (Some Type.Rule)
+      checkRuleSanity r
+      r
     
     member sp.ParsePolicy s = 
-      GeneralParser.TryParse (Parser.Policy Lexer.tokenize) s 
+      let p = GeneralParser.TryParse (Parser.Policy Lexer.tokenize) s
+      checkPolicySanity p
+      p
 
     member sp.ParseSignature s =
       GeneralParser.TryParse (Parser.Signature Lexer.tokenize) s
 
     member sp.ParseAssembly s =
-      GeneralParser.TryParse (Parser.Assembly Lexer.tokenize) s 
+      let a = GeneralParser.TryParse (Parser.Assembly Lexer.tokenize) s 
+      checkPolicySanity a.Policy
+      a

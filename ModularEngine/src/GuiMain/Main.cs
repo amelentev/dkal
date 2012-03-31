@@ -81,10 +81,18 @@ namespace Microsoft.Research.Dkal.GuiMain
                 var executor = ExecutorFactory.Executor(kind, router, logicEngine, signatureProvider, infostrate, mailbox);
 
                 Assembly assembly;
-                try {
+                try
+                {
                     assembly = parser.ParseAssembly(File.ReadAllText(policyFile));
-                } catch (ParseException e) {
+                }
+                catch (ParseException e)
+                {
                     MessageBox.Show("Error while parsing in line " + e.Data2 + ", column " + e.Data3 + ": " + e.Data1, "Syntax Error");
+                    return;
+                }
+                catch (SemanticCheckException e)
+                {
+                    MessageBox.Show("Semantic error: " + e.Data0 + " at " + e.Data1, "Semantic Error");
                     return;
                 }
 
