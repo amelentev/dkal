@@ -52,9 +52,9 @@ type BasicSubstrateTerm(left: ITerm, right: ITerm) as bst =
 
     member bst.Type = Type.SubstrateQuery
 
-    member bst.Vars = new HashSet<_>(left.Vars @ right.Vars) |> Seq.toList
+    member bst.Vars = right.Vars
 
-    member bst.BoundVars = []
+    member bst.BoundVars = left.Vars
 
     member bst.Apply (s: ISubstitution) =
       let left =  match left.Apply s with

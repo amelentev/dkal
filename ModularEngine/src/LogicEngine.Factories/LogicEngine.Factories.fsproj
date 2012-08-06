@@ -83,6 +83,11 @@
       <Project>{a2cfba02-1d02-4df1-b5d9-fb72757c20db}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.PPIL\LogicEngine.PPIL.fsproj">
+      <Name>LogicEngine.PPIL</Name>
+      <Project>{abadf3df-e60d-4765-889f-d665ac33c030}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\LogicEngine.SimpleML\LogicEngine.ML.fsproj">
       <Name>LogicEngine.ML</Name>
       <Project>{ec264af5-1001-457a-b602-8f9806a58081}</Project>

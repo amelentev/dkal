@@ -116,6 +116,9 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|AndInfon|_|) mt = match mt with
                           | App({Name=Primitives.And; RetType=Infon}, mts) -> Some mts
                           | _ -> None
+  let (|OrInfon|_|) mt = match mt with
+                          | App({Name=Primitives.Or; RetType=Infon}, mts) -> Some mts
+                          | _ -> None
   /// Active pattern for infon implication
   let (|ImpliesInfon|_|) mt = match mt with
                               | App({Name=Primitives.Implies; RetType=Infon}, [mt1; mt2]) -> Some (mt1, mt2)

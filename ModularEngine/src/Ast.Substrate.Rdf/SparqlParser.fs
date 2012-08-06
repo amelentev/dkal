@@ -28,7 +28,8 @@ type SparqlParser() =
     member sp.ParseTerm squery =
       let squery = squery.Trim([|' '; '"'|])
       let m = Regex.Match(squery, "select ([?]\w*(, [?]\w*)*)", RegexOptions.IgnoreCase)
+      let outputs = m.Groups.[1].Value.Split([|' '; ','|]) |> Seq.filter (fun s -> s.Length > 0) |> Seq.map (fun s -> s.Substring(1)) |> Set.ofSeq
+      let inputs = [for m in Regex.Matches(squery, "@\w+") do yield m] |> List.map(fun m -> m.Value.Substring(1)) |> Set.ofSeq
       let createvar varName = {Name=varName; Type=Context.Value.VariableType(varName)} :> IVar
-      let outputs = m.Groups.[1].Value.Split([|' '; ','|]) |> Seq.filter (fun s -> s.Length > 0) |> Seq.map (fun s -> s.Substring(1)) |> Seq.map createvar |> List.ofSeq
-      let inputs = [for m in Regex.Matches(squery, "@\w+") do yield m] |> List.map(fun m -> m.Value.Substring(1)) |> List.map createvar
-      SparqlQueryTerm(Namespace, squery, inputs, outputs) :> ISubstrateTerm
+      let createvars a = a |> List.ofSeq |> List.map createvar
+      SparqlQueryTerm(Namespace, squery, inputs |> createvars, outputs |> createvars) :> ISubstrateTerm

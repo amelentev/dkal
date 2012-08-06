@@ -33,8 +33,8 @@ module Main =
 
   let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
   match args with
-  | [_; routingFile; policyFile; step] | [_; routingFile; policyFile; step; "-MLLogicEngine"] | [_; routingFile; policyFile; step; "-FStarLogicEngine"]  ->
-      try  
+  | exe :: routingFile :: policyFile :: step :: tail ->
+      try
           let kind = "simple"
 
           if not (File.Exists (routingFile)) then
@@ -47,16 +47,15 @@ module Main =
 
             let router = RouterFactory.Router kind routingFile
             let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
-            let logicEngineKind = 
-              (if List.exists (fun a -> a="-MLLogicEngine") args then "ML" else 
-                (if List.exists (fun a -> a="-FStarLogicEngine") args then "FStar" else "simple"))
+            let logics = Map.ofList ["-MLLogicEngine", "ML";  "-FStarLogicEngine", "FStar"; "-PPIL", "PPIL"]
+            let logicEngineKind = tail |> List.map (fun x -> logics.TryFind x) |> List.filter Option.isSome |> List.map Option.get |> List.append ["simple"] |> List.rev |> List.head
             let logicEngine = LogicEngineFactory.LogicEngine logicEngineKind
             let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
             let infostrate = InfostrateFactory.Infostrate kind
             let mailbox = MailBoxFactory.MailBox kind logicEngine
             let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
 
-            // suscribe callbacks to executor
+            // subscribe callbacks to executor
             if step = "step" then
               executor.RoundStartCallback (fun _ -> System.Console.ReadKey() |> ignore)
             elif step <> "noStep" then

@@ -74,6 +74,8 @@ module Primitives =
   let Said = "said"
   [<Literal>] 
   let And = "and"
+  [<Literal>]
+  let Or = "or"
   [<Literal>] 
   let Justified = "justified"
 
@@ -152,6 +154,8 @@ module Primitives =
     | And ->
       Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Infon]; 
             Identity = Some <| ({Function=(SolveFunction EmptyInfon).Value; Args=[]} :> ITerm) }
+    | Or ->
+      Some {Name = f; RetType = Type.Infon; ArgsType = [Type.Infon; Type.Infon]; Identity = None }
     | Justified ->
       Some {Name = f; RetType = Type.JustifiedInfon; ArgsType = [Type.Infon; Type.Evidence]; Identity = None}
 

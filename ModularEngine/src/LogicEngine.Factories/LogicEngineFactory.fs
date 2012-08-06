@@ -23,6 +23,5 @@ type LogicEngineFactory() =
     | "simple" -> new Simple.SimpleLogicEngine() :> ILogicEngine
     | "ml" | "ML" -> new ML.MLLogicEngine() :> ILogicEngine
     | "fstar" | "FStar" | "Fstar" -> new FStar.Wrapper.Wrapper() :> ILogicEngine 
+    | "ppil" | "PPIL" -> new PPIL.PPILogicEngine() :> ILogicEngine
     | k -> failwith <| "Unrecognized logic engine kind: " + k
-
-

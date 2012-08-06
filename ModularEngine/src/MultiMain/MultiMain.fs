@@ -131,14 +131,13 @@ module MultiMain =
 
   let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
   match args with
-  | [_; policyFile; timeLimit; msgsLimit] | [_; policyFile; timeLimit; msgsLimit; "-MLLogicEngine"] | [_; policyFile; timeLimit; msgsLimit; "-FStarLogicEngine"] ->
+  | exe :: policyFile :: timeLimit :: msgsLimit :: tail ->
     if not (File.Exists (policyFile)) then
       log.Fatal("File not found: {0}", policyFile)
     else
       try
-        let logicEngineKind = 
-          (if List.exists (fun a -> a="-MLLogicEngine") args then "ML" else 
-           (if List.exists (fun a -> a="-FStarLogicEngine") args then "FStar" else "simple"))
+        let logics = Map.ofList ["-MLLogicEngine", "ML";  "-FStarLogicEngine", "FStar"; "-PPIL", "PPIL"]
+        let logicEngineKind = tail |> List.map (fun x -> logics.TryFind x) |> List.filter Option.isSome |> List.map Option.get |> List.append ["simple"] |> List.rev |> List.head
         execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit), logicEngineKind)
       with
         e -> log.ErrorException("Something went wrong", e)

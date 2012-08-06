@@ -49,7 +49,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 // These are the terminal tokens of the grammar along with the types of the data carried by each token:
 
 // Binary infon operators
-%token AND IMPLIES 
+%token AND IMPLIES OR
 
 // Unary infon operators
 %token AS_INFON SAID
@@ -119,6 +119,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %left SEND SAY LEARN FORGET INSTALL UNINSTALL APPLY 
 %right LSQ RSQ
 %left IMPLIES
+%left OR
 %left AND
 %right SAID
 
@@ -225,6 +226,10 @@ Infon:
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.And, [t1; t2]), sm1 @ sm2 }
+	| Infon OR Infon
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
+      primitiveApp(Primitives.Or, [t1; t2]), sm1 @ sm2 }
   | Infon LSQ Evidence RSQ 
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3

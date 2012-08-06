@@ -20,13 +20,9 @@ type SparqlQueryTerm(ns: string, query: string, inputs: IVar list, outputs: IVar
   member x.outputs = outputs
   interface ISubstrateQueryTerm with
     member x.Type = Type.SubstrateQuery
-    member x.Vars = outputs
-    member x.BoundVars = inputs
-    member x.Apply subst =
-      // TODO: substitute query?
-      let apply lst = new HashSet<_>(lst |> Seq.collect (fun (v:IVar) -> subst.Apply(v).Vars)) |> Seq.toList
-      let inputs, outputs = apply inputs, apply outputs
-      new SparqlQueryTerm(ns, query, inputs, outputs) :> ITerm
+    member x.Vars = inputs
+    member x.BoundVars = outputs
+    member x.Apply subst = x :> ITerm    
     member x.Normalize() = x :> ITerm
     member x.UnifyFrom s t = 
       match t with

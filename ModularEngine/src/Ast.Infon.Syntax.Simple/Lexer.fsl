@@ -40,6 +40,7 @@ rule tokenize = parse
 // Binary infon operators
 | "&&"				  { AND }
 | "->"				  { IMPLIES }
+| "||"				  { OR }
 
 // Unary infon operators
 | "asInfon"			{ AS_INFON }

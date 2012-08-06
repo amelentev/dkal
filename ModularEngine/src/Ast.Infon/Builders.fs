@@ -99,6 +99,11 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
           RetType = Type.Infon; 
           ArgsType = List.replicate infons.Length Type.Infon;
           Identity = (Primitives.SolveFunction Primitives.And).Value.Identity }, infons)
+  let OrInfon (infons: ITerm list) = 
+    App({ Name = Primitives.Or; 
+          RetType = Type.Infon; 
+          ArgsType = List.replicate infons.Length Type.Infon;
+          Identity = (Primitives.SolveFunction Primitives.Or).Value.Identity }, infons)
   /// Build an infon implication
   let ImpliesInfon (i1: ITerm, i2: ITerm) = 
     App(Primitives.SolveFunction Primitives.Implies |> Option.get, [i1; i2])
