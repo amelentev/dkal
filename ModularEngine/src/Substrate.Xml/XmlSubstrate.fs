@@ -53,7 +53,7 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
 
   let solve11 (query: XmlSubstrateQueryTerm) (subst: ISubstitution) =
     let xpath = ((query :> ITerm).Apply subst :?> XmlSubstrateQueryTerm).XPath
-    log.Debug("xpath: {0}", xpath)
+    log.Debug("xpath: {0} under {1}", xpath, subst)
     let res = xmldoc.Root.XPathEvaluate(xpath) :?> IEnumerable<obj>
     seq {
       for elem in res do

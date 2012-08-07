@@ -52,6 +52,7 @@ type SimpleLogicEngine() =
     /// ITerms). Then return only those Substitutions that satisfy all their 
     /// side conditions.
     member se.Derive (target: ITerm) (substs: ISubstitution seq) = 
+      log.Debug("Derive {0}", target)
       seq { for subst in substs do      
               for (subst, conds) in se.DoDerive [] (subst, seq []) (target.Normalize()) do
                 yield! SubstrateDispatcher.Solve conds [subst] }
