@@ -14,9 +14,14 @@ namespace Microsoft.Research.Dkal.LogicEngine.PPIL
 module PPILSolver =
   let solve H Q =
       let (H, Q, inp) = Stage1.stage1 H Q
-      let (N, V) = Stage2.constructNodesnVertices (H@Q) inp.Length
+      let (N, V) = Stage2.constructNodesnVertices (H@Q)
       let HO = Stage3.homonomy inp (N,V)
       let T = Stage4.preprocess HO H
       Stage5.stage5 HO T
-      [ for q in Q do 
-          yield T.[q.Key].Status<>Stage4.Raw ]
+      let res = [ for q in Q do yield T.[HO.[q.Key].Key].Status<>Stage4.Raw ]
+      res
+
+  let solveWithSets H Q =
+      let H = H |> List.map Stage0.stage0
+      let Q = Q |> List.map Stage0.stage0
+      solve H Q

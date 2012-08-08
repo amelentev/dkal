@@ -19,7 +19,7 @@ open Microsoft.Research.Dkal.Ast.Tree
 open System.Collections.Generic
 open NLog
 
-type PPILogicEngine() =
+type PPILogicEngine(solverFun) =
     let log = LogManager.GetLogger("LogicEngine.PPIL")
 
     let mutable _signatureProvider: ISignatureProvider option = None
@@ -107,5 +107,5 @@ type PPILogicEngine() =
         seq { for subst in substs do
                 let H = H |> Seq.map (fun x -> x.Apply(subst)) |> List.ofSeq
                 let Q = query.Apply(subst)
-                if PPILSolver.solve H [Q] = [true] then
+                if solverFun H [Q] = [true] then
                     yield subst,conds }

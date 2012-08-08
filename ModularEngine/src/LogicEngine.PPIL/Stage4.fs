@@ -16,13 +16,13 @@ open Microsoft.Research.Dkal.Ast.Infon
 open AST
 
 module Stage4 =
-  type Side = Left | Right
+  type Side = AndOp | OrOp | ImplLeft | ImplRight
   type Status = Raw | Pending | Processed
 
-  type PrimalRecord() =
-      /// only Binary AST
-      let mutable map : Map<Operation*Side, list<AST>> = Map.empty 
+  type PrimalRecord(numChilds) =
+      let mutable map : Map<Side, list<AST>> = Map.empty 
       let mutable status = Raw
+      let mutable counter = 0
 
       member this.Status
           with get() = status
@@ -36,22 +36,32 @@ module Stage4 =
       member this.Append k v =
           map <- map.Add(k, (v :: this.get k))
 
+      member this.IncCounter() = counter <- counter + 1; counter
+
+      member this.NumChilds = numChilds
+
   let preprocess (H: IDictionary<int, AST>) (HY: list<AST>) =
       let T = Dictionary()
       let mutable pending = []
 
       let forallLeaders f = H |> Seq.iter (fun kv -> if kv.Key=kv.Value.Key then f(kv.Value))
-      forallLeaders (fun h -> T.Add(h.Key, PrimalRecord()))
+      forallLeaders (function
+        | SetFormula(_,_,args) as h ->
+          T.Add(h.Key, PrimalRecord(List.length args))
+        | h -> T.Add(h.Key, PrimalRecord(0)))
 
-      let appendT key op side n = T.[key].Append (op,side) n
+      let appendT key side n = T.[key].Append side n
 
-      let rec dfs = function
-      | Binary(_,op,l,r) as n ->
+      let dfs = function
+      | SetFormula(_,op,args) as n ->
+          let args = args |> List.map (fun a -> H.[a.Key])
+          let side = if op = AST.AndOp then AndOp else OrOp
+          for a in args do
+            appendT a.Key side n
+      | Implies(_,l,r) as n ->
           let (l,r) = H.[l.Key], H.[r.Key]
-          appendT l.Key op Left n
-          appendT r.Key op Right n
-          dfs l
-          dfs r
+          appendT l.Key ImplLeft n
+          appendT r.Key ImplRight n
       | Rel((k,_,_), Primitives.EmptyInfon) ->
           T.[H.[k].Key].Status <- Pending
       | _ -> ()

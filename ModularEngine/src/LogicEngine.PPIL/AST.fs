@@ -12,26 +12,25 @@
 namespace Microsoft.Research.Dkal.LogicEngine.PPIL
 
 module AST =
-  type Operation = 
+  type SetOperation = 
       | AndOp
       | OrOp
-      | ImpliedOp
       override this.ToString() =
          match this with
          | AndOp -> "&"
          | OrOp -> "|"
-         | ImpliedOp -> "->"
 
   type Prefix = string list
 
-  [<ReferenceEquality>]
   type AST =
       | Rel of (int*int*Prefix)*string // key*len*
-      | Binary of (int*int*Prefix)*Operation*AST*AST
+      | SetFormula of (int*int*Prefix)*SetOperation*(AST list)
+      | Implies of (int*int*Prefix)*AST*AST
       member this.getKLP =
           match this with
-          | Rel((k,l,p),_) -> (k,l,p)
-          | Binary((k,l,p),_,_,_) -> (k,l,p)
+          | Rel((k,l,p),_) 
+          | SetFormula((k,l,p),_,_) 
+          | Implies((k,l,p),_,_) -> (k,l,p)
       member this.Key =
           let (k,_,_) = this.getKLP
           k
@@ -42,19 +41,12 @@ module AST =
           let (_,_,p) = this.getKLP
           p
       member this.PrefStr = this.Prefix |> List.map (fun s -> s + " said ") |> String.concat ""
-      member this.Right = 
-          match this with
-          | Binary(_,_,l,r) -> r
-          | _ -> failwith "Right on nonbinary"
-      member this.Left = 
-          match this with
-          | Binary(_,_,l,r) -> l
-          | _ -> failwith "Left on nonbinary"
         
       override this.ToString() =
-          let pref = this.PrefStr
           match this with
           | Rel(_,s) -> 
-              pref + s
-          | Binary(_,op,l,r) ->
-              pref + "(" + l.ToString() + op.ToString() + r.ToString()+")"
+              this.PrefStr + s
+          | SetFormula(_,op,args) ->
+              this.PrefStr + "(" + (args |> List.map (fun a -> a.ToString()) |> String.concat (op.ToString())) + ")"
+          | Implies(_,l,r) ->
+              this.PrefStr + "(" + l.ToString() + "->" + r.ToString()+")"

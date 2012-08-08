@@ -13,6 +13,7 @@ open System.Text
 open System.Collections.Generic
 open Fuchu
 
+open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Infon.Syntax.Simple
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Syntax.Parsing
@@ -20,20 +21,28 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.LogicEngine.PPIL
 open Microsoft.Research.Dkal.LogicEngine.PPIL.AST
+open Microsoft.Research.Dkal.LogicEngine.PPIL.Stage0
 open Microsoft.Research.Dkal.LogicEngine.PPIL.Stage2
 open Microsoft.Research.Dkal.LogicEngine.PPIL.Stage4
 
 let parse s =
     let parser = SimpleParser() :> IInfonParser
     parser.SetParsingContext (new ParsingContext("me"))
-    let rels = parser.ParseSignature "relation a() \n relation b() \n relation c() \n relation d() \n relation x() \n relation y() \n relation z() \n relation r(X:System.Int32)"
+    let decls = "type Int = System.Int32 \n"+
+                "relation a() relation b() relation c() relation d() relation x() relation y() relation z() relation w() relation r(X:Int) \n" +
+                "relation needSum(X:Int, Y:Int) relation needProduct(X:Int, Y:Int) relation knowsMath(X:Dkal.Principal)"
+    let rels = parser.ParseSignature (decls)
     parser.ParseInfon s
 
 let translate hyp que =
-    let h = hyp |> List.map parse
-    let q = que |> List.map parse
+    let h = hyp |> List.map parse |> List.map Stage0.stage0
+    let q = que |> List.map parse |> List.map Stage0.stage0
     let (H, Q, input) = Stage1.stage1 h q
     H, Q, input
+
+let RelationInfon (args: ITerm list) name = 
+  let argtypes = [for a in args do yield a.Type]
+  App({Name=name; RetType=Type.Infon; ArgsType=argtypes; Identity= None}, args)
 
 let debugHomonomy s (H:array<Option<AST>>) =
     printf "%s\n" s
@@ -58,20 +67,29 @@ let checkHomonomy (N:IDictionary<int,AST>) (H:IDictionary<int,AST>) =
     !count
 
 let solve hyp que =
-    let (H,Q,inp) = translate hyp que
-    let (N, V) = Stage2.constructNodesnVertices (H@Q) inp.Length
-    let HO = Stage3.homonomy inp (N,V)
-    let T = Stage4.preprocess HO H
-    Stage5.stage5 HO T
-    Q |> List.map (fun q -> T.[q.Key].Status<>Raw)
+    let hyp = hyp |> List.map parse
+    let que = que |> List.map parse
+    PPILSolver.solveWithSets hyp que
 
 [<Tests>]
 let tests = 
     "testsuite" =>> [
+        "stage0" =>
+            fun _ ->
+                let rel = RelationInfon []
+                let (ra,rb,rc) = rel "a", rel "b", rel "c"
+                let ast = AndInfon [AndInfon [rc;ra]; rb; ra]
+                let ast = Stage0.flatConjuncts ast
+                Assert.Equal("flatConjuncts", "and(c(), a(), b(), a())", (ast.ToString()))
+                let ast = Stage0.translate ast
+                Assert.Equal("translation", "and(a(), b(), c())", (ast.ToString()))
+                let ast = Stage0.translate (OrInfon [ast; ast; rb])
+                Assert.Equal("orand", "or(and(a(), b(), c()), b())", (ast.ToString()))
+
         "stage1" =>
             fun _ ->
                 let (h,q,input) = translate ["p1 said (a() && q said p said b())"] []
-                Assert.Equal("ast serialization", "(p1 said (a()&(q said (p said b()))))", input)
+                Assert.Equal("ast serialization", "p1 said (a()&q said p said b())", input)
                 Assert.Equal("ast tostring", "p1 said (a()&q said p said b())", h.Head.ToString())
 
         "stage2" => 
@@ -84,14 +102,14 @@ let tests =
         "stage3 1" =>
             fun _ ->
                 let (h,q,s) = translate ["a() && b() -> a() && b()"] []
-                let (N, V) = Stage2.constructNodesnVertices h s.Length
+                let (N, V) = Stage2.constructNodesnVertices h
                 let H = Stage3.homonomy s (N,V)
                 //debugHomonomy s H
                 Assert.Equal("", 4, checkHomonomy N H)
         "stage3 2" =>
             fun _ ->
                 let (h,q,s) = translate ["p said a() && b() -> p said a() && b() -> a() && p said b()"] []
-                let (N, V) = Stage2.constructNodesnVertices h s.Length
+                let (N, V) = Stage2.constructNodesnVertices h
                 let H = Stage3.homonomy s (N,V)
                 //debugHomonomy s H
                 Assert.Equal("", 8, checkHomonomy N H)
@@ -99,7 +117,7 @@ let tests =
         "stage4" =>
             fun _ ->
                 let (h,q,s) = translate ["r(1) && r(2) -> r(3)"; "r(1)"; "r(2)"] []
-                let (N, V) = Stage2.constructNodesnVertices h s.Length
+                let (N, V) = Stage2.constructNodesnVertices h
                 let H = Stage3.homonomy s (N,V)
                 //debugHomonomy s H
                 let T = Stage4.preprocess H h
@@ -118,24 +136,51 @@ let tests =
                   [true; true; false],
                   solve ["r said ((p said x()) && (r said x()))"; "r said p said (x() -> y())"; "r said p said (y() -> z())"]
                         ["r said p said z()"; "r said r said x()"; "r said r said z()"])
-        "or" =>
+        "||" =>
             fun _ ->
                 Assert.Equal("derivation", 
                   [true; true; true; true; true; true; false; false; true],
                   solve ["a() && b()"; "b()->c()"]
                         ["a() || b()"; "a()||c()"; "c()||d()"; "b()||a()"; "b()&&a()"; "d()||b()"; "d()"; "x() || y()"; "x() -> a()"])
-        "said and" =>
+        "said &&" =>
             fun _ ->
                 Assert.Equal("said and", 
                   [true],
                   solve ["p said r(1)"; "p said p said r(2)"; "p said r(1) -> r(1)"; "p said p said r(2) -> r(2)"]
                         ["r(1) && r(2)"])
+
+        "set basic" => fun _ ->
+            Assert.Equal("",
+              [true],
+              solve ["x() && y() -> z()"]
+                    ["y() && x() -> z()"])
+            Assert.Equal("", 
+              [true],
+              solve ["((x()&&y())&&z()) -> w()"]
+                    ["(x()&&(y()&&z())) -> w()"])
+            Assert.Equal("", 
+              [true],
+              solve ["r(1) && r(2) || r(3)"]
+                    ["r(2) && r(1) || r(3)"])
+
+        // underivable tests. filtered
+        "set || intro. underivable" => fun _ ->
+            Assert.Equal("",
+              [true],
+              solve ["a()||b()"]
+                    ["a()||b()||c()"])
+
+        "-> &&. underivable" => fun _ ->
+            Assert.Equal("",
+              [true],
+              solve ["a() -> b() && c()"]
+                    ["a() -> b()"])
     ]
 
 [<EntryPoint>]
 let main argv = 
     let r = tests 
-          //|> Test.filter (fun x -> x.EndsWith "4") 
+          |> Test.filter (fun x -> not (x.EndsWith "underivable"))
           |> run
     System.Console.ReadLine() |> ignore
     r

@@ -22,9 +22,11 @@ module Stage3 =
       let sufarr = LCP.sufsort input
       let lcp = LCP.computeLCP(input, sufarr)
 
-      (* debugging *)
-      //for i in 0..input.Length-1 do
-      //    printf "%d\t%d\t%s\n" sufarr.[i] lcp.[i] (input.Substring(sufarr.[i]))
+      (* debugging 
+      for i in 0..input.Length-1 do
+          let si = sufarr.[i]
+          if nodes.ContainsKey si then
+              printf "%d\t%d\t%s\n" si lcp.[i] (input.Substring(si)) *)
 
       let H = Dictionary()
       
@@ -47,3 +49,4 @@ module Stage3 =
           | _ -> ()
           i <- i+1
       H
+           

@@ -37,16 +37,20 @@ module Stage2 =
           "("+str+")"
 
   let rec constructTrie trie lst = function
-      | Binary((_,_,prefix),_,l,r) as e ->
-          let trie = List.fold (fun (trie:Trie) p -> trie.add p) trie prefix
-          let lst = constructTrie trie lst l
-          let lst = constructTrie trie lst r
-          (e, trie) :: lst
-      | Rel((_,_,prefix),_) as e ->
-          let trie = List.fold (fun (trie:Trie) p -> trie.add p) trie prefix
-          (e, trie) :: lst
-  
-  let constructNodesnVertices asts n =
+    | Rel((_,_,p),_) as n ->
+      let trie = List.fold (fun (trie:Trie) p -> trie.add p) trie p
+      (n, trie) :: lst
+    | Implies((_,_,p),l,r) as n ->
+      let trie = List.fold (fun (trie:Trie) p -> trie.add p) trie p
+      let lst = constructTrie trie lst l
+      let lst = constructTrie trie lst r
+      (n, trie) :: lst
+    | SetFormula((_,_,p),_,args) as n ->
+      let trie = List.fold (fun (trie:Trie) p -> trie.add p) trie p
+      let lst = args |> List.fold (fun lst n -> constructTrie trie lst n) lst
+      (n, trie) :: lst
+
+  let constructNodesnVertices asts =
       let trie = Trie()
       let lst = asts |> List.collect (constructTrie trie [])
 
