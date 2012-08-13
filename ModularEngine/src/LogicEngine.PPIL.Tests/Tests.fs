@@ -69,7 +69,7 @@ let checkHomonomy (N:IDictionary<int,AST>) (H:IDictionary<int,AST>) =
 let solve hyp que =
     let hyp = hyp |> List.map parse
     let que = que |> List.map parse
-    PPILSolver.solveWithSets hyp que
+    PPILSolver.solveWithSets hyp que |> List.map Option.isSome
 
 [<Tests>]
 let tests = 

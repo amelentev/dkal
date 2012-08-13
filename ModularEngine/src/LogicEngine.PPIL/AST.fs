@@ -11,6 +11,8 @@
 
 namespace Microsoft.Research.Dkal.LogicEngine.PPIL
 
+open Microsoft.Research.Dkal.Interfaces
+
 module AST =
   type SetOperation = 
       | AndOp
@@ -22,26 +24,26 @@ module AST =
 
   type Prefix = string list
 
+  type ASTCommon = {
+    key: int;
+    len: int;
+    pref: Prefix;
+    orig: ITerm
+  }
   type AST =
-      | Rel of (int*int*Prefix)*string // key*len*
-      | SetFormula of (int*int*Prefix)*SetOperation*(AST list)
-      | Implies of (int*int*Prefix)*AST*AST
-      member this.getKLP =
+      | Rel of ASTCommon*string
+      | SetFormula of ASTCommon*SetOperation*(AST list)
+      | Implies of ASTCommon*AST*AST
+      member this.Common =
           match this with
-          | Rel((k,l,p),_) 
-          | SetFormula((k,l,p),_,_) 
-          | Implies((k,l,p),_,_) -> (k,l,p)
-      member this.Key =
-          let (k,_,_) = this.getKLP
-          k
-      member this.Length = 
-          let (_,l,_) = this.getKLP
-          l
-      member this.Prefix =
-          let (_,_,p) = this.getKLP
-          p
+          | Rel(c,_) 
+          | SetFormula(c,_,_) 
+          | Implies(c,_,_) -> c
+      member this.Key = this.Common.key
+      member this.Length = this.Common.len
+      member this.Prefix = this.Common.pref
       member this.PrefStr = this.Prefix |> List.map (fun s -> s + " said ") |> String.concat ""
-        
+
       override this.ToString() =
           match this with
           | Rel(_,s) -> 
@@ -50,3 +52,11 @@ module AST =
               this.PrefStr + "(" + (args |> List.map (fun a -> a.ToString()) |> String.concat (op.ToString())) + ")"
           | Implies(_,l,r) ->
               this.PrefStr + "(" + l.ToString() + "->" + r.ToString()+")"
+
+  type Proof =
+    | Hypothesis of AST
+    | ConjElimination of Proof*AST
+    | ConjIntroduction of (Proof list)*AST
+    | DisjIntroduction of Proof*AST
+    | ImplicationElimination of Proof*Proof*AST
+    | ImplicationIntroduction of Proof*AST

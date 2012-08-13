@@ -80,6 +80,11 @@
       <Project>{dddae181-dc9d-430b-8ac9-a7a0580e6c14}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.Simple\LogicEngine.Simple.fsproj">
+      <Name>LogicEngine.Simple</Name>
+      <Project>{1ea3b178-b4de-4ac9-9f1c-02fa83f565e4}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Substrate\Substrate.fsproj">
       <Name>Substrate</Name>
       <Project>{49e0e6c4-6c69-4c95-a1d5-aa3f5c8a8554}</Project>

@@ -17,49 +17,52 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Tree
 open AST
 
+/// translate from ITerm AST to compact AST
 module Stage1 =
   let printPrefix (sb:StringBuilder) (prefix:Prefix) = for p in prefix |> List.rev do sb.Append(p).Append(" said ") |> ignore
 
   /// translate from regular binary ast to compact ast
-  let rec translate (sb: StringBuilder) prefix = function
+  let rec translate (sb: StringBuilder) prefix orig = function
+      | JustifiedInfon(i, _) ->
+          translate sb prefix orig i
       | SaidInfon(pc, i) ->
           let p = (pc :?> PrincipalConstant).Name
-          translate sb (p::prefix) i
+          translate sb (p::prefix) orig i
       | ImpliesInfon(l, r) ->
-          let (klp, a : AST list) = constrOp sb prefix "->" [l;r]
+          let (klp, a : AST list) = constrOp sb prefix "->" [l;r] orig
           Implies(klp, a.Head, a.Tail.Head)
       | AndInfon(args) ->
-          let (klp, args) = constrOp sb prefix "&" args
+          let (klp, args) = constrOp sb prefix "&" args orig
           SetFormula(klp, AndOp, args)
       | OrInfon(args) ->
-          let (klp, args) = constrOp sb prefix "|" args
+          let (klp, args) = constrOp sb prefix "|" args orig
           SetFormula(klp, OrOp, args)
       | EmptyInfon() ->
           let key = sb.Length
           sb.Append( Primitives.EmptyInfon ) |> ignore
-          Rel((key, sb.Length-key, prefix |> List.rev), Primitives.EmptyInfon)
+          Rel({key=key; len=sb.Length-key; pref=prefix |> List.rev; orig=orig}, Primitives.EmptyInfon)
       | App(rel, args) ->
           printPrefix sb prefix
           let key = sb.Length
           let rn = rel.Name + "(" + (args |> List.map (fun a -> a.ToString()) |> String.concat ",") + ")"
           sb.Append( rn ) |> ignore
-          Rel((key, sb.Length-key, prefix |> List.rev), rn)
+          Rel({key=key; len=sb.Length-key; pref=prefix |> List.rev; orig=orig}, rn)
       | _ as t -> failwithf "unknown term %O" t
 
-  and constrOp(sb: StringBuilder) prefix op args =
+  and constrOp(sb: StringBuilder) prefix op args orig =
       printPrefix sb prefix
       let key = sb.Length      
       sb.Append("(")  |> ignore
-      let hd = translate sb [] args.Head
+      let hd = translate sb [] args.Head args.Head
       let tl = args.Tail |> List.map (fun a -> 
         sb.Append(op) |> ignore
-        translate sb [] a)
+        translate sb [] a a)
       sb.Append(")") |> ignore
-      (key, sb.Length-key, prefix |> List.rev), hd :: tl
+      {key=key; len=sb.Length-key; pref=prefix |> List.rev; orig=orig}, hd :: tl
 
   let stage1 H Q =
       let sb = StringBuilder()
-      let trans lst = lst |> List.map (translate sb [])
+      let trans lst = lst |> List.map (fun x -> translate sb [] x x)
       let H = trans H
       let Q = trans Q
       (H, Q, sb.ToString())

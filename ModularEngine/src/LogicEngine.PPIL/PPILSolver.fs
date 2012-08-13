@@ -17,8 +17,11 @@ module PPILSolver =
       let (N, V) = Stage2.constructNodesnVertices (H@Q)
       let HO = Stage3.homonomy inp (N,V)
       let T = Stage4.preprocess HO H
-      Stage5.stage5 HO T
-      let res = [ for q in Q do yield T.[HO.[q.Key].Key].Status<>Stage4.Raw ]
+      let proofs = Stage5.stage5 N HO T Q
+      let res = Q |> List.map (fun q ->
+                    match proofs.TryGetValue(HO.[q.Key].Key) with
+                    | true,proof -> Some proof
+                    | _ -> None)
       res
 
   let solveWithSets H Q =

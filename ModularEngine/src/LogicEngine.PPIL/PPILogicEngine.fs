@@ -16,61 +16,46 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.LogicEngine.Simple
+open Microsoft.Research.Dkal.LogicEngine.PPIL.AST
 open System.Collections.Generic
 open NLog
 
-type PPILogicEngine(solverFun) =
+type PPILogicEngine(solverFun : ITerm list -> ITerm list -> AST.Proof option list) =
+    inherit SimpleLogicEngine()
     let log = LogManager.GetLogger("LogicEngine.PPIL")
 
-    let mutable _signatureProvider: ISignatureProvider option = None
-    let mutable _infostrate: IInfostrate option = None
-    let mutable _freshVarId = 0
+    let rec extractSubstrateTerms = function
+      | AsInfon(q) ->
+        EmptyInfon, [q]
+      | App(f, args) ->
+        let args,qs = args |> List.map extractSubstrateTerms |> List.unzip
+        App(f, args), qs |> List.concat
+      | n -> n, []
+
+    let rec extractJustifiedInfons = function
+      | JustifiedInfon(i,e) as ji ->
+        EmptyInfon, [(i,e)]
+      | App(f, args) ->
+        let args,qs = args |> List.map extractJustifiedInfons |> List.unzip
+        App(f, args), qs |> List.concat
+      | n -> n, []
 
     interface ILogicEngine with
-        member x.Start() = ()
-        member x.Stop() = ()
-        member se.set_Infostrate (infostrate: IInfostrate) =
-          _infostrate <- Some infostrate
+      member se.Derive (target: ITerm) (substs: ISubstitution seq) = 
+        log.Debug("Derive {0}", target)
+        let target = target.Normalize()
+        seq { for subst in substs do      
+                for (subst, conds) in se.DoDerive subst target do
+                  yield! SubstrateDispatcher.Solve conds [subst] }
 
-        member se.get_Infostrate () =
-          _infostrate.Value
-
-        member se.set_SignatureProvider (signatureProvider: ISignatureProvider) =
-          _signatureProvider <- Some signatureProvider
-
-        member se.get_SignatureProvider () =
-          _signatureProvider.Value
-
-        /// Obtain a list of Substitution with accompanying side conditions (AsInfon
-        /// ITerms). Then return only those Substitutions that satisfy all their 
-        /// side conditions.
-        member se.Derive (target: ITerm) (substs: ISubstitution seq) = 
-          log.Debug("Derive {0}", target)
-          seq { for subst in substs do
-                  for (subst, conds) in se.DoDerive subst (target.Normalize()) do
-                    yield! SubstrateDispatcher.Solve conds [subst] }
-
-        member se.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) = 
-            // todo
-            substs
-
-        member se.CheckJustification (evidence: ITerm) = 
-            // todo
-            None
-
-    member private se.DoDerive (subst: ISubstitution) (query:ITerm) =
-        let H = _infostrate.Value.Knowledge |> Seq.map (fun x -> x.Apply subst)
+    member private this.DoDerive (subst: ISubstitution) (query:ITerm) =
+        let H = (this :> ILogicEngine).Infostrate.Knowledge |> Seq.map (fun x -> x.Apply subst)
         let query = query.Apply subst
 
-        let rec extractSubstrateTerms = function
-          | AsInfon(q) ->
-            EmptyInfon, [q]
-          | App(f, args) ->
-            let args,qs = args |> List.map extractSubstrateTerms |> List.unzip
-            App(f, args), qs |> List.concat
-          | _ as n -> n, []
-
         let query,conds1 = extractSubstrateTerms query
+        let query,justifiedInfons = extractJustifiedInfons query
+        let queries = query :: (justifiedInfons |> List.map fst)
         let H,conds2 = H |> Seq.map extractSubstrateTerms |> List.ofSeq |> List.unzip
         let conds = conds1 @ (conds2 |> List.concat)
 
@@ -84,9 +69,9 @@ type PPILogicEngine(solverFun) =
             let hs = HashSet()
             for s in ss do
                 hs.Add(s) |> ignore
-            [ for s in hs do yield s ]
+            hs |> List.ofSeq
 
-        let all = Seq.singleton query |> Seq.append H
+        let all = Seq.append queries H
         let vars = uniq (all |> Seq.collect (fun x -> x.Vars) |> Seq.filter (fun x -> not(subst.DomainContains x)))
         let consts = dict (uniq (all |> Seq.collect collectConstants) |> Seq.groupBy (fun x -> x.Type))
 
@@ -99,13 +84,33 @@ type PPILogicEngine(solverFun) =
                 if ok then
                   seq { for c in cs do
                           yield! substitutions vars.Tail (subst.Extend(var, c)) }
-                else // todo:
-                  //substitutions vars.Tail subst
+                else
                   seq []
         let substs = substitutions vars subst
 
-        seq { for subst in substs do
-                let H = H |> Seq.map (fun x -> x.Apply(subst)) |> List.ofSeq
-                let Q = query.Apply(subst)
-                if solverFun H [Q] = [true] then
-                    yield subst,conds }
+        seq {
+          for subst in substs do
+            let H = H |> List.map (fun x -> x.Apply(subst))
+            let Q = queries |> List.map (fun q -> q.Apply(subst))
+            let res = solverFun H Q
+            if res |> List.forall Option.isSome then
+              let res = res.Tail |> List.map Option.get
+              let evars = justifiedInfons |> List.map snd
+              let subst = (List.zip res evars) |> List.fold (fun subst (proof,evar) ->
+                match subst with
+                | Some(subst) -> 
+                  let evid = this.constructEvidence proof
+                  evar.UnifyFrom subst evid
+                | _ -> None) (Some subst)
+              if subst.IsSome then
+                yield subst.Value,conds
+        }
+
+    member private this.constructEvidence = function
+      | Hypothesis(ast) ->
+        match ast.Common.orig with
+        | JustifiedInfon(_, e) -> e
+        | _ -> EmptyEvidence
+      | ConjIntroduction(proofs,_) -> AndEvidence(proofs |> List.map this.constructEvidence)
+      | ImplicationElimination(left,right,_) -> ModusPonensEvidence(this.constructEvidence left, this.constructEvidence right)
+      | _ -> EmptyEvidence // TODO:

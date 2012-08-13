@@ -42,7 +42,6 @@ module Stage4 =
 
   let preprocess (H: IDictionary<int, AST>) (HY: list<AST>) =
       let T = Dictionary()
-      let mutable pending = []
 
       let forallLeaders f = H |> Seq.iter (fun kv -> if kv.Key=kv.Value.Key then f(kv.Value))
       forallLeaders (function
@@ -62,8 +61,8 @@ module Stage4 =
           let (l,r) = H.[l.Key], H.[r.Key]
           appendT l.Key ImplLeft n
           appendT r.Key ImplRight n
-      | Rel((k,_,_), Primitives.EmptyInfon) ->
-          T.[H.[k].Key].Status <- Pending
+      | Rel(_, Primitives.EmptyInfon) as u ->
+          T.[H.[u.Key].Key].Status <- Pending
       | _ -> ()
 
       forallLeaders dfs

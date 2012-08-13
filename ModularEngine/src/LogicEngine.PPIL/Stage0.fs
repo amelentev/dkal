@@ -19,6 +19,7 @@ open Microsoft.Research.Dkal.Ast.Tree
 open SuffixArray
 open AST
 
+/// flat SetFormulas, remove duplicates and sort all childrens lexicographically
 module Stage0 =
   let rec flatConjuncts = function
     | AndInfon(args) ->
