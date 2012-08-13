@@ -12,6 +12,7 @@
 namespace Microsoft.Research.Dkal.Infostrate.Simple
 
 open System.Collections.Generic
+open NLog
 
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
@@ -19,6 +20,7 @@ open Microsoft.Research.Dkal.Interfaces
 
 /// The SimpleInfostrate accumulates knowledge as a set of facts
 type SimpleInfostrate() = 
+  let log = LogManager.GetLogger("Infostrate.Simple")
 
   /// Stores the known facts
   let knowledge = new HashSet<ITerm>()
@@ -29,6 +31,7 @@ type SimpleInfostrate() =
 
     /// Split the infon into conjunctions and learn these recursively
     member si.Learn (infon: ITerm) = 
+      log.Debug("Learn {0}", infon)
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
@@ -41,6 +44,7 @@ type SimpleInfostrate() =
 
     /// Split the infon into conjunctions and forget these recursively
     member si.Forget (infon: ITerm) =
+      log.Debug("Forget {0}", infon)
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"
