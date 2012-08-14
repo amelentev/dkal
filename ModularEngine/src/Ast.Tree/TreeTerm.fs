@@ -43,11 +43,11 @@ type Application =
       /// function; finally, it returns a singleton [t] in any other case
       let children (f: Function) (identity: ITerm) (t: ITerm) =
         match t with
+        | t when t = identity -> []
         | :? Application as app -> 
           match app with 
           | { Function=f'; Args=ts } when f = f' -> ts
-          | _ -> [t]
-        | t when t = identity -> []
+          | _ -> [t]        
         | _ -> [t]
           
       // Normalize recursively

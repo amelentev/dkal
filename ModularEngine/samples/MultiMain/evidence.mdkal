@@ -1,8 +1,9 @@
+// example of signature, &i and ->e evidences
 relation r(X: System.Int32)
 relation e(E: Dkal.Evidence)
 
 with P: Dkal.Principal, X: Dkal.Infon, E: Dkal.Evidence
-upon P said X [E]
+upon X [E]
 do learn X [E]
 
 ----p1----
@@ -12,11 +13,11 @@ say with justification to p2: r(2)
 say with justification to p2: (r(1) && r(2)) -> r(3)
 
 ----p2---
-if r(1) [E] // signature evidence
-do send to p1: e(E)
+if p1 said r(1) [E] // signature evidence
+do send to p1: p1 said r(1) [E]
 
-if r(1) && r(2) [E] // &i
-do send to p1: e(E)
+if p1 said (r(1) && r(2)) [E] // &i
+do send to p1: p1 said (r(1) && r(2)) [E]
 
-if r(3) [E] // &i, ->e
-do send to p1: e(E)
+if p1 said r(3) [E] // &i, ->e
+do send to p1: p1 said r(3) [E]
