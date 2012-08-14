@@ -15,6 +15,7 @@ open System.Collections.Generic
 open Stage4
 open AST
 open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Interfaces
 
 module Stage5 = 
 
@@ -24,7 +25,7 @@ module Stage5 =
       let status (p:AST) =
           T.[homkey p].Status
 
-      let proofs = Dictionary<int, Proof>()
+      let proofs = Dictionary<int, ITerm>()
       let proof u = proofs.[homkey u]
       let Qset = HashSet<int>()
       for q in queries |> List.map homkey do
@@ -40,14 +41,14 @@ module Stage5 =
 
       for h in H do
         if h.Key=h.Value.Key && T.[h.Value.Key].Status=Pending then
-          proofs.Add(h.Key, AST.Hypothesis h.Value)
+          proofs.Add(h.Key, EmptyEvidence)
           pending.Enqueue h.Key
       for h in N.Values do // justify hypotheses
         if T.[homkey h].Status=Pending then
           match h.Common.orig with
-          | JustifiedInfon(_,_) -> 
+          | JustifiedInfon(_, e) -> 
             proofs.Remove (homkey h) |> ignore
-            proofs.Add(homkey h, AST.Hypothesis(h))
+            proofs.Add(homkey h, e)
           | _ -> ()
 
       while pending.Count>0 do
@@ -55,30 +56,33 @@ module Stage5 =
         Qset.Remove u.Key |> ignore
         if Qset.Count > 0 then
           let t = T.[u.Key]
+          let evidence f = function
+          | JustifiedInfon(i, e) -> e
+          | u -> f u
           // &e
           match u with
           | SetFormula(_,AndOp,args) ->
             for a in args do
-              makepending (ConjElimination(proofs.[u.Key],a)) a
+              makepending (evidence (AndEliminationEvidence proofs.[u.Key]) a.Common.orig) a
           | _ -> ()
           // &i
           t.get (Side.AndOp) |> List.iter (function
             | SetFormula(_,AndOp,args) as w ->
               let t = T.[homkey w]
               if t.IncCounter() >=  t.NumChilds then
-                makepending (ConjIntroduction(args |> List.map proof, w)) w
-            | _ -> ())
+                makepending (AndEvidence (args |> List.map proof)) w
+            | _ -> ())          
           // |i
-          t.get (Side.OrOp) |> List.iter (fun a -> makepending (DisjIntroduction(proof u, a)) a)
+          t.get (Side.OrOp) |> List.iter (fun a -> makepending (evidence (OrIntroductionEvidence (proof u)) a.Common.orig) a)
           // ->i
-          t.get (ImplRight) |> List.iter (fun a -> makepending (ImplicationIntroduction(proof u, a)) a)
+          t.get (ImplRight) |> List.iter (fun a -> makepending (evidence (ImplicationIntroductionEvidence (proof u)) a.Common.orig) a)
           // ->e
           t.get (ImplLeft) |> List.iter (function
-            | Implies(_,_,r) as v -> makepending (ImplicationElimination(proof u, proof v, r)) r
+            | Implies(_,_,r) as v -> makepending (ModusPonensEvidence(proof u, proof v)) r
             | _ -> failwith "impossible")
           match u with
           | Implies(_,l,r) when status l <> Raw ->
-              makepending (ImplicationElimination(proof l, proof u, r)) r
+              makepending (ModusPonensEvidence(proof l, proof u)) r
           | _ -> ()
           t.Status <- Processed
       

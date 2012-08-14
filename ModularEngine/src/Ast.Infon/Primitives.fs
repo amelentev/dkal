@@ -87,7 +87,13 @@ module Primitives =
   [<Literal>] 
   let EvModusPonens = "evModusPonens"
   [<Literal>] 
+  let EvImplicationIntroduction = "->i"  
+  [<Literal>] 
   let EvAnd = "evAnd"
+  [<Literal>] 
+  let EvAndElimitation = "&e"
+  [<Literal>] 
+  let EvOrIntroduction = "|i"
   [<Literal>] 
   let EvAsInfon = "evAsInfon"
 
@@ -166,13 +172,18 @@ module Primitives =
       Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Principal; Type.Infon; Type.Int32]; Identity = None}
     | EvModusPonens ->
       Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Evidence; Type.Evidence]; Identity = None}
+    | EvImplicationIntroduction ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Evidence; Type.Infon]; Identity = None}
     | EvAnd ->
       Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Evidence; Type.Evidence]; 
             Identity = Some <| ({Function=(SolveFunction EvEmpty).Value; Args=[]} :> ITerm) }
+    | EvAndElimitation ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Evidence; Type.Infon]; Identity = None}
+    | EvOrIntroduction ->
+      Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.Evidence; Type.Infon]; Identity = None}
     | EvAsInfon ->
       Some {Name = f; RetType = Type.Evidence; ArgsType = [Type.SubstrateQuery]; Identity = None}
 
     // Otherwise, not found
-    | _ -> 
+    | _ ->
       None
-

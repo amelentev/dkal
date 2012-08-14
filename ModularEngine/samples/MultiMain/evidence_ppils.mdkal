@@ -1,0 +1,21 @@
+// example evidences for PPILS
+relation r(X: System.Int32)
+relation e(E: Dkal.Evidence)
+
+with P: Dkal.Principal, X: Dkal.Infon, E: Dkal.Evidence
+upon P said X [E]
+do learn P said X [E]
+
+----p1----
+do once
+say with justification to p2: r(1) && (r(1) -> r(2))
+
+----p2---
+if p1 said r(1) [E] // (&e)
+do send to p1: p1 said r(1) [E]
+
+if p1 said (r(1) || r(3)) [E] // |i
+do send to p1: p1 said (r(1) || r(3)) [E]
+
+if p1 said (r(3) -> r(1) && r(2)) [E] // &e, ->e, &i, ->i
+do send to p1: p1 said (r(3) -> r(1) && r(2)) [E]

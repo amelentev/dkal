@@ -21,7 +21,8 @@ open Microsoft.Research.Dkal.LogicEngine.PPIL.AST
 open System.Collections.Generic
 open NLog
 
-type PPILogicEngine(solverFun : ITerm list -> ITerm list -> AST.Proof option list) =
+/// solverFun: hypotheses -> queries -> evidences for queries
+type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
     inherit SimpleLogicEngine()
     let log = LogManager.GetLogger("LogicEngine.PPIL")
 
@@ -41,13 +42,99 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> AST.Proof option lis
         App(f, args), qs |> List.concat
       | n -> n, []
 
+    let ieq (i1: ITerm) i2 = i1.Unify i2 = Some Substitution.Id
+
+    let rec removeCommonPrefix pref args =
+      match List.head args with
+      | SaidInfon(phd,ihd) ->
+        let next = args.Tail |> List.collect (function
+            | SaidInfon(p,i) when ieq phd p -> [i]
+            | _ -> [])
+        if next.Length+1 = args.Length then
+          removeCommonPrefix (phd::pref) (ihd::next)
+        else
+          args,pref
+      | _ -> args,pref
+
+    let rec addPrefix i = function
+      | ppal :: tail -> addPrefix (SaidInfon(ppal, i)) tail
+      | [] -> i
+
     interface ILogicEngine with
-      member se.Derive (target: ITerm) (substs: ISubstitution seq) = 
+      member this.Derive (target: ITerm) (substs: ISubstitution seq) = 
         log.Debug("Derive {0}", target)
         let target = target.Normalize()
         seq { for subst in substs do      
-                for (subst, conds) in se.DoDerive subst target do
+                for (subst, conds) in this.DoDerive subst target do
                   yield! SubstrateDispatcher.Solve conds [subst] }
+
+      member this.CheckJustification (evidence: ITerm) =
+        let le = (this :> ILogicEngine)
+        let check = le.CheckJustification
+        let checkAndRemovePrefix args extra = 
+          let ca = args |> List.map check |> List.collect Option.toList
+          if ca.Length=args.Length then
+            Some(removeCommonPrefix [] (ca @ extra))
+          else None
+        match evidence with
+        | SignatureEvidence(PrincipalConstant(ppal), inf, SubstrateConstant(signature)) when signature.GetType() = typeof<int> ->
+          if this.CanSign ppal inf && le.SignatureProvider.CheckSignature inf ppal (signature :?> int) then
+            Some inf
+          else
+            log.Warn("Spoofed signature {0} from {1} on {2}", signature, ppal, inf)
+            None
+        | ModusPonensEvidence(e1, e2) ->
+          match checkAndRemovePrefix [e1; e2] [] with
+          | Some([i1; ImpliesInfon(i1', i2)], pref) when ieq i1 i1' ->
+            Some (addPrefix i2 pref)
+          | _ ->
+            log.Warn("Malformed modus ponens proof on {0} and {1}", e1, e2)
+            None
+        | ImplicationIntroductionEvidence(concl, res) ->
+          match checkAndRemovePrefix [concl] [res] with
+          | Some([concl; ImpliesInfon(premise, concl')], _) when ieq concl' concl -> 
+            Some res
+          | _ ->
+            log.Warn("Malformed implication introduction proof from {0} to {1}", concl, res)
+            None
+        | AndEvidence(evidences) ->
+          match checkAndRemovePrefix evidences [] with
+          | Some (args, pref) ->
+            Some(addPrefix (AndInfon args) pref)
+          | _ ->
+            log.Warn("Malformed conjunction proof on {0}", evidence)
+            None
+        | AndEliminationEvidence(conj, res) ->
+          match checkAndRemovePrefix [conj] [res] with          
+          | Some([AndInfon args; x], _) when args |> List.exists (ieq x) ->
+            Some res
+          | _ ->
+            log.Warn("Malformed conjunction elimination proof from {0} to {1}", conj, res)
+            None
+        | OrIntroductionEvidence(disj, res) ->
+          match checkAndRemovePrefix [disj] [res] with
+          | Some([disj; OrInfon(args)], pref) when args |> List.exists (ieq disj) ->
+            Some res
+          | _ ->
+            log.Warn("Malformed disjunction introduction proof from {0} to {1}", disj, res)
+            None
+        | AsInfonEvidence(query) ->
+          if SubstrateDispatcher.Solve [query] [Substitution.Id] |> Seq.isEmpty |> not then
+            Some <| AsInfon(query)
+          else
+            log.Warn("Non-true asInfon evidence at {0}", query)
+            None
+        | ConcretizationEvidence(ev, subst) ->
+          match le.CheckJustification ev with
+          | Some generalProof -> 
+            let concreteProof = match generalProof with
+                                | :? ForallTerm as ft -> ft.Instantiate subst
+                                | _ -> generalProof.Apply subst
+            Some concreteProof
+          | None -> None
+        | _ -> 
+          log.Warn("Unhandled evidence type at {0}", evidence)
+          None
 
     member private this.DoDerive (subst: ISubstitution) (query:ITerm) =
         let H = (this :> ILogicEngine).Infostrate.Knowledge |> Seq.map (fun x -> x.Apply subst)
@@ -96,21 +183,11 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> AST.Proof option lis
             if res |> List.forall Option.isSome then
               let res = res.Tail |> List.map Option.get
               let evars = justifiedInfons |> List.map snd
-              let subst = (List.zip res evars) |> List.fold (fun subst (proof,evar) ->
+              let subst = (List.zip res evars) |> List.fold (fun subst (evid,evar) ->
                 match subst with
                 | Some(subst) -> 
-                  let evid = this.constructEvidence proof
                   evar.UnifyFrom subst evid
                 | _ -> None) (Some subst)
               if subst.IsSome then
                 yield subst.Value,conds
         }
-
-    member private this.constructEvidence = function
-      | Hypothesis(ast) ->
-        match ast.Common.orig with
-        | JustifiedInfon(_, e) -> e
-        | _ -> EmptyEvidence
-      | ConjIntroduction(proofs,_) -> AndEvidence(proofs |> List.map this.constructEvidence)
-      | ImplicationElimination(left,right,_) -> ModusPonensEvidence(this.constructEvidence left, this.constructEvidence right)
-      | _ -> EmptyEvidence // TODO:

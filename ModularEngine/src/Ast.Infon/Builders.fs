@@ -125,16 +125,26 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   /// to prevent it from being substituted
   let SignatureEvidence (p: ITerm, i: ITerm, s: ITerm) =
     ExplicitSubstitutionTerm(App(Primitives.SolveFunction Primitives.EvSignature |> Option.get, [p; i; s])) :> ITerm
-  /// Build a modus ponens evidence
+  /// Build a modus ponens evidence / Implication Elimination / ->e
   let ModusPonensEvidence (e1: ITerm, e2: ITerm) =
     App(Primitives.SolveFunction Primitives.EvModusPonens |> Option.get, [e1; e2])
-  /// Build conjunction of evidence
+  /// Build Implication Introduction evidence / ->i
+  let ImplicationIntroductionEvidence conclusion result =
+    App(Primitives.SolveFunction Primitives.EvImplicationIntroduction |> Option.get, [conclusion; result])
+  /// Build Conjunction Introduction evidence / &i
   let AndEvidence (evidences: ITerm list) =
     App({ Name = Primitives.EvAnd; 
           RetType = Type.Evidence; 
           ArgsType = List.replicate evidences.Length Type.Evidence;
           Identity = (Primitives.SolveFunction Primitives.EvAnd).Value.Identity }, evidences)
+  /// Build Conjunction Elimination evidence / &e
+  let AndEliminationEvidence conjunct result =
+    App(Primitives.SolveFunction Primitives.EvAndElimitation |> Option.get, [conjunct; result])
+  /// Build Disjunction Introduction evidence / |i
+  let OrIntroductionEvidence disjunct result =
+    App(Primitives.SolveFunction Primitives.EvOrIntroduction |> Option.get, [disjunct; result])
+  
   /// Build asInfon evidence (for basic theorems)
   let AsInfonEvidence (sq: ISubstrateQueryTerm) =
     App(Primitives.SolveFunction Primitives.EvAsInfon |> Option.get, [sq])
-    
+  

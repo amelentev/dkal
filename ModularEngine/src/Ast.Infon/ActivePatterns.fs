@@ -151,10 +151,22 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|ModusPonensEvidence|_|) mt =  match mt with
                                       | App({Name=Primitives.EvModusPonens}, [e1; e2]) -> Some (e1, e2)
                                       | _ -> None
+  /// Active pattern for implication introduction evidence
+  let (|ImplicationIntroductionEvidence|_|) mt =  match mt with
+                                                  | App({Name=Primitives.EvImplicationIntroduction}, [e1; e2]) -> Some (e1, e2)
+                                                  | _ -> None
   /// Active pattern for conjunction of evidence
   let (|AndEvidence|_|) mt =  match mt with
                               | App({Name=Primitives.EvAnd}, evidences) -> Some evidences
                               | _ -> None
+  /// Active pattern for conjunction elimination evidence
+  let (|AndEliminationEvidence|_|) mt =  match mt with
+                                          | App({Name=Primitives.EvAndElimitation}, [conj; result]) -> Some (conj, result)
+                                          | _ -> None
+  /// Active pattern for disjunction introduction evidence
+  let (|OrIntroductionEvidence|_|) mt =  match mt with
+                                          | App({Name=Primitives.EvOrIntroduction}, [disj; result]) -> Some (disj, result)
+                                          | _ -> None
   /// Active pattern for asInfon evidence (basic theorems)
   let (|AsInfonEvidence|_|) mt =  match mt with
                                   | App({Name=Primitives.EvAsInfon}, [sq]) -> 
@@ -162,5 +174,3 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                                     | :? ISubstrateQueryTerm as sq -> Some sq
                                     | _ -> None
                                   | _ -> None
-
-

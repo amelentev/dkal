@@ -112,7 +112,7 @@ type SimpleLogicEngine() =
     | Forall(_,t) -> see.FinalOutcome t
     | i -> i
 
-  member private see.CanSign (principal: string) (infon: ITerm) =
+  member see.CanSign (principal: string) (infon: ITerm) =
     match see.FinalOutcome infon with
     | SaidInfon (PrincipalConstant(p), _) -> principal = p
     | _ -> false
