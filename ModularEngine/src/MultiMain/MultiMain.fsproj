@@ -24,8 +24,8 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
-    <StartWorkingDirectory>C:\Users\Guido\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>clinical_trials.mdkal 10000 10000</StartArguments>
+    <StartWorkingDirectory>C:\src\dkal\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
+    <StartArguments>-ws 1000 100 -PPILS</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -64,6 +64,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Rise4FunWebService.fs" />
     <Compile Include="MultiMain.fs" />
     <None Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -151,6 +152,9 @@
       <Project>{556267f3-7084-42f5-afe8-7f29f482e5b1}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

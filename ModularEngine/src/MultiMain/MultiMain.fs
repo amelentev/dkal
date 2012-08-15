@@ -131,6 +131,8 @@ module MultiMain =
 
   let private args = System.Environment.GetCommandLineArgs() |> Seq.toList
   match args with
+  | exe :: "-ws" :: tail ->
+    Rise4FunWebService.startWebService tail
   | exe :: policyFile :: timeLimit :: msgsLimit :: tail ->
     if not (File.Exists (policyFile)) then
       log.Fatal("File not found: {0}", policyFile)
