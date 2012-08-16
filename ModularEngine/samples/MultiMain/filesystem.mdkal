@@ -17,10 +17,10 @@ relation ask(F: File, U: User, O: Operation)
 
 // john tries to perform a bunch of operations over various files
 do once
-    send to filesystem: ask("readme.txt", Me, "read")
-    send to filesystem: ask("readme.txt", Me, "write")
-    send to filesystem: ask("secret_file.txt", Me, "read")
-    send to filesystem: ask("holidays.jpg", Me, "write")
+    send to filesystem: ask("readme.txt", me, "read")
+    send to filesystem: ask("readme.txt", me, "write")
+    send to filesystem: ask("secret_file.txt", me, "read")
+    send to filesystem: ask("holidays.jpg", me, "write")
                 
 ---filesystem--------------------------
 // filesystem's policy

@@ -57,7 +57,7 @@ if
     noCertificate()
 do
     say with justification to pa1:
-        passportCertificateNeeded(Me)
+        passportCertificateNeeded(me)
     forget
         noCertificate()
             
@@ -66,15 +66,15 @@ do
 // airline
 with F: Flight, N: Passport, E: Evidence
     upon
-        pa1 said issuedPassport(Me, N) [E]
+        pa1 said issuedPassport(me, N) [E]
     if
         asInfon({| "itineraries" | "//itinerary[@airline='ca']/@flight" | F |}) &&
         noBoardingPass(ca, F)
     do
         say with justification to ca:
-            checkinNeeded(Me, F)
+            checkinNeeded(me, F)
         send to ca:
-            pa1 said issuedPassport(Me, N) [E]
+            pa1 said issuedPassport(me, N) [E]
         forget
             noBoardingPass(ca, F)
     

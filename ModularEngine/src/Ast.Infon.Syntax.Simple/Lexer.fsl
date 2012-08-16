@@ -62,7 +62,7 @@ rule tokenize = parse
 
 // Wildcards
 | "_"                 { WILDCARD }
-| "Me"                { ME }
+| "me"                { ME }
 
 // Substrate declarations
 | "datasource"		{ SUBSTRATE } 

@@ -47,7 +47,7 @@ module Rise4FunWebService =
     jw.WriteStartElement("item")
     jw.WriteAttributeString("type", "object")
     jw.WriteElementString("Name", "hello world")
-    jw.WriteElementString("Source", "relation helloWorldFrom(P: Dkal.Principal)\n---p1---\ndo once send to p2: helloWorldFrom(Me)\n---p2---\nwith P: Dkal.Principal\n upon P said helloWorldFrom(P)\n do send to P: helloWorldFrom(Me)")
+    jw.WriteElementString("Source", "relation helloWorldFrom(P: Dkal.Principal)\n---p1---\ndo once send to p2: helloWorldFrom(me)\n---p2---\nwith P: Dkal.Principal\n upon P said helloWorldFrom(P)\n do send to P: helloWorldFrom(me)")
     jw.WriteEndElement()
     jw.WriteEndElement()
     jw.WriteElementString("TermsOfUseUrl","http://rise4fun.com/termsofuse")

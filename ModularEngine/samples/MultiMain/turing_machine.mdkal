@@ -65,7 +65,7 @@ with S1: State, S2: State, Sy1: Symbol, Sy2: Symbol, P1: Position, P2: Position
             currentPosition(P2)
         learn
             tape(P1, Sy2)
-        send to Me:
+        send to me:
             step(P1, P2, S1, S2, Sy1, Sy2)
         
 // general rule to move right
@@ -91,5 +91,5 @@ with S1: State, S2: State, Sy1: Symbol, Sy2: Symbol, P1: Position, P2: Position
             currentPosition(P2)
         learn
             tape(P1, Sy2)
-        send to Me:
+        send to me:
             step(P1, P2, S1, S2, Sy1, Sy2)

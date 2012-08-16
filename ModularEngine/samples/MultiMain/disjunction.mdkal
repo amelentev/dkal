@@ -6,7 +6,7 @@ relation cit(P: String, C: String)
 
 with P: String
 if cit(P, "US") || cit(P, "UK")
-do send to Me: cit(P, "US or UK")
+do send to me: cit(P, "US or UK")
 
 ---p1-----------------------------
 do once

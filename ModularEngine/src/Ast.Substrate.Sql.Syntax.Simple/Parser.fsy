@@ -225,10 +225,7 @@ Terms:
 
 Variable:
   | UPPER_IDENTIFIER 
-    { if $1 = "Me" then
-        Const <| PrincipalConstant(ctx.Value.Me)
-      else
-        Var({ Name = $1; Type = ctx.Value.VariableType $1 }) }
+    { Var({ Name = $1; Type = ctx.Value.VariableType $1 }) }
 
 Literal:
 	| TRUE									    	{ Const(Constant(true)) }
@@ -236,7 +233,10 @@ Literal:
 	| INT_LITERAL						  		{ Const(Constant($1)) }
 	| FLOAT_LITERAL								{ Const(Constant($1)) }
 	| STRING_LITERAL							{ Const(Constant($1)) }
-	| LOWER_IDENTIFIER						{ Const(PrincipalConstant($1)) }
+	| LOWER_IDENTIFIER						
+      { if $1 = "me" then
+          Const(PrincipalConstant ctx.Value.Me)
+        else Const(PrincipalConstant $1) }
 
 ColUpdate:
   | LOWER_IDENTIFIER DOT LOWER_IDENTIFIER GETS Term

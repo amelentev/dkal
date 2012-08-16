@@ -23,7 +23,7 @@ let mutable Context: IParsingContext option = None
 let mutable Namespace: string = null
 
 let replaceMeInQuery (query: string) = 
-  (new Regex(@"\$Me\b")).Replace(query, Context.Value.Me)
+  (new Regex(@"\$me\b")).Replace(query, Context.Value.Me)
 
 let varsFromQuery (query: string) = 
   let ret = new HashSet<_>()

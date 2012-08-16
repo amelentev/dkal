@@ -72,20 +72,20 @@ with P: Principal, SUBJECT: Subject, CONTENTS: String
 // prof. suresh's policy
 
 do once
-    learn needsExamContents(Me, "programming")
+    learn needsExamContents(me, "programming")
     
 with PROF: Principal, SUBJECT: Subject, CONTENTS: String
     if 
-        needsExamContents(Me, SUBJECT) && 
+        needsExamContents(me, SUBJECT) && 
         asInfon(isProfessor(PROF)) &&
         asInfon(givesLectures(PROF, SUBJECT)) &&
-        asInfon(givesLectures(Me, SUBJECT)) &&
-        asInfon({| "basic" | PROF != Me |})
+        asInfon(givesLectures(me, SUBJECT)) &&
+        asInfon({| "basic" | PROF != me |})
     do
         send to PROF:
-            asksForExamContents(Me, SUBJECT)
+            asksForExamContents(me, SUBJECT)
         forget
-            needsExamContents(Me, SUBJECT)
+            needsExamContents(me, SUBJECT)
             
 ---david--------------------------
 // david's policy
@@ -93,9 +93,9 @@ with PROF: Principal, SUBJECT: Subject, CONTENTS: String
 with PROF: Principal, SUBJECT: Subject
     if 
         asInfon(isSubject(SUBJECT)) &&
-        asInfon(enrolledIn(Me, SUBJECT)) &&
+        asInfon(enrolledIn(me, SUBJECT)) &&
         asInfon(isProfessor(PROF)) &&
         asInfon(givesLectures(PROF, SUBJECT))
     do
         send to PROF:
-            asksForExamContents(Me, SUBJECT)
+            asksForExamContents(me, SUBJECT)

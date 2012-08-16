@@ -20,18 +20,18 @@ with NN: System.String
   do
     apply {|"x"| insert "/root" | NN, "value" <-> "attr" |}
     forget nodename(NN)
-    send to Me: log("inserted") && log(NN)
+    send to me: log("inserted") && log(NN)
 
 with NN: System.String
   if
     asInfon({|"x"| "/root/*[@attr='value']" | NN |})
   do
     apply {|"x"| update "/root/$NN" | "node1", "value1" <-> "attr" |}
-    send to Me: log("updated") && log(NN)
+    send to me: log("updated") && log(NN)
 
 with NN: System.String
   if
     asInfon({|"x"| "/root/*[@attr='value1']" | NN |})
   do
     apply {|"x"| delete "/root/$NN" |}
-    send to Me: log("deleted") && log(NN)
+    send to me: log("deleted") && log(NN)

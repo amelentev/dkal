@@ -5,8 +5,8 @@ relation isTheNextBigStar(P: Dkal.Principal)
 ---alice-----------------------------
 // alice starts a rumor about her being the next big star
 do once
-    send to bob: isTheNextBigStar(Me)
-    send to chuck: isTheNextBigStar(Me)
+    send to bob: isTheNextBigStar(me)
+    send to chuck: isTheNextBigStar(me)
 
 ---bob-----------------------------
 // bob tells any rumors about next big stars to his friend chuck
