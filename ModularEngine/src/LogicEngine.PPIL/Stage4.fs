@@ -41,6 +41,8 @@ module Stage4 =
       member this.NumChilds = numChilds
 
   let preprocess (H: IDictionary<int, AST>) (HY: list<AST>) =
+      let hom (u:AST) = H.[u.Key]
+      let homkey u = (hom u).Key
       let T = Dictionary()
 
       let forallLeaders f = H |> Seq.iter (fun kv -> if kv.Key=kv.Value.Key then f(kv.Value))
@@ -51,21 +53,21 @@ module Stage4 =
 
       let appendT key side n = T.[key].Append side n
 
-      let dfs = function
-      | SetFormula(_,op,args) as n ->
-          let args = args |> List.map (fun a -> H.[a.Key])
-          let side = if op = AST.AndOp then AndOp else OrOp
-          for a in args do
-            appendT a.Key side n
-      | Implies(_,l,r) as n ->
-          let (l,r) = H.[l.Key], H.[r.Key]
-          appendT l.Key ImplLeft n
-          appendT r.Key ImplRight n
-      | Rel(_, Primitives.EmptyInfon) as u ->
-          T.[H.[u.Key].Key].Status <- Pending
-      | _ -> ()
+      forallLeaders (function
+        | SetFormula(_,op,args) as n ->
+            let args = args |> List.map hom
+            let side = if op = AST.AndOp then AndOp else OrOp
+            for a in args do
+              appendT a.Key side n
+        | Implies(_,l,r) as n ->
+            let (l,r) = hom l, hom r
+            appendT l.Key ImplLeft n
+            appendT r.Key ImplRight n
+            if homkey l = homkey r then
+              T.[homkey n].Status <- Pending
+        | Rel(_, Primitives.EmptyInfon) as u ->
+            T.[homkey u].Status <- Pending
+        | _ -> ())
 
-      forallLeaders dfs
-
-      HY |> List.iter (fun h -> T.[H.[h.Key].Key].Status <- Pending)
+      HY |> List.iter (fun h -> T.[homkey h].Status <- Pending)
       T

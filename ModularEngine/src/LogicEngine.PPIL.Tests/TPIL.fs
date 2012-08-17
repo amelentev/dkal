@@ -40,7 +40,7 @@ module TPIL =
         [true; true; false],
         solve ["a() -> b()"; "b() -> c()"; "c() -> a()"; "b() -> d()"]
               ["c() -> b()"; "a() -> d()"; "d() -> a()"])
-    "transitive x2x. underivable" => fun _ -> // TODO: add axiom?
+    "transitive x2x" => fun _ ->
       Assert.Equal("x2x axiom",
         [true],
         solve []
