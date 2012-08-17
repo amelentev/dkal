@@ -138,9 +138,7 @@ module MultiMain =
       log.Fatal("File not found: {0}", policyFile)
     else
       try
-        let logics = Map.ofList ["-MLLogicEngine", "ML";  "-FStarLogicEngine", "FStar"; "-PPIL", "PPIL"; "-PPILS", "PPILS"]
-        let logicEngineKind = tail |> List.map (fun x -> logics.TryFind x) |> List.filter Option.isSome |> List.map Option.get |> List.append ["simple"] |> List.rev |> List.head
-        execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit), logicEngineKind)
+        execute(File.ReadAllText(policyFile), Int32.Parse(timeLimit), Int32.Parse(msgsLimit), LogicEngineFactory.parseLogicEngineKind tail)
       with
         e -> log.ErrorException("Something went wrong", e)
   | _ -> log.Fatal("Wrong number of parameters; expecting multi-policy file, time limit (ms), messages limit")

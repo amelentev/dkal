@@ -46,6 +46,8 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Utils.fs" />
+    <Compile Include="TPIL.fs" />
     <Compile Include="Tests.fs" />
   </ItemGroup>
   <ItemGroup>

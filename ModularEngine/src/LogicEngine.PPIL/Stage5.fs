@@ -19,7 +19,7 @@ open Microsoft.Research.Dkal.Interfaces
 
 module Stage5 = 
 
-  let stage5 (N:IDictionary<int,AST>) (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) queries =
+  let stage5 (N:IDictionary<int,AST>) (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) extraRules queries =
       let hom (u:AST) = H.[u.Key]
       let homkey u = (hom u).Key
       let status (p:AST) =
@@ -84,6 +84,9 @@ module Stage5 =
           | Implies(_,l,r) when status l <> Raw ->
               makepending (ModusPonensEvidence(proof l, proof u)) r
           | _ -> ()
+
+          extraRules H T u |> List.iter (makepending EmptyEvidence) // TODO: evidence construction
+
           t.Status <- Processed
       
       proofs

@@ -191,3 +191,12 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
               if subst.IsSome then
                 yield subst.Value,conds
         }
+
+type BPILogicEngine() =
+  inherit PPILogicEngine(PPILSolver.solveBPIL)
+
+type SPILogicEngine() = 
+  inherit PPILogicEngine(PPILSolver.solveSPIL)
+
+type TPILogicEngine() =
+  inherit PPILogicEngine(PPILSolver.solveTPIL)

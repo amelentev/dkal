@@ -47,9 +47,7 @@ module Main =
 
             let router = RouterFactory.Router kind routingFile
             let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
-            let logics = Map.ofList ["-MLLogicEngine", "ML";  "-FStarLogicEngine", "FStar"; "-PPIL", "PPIL"; "-PPILS", "PPILS"]
-            let logicEngineKind = tail |> List.map (fun x -> logics.TryFind x) |> List.filter Option.isSome |> List.map Option.get |> List.append ["simple"] |> List.rev |> List.head
-            let logicEngine = LogicEngineFactory.LogicEngine logicEngineKind
+            let logicEngine = LogicEngineFactory.LogicEngine (LogicEngineFactory.parseLogicEngineKind tail)
             let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
             let infostrate = InfostrateFactory.Infostrate kind
             let mailbox = MailBoxFactory.MailBox kind logicEngine
