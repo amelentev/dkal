@@ -29,22 +29,10 @@ open Microsoft.Research.Dkal.LogicEngine.PPIL.Stage4
 open Utils
 
 module Tests =
-  let solve = Utils.genericSolve PPILSolver.solveSPIL
+  let private solve = Utils.genericSolve PPILSolver.solveBPIL
   [<Tests>]
   let tests = 
       "testsuite" =>> [
-          "stage0" =>
-              fun _ ->
-                  let rel = RelationInfon []
-                  let (ra,rb,rc) = rel "a", rel "b", rel "c"
-                  let ast = AndInfon [AndInfon [rc;ra]; rb; ra]
-                  let ast = Stage0.flatConjuncts ast
-                  Assert.Equal("flatConjuncts", "and(c(), a(), b(), a())", (ast.ToString()))
-                  let ast = Stage0.translate ast
-                  Assert.Equal("translation", "and(a(), b(), c())", (ast.ToString()))
-                  let ast = Stage0.translate (OrInfon [ast; ast; rb])
-                  Assert.Equal("orand", "or(and(a(), b(), c()), b())", (ast.ToString()))
-
           "stage1" =>
               fun _ ->
                   let (h,q,input) = translate ["p1 said (a() && q said p said b())"] []
@@ -62,22 +50,25 @@ module Tests =
               fun _ ->
                   let (h,q,s) = translate ["a() && b() -> a() && b()"] []
                   let (N, V) = Stage2.constructNodesnVertices h
-                  let H = Stage3.homonomy s (N,V)
+                  let H = Stage3.homonomySufArr s (N,V)
                   //debugHomonomy s H
+                  Assert.Equal("", 4, checkHomonomy N H)
+                  let (_,_,H) = Stage3.homonomyHash h q (N,V)
                   Assert.Equal("", 4, checkHomonomy N H)
           "stage3 2" =>
               fun _ ->
                   let (h,q,s) = translate ["p said a() && b() -> p said a() && b() -> a() && p said b()"] []
                   let (N, V) = Stage2.constructNodesnVertices h
-                  let H = Stage3.homonomy s (N,V)
+                  let H = Stage3.homonomySufArr s (N,V)
                   //debugHomonomy s H
                   Assert.Equal("", 8, checkHomonomy N H)
-
+                  let (_,_,H) = Stage3.homonomyHash h q (N,V)
+                  Assert.Equal("", 8, checkHomonomy N H)
           "stage4" =>
               fun _ ->
                   let (h,q,s) = translate ["r(1) && r(2) -> r(3)"; "r(1)"; "r(2)"] []
                   let (N, V) = Stage2.constructNodesnVertices h
-                  let H = Stage3.homonomy s (N,V)
+                  let H = Stage3.homonomySufArr s (N,V)
                   //debugHomonomy s H
                   let T = Stage4.preprocess H h
                   //printf "%A\n" T
@@ -107,40 +98,13 @@ module Tests =
                     [true],
                     solve ["p said r(1)"; "p said p said r(2)"; "p said r(1) -> r(1)"; "p said p said r(2) -> r(2)"]
                           ["r(1) && r(2)"])
-
-          "set basic" => fun _ ->
-              Assert.Equal("",
-                [true],
-                solve ["x() && y() -> z()"]
-                      ["y() && x() -> z()"])
-              Assert.Equal("", 
-                [true],
-                solve ["((x()&&y())&&z()) -> w()"]
-                      ["(x()&&(y()&&z())) -> w()"])
-              Assert.Equal("", 
-                [true],
-                solve ["r(1) && r(2) || r(3)"]
-                      ["r(2) && r(1) || r(3)"])
-
-          // underivable tests. filtered
-          "set || intro. underivable" => fun _ ->
-              Assert.Equal("",
-                [true],
-                solve ["a()||b()"]
-                      ["a()||b()||c()"])
-
-          "-> &&. underivable" => fun _ ->
-              Assert.Equal("",
-                [true],
-                solve ["a() -> b() && c()"]
-                      ["a() -> b()"])
-      ] @ TPIL.tests
+      ] @ SPIL.tests @ TPIL.tests
 
   [<EntryPoint>]
   let main argv = 
       let r = tests
             //|> Test.filter (fun x -> x.Contains "transitive")
-            |> Test.filter (fun x -> not (x.EndsWith "underivable"))
+            |> Test.filter (fun x -> not (x.EndsWith "todo"))
             |> run
       System.Console.ReadLine() |> ignore
       r

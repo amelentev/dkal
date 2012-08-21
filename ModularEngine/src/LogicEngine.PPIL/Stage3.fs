@@ -18,7 +18,7 @@ open AST
 
 module Stage3 =
 
-  let homonomy (input:string) ((nodes:IDictionary<int, AST>), (vertices: IDictionary<int, Trie>)) =
+  let homonomySufArr (input:string) ((nodes: IDictionary<int, AST>), (vertices: IDictionary<int, Trie>)) =
       let sufarr = LCP.sufsort input
       let lcp = LCP.computeLCP(input, sufarr)
 
@@ -49,4 +49,92 @@ module Stage3 =
           | _ -> ()
           i <- i+1
       H
-           
+
+  /// Build a homonomy map and remove duplicates from set formulas. preserve order of childrens.
+  /// average complexity = O(number of nodes)
+  let homonomyHash HY Q ((nodes: IDictionary<int, AST>), (vertices: IDictionary<int, Trie>)) =
+    /// assign a key for every local prefix
+    let mutable ind = 0
+    for v in vertices.Values do
+      v.Position <- ind
+      ind <- ind + 1
+
+    /// from node key to hash
+    let hashcache = Dictionary<int, int>()
+    /// hash function for prefix
+    let prefhash (u:AST) = vertices.[u.Key].Position
+    /// hash function for nodes
+    let rec shash = function
+    | Rel(_,s) as u -> (prefhash u, s).GetHashCode()
+    | Implies(_,l,r) as u -> (prefhash u, chash l, chash r).GetHashCode()
+    | SetFormula(_,op,args) as u -> (prefhash u, op).GetHashCode() + (args |> List.fold (fun acc a -> acc + (chash a)) 0)
+    /// hash function for nodes with memorization
+    and chash (u: AST) =
+      match hashcache.TryGetValue u.Key with
+      | true,res -> res
+      | _ ->
+        let r = shash u
+        hashcache.Add(u.Key, r)
+        r
+
+    let HO = Dictionary<int, AST>(nodes)
+    let homkey (u:AST) = HO.[u.Key].Key
+
+    let rec addhom (t1:AST) (t2:AST) =
+      if t2.Key = homkey t2 then
+        assert HO.Remove(t2.Key)
+        HO.Add(t2.Key, HO.[t1.Key])
+        true
+      else
+        assert (t1.Key = homkey t1)
+        addhom t2 t1
+
+    let equalityComparer = 
+      { new IEqualityComparer<AST> with
+        /// @precondition: childrens of t1 and t2 should be in globalset
+        member x.Equals(t1: AST, t2: AST) =
+          if homkey t1 = homkey t2 then
+            true
+          else
+          if vertices.[t1.Key] = vertices.[t2.Key] then
+            match t1, t2 with
+            | Rel(_,s1), Rel(_,s2) when s1.Equals(s2) ->
+              addhom t1 t2
+            | SetFormula(_,op1,args1), SetFormula(_,op2,args2) when op1=op2 && args1.Length = args2.Length ->
+              let leaders = HashSet<int>()
+              for a in args1 do
+                assert leaders.Add(homkey a)
+              if args2 |> List.forall (fun x -> leaders.Contains(homkey x)) then
+                addhom t1 t2
+              else false
+            | Implies(_,a11,a12), Implies(_,a21,a22) ->
+              if homkey a11 = homkey a21 && homkey a12 = homkey a22 then
+                addhom t1 t2
+              else false
+            | _ -> false
+          else false
+        member x.GetHashCode(t: AST) = chash t
+      }
+    let globalset = new HashSet<AST>(equalityComparer)
+
+    let rec removedups = function
+    | Rel(_) as self ->
+      globalset.Add(self) |> ignore
+      self
+    | SetFormula(_, op, args) as self ->
+      let args = args |> List.map removedups
+      let childrenset = HashSet(equalityComparer)
+      let args = args |> List.filter childrenset.Add
+      let res = SetFormula(self.Common, op, args)
+      globalset.Add(res) |> ignore
+      res
+    | Implies(_, al, ar) as self ->
+      let al = removedups al
+      let ar = removedups ar
+      let self = Implies(self.Common, al, ar)
+      globalset.Add(self) |> ignore
+      self
+
+    let HY = HY |> List.map removedups
+    let Q = Q |> List.map removedups
+    HY, Q, HO

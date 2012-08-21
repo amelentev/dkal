@@ -17,7 +17,7 @@ open Microsoft.Research.Dkal.LogicEngine.PPIL
 open Utils
 
 module TPIL =
-  let solve = Utils.genericSolve PPILSolver.solveTPIL
+  let private solve = Utils.genericSolve PPILSolver.solveTPIL
 
   let tests = [
     "transitive 1" => fun _ ->
@@ -45,4 +45,10 @@ module TPIL =
         [true],
         solve []
               ["a() -> a()"])
+    
+    "transitive -> &&. TSPIL. todo" => fun _ ->
+        Assert.Equal("",
+          [true],
+          solve ["a() -> b() && c()"]
+                ["a() -> b()"])
     ]
