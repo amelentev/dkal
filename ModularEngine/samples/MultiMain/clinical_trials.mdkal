@@ -79,7 +79,7 @@ with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
         // to someone to read a record, if this record corresponds to a patient
         // in [N1,...,N2], then it can act as if org1 granted access
         send with justification to SITE:
-            with PERSON: Principal, REC: Int, NUMBER: Int
+            forall PERSON: Principal, REC: Int, NUMBER: Int
                 SITE said mayRead(PERSON, REC) &&
                 asInfon({| "records" | "//record[@id='$REC' and @trial='$TRIAL']/@patient" | NUMBER |}) &&
                 asInfon({| "basic" | N1 <= NUMBER && NUMBER <= N2 |})
@@ -135,7 +135,7 @@ with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal
         // read a record, if this record corresponds to a patient in [P1,...,P2]
         // then site1 granted access
         send with justification to PHYS:
-            with NUMBER: Int, R: Record
+            forall NUMBER: Int, R: Record
                 asInfon({| "records" | "//record[@id='$R' and @trial='$TRIAL']/@patient" | NUMBER |}) &&
                 asInfon({| "basic" | P1 <= NUMBER && NUMBER <= P2 |})
                 -> 
