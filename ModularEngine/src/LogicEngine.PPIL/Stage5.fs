@@ -77,7 +77,7 @@ module Stage5 =
         t.get (ImplRight) |> List.iter (fun a -> makepending (evidence (ImplicationIntroductionEvidence (proof u)) a.Common.orig) a)
         // ->e
         t.get (ImplLeft) |> List.iter (function
-          | Implies(_,_,r) as v -> makepending (ModusPonensEvidence(proof u, proof v)) r
+          | Implies(_,_,r) as v -> if status v <> Raw then makepending (ModusPonensEvidence(proof u, proof v)) r
           | _ -> failwith "impossible")
         match u with
         | Implies(_,l,r) when status l <> Raw ->

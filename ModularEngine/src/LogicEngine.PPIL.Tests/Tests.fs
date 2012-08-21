@@ -98,6 +98,12 @@ module Tests =
                     [true],
                     solve ["p said r(1)"; "p said p said r(2)"; "p said r(1) -> r(1)"; "p said p said r(2) -> r(2)"]
                           ["r(1) && r(2)"])
+          "->e bug" =>
+              fun _ ->
+                  Assert.Equal("",
+                    [false; false],
+                    solve ["a()"]
+                          ["a() -> b()"; "b()"])
       ] @ SPIL.tests @ TPIL.tests
 
   [<EntryPoint>]
