@@ -14,10 +14,10 @@ namespace Microsoft.Research.Dkal.LogicEngine.PPIL
 module PPILSolver =
   let emptyRule _ _ _ = []
 
-  let genericSolve extraRules H Q =
+  let genericSolve stage3 extraRules H Q =
       let (H, Q, inp) = Stage1.stage1 H Q
       let (N, V) = Stage2.constructNodesnVertices (H@Q)
-      let (H,Q,HO) = Stage3.homonomyHash H Q (N,V) // via suffix array: let HO = Stage3.homonomySufArr inp (N,V)
+      let (H,Q,HO) = stage3 inp H Q (N,V)
       let T = Stage4.preprocess HO H
       let proofs = Stage5.stage5 N HO T extraRules Q
       let res = Q |> List.map (fun q ->
@@ -27,12 +27,19 @@ module PPILSolver =
       res
 
   let solveBPIL H Q =
-      genericSolve emptyRule H Q
+      genericSolve Stage3.homonomySufArr emptyRule H Q
 
-  let solveSPIL H Q =
-      let H = H |> List.map Stage0.flatConjuncts // if via suffix array then Stage0.stage0
+  /// solve SPIL using O(d*n) algorithm based on suffix arrays
+  let solveSPILsufarr H Q =
+      let H = H |> List.map Stage0.stage0
+      let Q = Q |> List.map Stage0.stage0
+      genericSolve Stage3.homonomySufArr emptyRule H Q
+
+  /// solve SPIL using hash based agorithm with O(n) average complexity
+  let solveSPILhash H Q =
+      let H = H |> List.map Stage0.flatConjuncts
       let Q = Q |> List.map Stage0.flatConjuncts
-      solveBPIL H Q
+      genericSolve Stage3.homonomyHash emptyRule H Q
 
   let solveTPIL H Q =
-      genericSolve TPIL.applyTrans H Q
+      genericSolve Stage3.homonomySufArr TPIL.applyTrans H Q

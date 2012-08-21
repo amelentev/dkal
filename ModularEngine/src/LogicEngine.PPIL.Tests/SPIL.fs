@@ -18,7 +18,7 @@ open Microsoft.Research.Dkal.Ast.Infon
 open Utils
 
 module SPIL =
-  let private solve = Utils.genericSolve PPILSolver.solveSPIL
+  let private solve = Utils.genericSolve PPILSolver.solveSPILhash
   let private rel = RelationInfon []
   let private ra,rb,rc = rel "a", rel "b", rel "c"
 

@@ -50,25 +50,25 @@ module Tests =
               fun _ ->
                   let (h,q,s) = translate ["a() && b() -> a() && b()"] []
                   let (N, V) = Stage2.constructNodesnVertices h
-                  let H = Stage3.homonomySufArr s (N,V)
+                  let (_,_,H) = Stage3.homonomySufArr s [] [] (N,V)
                   //debugHomonomy s H
                   Assert.Equal("", 4, checkHomonomy N H)
-                  let (_,_,H) = Stage3.homonomyHash h q (N,V)
+                  let (_,_,H) = Stage3.homonomyHash "" h q (N,V)
                   Assert.Equal("", 4, checkHomonomy N H)
           "stage3 2" =>
               fun _ ->
                   let (h,q,s) = translate ["p said a() && b() -> p said a() && b() -> a() && p said b()"] []
                   let (N, V) = Stage2.constructNodesnVertices h
-                  let H = Stage3.homonomySufArr s (N,V)
+                  let (_,_,H) = Stage3.homonomySufArr s [] [] (N,V)
                   //debugHomonomy s H
                   Assert.Equal("", 8, checkHomonomy N H)
-                  let (_,_,H) = Stage3.homonomyHash h q (N,V)
+                  let (_,_,H) = Stage3.homonomyHash "" h q (N,V)
                   Assert.Equal("", 8, checkHomonomy N H)
           "stage4" =>
               fun _ ->
                   let (h,q,s) = translate ["r(1) && r(2) -> r(3)"; "r(1)"; "r(2)"] []
                   let (N, V) = Stage2.constructNodesnVertices h
-                  let H = Stage3.homonomySufArr s (N,V)
+                  let (_,_,H) = Stage3.homonomySufArr s [] [] (N,V)
                   //debugHomonomy s H
                   let T = Stage4.preprocess H h
                   //printf "%A\n" T
