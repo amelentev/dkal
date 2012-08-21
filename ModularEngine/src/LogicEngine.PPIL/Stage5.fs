@@ -37,6 +37,7 @@ module Stage5 =
         if status v = Raw then 
           proofs.Add(v.Key, proof)
           T.[v.Key].Status <- Pending
+          Qset.Remove v.Key |> ignore
           pending.Enqueue v.Key
 
       for h in H do
@@ -51,42 +52,40 @@ module Stage5 =
             proofs.Add(homkey h, e)
           | _ -> ()
 
-      while pending.Count>0 do
+      while pending.Count>0 && Qset.Count>0 do
         let u = H.[pending.Dequeue()]
-        Qset.Remove u.Key |> ignore
-        if Qset.Count > 0 then
-          let t = T.[u.Key]
-          let evidence f = function
-          | JustifiedInfon(i, e) -> e
-          | u -> f u
-          // &e
-          match u with
-          | SetFormula(_,AndOp,args) ->
-            for a in args do
-              makepending (evidence (AndEliminationEvidence proofs.[u.Key]) a.Common.orig) a
-          | _ -> ()
-          // &i
-          t.get (Side.AndOp) |> List.iter (function
-            | SetFormula(_,AndOp,args) as w ->
-              let t = T.[homkey w]
-              if t.IncCounter() >=  t.NumChilds then
-                makepending (AndEvidence (args |> List.map proof)) w
-            | _ -> ())          
-          // |i
-          t.get (Side.OrOp) |> List.iter (fun a -> makepending (evidence (OrIntroductionEvidence (proof u)) a.Common.orig) a)
-          // ->i
-          t.get (ImplRight) |> List.iter (fun a -> makepending (evidence (ImplicationIntroductionEvidence (proof u)) a.Common.orig) a)
-          // ->e
-          t.get (ImplLeft) |> List.iter (function
-            | Implies(_,_,r) as v -> makepending (ModusPonensEvidence(proof u, proof v)) r
-            | _ -> failwith "impossible")
-          match u with
-          | Implies(_,l,r) when status l <> Raw ->
-              makepending (ModusPonensEvidence(proof l, proof u)) r
-          | _ -> ()
+        let t = T.[u.Key]
+        let evidence f = function
+        | JustifiedInfon(i, e) -> e
+        | u -> f u
+        // &e
+        match u with
+        | SetFormula(_,AndOp,args) ->
+          for a in args do
+            makepending (evidence (AndEliminationEvidence proofs.[u.Key]) a.Common.orig) a
+        | _ -> ()
+        // &i
+        t.get (Side.AndOp) |> List.iter (function
+          | SetFormula(_,AndOp,args) as w ->
+            let t = T.[homkey w]
+            if t.IncCounter() >=  t.NumChilds then
+              makepending (AndEvidence (args |> List.map proof)) w
+          | _ -> ())          
+        // |i
+        t.get (Side.OrOp) |> List.iter (fun a -> makepending (evidence (OrIntroductionEvidence (proof u)) a.Common.orig) a)
+        // ->i
+        t.get (ImplRight) |> List.iter (fun a -> makepending (evidence (ImplicationIntroductionEvidence (proof u)) a.Common.orig) a)
+        // ->e
+        t.get (ImplLeft) |> List.iter (function
+          | Implies(_,_,r) as v -> makepending (ModusPonensEvidence(proof u, proof v)) r
+          | _ -> failwith "impossible")
+        match u with
+        | Implies(_,l,r) when status l <> Raw ->
+            makepending (ModusPonensEvidence(proof l, proof u)) r
+        | _ -> ()
 
-          extraRules H T u |> List.iter (makepending EmptyEvidence) // TODO: evidence construction
+        extraRules H T u |> List.iter (makepending EmptyEvidence) // TODO: evidence construction
 
-          t.Status <- Processed
+        t.Status <- Processed
       
       proofs
