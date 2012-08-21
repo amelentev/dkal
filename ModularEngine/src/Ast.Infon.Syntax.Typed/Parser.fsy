@@ -35,7 +35,7 @@ open System.Collections.Generic
 %token LPAR RPAR LBRACE RBRACE COMMA 
 
 // Variable declarations
-%token WITH
+%token FORALL
 
 // Types
 %token COLON TIMES TO
@@ -72,7 +72,7 @@ Policy:
 	| Policy ITerm								{ { Rules = $1.Rules @ [$2] } }
 
 ITerm:
-  | WITH Variables ITerm
+  | FORALL Variables ITerm
     { ForallMany($2, $3) }
 	| LOWER_IDENTIFIER COLON Types TO Type LPAR ITerms RPAR	COLON ITerm		
     { App({ Name = $1; ArgsType = $3; RetType = $5; Identity = Some $10 }, $7) } 

@@ -42,6 +42,12 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
         App(f, args), qs |> List.concat
       | n -> n, []
 
+    let rec extractForAllTerms = function
+      | Forall(var, t) ->
+        let t, vars = extractForAllTerms t
+        t, (var :> ITerm) :: vars
+      | u -> u, []
+
     let ieq (i1: ITerm) i2 = i1.Unify i2 = Some Substitution.Id
 
     let rec removeCommonPrefix pref args =
@@ -140,6 +146,7 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
         let H = (this :> ILogicEngine).Infostrate.Knowledge |> Seq.map (fun x -> x.Apply subst)
         let query = query.Apply subst
 
+        let query,forallvars = extractForAllTerms query
         let query,conds1 = extractSubstrateTerms query
         let query,justifiedInfons = extractJustifiedInfons query
         let queries = query :: (justifiedInfons |> List.map fst)
@@ -150,7 +157,7 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
             | App(f, args) ->
                 args |> Seq.collect collectConstants
             | Const(c) ->
-                Seq.singleton c
+                Seq.singleton (c:>ITerm)
             | _ -> Seq.empty
         let uniq ss =
             let hs = HashSet()
@@ -159,8 +166,9 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
             hs |> List.ofSeq
 
         let all = Seq.append queries H
-        let vars = uniq (all |> Seq.collect (fun x -> x.Vars) |> Seq.filter (fun x -> not(subst.DomainContains x)))
-        let consts = dict (uniq (all |> Seq.collect collectConstants) |> Seq.groupBy (fun x -> x.Type))
+        let forallvars = HashSet(forallvars)
+        let vars = uniq (all |> Seq.collect (fun x -> x.Vars) |> Seq.filter (fun x -> not(subst.DomainContains x) && not(forallvars.Contains x)))
+        let consts = dict (uniq (Seq.append forallvars (all |> Seq.collect collectConstants)) |> Seq.groupBy (fun x -> x.Type))
 
         let rec substitutions (vars:IVar list) (subst:ISubstitution) =
             if vars=[] then 

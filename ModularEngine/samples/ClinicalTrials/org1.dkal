@@ -39,7 +39,7 @@ do once
 with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
 	if
 		asInfon({|"ct"|
-			ppalName(Me) == org(TRIAL) &&
+			ppalName(me) == org(TRIAL) &&
 			siteUnnotified(SITE, TRIAL) &&
 			sitePatients(SITE, TRIAL, N1, N2)
 		|})
@@ -49,11 +49,11 @@ with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
         say with justification to SITE:
             allocatedPatients(SITE, N1, N2, TRIAL)
 		send with justification to SITE:
-			with PERSON: Principal, R: Int, N: Int
+			forall PERSON: Principal, R: Int, N: Int
                 SITE said mayRead(PERSON, R) && asInfon({|"ct"|
                     N1 <= N && N <= N2
                     && R == record(N, TRIAL)
                 |})
                 ->
-                Me said mayRead(PERSON, R)
+                me said mayRead(PERSON, R)
 		apply {|"ct"| siteAssignments.site == ppalName(SITE) && siteAssignments.trial == TRIAL | update siteAssignments.unnotified := false |}

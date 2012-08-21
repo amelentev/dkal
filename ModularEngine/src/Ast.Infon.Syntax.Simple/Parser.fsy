@@ -73,7 +73,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token MACRO
 
 // Variable declarations
-%token WITH LET FRESH
+%token WITH LET FRESH FORALL
 
 // Rules
 %token DO ONCE
@@ -192,6 +192,11 @@ VarsDeclaration:
     { ctxs.Push <| new LocalParsingContext($2, ctxs.Peek())
       $2 }
 
+ForAllDeclaration:
+  | FORALL Args
+    { ctxs.Push <| new LocalParsingContext($2, ctxs.Peek())
+      $2 }
+
 Term:
 | Infon                               { $1 }
 | Principal                           { $1 }
@@ -246,11 +251,11 @@ Infon:
           App(func, ts), (List.concat sms)
         else
           failwithf "Undefined identifier: %O" $1 }
-  | VarsDeclaration Infon
+  | ForAllDeclaration Infon
     { ctxs.Pop() |> ignore
       let t, solvedMacros = normalizeAndApplyMacros $2
       ForallMany($1, t), solvedMacros }
-         
+
 Principal:
   | Variable        						{ $1, [] }
   | WILDCARD                    { Var(ctxs.Peek().FreshVar(Type.Principal)), [] }

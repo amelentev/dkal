@@ -79,6 +79,7 @@ rule tokenize = parse
 
 // Variable declarations
 | "with"			{ WITH }
+| "forall"			{ FORALL }
 | "let"             { LET }
 | "fresh"			{ FRESH }
 

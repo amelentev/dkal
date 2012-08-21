@@ -51,9 +51,9 @@ with ORG: Principal, I1: Infon, I2: Infon, E: Evidence
 
 with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal, R: Record, ORG: Principal, E: Evidence
     if
-        ORG said participates(Me, TRIAL) [_]
+        ORG said participates(me, TRIAL) [_]
     if
-        ORG said allocatedPatients(Me, N1, N2, TRIAL) [_]
+        ORG said allocatedPatients(me, N1, N2, TRIAL) [_]
     if
         asInfon({|"ct"| org(TRIAL) == ppalName(ORG) |}) &&
 		asInfon({|"ct"|
@@ -64,17 +64,17 @@ with X: Infon, TRIAL: Trial, N1: Int, N2: Int, P1: Int, P2: Int, PHYS: Principal
         X -> ORG said mayRead(PHYS, R) [E]
     do
 		say with justification to PHYS:
-			physParticipates(PHYS, TRIAL, Me)
+			physParticipates(PHYS, TRIAL, me)
         say with justification to PHYS:
-			physAllocatedPatients(PHYS, P1, P2, TRIAL, Me)
+			physAllocatedPatients(PHYS, P1, P2, TRIAL, me)
 		send with justification to PHYS:
-			with NUMBER: Int, R: Record
+			forall NUMBER: Int, R: Record
                 asInfon({|"ct"|
                     P1 <= NUMBER && NUMBER <= P2 
                     && R == record(NUMBER,TRIAL)
                 |})
                 ->
-                Me said mayRead(PHYS, R)
+                me said mayRead(PHYS, R)
 		send to PHYS:
             X -> ORG said mayRead(PHYS, R) [E]
             

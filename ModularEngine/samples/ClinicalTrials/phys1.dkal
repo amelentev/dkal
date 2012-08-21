@@ -42,9 +42,9 @@ with P: Principal, I1: Infon, I2: Infon, E: Evidence
 
 with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int, ORG: Principal, R: Int, E1: Dkal.Evidence, E2: Dkal.Evidence
     if 
-        SITE said physParticipates(Me, TRIAL, SITE) [_]
+        SITE said physParticipates(me, TRIAL, SITE) [_]
     if
-        SITE said physAllocatedPatients(Me, P1, P2, TRIAL, SITE) [_]
+        SITE said physAllocatedPatients(me, P1, P2, TRIAL, SITE) [_]
     if
 		asInfon({|"ct"|
 			P1 <= N && N <= P2 &&
@@ -53,13 +53,13 @@ with X: Infon, Y: Infon, SITE: Principal, TRIAL: Trial, P1: Int, P2: Int, N: Int
 			R == record(N, TRIAL)
 		|})
     if
-        X -> ORG said mayRead(Me, R) [E1]
+        X -> ORG said mayRead(me, R) [E1]
     if
-        Y -> SITE said mayRead(Me, R) [E2]
+        Y -> SITE said mayRead(me, R) [E2]
 	do
 		say with justification to keyMgr:
-			requestToRead(Me, R)
+			requestToRead(me, R)
         send to keyMgr:
-			X -> ORG said mayRead(Me, R) [E1]
+			X -> ORG said mayRead(me, R) [E1]
         send to keyMgr:
-			Y -> SITE said mayRead(Me, R) [E2]          
+			Y -> SITE said mayRead(me, R) [E2]          

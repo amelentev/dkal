@@ -186,7 +186,8 @@ type SimplePrettyPrinter() =
           ManyTokens <| spp.TokenizeTerm t.Term;
           TextToken <| " " + t.Substitution.ToString() + ")" ]
     | :? ForallTerm as ft ->
-      [ TextToken <| "with " + (String.concat ", " [for v in (ft :> ITerm).BoundVars -> v.Name + ": " + v.Type.FullName]);
+      let keyword = if ft.Term.Type=Type.Rule then "with " else "forall "
+      [ TextToken <| keyword + (String.concat ", " [for v in (ft :> ITerm).BoundVars -> v.Name + ": " + v.Type.FullName]);
         TabToken; NewLineToken;
         ManyTokens <| spp.TokenizeTerm ft.InnerTerm;
         UntabToken; NewLineToken ]

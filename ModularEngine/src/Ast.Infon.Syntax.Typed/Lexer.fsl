@@ -45,7 +45,7 @@ rule tokenize = parse
 | ","				{ COMMA }
 
 // Variable declarations
-| "with"			{ WITH }
+| "forall"			{ FORALL }
 
 // Types
 | ":"			  	{ COLON }
