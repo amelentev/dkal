@@ -71,6 +71,7 @@ type SimpleParser() =
     | EmptyRule -> ()
     | RuleOnce(c,a) | Rule(c,a) -> checkConditionSanity(c); checkActionSanity(a)
     | Forall(_,r) -> checkRuleSanity(r)
+    | Var(v) when v.Type=Type.Rule -> ()
     | _ -> raise(SemanticCheckException("Expecting rule when checking sanity", pp.PrintTerm(r)))
 
   and checkPolicySanity (p: Policy) =
