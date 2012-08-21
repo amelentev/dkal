@@ -21,11 +21,11 @@ module TPIL =
       let homkey (u:AST) = H.[u.Key].Key
       let status p =  T.[homkey p].Status
 
-      let constructPred (u: AST) side f2 =
+      let constructPred ukey side f2 =
         let r = HashSet<int>()
         let q = Queue<int>()
-        q.Enqueue u.Key
-        r.Add u.Key |> ignore
+        q.Enqueue ukey
+        r.Add ukey |> ignore
         while q.Count > 0 do
           let u = H.[q.Dequeue()]
           for v in T.[homkey u].get side do
@@ -38,8 +38,8 @@ module TPIL =
             | _ -> ()
         r
         
-      let Pl = constructPred ul ImplRight fst
-      let Pr = constructPred ur ImplLeft snd
+      let Pl = constructPred (homkey ul) ImplRight fst
+      let Pr = constructPred (homkey ur) ImplLeft snd
 
       [
       for t in T do
