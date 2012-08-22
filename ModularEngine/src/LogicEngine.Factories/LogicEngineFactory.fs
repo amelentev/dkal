@@ -18,7 +18,7 @@ open Microsoft.Research.Dkal.LogicEngine
 type LogicEngineFactory() =
 
   static member parseLogicEngineKind (cmdargs: string list) =
-    let logics = Map.ofList ["-MLLogicEngine", "ML";  "-FStarLogicEngine", "FStar"; "-BPIL", "BPIL"; "-SPIL", "SPIL"; "-TPIL", "TPIL"]
+    let logics = Map.ofList ["-MLLogicEngine", "ML";  "-FStarLogicEngine", "FStar"; "-BPIL", "BPIL"; "-SPIL", "SPIL"; "-TPIL", "TPIL"; "-TSPIL", "TSPIL"]
     cmdargs |> List.map (fun x -> logics.TryFind x) |> List.filter Option.isSome |> List.map Option.get |> List.append ["simple"] |> List.rev |> List.head
 
   /// Construct a LogicEngine. A logic engine kind must be provided.
@@ -30,4 +30,5 @@ type LogicEngineFactory() =
     | "BPIL" -> new PPIL.BPILogicEngine() :> ILogicEngine
     | "SPIL" -> new PPIL.SPILogicEngine() :> ILogicEngine
     | "TPIL" -> new PPIL.TPILogicEngine() :> ILogicEngine
+    | "TSPIL" -> new PPIL.TSPILogicEngine() :> ILogicEngine
     | k -> failwith <| "Unrecognized logic engine kind: " + k

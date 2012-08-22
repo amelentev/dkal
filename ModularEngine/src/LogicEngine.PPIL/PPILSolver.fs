@@ -43,3 +43,9 @@ module PPILSolver =
 
   let solveTPIL H Q =
       genericSolve Stage3.homonomySufArr TPIL.applyTrans H Q
+
+  /// SPIL + additional transitive rule
+  let solveTSPILhash H Q =
+      let H = H |> List.map Stage0.flatConjuncts
+      let Q = Q |> List.map Stage0.flatConjuncts
+      genericSolve Stage3.homonomyHash TPIL.applyTrans H Q
