@@ -53,18 +53,18 @@ module Stage3 =
   /// Build a homonomy map and remove duplicates from set formulas. preserve order of childrens.
   /// average complexity = O(number of nodes)
   let homonomyHash _ HY Q ((nodes: IDictionary<int, AST>), (vertices: IDictionary<int, Trie>)) =
-    /// assign a key for every local prefix
+    /// assign unique key for every local prefix
     let mutable ind = 0
     for v in vertices.Values do
       v.Position <- ind
       ind <- ind + 1
 
-    /// from node key to hash
+    /// remembered hases. from node key to hash
     let hashcache = Dictionary<int, int>()
     /// hash function for prefix
     let prefhash (u:AST) = vertices.[u.Key].Position
     /// hash function for nodes
-    let rec shash = function
+    let rec nhash = function
     | Rel(_,s) as u -> (prefhash u, s).GetHashCode()
     | Implies(_,l,r) as u -> (prefhash u, chash l, chash r).GetHashCode()
     | SetFormula(_,op,args) as u -> (prefhash u, op).GetHashCode() + (args |> List.fold (fun acc a -> acc + (chash a)) 0)
@@ -73,22 +73,22 @@ module Stage3 =
       match hashcache.TryGetValue u.Key with
       | true,res -> res
       | _ ->
-        let r = shash u
+        let r = nhash u
         hashcache.Add(u.Key, r)
         r
-
+    /// homonomy map
     let HO = Dictionary<int, AST>(nodes)
     let homkey (u:AST) = HO.[u.Key].Key
-
+    /// make t1 and t2 as homonyms.
     let rec addhom (t1:AST) (t2:AST) =
-      if t2.Key = homkey t2 then
+      if t2.Key = homkey t2 then // is t2 original?
         assert HO.Remove(t2.Key)
         HO.Add(t2.Key, HO.[t1.Key])
         true
       else
-        assert (t1.Key = homkey t1)
+        assert (t1.Key = homkey t1) // t1 should be original
         addhom t2 t1
-
+    /// equality and hash provider
     let equalityComparer = 
       { new IEqualityComparer<AST> with
         /// @precondition: childrens of t1 and t2 should be in globalset
@@ -96,7 +96,7 @@ module Stage3 =
           if homkey t1 = homkey t2 then
             true
           else
-          if vertices.[t1.Key] = vertices.[t2.Key] then
+          if vertices.[t1.Key] = vertices.[t2.Key] then // same prefix?
             match t1, t2 with
             | Rel(_,s1), Rel(_,s2) when s1.Equals(s2) ->
               addhom t1 t2
@@ -115,8 +115,9 @@ module Stage3 =
           else false
         member x.GetHashCode(t: AST) = chash t
       }
+    /// Set of all homonymy originals
     let globalset = new HashSet<AST>(equalityComparer)
-
+    /// remove duplicates from set formulas
     let rec removedups = function
     | Rel(_) as self ->
       globalset.Add(self) |> ignore
