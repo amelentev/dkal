@@ -39,15 +39,16 @@ datasource xml("<itineraries>
 // to keep track that john does not have issuance certificate or boarding passes
 relation noCertificate()
 relation noBoardingPass(AIRLINE: Principal, F: Flight)
+relation start()
 
-do once
-    learn noCertificate()
+knows noCertificate() && start()
 
 with AIRLINE: Principal, F: Flight
     if
-        asInfon({| "itineraries" | "//itinerary" | AIRLINE <-> "airline", F <-> "flight" |})
-    do once
+        start() && asInfon({| "itineraries" | "//itinerary" | AIRLINE <-> "airline", F <-> "flight" |})
+    do
         learn noBoardingPass(AIRLINE, F)
+	forget start()
     
 // whenever john is about to travel using cautious airline (ca), if he does not
 // have an passport-issuance certificate, he first gets one from his issuing 

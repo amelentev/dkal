@@ -2,13 +2,18 @@
 
 relation r(P: Dkal.Principal)
 relation ins(R: Dkal.Rule)
+relation start()
 
 ---p1-----------------------------
-do once
+knows start()
+
+if start()
+do
     send to p2: ins(with X: Dkal.Principal  if r(X) do send to p1: r(X))
+    forget start()
 
 ---p2-----------------------------
-do once learn r(p2)
+knows r(p2)
 
 with R: Dkal.Rule
 upon p1 said ins(R)

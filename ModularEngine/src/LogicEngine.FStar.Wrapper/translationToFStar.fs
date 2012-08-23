@@ -53,7 +53,6 @@ module TranslationToFStar =
     | Primitives.SeqRule -> new Types.SeqRule () :> Types.func 
     | Primitives.EmptyRule -> new Types.EmptyRule () :> Types.func 
     | Primitives.Rule -> new Types.Rule () :> Types.func 
-    | Primitives.RuleOnce -> new Types.RuleOnce () :> Types.func 
     | Primitives.SeqCondition -> new Types.SeqCondition () :> Types.func 
     | Primitives.EmptyCondition -> new Types.EmptyCondition () :> Types.func 
     | Primitives.WireCondition -> new Types.WireCondition () :> Types.func 

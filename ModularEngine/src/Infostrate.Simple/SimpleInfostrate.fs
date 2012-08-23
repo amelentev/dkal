@@ -38,7 +38,8 @@ type SimpleInfostrate() =
       | AndInfon(infons) ->
         List.fold (fun ch i -> 
                     let ch' = (si :> IInfostrate).Learn i
-                    ch' || ch) false infons 
+                    ch' || ch) false infons
+      | Forall(v, t) -> (si :> IInfostrate).Learn t
       | infon -> 
         knowledge.Add infon
 
@@ -52,7 +53,8 @@ type SimpleInfostrate() =
         List.fold (fun ch i -> 
                     let ch' = (si :> IInfostrate).Forget i
                     ch' || ch) false infons 
-      | infon -> 
+      | Forall(v, t) -> (si :> IInfostrate).Forget t
+      | infon ->
         knowledge.Remove infon
 
     member si.Knowledge = seq knowledge 

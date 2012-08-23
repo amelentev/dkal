@@ -64,6 +64,8 @@ module Main =
             log.Debug("------------------------------------------------------------------------")
             log.Debug(printer.PrintPolicy assembly.Policy)
             log.Debug("------------------------------------------------------------------------")
+            for ka in assembly.Policy.KA do
+              infostrate.Learn ka |> ignore
             for rule in assembly.Policy.Rules do
               executor.InstallRule rule |> ignore
             executor.Start()

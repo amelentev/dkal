@@ -100,6 +100,8 @@ namespace Microsoft.Research.Dkal.GuiMain
                 log.Debug("------------------------------------------------------------------------");
                 log.Debug(printer.PrintPolicy(assembly.Policy));
                 log.Debug("------------------------------------------------------------------------");
+                foreach (var ka in assembly.Policy.KA)
+                  infostrate.Learn(ka);
                 foreach (var rule in assembly.Policy.Rules)
                   executor.InstallRule(rule);
 

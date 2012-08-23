@@ -11,8 +11,7 @@ datasource xml("<root></root>")
 relation nodename(X: System.String)
 relation log(X: System.String)
 
-do once
-  learn nodename("node")
+knows nodename("node")
 
 with NN: System.String
   if

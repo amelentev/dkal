@@ -12,15 +12,20 @@ relation allowed(F: File, U: User, O: Operation)
 // user U is requesting to perform operation O on file F
 relation ask(F: File, U: User, O: Operation)
 
+relation start()
+
 ---john--------------------------
 // john's policy
 
 // john tries to perform a bunch of operations over various files
-do once
+knows start()
+
+if start() do
     send to filesystem: ask("readme.txt", me, "read")
     send to filesystem: ask("readme.txt", me, "write")
     send to filesystem: ask("secret_file.txt", me, "read")
     send to filesystem: ask("holidays.jpg", me, "write")
+    forget start()
                 
 ---filesystem--------------------------
 // filesystem's policy

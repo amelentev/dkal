@@ -28,8 +28,8 @@ type Signature =  { Substrates: ISubstrate list;
                     Relations: RelationDeclaration list }
  
 /// A Policy contains a list of rules (in the order they were found in the 
-/// Assembly)
-type Policy = { Rules: ITerm list }
+/// Assembly) and knowledge assertions
+type Policy = { Rules: ITerm list; KA: ITerm list }
 
 /// An Assembly is composed of a Signature and a Policy
 type Assembly = { Signature: Signature; Policy: Policy }

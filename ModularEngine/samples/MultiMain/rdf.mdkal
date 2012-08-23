@@ -3,11 +3,15 @@ datasource rdf("http://dbpedia.org/sparql") namespaces "dbpedia"
 type String = System.String
 relation wantGoTo(Conf: String)
 relation canGoTo(Conf: String)
+relation start()
 
 ---student-----------------------------
+knows start()
+
 with Conf: String
-	if asInfon({|"dbpedia"|" select ?Conf where { ?Conf  dcterms:subject  category:Programming_languages_conferences }"|})
-	do once  send to supervisor: wantGoTo(Conf)
+	if start() && asInfon({|"dbpedia"|" select ?Conf where { ?Conf  dcterms:subject  category:Programming_languages_conferences }"|})
+	do send to supervisor: wantGoTo(Conf)
+	forget start()
 
 ---supervisor---------------
 with Conf: String

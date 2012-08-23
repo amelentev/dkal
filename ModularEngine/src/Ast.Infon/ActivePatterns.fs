@@ -31,11 +31,6 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                       | App({Name=Primitives.Rule}, [c; a]) -> Some (c, a)
                       | _ -> None
   
-  /// Active pattern for the "rule once"
-  let (|RuleOnce|_|) mt = match mt with
-                          | App({Name=Primitives.RuleOnce}, [c; a]) -> Some (c, a)
-                          | _ -> None
-
   /// Active pattern for the sequencing of conditions
   let (|SeqCondition|_|) mt = match mt with
                               | App({Name=Primitives.SeqCondition}, cs) -> Some cs

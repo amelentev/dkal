@@ -4,9 +4,13 @@ relation isTheNextBigStar(P: Dkal.Principal)
 
 ---alice-----------------------------
 // alice starts a rumor about her being the next big star
-do once
+knows isTheNextBigStar(me)
+
+if isTheNextBigStar(me)
+do
     send to bob: isTheNextBigStar(me)
     send to chuck: isTheNextBigStar(me)
+    forget isTheNextBigStar(me)
 
 ---bob-----------------------------
 // bob tells any rumors about next big stars to his friend chuck
@@ -26,13 +30,11 @@ with P: Dkal.Principal, I: Dkal.Infon
 
 // chuck is a good journalist and he needs two different sources
 // before he accepts something as valid
-with P: Dkal.Principal, Q: Dkal.Principal, R: Dkal.Principal
-    do once
-        learn 
-			(Q said isTheNextBigStar(P)) &&
-			(R said isTheNextBigStar(P)) &&
-			asInfon({| "basic" | Q != R |}) -> 
-			isTheNextBigStar(P)
+knows forall P: Dkal.Principal, Q: Dkal.Principal, R: Dkal.Principal
+	(Q said isTheNextBigStar(P)) &&
+	(R said isTheNextBigStar(P)) &&
+	asInfon({| "basic" | Q != R |}) -> 
+	isTheNextBigStar(P)
 
 // if chuck knows about a coming big star it will publish it
 with P: Dkal.Principal

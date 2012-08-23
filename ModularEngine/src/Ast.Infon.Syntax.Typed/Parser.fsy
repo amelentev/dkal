@@ -68,8 +68,8 @@ open System.Collections.Generic
 %%
 
 Policy:
-	|										        	{ { Rules = [] } }
-	| Policy ITerm								{ { Rules = $1.Rules @ [$2] } }
+	|										        	{ { Rules = []; KA = [] } }
+	| Policy ITerm								{ {$1 with Rules = $1.Rules @ [$2]} }
 
 ITerm:
   | FORALL Variables ITerm

@@ -27,7 +27,6 @@ module Builders =
   let SeqRuleStr (b:bool) : string = Primitives.SeqRule
   let EmptyRule (b:bool) : string = Primitives.EmptyRule
   let RuleF (b:bool) : string = Primitives.Rule  (* to avoid conflict with Type.Rule *)
-  let RuleOnce (b:bool) : string = Primitives.RuleOnce  
   let SeqConditionStr (b:bool) : string = Primitives.SeqCondition  
   let EmptyCondition (b:bool) : string = Primitives.EmptyCondition  
   let WireCondition (b:bool) : string = Primitives.WireCondition  

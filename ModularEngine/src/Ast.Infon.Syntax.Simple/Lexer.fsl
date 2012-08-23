@@ -85,7 +85,7 @@ rule tokenize = parse
 
 // Rules
 | "do"			  { DO }
-| "once"			{ ONCE }
+| "knows"			{KNOWS}
 
 // Conditions
 | "upon"        { UPON }

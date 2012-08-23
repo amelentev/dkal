@@ -12,10 +12,14 @@ relation number(I: Int)
 // ping's policy
 
 // start the chain reaction
-do once
-    send to pong:
-        number(1)
-        
+knows number(1)
+
+if number(1)
+do
+    send to pong: number(1)
+    forget number(1)
+
+
 // reply to pong's messages
 with X: Int, Y: Int
     upon

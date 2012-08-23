@@ -49,8 +49,6 @@ module TranslationfromML =
       Primitives.EmptyRule |> Primitives.SolveFunction |> Option.get
     | MLType.Rule ->  
       Primitives.Rule |> Primitives.SolveFunction |> Option.get
-    | MLType.RuleOnce ->  
-      Primitives.RuleOnce |> Primitives.SolveFunction |> Option.get
     | MLType.SeqCondition ->  
       Primitives.SeqCondition |> Primitives.SolveFunction |> Option.get
     | MLType.EmptyCondition ->  

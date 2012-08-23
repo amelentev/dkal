@@ -3,8 +3,13 @@
 relation helloWorldFrom(P: Dkal.Principal)
 
 ---p1-----------------------------
-do once
+knows helloWorldFrom(me)
+
+if 
+    helloWorldFrom(me)
+do
     send to p2: helloWorldFrom(me)
+    forget helloWorldFrom(me)
 
 ---p2-----------------------------
 with P: Dkal.Principal

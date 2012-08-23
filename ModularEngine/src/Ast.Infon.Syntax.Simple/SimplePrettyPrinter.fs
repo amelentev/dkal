@@ -87,7 +87,7 @@ type SimplePrettyPrinter() =
         | _ -> failwith "Incorrect arguments in AsInfon(...)"
       elif fSymbol = "emptyInfon" then
         [ TextToken <| "asInfon(true)" ]
-      elif fSymbol = Primitives.Rule || fSymbol = Primitives.RuleOnce then
+      elif fSymbol = Primitives.Rule then
         let beginVars, endVars =  
           if withVars then 
             spp.TokenizeVariableDeclaration (mt.Vars |> Seq.toList)
@@ -96,7 +96,6 @@ type SimplePrettyPrinter() =
         let mainTokens = 
           [ ManyTokens <| spp.TokenizeTerm(mts.[0], false)]
           @ [ TextToken <| "do" ]
-          @ (if fSymbol = Primitives.RuleOnce then [TextToken <| " once"] else [])
           @ [ TabToken; NewLineToken ]
           @ [ ManyTokens <| spp.TokenizeTerm(mts.[1], false)]
           @ [ UntabToken; NewLineToken ]

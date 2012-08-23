@@ -185,8 +185,6 @@ type SimpleExecutor(router: IRouter,
       match rule with
       | Rule(condition, action) ->
         Seq.map action.Apply (se.SolveCondition condition [Substitution.Id]) |> Seq.toList
-      | RuleOnce(condition, action) ->
-        [UninstallAction(rule)] @ (Seq.map action.Apply (se.SolveCondition condition [Substitution.Id]) |> Seq.toList)
       | EmptyRule -> []
       | SeqRule (rules) ->
         Seq.collect traverse rules |> Seq.toList

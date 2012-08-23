@@ -1,10 +1,12 @@
 // example with explicit forall quantification
 relation access(P: Dkal.Principal, F: System.String)
 relation employee(P: Dkal.Principal)
+relation start()
 relation log(S: System.String, F: System.String)
 
 ---p1-----------------------------
-do once learn employee(p1)
+knows employee(p1)
+knows start()
 
 with P: Dkal.Principal
 if employee(P)
@@ -12,9 +14,11 @@ do
 	send to p2:	access(P, "F14") -> employee(P)
 	forget	employee(P)
 
-do once send to p2:
+if start() do 
+send to p2:
 	forall P : Dkal.Principal
 		access(P, "F13") -> employee(P)
+forget start()
 
 ---p2-----------------------------
 with X: Dkal.Infon
@@ -29,7 +33,7 @@ with F: System.String, P: Dkal.Principal
 if access(P, F) -> employee(P)
 do send to p1: log("some principal should be employee to access", F) && employee(P)
 
-do once learn access(p1, "F13")
+knows access(p1, "F13")
 
 with P: Dkal.Principal
 if employee(P)

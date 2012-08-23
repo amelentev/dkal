@@ -10,10 +10,14 @@ relation r(X: Int)
 ---alice--------------------------
 // alice's policy
 
+knows r(0)
+
 with F1: Int
-	do once
+	if r(0)
+	do
 		let F1 <- fresh
 		send to bob: r(F1)
+		forget r(0)
 
 ---bob--------------------------
 // bob's policy

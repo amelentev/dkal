@@ -7,10 +7,13 @@ upon X [E]
 do learn X [E]
 
 ----p1----
-do once
+knows r(0)
+
+if r(0) do
 say with justification to p2: r(1)
 say with justification to p2: r(2)
 say with justification to p2: (r(1) && r(2)) -> r(3)
+forget r(0)
 
 ----p2---
 if p1 said r(1) [E] // signature evidence

@@ -7,8 +7,11 @@ upon P said X [E]
 do learn P said X [E]
 
 ----p1----
-do once
+knows r(0)
+
+if r(0) do
 say with justification to p2: r(1) && (r(1) -> r(2))
+forget r(0)
 
 ----p2---
 if p1 said r(1) [E] // (&e)

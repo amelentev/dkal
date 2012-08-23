@@ -71,8 +71,7 @@ with P: Principal, SUBJECT: Subject, CONTENTS: String
 ---suresh--------------------------
 // prof. suresh's policy
 
-do once
-    learn needsExamContents(me, "programming")
+knows needsExamContents(me, "programming")
     
 with PROF: Principal, SUBJECT: Subject, CONTENTS: String
     if 

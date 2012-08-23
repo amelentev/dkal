@@ -13,6 +13,7 @@ type Evidence = Dkal.Evidence
 relation participates(SITE: Principal, T: Trial)
 relation allocatedPatients(SITE: Principal, N1: Int, N2: Int, T: Trial)
 relation mayRead(P: Principal, R: Record)
+relation start()
 
 macro org(T: Trial) : String
     {| "ct" | T == trials.id && 
@@ -33,8 +34,11 @@ macro sitePatients(S: Principal, T: Trial, N1: Int, N2: Int) : Boolean
 macro record (N: Int, T:Trial): Record
     {| "ct" | Ret == records.id && records.patient == N && records.trial == T |}
 
-do once
-	apply {| "ct" | true | update siteAssignments.unnotified := true |}
+
+knows start()
+if start()
+do	apply {| "ct" | true | update siteAssignments.unnotified := true |}
+	forget start()
 
 with TRIAL: Trial, N1: Int, N2: Int, SITE: Principal
 	if

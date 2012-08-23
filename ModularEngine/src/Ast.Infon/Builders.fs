@@ -30,9 +30,6 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   /// Build a simple rule
   let RuleRule (c: ITerm, a: ITerm) = 
     App(Primitives.SolveFunction Primitives.Rule |> Option.get, [c; a])
-  /// Build a "do once" rule
-  let RuleOnceRule (c: ITerm, a: ITerm) = 
-    App(Primitives.SolveFunction Primitives.RuleOnce |> Option.get, [c; a])
 
   /// Build a sequencing of conditions
   let SeqCondition (conds: ITerm list) = 

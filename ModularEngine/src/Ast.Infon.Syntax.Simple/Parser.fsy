@@ -76,7 +76,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token WITH LET FRESH FORALL
 
 // Rules
-%token DO ONCE
+%token DO KNOWS
 
 // Conditions
 %token UPON FROM IF
@@ -139,11 +139,15 @@ Signature:
 	| Signature MacroDeclaration 				  { $1 }
 
 Policy:
-	|										        	{ {Rules = []} }
+	|										        	{ {Rules = []; KA = []} }	
 	| Policy Rule   							
     { let rule, solvedMacros = normalizeAndApplyMacros $2
       if not solvedMacros.IsEmpty then failwithf "Unsolved macros at rule %O" rule
-      {$1 with Rules = $1.Rules @ [rule]} }
+      {$1 with Rules = $1.Rules @ [rule]} }	
+	| Policy KNOWS Infon   							
+    { let ka, solvedMacros = normalizeAndApplyMacros $3
+      if not solvedMacros.IsEmpty then failwithf "Unsolved macros at knowledge assertion %O" ka
+      {$1 with KA = $1.KA @ [ka]} }
 
 SubstrateDeclaration:
 	| SUBSTRATE LOWER_IDENTIFIER 
@@ -360,13 +364,6 @@ Rule:
   | Variable        							    { $1, [] }
   | WILDCARD                          { Var(ctxs.Peek().FreshVar(Type.Rule)), [] }
 	| LPAR Rule RPAR					          { $2 }
-  | DO ONCE Action
-    { let t, sm = normalizeAndApplyMacros $3
-      primitiveApp(Primitives.RuleOnce, [primitiveApp(Primitives.EmptyCondition, []); t]), sm }
-  | Condition DO ONCE Action
-    { let t1, sm1 = normalizeAndApplyMacros $1
-      let t2, sm2 = normalizeAndApplyMacros $4
-      primitiveApp(Primitives.RuleOnce, [t1; t2]), sm1 @ sm2 }
   | DO Action
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Rule, [primitiveApp(Primitives.EmptyCondition, []); t]), sm }

@@ -23,10 +23,9 @@ relation knowsMath(P: Dkal.Principal)
 // alice's policy
 
 // basic knowledge about needed arithmetic calculations and who knows math
-do once
-    learn needSum(1, 2)
-    learn needProduct(11, 22)
-    learn knowsMath(bob)
+knows needSum(1, 2) &&
+	needProduct(11, 22) &&
+	knowsMath(bob)
 
 // general rule to solve sums
 with X: Int, Y: Int, P: Dkal.Principal

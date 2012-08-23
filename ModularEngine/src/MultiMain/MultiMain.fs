@@ -53,7 +53,9 @@ module MultiMain =
 
 //    if assembly.Signature.Substrates.Length > 0 then // TODO: forbid SQL substrate
 //      printfn "%s: Substrate declarations are fobidden" router.Me
-      
+    
+    for ka in assembly.Policy.KA do
+      infostrate.Learn ka |> ignore
     for rule in assembly.Policy.Rules do
       executor.InstallRule rule |> ignore
     executor

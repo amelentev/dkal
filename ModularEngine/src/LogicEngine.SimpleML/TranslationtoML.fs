@@ -49,7 +49,6 @@ module TranslationtoML =
     | Primitives.SeqRule -> MLType.SeqRule
     | Primitives.EmptyRule -> MLType.EmptyRule
     | Primitives.Rule -> MLType.Rule
-    | Primitives.RuleOnce -> MLType.RuleOnce
     | Primitives.SeqCondition -> MLType.SeqCondition
     | Primitives.EmptyCondition -> MLType.EmptyCondition
     | Primitives.WireCondition -> MLType.WireCondition

@@ -1,21 +1,19 @@
 // example with weak disjunction
+---p1-----------------------------
 type String = System.String
-type Principal = Dkal.Principal
 
 relation cit(P: String, C: String)
+
+knows cit("P1", "US")
+knows cit("P2", "UK")
+knows cit("P3", "US") && cit("P3", "UK")
+knows cit("P4", "US") && cit("P4", "Other")
+knows cit("P5", "Other") && cit("P5", "UK")
+knows cit("P6", "Other1") && cit("P6", "Other2")
+knows cit("P7", "Other")
+knows cit("P8", "US") || cit("P8", "UK")
 
 with P: String
 if cit(P, "US") || cit(P, "UK")
 do send to me: cit(P, "US or UK")
-
----p1-----------------------------
-do once
-	learn cit("P1", "US")
-	learn cit("P2", "UK")
-	learn cit("P3", "US") && cit("P3", "UK")
-	learn cit("P4", "US") && cit("P4", "Other")
-	learn cit("P5", "Other") && cit("P5", "UK")
-	learn cit("P6", "Other1") && cit("P6", "Other2")
-	learn cit("P7", "Other")
-	learn cit("P8", "US") || cit("P8", "UK")
 // result should be P1-P5,P8
