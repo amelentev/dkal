@@ -35,10 +35,6 @@ type SimpleInfostrate() =
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
-      | AndInfon(infons) ->
-        List.fold (fun ch i -> 
-                    let ch' = (si :> IInfostrate).Learn i
-                    ch' || ch) false infons
       | Forall(v, t) -> (si :> IInfostrate).Learn t
       | infon -> 
         knowledge.Add infon
@@ -49,12 +45,8 @@ type SimpleInfostrate() =
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"
-      | AndInfon(infons) ->
-        List.fold (fun ch i -> 
-                    let ch' = (si :> IInfostrate).Forget i
-                    ch' || ch) false infons 
       | Forall(v, t) -> (si :> IInfostrate).Forget t
       | infon ->
         knowledge.Remove infon
 
-    member si.Knowledge = seq knowledge 
+    member si.Knowledge = seq knowledge

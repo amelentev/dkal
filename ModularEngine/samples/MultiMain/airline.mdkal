@@ -41,7 +41,8 @@ relation noCertificate()
 relation noBoardingPass(AIRLINE: Principal, F: Flight)
 relation start()
 
-knows noCertificate() && start()
+knows noCertificate()
+knows start()
 
 with AIRLINE: Principal, F: Flight
     if
