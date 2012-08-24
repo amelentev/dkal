@@ -47,7 +47,9 @@ type SimpleInfostrate() =
       | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"
       | Forall(v, t) -> (si :> IInfostrate).Forget t
       | infon ->
-        knowledge.Remove infon
+        let todel = knowledge |> Seq.filter (fun h -> infon.Unify(h) |> Option.exists (fun s -> s.IsVariableRenaming))
+        todel |> List.ofSeq |> List.iter (fun x -> knowledge.Remove(x) |> ignore)
+        not(todel |> Seq.isEmpty)
 
     member si.Knowledge =
       // variables in knowledges should not intersect
