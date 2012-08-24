@@ -49,4 +49,13 @@ type SimpleInfostrate() =
       | infon ->
         knowledge.Remove infon
 
-    member si.Knowledge = seq knowledge
+    member si.Knowledge =
+      // variables in knowledges should not intersect
+      let ind = ref 0
+      let renamevars (h:ITerm) =
+        let vsubst = h.Vars |> List.fold (fun (vsubst:ISubstitution) v ->
+          let v' = {Name="H"+string(!ind) + "_" + v.Name; Type=v.Type}
+          vsubst.Extend(v, v')) Substitution.Id
+        incr ind
+        h.Apply(vsubst)
+      knowledge |> Seq.map renamevars

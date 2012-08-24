@@ -1,0 +1,16 @@
+// example with explicit forall quantification
+type Int = System.Int32
+relation a(X: Int)
+relation b(X: Int)
+relation c(X: Int)
+
+---p1-----------------------------
+knows forall X: Int 
+	a(X) -> b(X)
+knows forall X: Int 
+	a(X) -> c(X)
+knows	a(1)
+knows	a(2)
+
+if b(1) && c(2)
+do send to me: b(1) && c(2)
