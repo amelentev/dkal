@@ -91,6 +91,7 @@ type SimpleMailBox(logicEngine: ILogicEngine) =
         List.iter2 (fun msg ev -> smb.DoAdd(msg, from, Some ev, prefix)) msgs evidences
       | _ -> failwithf "Malformed conjunction evidence on %O" msg
     | SaidInfon(ppal, msg) when evidence.IsNone -> smb.DoAdd(msg, from, evidence, prefix @ [ppal])
+    | Forall(v, msg) -> smb.DoAdd(msg, from, evidence, prefix)
     | _ -> 
       msgs.[PrefixedInfon(prefix, msg)] <- (from, evidence)
 
@@ -114,6 +115,8 @@ type SimpleMailBox(logicEngine: ILogicEngine) =
         List.fold (fun substs infon -> smb.DoMatches(infon, from, proofPattern, substs, prefix)) substs infons
     | SaidInfon(ppal, infon) ->
       smb.DoMatches(infon, from, proofPattern, substs, prefix @ [ppal])
+    | Forall(v, infon) ->
+      smb.DoMatches(infon, from, proofPattern, substs, prefix)
     | JustifiedInfon(infon, ev) ->
       match proofPattern with 
       | None -> smb.DoMatches(infon, from, Some ev, substs, prefix)
