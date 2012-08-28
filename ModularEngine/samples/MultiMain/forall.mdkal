@@ -1,3 +1,4 @@
+/// logic: BPIL
 // example with explicit forall quantification
 relation access(P: Dkal.Principal, F: System.String)
 relation employee(P: Dkal.Principal)

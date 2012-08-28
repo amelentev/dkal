@@ -1,3 +1,4 @@
+/// logic: BPIL
 // example with explicit forall quantification
 type Int = System.Int32
 relation a(X: Int)

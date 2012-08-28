@@ -85,6 +85,8 @@ module MultiMain =
     let i = policy.IndexOf("---")
     if i<0 then failwith "headers not found in policy file"
     let commonPolicy = policy.Substring(0, i) + "\n"
+    let mlogic = Regex.Match(commonPolicy, "^///\s*logic:\s*(\w+)", RegexOptions.IgnoreCase)
+    let logicEngineKind = if mlogic.Success then mlogic.Groups.[1].Value else logicEngineKind
     let ppals = splitPolicies( policy.Substring(i) )
     let routers = RouterFactory.LocalRouters (ppals |> List.unzip |> fst)        
     let assemblies = ppals |> List.map (fun x -> 

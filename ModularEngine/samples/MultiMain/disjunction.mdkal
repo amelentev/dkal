@@ -1,3 +1,4 @@
+/// logic: BPIL
 // example with weak disjunction
 ---p1-----------------------------
 type String = System.String

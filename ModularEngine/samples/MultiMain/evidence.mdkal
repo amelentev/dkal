@@ -1,8 +1,9 @@
-// example of signature, &i and ->e evidences
+/// logic: SPIL
+// example of evidence construction from signatures
 relation r(X: System.Int32)
 relation e(E: Dkal.Evidence)
 
-with P: Dkal.Principal, X: Dkal.Infon, E: Dkal.Evidence
+with X: Dkal.Infon, E: Dkal.Evidence
 upon X [E]
 do learn X [E]
 
@@ -10,17 +11,15 @@ do learn X [E]
 knows r(0)
 
 if r(0) do
-say with justification to p2: r(1)
-say with justification to p2: r(2)
-say with justification to p2: (r(1) && r(2)) -> r(3)
+say with justification to p2: r(1) && (r(1) -> r(2))
 forget r(0)
 
 ----p2---
-if p1 said r(1) [E] // signature evidence
+if p1 said r(1) [E] // (&e)
 do send to p1: p1 said r(1) [E]
 
-if p1 said (r(1) && r(2)) [E] // &i
-do send to p1: p1 said (r(1) && r(2)) [E]
+if p1 said (r(1) || r(3)) [E] // |i
+do send to p1: p1 said (r(1) || r(3)) [E]
 
-if p1 said r(3) [E] // &i, ->e
-do send to p1: p1 said r(3) [E]
+if p1 said (r(3) -> r(1) && r(2)) [E] // &e, ->e, &i, ->i
+do send to p1: p1 said (r(3) -> r(1) && r(2)) [E]
