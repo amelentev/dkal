@@ -128,7 +128,8 @@ module Stage3 =
       let args = args |> List.filter childrenset.Add
       let res = SetFormula(self.Common, op, args)
       globalset.Add(res) |> ignore
-      res
+      if args.Length=1 then args.Head
+      else res
     | Implies(_, al, ar) as self ->
       let al = removedups al
       let ar = removedups ar

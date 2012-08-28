@@ -45,6 +45,20 @@ module SPIL =
         solve ["r(1) && r(2) || r(3)"]
               ["r(2) && r(1) || r(3)"])
 
+    "Carlos1" => fun _ ->
+      Assert.Equal("",
+        [true],
+        solve ["(p said x() -> (
+                          (q said x() -> (x() && asInfon(true))) &&
+                          ((q said x() && asInfon(true)) -> ((x() && asInfon(true)) && asInfon(true))) &&
+                          ((q said x() && q said x()) -> x())
+                       )
+              ) &&
+              (((p said x() && asInfon(true)) && p said x()) -> ((q said x() -> (x() && asInfon(true))) &&
+                          ((q said x() && asInfon(true)) -> ((x() && asInfon(true)) && asInfon(true))) &&
+                          ((q said x() && q said x()) -> x())))"]
+              ["p said x() -> (q said x() -> x())"])
+
     "set || intro. todo" => fun _ ->
       Assert.Equal("",
         [true],
