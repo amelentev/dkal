@@ -1,0 +1,23 @@
+(* common to all principals *)
+upon Init(x) as m
+upon justified 
+       (=>(y, (org said MayRead(_PHYS1_, 101)))) as m3
+then 
+   fwd _PHYS1_ m3
+   send _PHYS1_ 
+                 (=>(and(Record(101, 1010, 42, "ala ma kota"),
+                         InRange(1010, 1010, 1050)),
+                     _SITE1_ said MayRead(_PHYS1_, 101)))
+	(*send _PHYS1_ SiteAssignment(_SITE1_, 42, 1000, 1250)*)
+   drop m
+   drop m3
+
+using "clinical.cfg" as _SITE1_
+ 
+
+ (*learn Record(101, 1010, 42, "ala ma kota")      (* id, patient, trial *)
+     learn Trial(42, _ORG1_ , "highly classified trial") (* id, organizer, name *)
+     learn SiteAssignment(_SITE1_, 42, 1000, 1250)
+     
+	 send _PHYS1_ (_SITE1_ said PhysParticipates(_PHYS1_, 42, _SITE1_))
+     send _PHYS1_ (_SITE1_ said PhysAllocatedPatients(_PHYS1_, 1010, 1050, 42, _SITE1_))*)

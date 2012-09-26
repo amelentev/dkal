@@ -1,9 +1,9 @@
-MY_FSTAR_HOME=`cygpath -u $${FSTAR_HOME}`
+MY_FSTAR_HOME=`cygpath -u $${FSTAR_OLD_HOME}`
 MY_DKAL_HOME=`cygpath -d $${DKAL_HOME}`
 FSTBIN=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin
 FSTBIN2=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.FStar/bin2
 DKAL_SIMPLEML=$(MY_DKAL_HOME)/ModularEngine/src/LogicEngine.SimpleML
-FSTAR=fstar --writePrims --UNSAFE --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000
+FSTAR=/cygdrive/c/cygwin/home/juanchen/old/fine/bin/fstar.exe --writePrims --UNSAFE --genIL --dotnet4 --odir bin --prims prims.fst --z3timeout 1000000
 #typeHeaders.fst translationFromFStar.fst 
 SOURCES=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst crypto.fst authenticate.fst marshall.fst net.fst state.fst interp.fst 
 SOURCES_INFONLOGIC=util.fst types.fst subst.fst typing.fst unify.fst hilbertian.fst infonlogic.fst 
@@ -13,6 +13,9 @@ retail: bin/retailcustomer.exe bin/retailwebsite.exe bin/retailpaypal.exe
 calc: bin/alice.exe bin/bob.exe
 
 clinical: bin/clinicalorg1.exe bin/clinicalsite1.exe bin/clinicalphys1.exe bin/clinicalkeymgr.exe
+
+clinical_simple: bin/org1.exe bin/site1.exe bin/phys1.exe bin/keymgr.exe
+
 bin/%.exe: $(SOURCES) examples/%.fst
 	$(FSTAR) --writePrims $^ --odir bin 
 

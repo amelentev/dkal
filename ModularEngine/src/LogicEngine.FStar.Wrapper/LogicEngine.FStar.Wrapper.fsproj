@@ -38,6 +38,9 @@
     <Reference Include="InfonLogic">
       <HintPath>..\LogicEngine.FStar\bin2\InfonLogic.dll</HintPath>
     </Reference>
+    <Reference Include="LogicEngine.FStar">
+      <HintPath>bin\Debug\LogicEngine.FStar.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="Prims">

@@ -1,0 +1,20 @@
+(* common to all principals *)
+upon Init(x) as m
+upon justified (=>(y,
+                  _SITE1_ said MayRead(_PHYS1_, 101))) as m4
+upon justified  (=>(z,
+                  _ORG1_ said MayRead(_PHYS1_, 101))) as m3
+then 
+     send _KEYMGR_ (_PHYS1_ said RequestToRead(_PHYS1_, 101))
+     fwd _KEYMGR_ m3
+     drop m3
+     fwd _KEYMGR_ m4
+     drop m4
+	 drop m
+
+using "clinical.cfg" as _PHYS1_
+
+
+(*upon justified (site said PhysParticipates(_PHYS1_, trial, site)) as m1
+upon justified (site said
+                PhysAllocatedPatients(_PHYS1_, p1, p2, trial, site)) as m2*)

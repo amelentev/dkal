@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LogicEngine.FStar">
-      <HintPath>..\LogicEngine.FStar\bin\LogicEngine.FStar.dll</HintPath>
+      <HintPath>..\LogicEngine.Factories\bin\Debug\LogicEngine.FStar.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
