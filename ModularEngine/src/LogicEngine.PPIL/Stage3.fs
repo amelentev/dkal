@@ -82,7 +82,7 @@ module Stage3 =
     /// make t1 and t2 as homonyms.
     let rec addhom (t1:AST) (t2:AST) =
       if t2.Key = homkey t2 then // is t2 original?
-        assert HO.Remove(t2.Key)
+        HO.Remove(t2.Key) |> ignore
         HO.Add(t2.Key, HO.[t1.Key])
         true
       else
