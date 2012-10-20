@@ -25,7 +25,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
     <StartWorkingDirectory>C:\src\dkal\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>-ws 1000 100 -PPILS</StartArguments>
+    <StartArguments>-ws 1000 100</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -72,6 +72,9 @@
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Content Include="language.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast.Infon.Syntax.Factories\Ast.Infon.Syntax.Factories.fsproj">

@@ -22,6 +22,8 @@ open NLog
 
 open Microsoft.Research.Dkal
 
+open System.Reflection
+
 /// Web service for RISE4fun.
 /// see http://rise4fun.com/dev/
 module Rise4FunWebService =
@@ -33,14 +35,15 @@ module Rise4FunWebService =
     jw.WriteStartDocument()
     jw.WriteStartElement("root")
     jw.WriteAttributeString("type", "object")
-    jw.WriteElementString("Name", "TSPIL")
-    jw.WriteElementString("DisplayName","DKAL-TSPIL")
-    jw.WriteElementString("Description","Demo of DKAL with SPIL + TPIL")
+    jw.WriteElementString("Name", "DKAL")
+    jw.WriteElementString("DisplayName","DKAL")
+    jw.WriteElementString("Description","Demo of DKAL")
     jw.WriteElementString("Question","How do these principals interact?")
     jw.WriteElementString("Institution","Microsoft Research")
     jw.WriteElementString("InstitutionImageUrl","http://research.microsoft.com/en-us/um/people/gurevich/dkal.png")
     jw.WriteElementString("InstitutionUrl","http://dkal.codeplex.com")
     jw.WriteElementString("MimeType","text/x-csharp")
+    jw.WriteElementString("SupportsLanguageSyntax", "true");
     jw.WriteElementString("PrivacyUrl","http://rise4fun.com/privacy")
     jw.WriteStartElement("Samples")
     jw.WriteAttributeString("type", "array")
@@ -62,6 +65,14 @@ module Rise4FunWebService =
     jw.WriteEndElement()
     jw.WriteEndDocument()
     jw.Flush()
+
+  let sendLanguage (context: HttpListenerContext) =
+    log.Info "sending language"
+    let assemblydir = Directory.GetParent(Assembly.GetEntryAssembly().Location).FullName
+    let lang = File.ReadAllBytes(assemblydir + "/language.js")
+
+    context.Response.OutputStream.Write(lang, 0, lang.Length)
+    context.Response.OutputStream.Flush()
 
   let exec args source =
     let file = Path.GetTempFileName()
@@ -102,7 +113,6 @@ module Rise4FunWebService =
     jw.WriteStartElement("item")
     jw.WriteAttributeString("type", "object")
     jw.WriteElementString("MimeType", "text/plain")
-    let output = output.Replace(':', ';') // bug: "p2.dkal(6,34): error D001: parse error" - infinite loop in rise4fun on requesting metadata
     jw.WriteElementString("Value", output)
     jw.WriteEndElement()
     jw.WriteEndElement()
@@ -113,12 +123,18 @@ module Rise4FunWebService =
   let startWebService args =
     use listener = new HttpListener()
     listener.Prefixes.Add("http://+:8080/")
-    listener.Start()
+    listener.Start() // if access denied then try "> netsh http add urlacl url=http://+:8080/ user=<DOMAIN\user>"
     log.Info "Listening 8080 port ..."
     while true do
       let context = listener.GetContext(); // Note: The GetContext method blocks while waiting for a request. 
-      match context.Request.HttpMethod with
-      | "GET" -> sendMetadata context
-      | "POST" -> run args context
-      | m -> log.Info("unknown method {0}", m)
+
+      match context.Request.HttpMethod, context.Request.Url.AbsolutePath with
+      | "GET", "/metadata" -> sendMetadata context
+      | "GET", "/language" -> sendLanguage context
+      | "POST", "/run" -> run args context
+      | m -> 
+        log.Info("unknown request {0} {1}", m, context.Request.RawUrl)
+        context.Response.StatusCode <- 404
+
+      context.Response.Close()
     listener.Stop();
