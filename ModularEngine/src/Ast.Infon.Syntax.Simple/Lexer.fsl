@@ -145,7 +145,7 @@ and string = parse
 | '\\' 'r' { add '\r'; string lexbuf }
 | '\\' 't' { add '\t'; string lexbuf }
 | '\\' _ { add (lexbuf.Lexeme.[1]); string lexbuf }
-| [^ '\\' '"']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
+| [^ '\\' '"' '\n' '\r']+ { stringBuf.Append (lexeme lexbuf) |> ignore; string lexbuf }
 | _ { add (lexbuf.Lexeme.[0]); string lexbuf }
 | eof { () }
 

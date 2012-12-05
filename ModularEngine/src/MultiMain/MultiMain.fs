@@ -59,48 +59,58 @@ module MultiMain =
     for rule in assembly.Policy.Rules do
       executor.InstallRule rule |> ignore
     executor
+  
+  let lineCount (s: string) = s.Split('\n').Length
 
-  let rec private splitPolicies (s : string) =
-    let mutable i = 0
-    while i < s.Length && s.[i]='-' do
-      i <- i + 1
-    let ppalName = StringBuilder()
-    while i < s.Length && s.[i]<>'-' do
-      ppalName.Append(s.[i]) |> ignore
-      i <- i + 1
-    if ppalName.Length = 0 then failwithf "invalid policy header:\n%s" s
-    while i < s.Length && s.[i]='-' do
-      i <- i + 1
-    let s = s.Substring(i)
-    let j = s.IndexOf("---")
-    if j<0 then
-      [(ppalName.ToString(), s)]
-    else
-      (ppalName.ToString(), s.Substring(0, j)) :: splitPolicies(s.Substring(j))
+  let splitPolicies (policy : string) =
+    let rec splitrec (s: string) =
+      let mutable i = 0
+      while i < s.Length && s.[i]='-' do
+        i <- i + 1
+      let ppalName = StringBuilder()
+      while i < s.Length && s.[i]<>'-' do
+        ppalName.Append(s.[i]) |> ignore
+        i <- i + 1
+      if ppalName.Length = 0 then failwithf "invalid policy header:\n%s" s
+      while i < s.Length && s.[i]='-' do
+        i <- i + 1
+      let s = s.Substring(i)
+      let j = s.IndexOf("---")
+      if j<0 then
+        [(ppalName.ToString(), s)]
+      else
+        (ppalName.ToString(), s.Substring(0, j)) :: splitrec(s.Substring(j))
+    let i = policy.IndexOf("---")
+    if i<0 then failwith "headers not found in policy file"
+    let commonPolicy = policy.Substring(0, i)
+    (commonPolicy, splitrec (policy.Substring(i)))
 
   let private execute (policy: string, timeLimit: int, msgsLimit: int, logicEngineKind: string) =
     // Populate factories
     FactoriesInitializer.Init()
 
-    let i = policy.IndexOf("---")
-    if i<0 then failwith "headers not found in policy file"
-    let commonPolicy = policy.Substring(0, i) + "\n"
+    let (commonPolicy,ppals) = splitPolicies policy
     let mlogic = Regex.Match(commonPolicy, "^///\s*logic:\s*(\w+)", RegexOptions.IgnoreCase)
     let logicEngineKind = if mlogic.Success then mlogic.Groups.[1].Value else logicEngineKind
-    let ppals = splitPolicies( policy.Substring(i) )
-    let routers = RouterFactory.LocalRouters (ppals |> List.unzip |> fst)        
-    let assemblies = ppals |> List.map (fun x -> 
-      let parser = ParserFactory.InfonParser("simple", routers.[fst x].Me)
+    let routers = RouterFactory.LocalRouters (ppals |> List.map fst)
+
+    let ppalsWithOffset = ppals |> List.fold (fun acc x -> 
+      match acc with
+      | [] -> [fst x, snd x, 0]
+      | (_,pol,l) :: _ -> (fst x, snd x, l + lineCount(pol)-1) :: acc) [] |> List.rev
+    let parse (ppal,policy,lineOffset) =
+      let parser = ParserFactory.InfonParser("simple", routers.[ppal].Me)
       try
-        (fst x, parser.ParseAssembly (commonPolicy + snd x))
-      with 
+        (ppal, parser.ParseAssembly (commonPolicy + policy))
+      with
       | ParseException(msg, text, line, col) -> 
-        log.Error("{0}.dkal({1},{2}): error {3}: {4}", fst x, line, col, errorParsing, msg)
+        log.Error("{0}.dkal({1},{2}): error {3}: {4}", ppal, lineOffset + line, col, errorParsing, msg)
         Environment.Exit(1); failwith ""
       | SemanticCheckException(desc, o) ->
-        log.Error("{0}.dkal(0,0): error {1}: {2} at {3}", fst x, errorSemanticCheck, desc, o)
+        log.Error("{0}.dkal(0,0): error {1}: {2} at {3}", ppal, errorSemanticCheck, desc, o)
         Environment.Exit(1); failwith ""
-    )
+    let assemblies =  ppalsWithOffset |> List.map parse
+
     let fixedPointCounter = new CountdownEvent(assemblies.Length)
     let executors = assemblies |> List.mapi (fun i x ->
       let exec = createExec(routers.[fst x], snd x, logicEngineKind)
