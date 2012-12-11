@@ -67,7 +67,9 @@ module Stage3 =
     let rec nhash = function
     | Rel(_,s) as u -> (prefhash u, s).GetHashCode()
     | Implies(_,l,r) as u -> (prefhash u, chash l, chash r).GetHashCode()
-    | SetFormula(_,op,args) as u -> (prefhash u, op).GetHashCode() + (args |> List.fold (fun acc a -> acc + (chash a)) 0)
+    | SetFormula(_,op,args) as u -> 
+        let argshash = (args |> List.map chash |> List.reduce (^^^))
+        (prefhash u, op, argshash).GetHashCode()
     /// hash function for nodes with memorization
     and chash (u: AST) =
       match hashcache.TryGetValue u.Key with
@@ -103,7 +105,7 @@ module Stage3 =
             | SetFormula(_,op1,args1), SetFormula(_,op2,args2) when op1=op2 && args1.Length = args2.Length ->
               let leaders = HashSet<int>()
               for a in args1 do
-                assert leaders.Add(homkey a)
+                leaders.Add(homkey a) |> ignore
               if args2 |> List.forall (fun x -> leaders.Contains(homkey x)) then
                 addhom t1 t2
               else false

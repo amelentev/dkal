@@ -47,27 +47,23 @@ module Utils =
     let argtypes = [for a in args do yield a.Type]
     App({Name=name; RetType=Type.Infon; ArgsType=argtypes; Identity= None}, args)
 
-  let debugHomonomy s (H:array<Option<AST>>) =
+  let debugHomonomy s (H:IDictionary<int,AST>) =
       printf "%s\n" s
       let tostr (h:AST) = s.Substring(h.Key, h.Length)
-      H |> Array.iteri (fun i h ->
-                      h |> Option.iter (fun h ->
-                              if i = h.Key then
-                                  printf "leader: %d %s\n" i (tostr h)
-                              else
-                                  printf "%d point to %d: %s\n" i h.Key (tostr h)
-                              )
-                          )
+      H |> Seq.iter (function
+        | KeyValue(i,h) ->
+            if i = h.Key then
+                printf "leader: %d %s\n" i (tostr h)
+            else
+                printf "%d point to %d: %s\n" i h.Key (tostr h)
+        )
 
   let checkHomonomy (N:IDictionary<int,AST>) (H:IDictionary<int,AST>) =
-      let count = ref 0
-      H |> Seq.iter (fun kv -> // todo: check N instead
-                      let i,h = kv.Key, kv.Value
-                      Assert.Equal("homonomy fails", N.[i].ToString(), h.ToString())
-                      if i = h.Key then
-                          incr count
-                    )
-      !count
+      H |> Seq.map (function
+        | KeyValue(i,h) ->
+            Assert.Equal("homonomy fails", N.[i].ToString(), h.ToString())
+            if i = h.Key then 1 else 0
+        ) |> Seq.sum
 
   let genericSolve solver hyp que =
       let hyp = hyp |> List.map parse
