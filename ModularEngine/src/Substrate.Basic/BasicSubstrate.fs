@@ -56,6 +56,12 @@ type BasicSubstrate() =
       box (not (a.Equals(b)))
     | BasicPrimitives.Times, [a; b] ->
       box ((a:?>int)*(b:?>int))
+    | BasicPrimitives.Exists, [col; elem] ->
+      let col' = col :?> obj seq
+      box (col' |> Seq.exists (Constant(elem).Equals))
+    | BasicPrimitives.IsEmpty, [col] ->
+      let col' = col :?> obj seq
+      box (col' |> Seq.isEmpty)
     | _ -> failwithf "unknown function %A on args %A" f args
 
   let rec evaluate (substs: ISubstitution list) (expr: ITerm) =

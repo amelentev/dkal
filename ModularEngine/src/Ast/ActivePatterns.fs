@@ -100,3 +100,11 @@ module Microsoft.Research.Dkal.Ast.ActivePatterns
   let (|Forall|_|) (mt: ITerm) =  match mt with
                                   | :? ForallTerm as fit -> Some (fit.Var, fit.Term)
                                   | _ -> None
+
+  let (|Collection|_|) (mt: ITerm) = match mt with
+                                     | :? Collection as c -> Some c.elems
+                                     | _ -> None
+
+  let (|CollectionType|_|) (t: IType) = match t with
+                                        | :? Type.CollectionType as ct -> Some(ct.elemType)
+                                        | _ -> None

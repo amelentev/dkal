@@ -16,7 +16,7 @@ open Microsoft.Research.Dkal.Interfaces
 /// Defines the basic IType implementations for DKAL types
 module Type = 
 
-  type private BasicType(fullName: string, name: string, ?baseType: IType) = 
+  type BasicType(fullName: string, name: string, ?baseType: IType) = 
     interface IType with
       member bt.FullName = fullName
       member bt.Name = name
@@ -83,6 +83,31 @@ module Type =
   let Double = Substrate(typeof<double>) :> IType
   let String = Substrate(typeof<string>) :> IType
 
+  /// Collection type
+  type CollectionType(elemType: IType) =
+    member x.elemType = elemType
+    interface IType with
+      member x.FullName = elemType.FullName + "[]"
+      member x.Name = elemType.Name + "[]"
+      member x.BaseType = None
+      member x.IsSubtypeOf t = 
+        match t with
+        | :? CollectionType as ct -> elemType.IsSubtypeOf ct.elemType // Collections are covariant because immutability
+        | _ -> false
+    override x.Equals x' = 
+      match x' with
+      | :? CollectionType as x' -> elemType.Equals(x'.elemType)
+      | _ -> false
+    override x.GetHashCode() = (typeof<CollectionType>, elemType).GetHashCode()
+    override x.ToString() = elemType.ToString() + "[]"
+
+  /// Bottom type. There are no instances of Nothing and Nothing is subtype of every type.
+  /// Empty collection has type  CollectionType(Nothing()).
+  type Nothing() =
+    inherit BasicType("Dkal.Nothing", "Nothing")
+    interface IType with
+      override t.IsSubtypeOf t' = true
+
   let FromFullName fn = 
     match fn with
     | "Dkal.Infon" -> Infon
@@ -100,4 +125,3 @@ module Type =
         Substrate(t) :> IType
       else
         failwithf "Unknown type: %O, check spelling and make sure to use fully qualified names (e.g., Dkal.Principal, System.Int32)" fn
-

@@ -1,0 +1,23 @@
+/// logic: BPIL
+// example of collections
+---p1---
+type CollectionOfStrings = System.String[]
+relation rel(A: CollectionOfStrings)
+relation log(S: System.String)
+
+knows rel(["qwe"; "asd"; "zxc"])
+knows rel([])
+
+with A: CollectionOfStrings
+if rel(A)
+do send to me: log("knows") && rel(A)
+
+with A: CollectionOfStrings
+if rel(A) && asInfon({|"basic"|exists(A, "qwe")|})
+do send to me: log("'qwe' should exists") && rel(A)
+
+if rel(A) && asInfon({|"basic"|exists(A, "wer")|})
+do send to me: log("error! 'wer' should not exists") && rel(A)
+
+if rel(A) && asInfon({|"basic"|isEmpty(A)|})
+do send to me: log("empty") && rel(A)

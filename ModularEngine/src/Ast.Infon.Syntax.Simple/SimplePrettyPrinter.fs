@@ -190,6 +190,11 @@ type SimplePrettyPrinter() =
         TabToken; NewLineToken;
         ManyTokens <| spp.TokenizeTerm ft.InnerTerm;
         UntabToken; NewLineToken ]
+    | Collection([]) ->
+      [TextToken("[]")]
+    | Collection(elems) ->
+      let elems =  elems |> List.collect (fun e -> TextToken("; ") :: spp.TokenizeTerm e) |> List.tail
+      TextToken("[") :: elems @ [TextToken("]")]
     | _ -> failwith <| sprintf "PrettyPrinter does not know how to print ITerm %O" mt
    
   member private spp.TokenizeVariableDeclaration (vars: IVar list) =

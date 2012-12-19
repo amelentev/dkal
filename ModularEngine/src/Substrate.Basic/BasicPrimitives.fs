@@ -52,6 +52,11 @@ module Microsoft.Research.Dkal.Substrate.Basic.BasicPrimitives
   let Divide = "divide"
   [<Literal>] 
   let AsBoolean = "asBoolean"
+  // collection functions
+  [<Literal>]
+  let Exists = "exists"
+  [<Literal>]
+  let IsEmpty = "isEmpty"
 
   /// Returns true iff the given IType supports equality in Basic substrate
   let private HasEquality (t: IType) =
@@ -132,4 +137,10 @@ module Microsoft.Research.Dkal.Substrate.Basic.BasicPrimitives
       Some {Name = f; ArgsType = [t;t]; RetType = t;
             Identity = Some <| Const(Constant(1))}
     | _ ->
-      None
+      match t with
+      | CollectionType(et) ->
+        match f with
+        | Exists -> Some {Name = f; ArgsType = [t; et]; RetType = Type.Boolean; Identity = None}
+        | IsEmpty -> Some {Name = f; ArgsType = [t]; RetType = Type.Boolean; Identity = None}
+        | _ -> None
+      | _ -> None

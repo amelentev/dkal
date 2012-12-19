@@ -168,7 +168,12 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
         let all = Seq.append queries H
         let forallvars = HashSet(forallvars)
         let vars = uniq (all |> Seq.collect (fun x -> x.Vars) |> Seq.filter (fun x -> not(subst.DomainContains x) && not(forallvars.Contains x)))
-        let consts = dict (uniq (Seq.append forallvars (all |> Seq.collect collectConstants)) |> Seq.groupBy (fun x -> x.Type))
+        let consts = uniq (Seq.append forallvars (all |> Seq.collect collectConstants))
+        let consts = consts |> List.collect (function // TODO: type inheritance?
+                                            | Collection([]) as ec ->
+                                              consts |> List.map (fun c -> c.Type) |> List.filter (fun t -> t :? Type.CollectionType) |> List.map (fun t -> t, ec) // empty collection has any collection type
+                                            | _ as c -> [c.Type, c])
+        let consts = dict (consts |> Seq.groupBy fst |> Seq.map (fun x -> fst x, snd x |> Seq.map snd))
 
         let rec substitutions (vars:IVar list) (subst:ISubstitution) =
             if vars=[] then 

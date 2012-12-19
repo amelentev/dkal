@@ -47,3 +47,16 @@ type PrincipalConstant(name: string) =
   member pc.Name = name
   override pc.ToString() = name
 
+type Collection(elems: IConst list) =
+  inherit Constant(elems)
+  member c.elems = elems
+  interface IConst with
+    override c.Type = 
+      (if elems.IsEmpty then Type.CollectionType(Type.Nothing())
+      else Type.CollectionType(elems.Head.Type)) :> IType
+  override c.Equals (o: obj) =
+    match o with
+    | :? Collection as c' -> elems.Equals(c'.elems)
+    | _ -> false
+  override c.GetHashCode() = elems.GetHashCode()
+  override c.ToString() = "[" + (elems |> List.map (fun e -> e.ToString()) |> String.concat "; ") + "]"

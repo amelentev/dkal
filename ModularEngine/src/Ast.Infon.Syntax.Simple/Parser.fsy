@@ -177,6 +177,7 @@ Arg:
 
 Type:
 	| UPPER_IDENTIFIER							{ ctxs.Peek().TypeFromName($1) }
+	| Type LSQ RSQ								{ Type.CollectionType($1) :> IType }
 
 MacroDeclaration:
 	| MACRO LOWER_IDENTIFIER LPAR Args RPAR 
@@ -407,13 +408,22 @@ Substrate:
 	| Variable        							{ $1, [] }
 	| LPAR Substrate RPAR					  { $2 }
 	| Literal							      		{ $1, [] }
-	| LOWER_IDENTIFIER LPAR Terms RPAR		
+	| LOWER_IDENTIFIER LPAR Terms RPAR
     { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
       if ctxs.Peek().HasMacro($1) then
         let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
         ret, (List.concat sms) @ [solvedMacro]
       else
         failwithf "Undefined identifier: %O" $1 }
+	| Collection	{ $1 :> ITerm, [] }
+
+Collection:
+	| LSQ CollectionItems RSQ	{ Collection($2) }
+
+CollectionItems:
+	|									{ [] }
+	| Literal							{ [$1 :?> IConst] }
+	| Literal SEMICOLON CollectionItems	{ $1 :?> IConst :: $3 }
 
 Terms:
 	|											              { [] }
