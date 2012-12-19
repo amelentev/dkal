@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SQLSubstrate</RootNamespace>
     <AssemblyName>Substrate.Sql</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Substrate.Sql</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Ast.Infon</RootNamespace>
     <AssemblyName>Ast.Infon</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Ast.Infon</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

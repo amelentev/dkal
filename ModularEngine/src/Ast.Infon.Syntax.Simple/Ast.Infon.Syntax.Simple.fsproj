@@ -9,8 +9,9 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SimpleSyntax</RootNamespace>
     <AssemblyName>Ast.Infon.Syntax.Simple</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <Name>Ast.Infon.Syntax.Simple</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

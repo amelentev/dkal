@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Substrate</RootNamespace>
     <AssemblyName>Substrate</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Substrate</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

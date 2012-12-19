@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Executor.Factories</RootNamespace>
     <AssemblyName>Executor.Factories</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Executor.Factories</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

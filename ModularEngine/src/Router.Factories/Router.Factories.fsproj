@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Router.Factories</RootNamespace>
     <AssemblyName>Router.Factories</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Router.Factories</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

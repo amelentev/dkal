@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Infostrate.Simple</RootNamespace>
     <AssemblyName>Infostrate.Simple</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Infostrate.Simple</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

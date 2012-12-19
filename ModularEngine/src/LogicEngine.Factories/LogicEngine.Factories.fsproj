@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>LogicEngine.Factories</RootNamespace>
     <AssemblyName>LogicEngine.Factories</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>LogicEngine.Factories</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

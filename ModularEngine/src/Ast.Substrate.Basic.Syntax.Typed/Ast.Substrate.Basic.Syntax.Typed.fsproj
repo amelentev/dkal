@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Ast.Substrate.Basic.Syntax.Typed</RootNamespace>
     <AssemblyName>Ast.Substrate.Basic.Syntax.Typed</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Ast.Substrate.Basic.Syntax.Typed</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

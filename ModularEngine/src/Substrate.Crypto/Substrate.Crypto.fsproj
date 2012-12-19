@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Substrate.Crypto</RootNamespace>
     <AssemblyName>Substrate.Crypto</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Substrate.Crypto</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

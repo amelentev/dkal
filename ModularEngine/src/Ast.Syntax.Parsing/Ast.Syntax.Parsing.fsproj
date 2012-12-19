@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Ast.Syntax.Context</RootNamespace>
     <AssemblyName>Ast.Syntax.Parsing</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Ast.Syntax.Parsing</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

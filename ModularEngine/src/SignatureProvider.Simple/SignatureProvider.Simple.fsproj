@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>EvidenceEngine.Simple</RootNamespace>
     <AssemblyName>SignatureProvider.Simple</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>SignatureProvider.Simple</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

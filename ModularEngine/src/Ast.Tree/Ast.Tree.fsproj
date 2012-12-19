@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>TreeTerm</RootNamespace>
     <AssemblyName>Ast.Tree</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Ast.Tree</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

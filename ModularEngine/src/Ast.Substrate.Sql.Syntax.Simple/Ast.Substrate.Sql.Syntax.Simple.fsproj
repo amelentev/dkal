@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SimpleSqlParser</RootNamespace>
     <AssemblyName>Ast.Substrate.Sql.Syntax.Simple</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Ast.Substrate.Sql.Syntax.Simple</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

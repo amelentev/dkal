@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>TypedSqlSyntax</RootNamespace>
     <AssemblyName>Ast.Substrate.Sql.Syntax.Typed</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Ast.Substrate.Sql.Syntax.Typed</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

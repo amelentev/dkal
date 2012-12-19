@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Substrate.Rdf</RootNamespace>
     <AssemblyName>Substrate.Rdf</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Substrate.Rdf</Name>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
