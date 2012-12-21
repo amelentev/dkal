@@ -13,11 +13,11 @@ if rel(A)
 do send to me: log("knows") && rel(A)
 
 with A: CollectionOfStrings
-if rel(A) && asInfon({|"basic"|exists(A, "qwe")|})
+if rel(A) && asInfon({|"basic"|A.exists("qwe")|})
 do send to me: log("'qwe' should exists") && rel(A)
 
-if rel(A) && asInfon({|"basic"|exists(A, "wer")|})
+if rel(A) && asInfon({|"basic"|A.exists("wer")|})
 do send to me: log("error! 'wer' should not exists") && rel(A)
 
-if rel(A) && asInfon({|"basic"|isEmpty(A)|})
+if rel(A) && asInfon({|"basic"|A.isEmpty()|})
 do send to me: log("empty") && rel(A)

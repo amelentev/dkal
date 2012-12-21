@@ -104,6 +104,8 @@ Term:
         primitiveApp($1, concreteArgs)
       else
         failwithf "Unknown or malformed function application in %O(%O)" $1 concreteArgs }
+	| Term DOT LOWER_IDENTIFIER LPAR Terms RPAR
+	{ primitiveApp($3, $1 :: $5) } // Term.methodCall(args) -> methodCall(Term, args)
 
 // Bool constructs
   | Term AND Term
