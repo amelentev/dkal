@@ -103,7 +103,7 @@ module MultiMain =
       try
         (ppal, parser.ParseAssembly (commonPolicy + policy))
       with
-      | ParseException(msg, text, line, col) -> 
+      | ParseException(msg, text, line, col) ->
         log.Error("{0}.dkal({1},{2}): error {3}: {4}", ppal, lineOffset + line, col, errorParsing, msg)
         Environment.Exit(1); failwith ""
       | SemanticCheckException(desc, o) ->

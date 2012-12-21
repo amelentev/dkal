@@ -28,8 +28,9 @@ namespace Microsoft.Research.Dkal.Ast.Syntax.Parsing
         let ret = target lexbuf
         ret
       with 
-      | ParseException(_) as e -> 
-        raise e
-      | e ->
+      | ParseException(msg, s, line, column) -> // from some inner parser (substrate)
+        let pos = lexbuf.StartPos
+        raise <| ParseException(msg, s, pos.Line+line, pos.Column)
+      | e -> // from fsyacc
         let pos = lexbuf.StartPos
         raise <| ParseException(e.Message, s, pos.Line+1, pos.Column+1)
