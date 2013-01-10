@@ -22,8 +22,8 @@ open System.Collections.Generic
 let mutable ctx : IParsingContext option = None
 let mutable ns : string = null
 
-let primitiveApp (f: string, args: ITerm list) = 
-  match BasicPrimitives.SolveOverloadOperator f args.[0].Type with
+let primitiveApp (f: string, args: ITerm list) =
+  match BasicPrimitives.SolveFunction f args with
   | Some(f) -> 
     App(f, args)
   | None ->
@@ -98,12 +98,7 @@ SubstrateTerm:
 
 Term:
 	| LOWER_IDENTIFIER LPAR Terms RPAR	    	    
-    { let concreteArgs: ITerm list = $3
-      if concreteArgs.Length > 0 then
-        // it is an overloaded operator
-        primitiveApp($1, concreteArgs)
-      else
-        failwithf "Unknown or malformed function application in %O(%O)" $1 concreteArgs }
+    { primitiveApp($1, $3) }
 	| Term DOT LOWER_IDENTIFIER LPAR Terms RPAR
 	{ primitiveApp($3, $1 :: $5) } // Term.methodCall(args) -> methodCall(Term, args)
 

@@ -82,6 +82,7 @@ module Type =
   let Int32 = Substrate(typeof<int32>) :> IType
   let Double = Substrate(typeof<double>) :> IType
   let String = Substrate(typeof<string>) :> IType
+  let DateTime = Substrate(typeof<System.DateTime>) :> IType
 
   /// Collection type
   type CollectionType(elemType: IType) =

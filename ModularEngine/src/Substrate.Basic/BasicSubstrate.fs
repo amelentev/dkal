@@ -62,6 +62,10 @@ type BasicSubstrate() =
     | BasicPrimitives.IsEmpty, [col] ->
       let col' = col :?> obj seq
       box (col' |> Seq.isEmpty)
+    | BasicPrimitives.Date, [sdate] ->
+      System.DateTime.Parse(sdate.ToString()) |> box
+    | BasicPrimitives.Now, [] ->
+      System.DateTime.Now |> box
     | _ -> failwithf "unknown function %A on args %A" f args
 
   let rec evaluate (substs: ISubstitution list) (expr: ITerm) =

@@ -115,6 +115,9 @@ rule tokenize = parse
                        string lexbuf;
                        STRING_LITERAL (stringBuf.ToString()) }
 
+| "date"			{ DATE }
+| "now"				{ NOW }
+
 // Substrate expressions
 | '{' '|' (whitespace|newline)* '"' ['a'-'z''A'-'Z']+ '"' (whitespace|newline)* '|'       
     { let ns = lexeme lexbuf;

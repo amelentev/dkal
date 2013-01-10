@@ -1,0 +1,21 @@
+---p1---
+type Time = System.DateTime
+relation r(T: Time)
+relation log(S: System.String)
+
+knows r(date("2013-1-1T01:01")) // System.DateTime.Parse format
+knows r(date("9999-1-1"))
+knows r(now())
+
+with T: Time
+if r(T)
+do send to me: log("knows") && r(T)
+
+if r(T) && asInfon({|"basic"|T > now()|})
+do send to me: log("future") && r(T)
+
+if r(T) && asInfon({|"basic"|T < now()|})
+do send to me: log("past") && r(T)
+
+if r(T) && asInfon({|"basic"|T >= date("2012-1-1") && T <= now()|})
+do send to me: log("from 2012 to now") && r(T)

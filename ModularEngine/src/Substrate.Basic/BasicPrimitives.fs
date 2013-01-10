@@ -57,6 +57,17 @@ module Microsoft.Research.Dkal.Substrate.Basic.BasicPrimitives
   let Exists = "exists"
   [<Literal>]
   let IsEmpty = "isEmpty"
+  [<Literal>]
+  let Date = "date"
+  [<Literal>]
+  let Now = "now"
+
+  /// non overloaded functions
+  let functions =
+    [
+      {Name = Date; ArgsType = [Type.String]; RetType = Type.DateTime; Identity = None};
+      {Name = Now; ArgsType = []; RetType = Type.DateTime; Identity = None}
+    ] |> List.map (fun f -> f.Name, f) |> dict
 
   /// Returns true iff the given IType supports equality in Basic substrate
   let private HasEquality (t: IType) =
@@ -144,3 +155,9 @@ module Microsoft.Research.Dkal.Substrate.Basic.BasicPrimitives
         | IsEmpty -> Some {Name = f; ArgsType = [t]; RetType = Type.Boolean; Identity = None}
         | _ -> None
       | _ -> None
+
+  /// Given an function name and arguments it looks the type information to see if there is a match.
+  let SolveFunction (f: string) (args: ITerm list) =
+    match functions.TryGetValue(f) with
+    | true, v -> Some(v)
+    | _ -> SolveOverloadOperator f args.Head.Type

@@ -92,6 +92,8 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token <System.Int32> INT_LITERAL
 %token <System.Double> FLOAT_LITERAL
 %token <System.String> STRING_LITERAL
+%token DATE
+%token NOW
 
 // Substrate expressions
 %token <System.String * System.String> SUBSTRATE_EXPRESSION
@@ -416,6 +418,8 @@ Substrate:
       else
         failwithf "Undefined identifier: %O" $1 }
 	| Collection	{ $1 :> ITerm, [] }
+	| DATE LPAR STRING_LITERAL RPAR	{ Const(Constant(System.DateTime.Parse($3))), [] }
+	| NOW LPAR RPAR	{ Const(Constant(System.DateTime.Now)), [] }
 
 Collection:
 	| LSQ CollectionItems RSQ	{ Collection($2) }
