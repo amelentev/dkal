@@ -46,7 +46,7 @@ knows start()
 
 with AIRLINE: Principal, F: Flight
     if
-        start() && asInfon({| "itineraries" | "//itinerary" | AIRLINE <-> "airline", F <-> "flight" |})
+        start() && {| itineraries | "//itinerary" | AIRLINE <-> "airline", F <-> "flight" |}
     do
         learn noBoardingPass(AIRLINE, F)
 	forget start()
@@ -55,7 +55,7 @@ with AIRLINE: Principal, F: Flight
 // have an passport-issuance certificate, he first gets one from his issuing 
 // passport agency (pa1)
 if
-    asInfon({| "itineraries" | "//itinerary[@airline='ca']" |}) && 
+    {| itineraries | "//itinerary[@airline='ca']" |} && 
     noCertificate()
 do
     say with justification to pa1:
@@ -70,7 +70,7 @@ with F: Flight, N: Passport, E: Evidence
     upon
         pa1 said issuedPassport(me, N) [E]
     if
-        asInfon({| "itineraries" | "//itinerary[@airline='ca']/@flight" | F |}) &&
+        {| itineraries | "//itinerary[@airline='ca']/@flight" | F |} &&
         noBoardingPass(ca, F)
     do
         say with justification to ca:
@@ -96,7 +96,7 @@ with P: Principal, N: Passport
     upon 
         P said passportCertificateNeeded(P) [_]
     if
-        asInfon({| "passports" | "//passport[@name='$P']/@number" | N |})
+        {| passports | "//passport[@name='$P']/@number" | N |}
     do
         say with justification to P:
             issuedPassport(P, N)
@@ -124,7 +124,7 @@ with PA: Principal, I: Infon, E: Evidence
 	upon
 		PA said I [E]
     if
-        asInfon({| "agencies" | "//agency[@name='$PA']" |})
+        {| agencies | "//agency[@name='$PA']" |}
 	do
 		learn PA said I [E]
 
@@ -141,7 +141,7 @@ with P: Principal, F: Flight, S: Seat, PA: Principal, N: Passport
     if
         PA said issuedPassport(P, N) [_]
     if
-        asInfon({| "flights" | "//flight[@number='$F']/passenger[@name='$P']/@seat" | S |})
+        {| flights | "//flight[@number='$F']/passenger[@name='$P']/@seat" | S |}
     do
         say with justification to P:
             boardingPass(P, F, S)

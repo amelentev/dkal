@@ -226,6 +226,13 @@ Infon:
         primitiveApp(Primitives.AsInfon, [bq]), solvedMacros
       else
         primitiveApp(Primitives.AsInfon, [t]), solvedMacros }
+  | SubstrateTerm
+    { let t, solvedMacros = normalizeAndApplyMacros $1
+      if t.Type = Type.Boolean then
+        let bq = BasicSubstrateTerm(Constant(true), t) :> ISubstrateQueryTerm
+        primitiveApp(Primitives.AsInfon, [bq]), solvedMacros
+      else
+        primitiveApp(Primitives.AsInfon, [t]), solvedMacros }
 	| Infon IMPLIES Infon
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3

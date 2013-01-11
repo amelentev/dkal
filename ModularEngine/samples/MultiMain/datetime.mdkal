@@ -11,11 +11,11 @@ with T: Time
 if r(T)
 do send to me: log("knows") && r(T)
 
-if r(T) && asInfon({|"basic"|T > now()|})
+if r(T) && {||T > now()|}
 do send to me: log("future") && r(T)
 
-if r(T) && asInfon({|"basic"|T < now()|})
+if r(T) && {||T < now()|}
 do send to me: log("past") && r(T)
 
-if r(T) && asInfon({|"basic"|T >= date("2012-1-1") && T <= now()|})
+if r(T) && {||T >= date("2012-1-1") && T <= now()|}
 do send to me: log("from 2012 to now") && r(T)

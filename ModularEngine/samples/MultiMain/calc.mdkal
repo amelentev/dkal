@@ -55,7 +55,7 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
     upon
         P said needSum(X, Y)
     if
-        asInfon({|"basic"|Z:=X+Y|})
+        {||Z:=X+Y|}
     do
         send to P:
             sum(X, Y, Z)
@@ -65,7 +65,7 @@ with X: Int, Y: Int, Z: Int, P: Dkal.Principal
     upon
         P said needProduct(X, Y)
     if
-        asInfon({|"basic"|Z:=X*Y|})
+        {||Z:=X*Y|}
     do
         send to P:
             product(X, Y, Z)

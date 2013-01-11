@@ -120,10 +120,11 @@ rule tokenize = parse
 | "now"				{ NOW }
 
 // Substrate expressions
-| '{' '|' (whitespace|newline)* '"' ['a'-'z''A'-'Z']+ '"' (whitespace|newline)* '|'       
+| '{' '|' (whitespace|newline)* '"'? ['a'-'z''A'-'Z']* '"'? (whitespace|newline)* '|'       
     { let ns = lexeme lexbuf;
       let ns = ns.Substring(2, ns.Length-3).Trim();
-      let ns = ns.Substring(1, ns.Length-2);
+      let ns = if ns="" then "basic" else ns;
+      let ns = if ns.[0]='\"' then ns.Substring(1, ns.Length-2) else ns;
       stringBuf.Length <- 0;
       remainingDelims <- 0;
       substrate lexbuf;
