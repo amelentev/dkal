@@ -1,0 +1,10 @@
+<!-- Add fslex/fsyacc support to a project -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Import Project="packages\FSPowerPack.Community.3.0.0.0\Tools\FSharp.PowerPack.targets" />
+	<PropertyGroup>
+		<FsLexOutputFolder>$(IntermediateOutputPath)</FsLexOutputFolder>
+		<FsYaccOutputFolder>$(IntermediateOutputPath)</FsYaccOutputFolder>
+    		<FsLexToolPath>../packages/FSPowerPack.Community.3.0.0.0/Tools</FsLexToolPath>
+		<FsYaccToolPath>../packages/FSPowerPack.Community.3.0.0.0/Tools</FsYaccToolPath>
+	</PropertyGroup>
+</Project>

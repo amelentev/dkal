@@ -11,8 +11,6 @@
 
 namespace Microsoft.Research.Dkal.Interfaces
 
-open Microsoft.FSharp.Text.Lexing
-
 /// IParsingContext provides an interface for contexts that keep information
 /// necessary during the parsing process such as variable types, macro 
 /// definitions, etc.

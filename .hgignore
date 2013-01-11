@@ -15,3 +15,5 @@ syntax: glob
 **/{bin,obj}/**Debug/*
 glob:ModularEngine/src/*/bin/*
 glob:ModularEngine/src/*/obj/*
+glob:ModularEngine/src/packages
+glob:ModularEngine/src/.nuget
