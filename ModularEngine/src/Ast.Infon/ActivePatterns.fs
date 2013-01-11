@@ -28,7 +28,7 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                             | _ -> None
   /// Active pattern for the simple rule
   let (|Rule|_|) mt = match mt with
-                      | App({Name=Primitives.Rule}, [c; a]) -> Some (c, a)
+                      | App({Name=Primitives.Rule}, [c; a; e]) -> Some (c, a, e)
                       | _ -> None
   
   /// Active pattern for the sequencing of conditions

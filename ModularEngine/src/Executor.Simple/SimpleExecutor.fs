@@ -183,8 +183,12 @@ type SimpleExecutor(router: IRouter,
     // Collects the actions that each rule mandates
     let rec traverse rule = 
       match rule with
-      | Rule(condition, action) ->
-        Seq.map action.Apply (se.SolveCondition condition [Substitution.Id]) |> Seq.toList
+      | Rule(condition, action, elseRule) ->
+        let actions = Seq.map action.Apply (se.SolveCondition condition [Substitution.Id]) |> Seq.toList
+        if Seq.isEmpty actions then 
+          traverse elseRule
+        else
+          actions
       | EmptyRule -> []
       | SeqRule (rules) ->
         Seq.collect traverse rules |> Seq.toList

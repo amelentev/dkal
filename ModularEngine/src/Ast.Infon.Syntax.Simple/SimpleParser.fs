@@ -69,7 +69,7 @@ type SimpleParser() =
     match r with
     | SeqRule(rs) -> List.iter checkRuleSanity rs
     | EmptyRule -> ()
-    | Rule(c,a) -> checkConditionSanity(c); checkActionSanity(a)
+    | Rule(c,a,e) -> checkConditionSanity(c); checkActionSanity(a); checkRuleSanity(e)
     | Forall(_,r) -> checkRuleSanity(r)
     | Var(v) when v.Type=Type.Rule -> ()
     | _ -> raise(SemanticCheckException("Expecting rule when checking sanity", pp.PrintTerm(r)))

@@ -79,7 +79,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token DO KNOWS
 
 // Conditions
-%token UPON FROM IF
+%token UPON FROM IF ELSE
 
 // Actions
 %token SEND SAY JUSTIFICATION TO LEARN FORGET INSTALL UNINSTALL APPLY 
@@ -373,7 +373,12 @@ Rule:
   | Condition DO Action
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
-      primitiveApp(Primitives.Rule, [t1; t2]), sm1 @ sm2 }
+      primitiveApp(Primitives.Rule, [t1; t2; EmptyRule]), sm1 @ sm2 }
+  | Condition DO Action ELSE Rule
+    { let t1, sm1 = normalizeAndApplyMacros $1
+      let t2, sm2 = normalizeAndApplyMacros $3
+      let elseRule, sm3 = $5
+      primitiveApp(Primitives.Rule, [t1; t2; elseRule]), sm1 @ sm2 @ sm3 }
   | Rule Rule
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $2

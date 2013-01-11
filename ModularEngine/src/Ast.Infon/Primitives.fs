@@ -106,7 +106,7 @@ module Primitives =
     | EmptyRule -> 
       Some {Name = f; RetType = Type.Rule; ArgsType = []; Identity = None}
     | Rule -> 
-      Some {Name = f; RetType = Type.Rule; ArgsType = [Type.Condition; Type.Action]; Identity = None}
+      Some {Name = f; RetType = Type.Rule; ArgsType = [Type.Condition; Type.Action; Type.Rule]; Identity = None}
 
     // Conditions
     | SeqCondition -> 

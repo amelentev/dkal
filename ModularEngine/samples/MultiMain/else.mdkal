@@ -1,0 +1,25 @@
+type Int = System.Int32
+
+relation r(I: Int)
+relation log(S: System.String)
+
+---p1---
+knows r(1)
+knows r(5)
+knows r(10)
+
+with I: Int
+if r(I) && asInfon({|"basic"|I<5|}) do 
+	send to p2: r(I) && log("<5")
+	forget r(I)
+else if r(I) && asInfon({|"basic"|I>5|}) do
+	send to p2: r(I) && log(">5")
+	forget r(I)
+else if r(I) && asInfon({|"basic"|I==5|}) do
+	send to p2: log("=5")
+	forget r(I)
+
+---p2---
+with I: Int
+upon p1 said r(I)
+do send to p1: r(I)

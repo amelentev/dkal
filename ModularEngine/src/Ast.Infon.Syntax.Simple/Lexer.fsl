@@ -91,6 +91,7 @@ rule tokenize = parse
 | "upon"        { UPON }
 | "from"        { FROM }
 | "if"          { IF }
+| "else"		{ ELSE }
 
 // Actions
 | "send"			        { SEND }
