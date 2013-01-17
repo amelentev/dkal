@@ -1,4 +1,4 @@
-/// logic: BPIL
+/// logic: simple
 // example of collections
 ---p1---
 type CollectionOfStrings = System.String[]

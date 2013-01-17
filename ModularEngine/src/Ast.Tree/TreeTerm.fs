@@ -20,10 +20,21 @@ open System.Collections.Generic
 /// They have an arbitrary-sized typed list of arguments. They return a typed
 /// single value. The Identity field is None if the function is not 
 /// associative; it points to the ITerm that behaves as identity otherwise
-type Function = { Name: string; 
-                  RetType: IType; 
-                  ArgsType: IType list;
-                  Identity: ITerm option }
+type Function = 
+  {
+    Name: string;
+    RetType: IType; 
+    ArgsType: IType list;
+    Identity: ITerm option;
+  }
+  member f.isCompatibleWith f' =
+    f.Name = f'.Name &&
+    f.RetType = f'.RetType &&
+    f.Identity = f'.Identity &&
+    f.ArgsType.Length = f'.ArgsType.Length &&
+    let args = List.zip f.ArgsType f'.ArgsType in
+    (args |> List.forall (fun (t, t') -> t.IsSubtypeOf t')
+    || args |> List.forall (fun (t, t') -> t'.IsSubtypeOf t))
 
 /// Application ITerms are the inner nodes of the AST tree. They have a Function
 /// and a list of arguments
@@ -75,7 +86,7 @@ type Application =
       match t with
       | :? IVar as v -> v.UnifyFrom s f
       | :? Application as f' 
-        when f'.Function = f.Function 
+        when f'.Function.isCompatibleWith(f.Function)
           && f'.Args.Length = f.Args.Length -> 
         let mutable okSoFar = true
         let mutable ret = s
