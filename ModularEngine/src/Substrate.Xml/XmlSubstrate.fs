@@ -29,18 +29,22 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
 
   let xn s = XName.Get s
 
+  let rec constant (typ: IType) (value:string) =
+    if typ = Type.Int32 then Constant (System.Int32.Parse(value)) :> IConst
+    elif typ = Type.Principal then PrincipalConstant value :> IConst
+    else
+      match typ with
+      | CollectionType(et) ->
+        let elems = value.Split(';')
+        let elems = if elems.Length>0 && elems.Last()="" then elems.Take(elems.Length-1).ToArray() else elems
+        Collection( elems |> List.ofSeq |> List.map (constant et) ) :> IConst
+      | _ -> Constant value :> IConst
+
   let bind (subst: ISubstitution option) (output: ITerm) value =
     match subst with
     | None -> None
     | Some subst ->
-      let sc : ITerm = 
-        if output.Type=Type.Int32 then
-          Constant (System.Int32.Parse(value)) :> ITerm
-        else if output.Type=Type.Principal then
-          PrincipalConstant value :> ITerm
-        else
-          Constant value :> ITerm
-      output.UnifyFrom subst sc
+      output.UnifyFrom subst (constant output.Type value)
 
   let getValue (elem: XElement) attr =
     match attr with
@@ -71,8 +75,9 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
           failwithf "unknown xpath result: %A" elem
     }
 
-  let getTermValue (t:ITerm) = 
+  let rec getTermValue (t:ITerm) = 
     match t with
+      | Collection(es) -> es |> List.map (fun e -> (getTermValue e) + ";") |> String.concat ""
       | :? IConst as c -> c.Value.ToString()
       | _ as v -> failwithf "unknown attribute value %A" v
   
@@ -125,6 +130,6 @@ type XmlSubstrate(xmldoc: XDocument, namespaces: string list) =
         | _ -> failwithf "unknown SubstrateUpdateTerm: %A" term
       terms |> Seq.map update |> List.ofSeq |> List.exists (fun x -> x)
 
-    member xs.AreConsistentUpdates _ = failwith "XML substrate does not support updates"
+    member xs.AreConsistentUpdates _ = true
 
   new(xmlFile: string, namespaces: string list) = new XmlSubstrate(XDocument.Load(xmlFile), namespaces)

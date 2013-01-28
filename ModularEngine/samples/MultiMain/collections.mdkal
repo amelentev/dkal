@@ -1,6 +1,15 @@
 /// logic: simple
 // example of collections
 ---p1---
+datasource xml("<root>
+	<load>
+		<collection value='qwe;asd;zxc;'/>
+		<collection value=''/>
+	</load>
+	<save>
+	</save>
+</root>") namespaces "x"
+
 type CollectionOfStrings = System.String[]
 relation rel(A: CollectionOfStrings)
 relation log(S: System.String)
@@ -8,10 +17,30 @@ relation log(S: System.String)
 knows rel(["qwe"; "asd"; "zxc"])
 knows rel([])
 
+// load from infostrate
 with A: CollectionOfStrings
 if rel(A)
-do send to me: log("knows") && rel(A)
+do	forget rel(A)
+	send to me: log("knows") && rel(A)
+	
+// load from xml
+with A: CollectionOfStrings
+if {|x| "/root/load/*" | A <-> "value" |}
+do	send to me: log("xml load") && rel(A)
+	apply {|x| delete "/root/load" |}
+	
+// save from infostrate to xml
+with A: CollectionOfStrings
+if	rel(A)
+do	apply {|x| insert "/root/save" | "collection", A <-> "value" |}
 
+// check saved
+with A: CollectionOfStrings
+if {|x| "/root/save/*" | A <-> "value" |}
+do	send to me: log("xml save") && rel(A)
+	apply {|x| delete "/root/save" |}
+	
+// check exists
 with A: CollectionOfStrings
 if rel(A) && {||A.exists("qwe")|}
 do send to me: log("'qwe' should exists") && rel(A)
@@ -19,5 +48,6 @@ do send to me: log("'qwe' should exists") && rel(A)
 if rel(A) && {||A.exists("wer")|}
 do send to me: log("error! 'wer' should not exists") && rel(A)
 
+// check isEmpty
 if rel(A) && {||A.isEmpty()|}
 do send to me: log("empty") && rel(A)
