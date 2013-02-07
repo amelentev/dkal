@@ -124,6 +124,7 @@ module Rise4FunWebService =
     use listener = new HttpListener()
     listener.Prefixes.Add("http://+:8080/")
     listener.Start() // if access denied then try "> netsh http add urlacl url=http://+:8080/ user=<DOMAIN\user>"
+    // also "> netsh advfirewall firewall add rule name="dkal4fun" dir=in action=allow protocol=TCP localport=8080"
     log.Info "Listening 8080 port ..."
     while true do
       let context = listener.GetContext(); // Note: The GetContext method blocks while waiting for a request. 
