@@ -149,6 +149,11 @@ type SimpleLogicEngine() =
           | Some s -> seq [(s, seq {yield! conds; yield! conds'})]
           | None -> seq []
       se.DoDeriveJustification inf (subst, conds) |> Seq.collect unifyEv
+    | templ when not (Seq.isEmpty conds || templ.Vars |> List.forall subst.DomainContains) -> // if templ has unbound variables
+      // exec 1st substrate query to [possibly] instantiate unbound vars
+      let condhd, condtl = conds |> Seq.take 1, conds |> Seq.skip 1
+      SubstrateDispatcher.Solve condhd (Seq.singleton subst) |>
+        Seq.collect (fun subst -> se.DoDerive pref (subst,condtl) templ)
     | templ ->
       // For every other case we call se.InfonsWithPrefix(..) which will give us a list of
       // substitutions, each of which will have a list of infon ITerms (preconditions) that 
