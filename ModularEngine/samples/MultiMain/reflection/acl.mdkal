@@ -14,7 +14,6 @@ type Object = String
 relation permitg(G: Group, O: Object)
 relation permit(P: Group, O: Object)
 
-relation init()
 relation askpermit(O: Object)
 relation log(S: String)
 
@@ -30,29 +29,25 @@ knows forall O: Object, G: Group, P: Principal
 
 ---p1---
 
-knows	init()
-
 // queries:
 knows askpermit("i1") //g1,p1
 knows askpermit("i1/i2") //g1,p1
 knows askpermit("i1/i2/i3") //g3,p3
 
-if init() do forget init()
-
 with O: Object, G: Group, P: Principal
 
-if	init() && askpermit(O) && permitg(G, O)
+if	askpermit(O) && permitg(G, O)
 do	send to me: permitg(G, O)
 	
-if	init() && askpermit(O) && permit(P, O)
+if	askpermit(O) && permit(P, O)
 do	send to me: permit(P, O)
 
-if	init() && permit("p1", "i1/i2")
+if	permit("p1", "i1/i2")
 do	send to me: log("ok")
 
-if	init() && permit("p3", "i1/i2")
+if	permit("p3", "i1/i2")
 do	send to me: log("error")
 
 // todo:
-if	init() && permit("p1", O)
+if	permit("p1", O)
 do	send to me: permit("p1 has access to:", O)

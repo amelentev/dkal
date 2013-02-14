@@ -1,4 +1,5 @@
 @echo off
 csc /target:library ACL.cs
-copy ACL.dll ..\..\..\src\MultiMain\bin\Debug\
-..\..\..\src\MultiMain\bin\Debug\DkalMulti.exe acl.mdkal 100000 1000 %2
+set DIR="..\..\..\src\MultiMain\bin\Debug\"
+copy ACL.dll %DIR%
+%DIR%\DkalMulti.exe acl.mdkal 100000 1000 %2
