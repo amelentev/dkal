@@ -36,9 +36,11 @@ type Substitution(subst : Dictionary<IVar, ITerm>) =
        
     /// Applies this Substitution to the given IVar
     member s.Apply (v: IVar) = 
-      let found, ret = subst.TryGetValue v
-      if found then ret else (v :> ITerm) 
-      
+      match subst.TryGetValue v with
+      | true, (:? IVar as ret) -> (s:>ISubstitution).Apply(ret) // var -> another var
+      | true, ret -> ret
+      | _ -> v :> ITerm
+
     /// Returns a new Substitution that results from first applying s' and 
     /// then applying the current Substitution
     member s.ComposeWith (s': ISubstitution) =
