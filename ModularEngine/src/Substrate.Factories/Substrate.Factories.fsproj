@@ -98,6 +98,11 @@
       <Project>{0979ddbc-7c0f-488d-90ab-31bc6b89c823}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Substrate.Reflection\Substrate.Reflection.fsproj">
+      <Name>Substrate.Reflection</Name>
+      <Project>{a6942fa1-47c2-4d3d-b06e-7fb9bf5b1ae5}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Substrate.Sql\Substrate.Sql.fsproj">
       <Name>Substrate.Sql</Name>
       <Project>{65b27d4b-16fb-441a-8fd7-2b01abe789ef}</Project>
@@ -106,6 +111,11 @@
     <ProjectReference Include="..\Substrate.Xml\Substrate.Xml.fsproj">
       <Name>Substrate.Xml</Name>
       <Project>{66db220d-6608-45f4-874a-860f1acaeab9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Substrate\Substrate.fsproj">
+      <Name>Substrate (Substrate\Substrate)</Name>
+      <Project>{49e0e6c4-6c69-4c95-a1d5-aa3f5c8a8554}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

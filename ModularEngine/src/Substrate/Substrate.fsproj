@@ -64,6 +64,9 @@
   <ItemGroup>
     <Compile Include="SubstrateDispatcher.fs" />
     <Compile Include="DummySubstrateQueryTerm.fs" />
+    <Compile Include="ASubstrateQuery.fs" />
+    <Compile Include="ASubstrateParser.fs" />
+    <Compile Include="ASubstrate.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast.Infon\Ast.Infon.fsproj">

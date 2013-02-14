@@ -24,6 +24,7 @@ open Microsoft.Research.Dkal.Ast.Substrate.Basic.Syntax.Simple
 open Microsoft.Research.Dkal.Ast.Substrate.Basic.Syntax.Typed
 open Microsoft.Research.Dkal.Substrate.Rdf
 open Microsoft.Research.Dkal.Ast.Substrate.Rdf.Syntax
+open Microsoft.Research.Dkal.Substrate.Reflection
 
 /// Initializes the substrate factories by suscribing all known implementations
 /// of substrate parsers and pretty printers. It also adds the basic substrate
@@ -62,3 +63,6 @@ type FactoriesInitializer() =
     // Rdf substrate
     SubstrateParserFactory.RegisterParser typeof<RdfSubstrate> "simple" typeof<SparqlParser>
     SubstrateParserFactory.RegisterParser typeof<RdfSubstrate> "typed" typeof<SparqlParser>
+
+    // Reflection substrate
+    SubstrateParserFactory.RegisterParser typeof<ReflectionSubstrate> "simple" typeof<ReflectionParser>

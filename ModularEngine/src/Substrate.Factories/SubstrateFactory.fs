@@ -17,6 +17,7 @@ open Microsoft.Research.Dkal.Substrate.Sql
 open Microsoft.Research.Dkal.Substrate.Xml
 open Microsoft.Research.Dkal.Substrate.Crypto
 open Microsoft.Research.Dkal.Substrate.Rdf
+open Microsoft.Research.Dkal.Substrate.Reflection
 
 open System.Xml.Linq
 open System.IO
@@ -43,4 +44,5 @@ type SubstrateFactory() =
         new XmlSubstrate(xml, namespaces) :> ISubstrate
     | "crypto", [] -> CryptoSubstrate() :> ISubstrate
     | "rdf", [endpoint] -> RdfSubstrate(endpoint, namespaces) :> ISubstrate
+    | "reflection", [clas] -> ReflectionSubstrate(namespaces, clas) :> ISubstrate
     | _ -> failwith <| "Unknown substrate kind/params for " + kind

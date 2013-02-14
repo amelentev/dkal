@@ -125,6 +125,11 @@
       <Project>{0979ddbc-7c0f-488d-90ab-31bc6b89c823}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Substrate.Reflection\Substrate.Reflection.fsproj">
+      <Name>Substrate.Reflection</Name>
+      <Project>{a6942fa1-47c2-4d3d-b06e-7fb9bf5b1ae5}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Substrate.Sql\Substrate.Sql.fsproj">
       <Name>Substrate.Sql</Name>
       <Project>{65b27d4b-16fb-441a-8fd7-2b01abe789ef}</Project>

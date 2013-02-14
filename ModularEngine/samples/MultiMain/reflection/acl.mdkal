@@ -1,0 +1,77 @@
+datasource xml("<root>
+	<groups>
+		<g1><p1/></g1>
+		<g3><p3/></g3>
+	</groups>
+</root>") namespaces "x"
+datasource reflection("ACL, ACL") namespaces "r"
+
+type String = System.String
+type Principal = String
+type Group = String
+type Object = String
+
+relation child(C: Object, P: Object)
+relation owns(G: Group, O: Object)
+relation notowned(O: Object)
+relation permitg(G: Group, O: Object)
+relation permit(P: Group, O: Object)
+relation in(P: Principal, G: Group)
+
+relation init()
+relation init2()
+relation askpermit(O: Object)
+relation log(S: String)
+
+// permitg definition:
+knows forall O: Object, G: Group
+	{|r| G = owns(O) |} -> permitg(G, O)
+knows forall O: Object, O1: Object, G: Group
+	{|r| notOwned(O) |} && {|r| O1 = getParent(O) |} && permitg(G, O1) -> permitg(G, O)
+	
+// permit definition:
+knows forall O: Object, G: Group, P: Principal
+	permitg(G, O) && in(P, G) -> permit(P, O)
+	
+---p1---
+
+// load from xml
+knows	init()
+if init() do learn init2() forget init()
+
+with G: Group, P: Principal
+if	init() && {|x| "//groups/*" | G |} && {|x| "//groups/$G/*" | P |}
+do	learn in(P, G)
+//	send to me: in(P, G)
+	
+// queries:
+knows askpermit("i1") //g1,p1
+knows askpermit("i1/i2") //g1,p1
+knows askpermit("i1/i2/i3") //g3,p3
+
+if init2() do forget init2()
+
+with O: Object, O1: Object, G: Group, P: Principal
+/* debug info:
+if	askpermit(O) && {|r| O1 = getParent(O) |}
+do send to me: child(O, O1)
+if	askpermit(O) && {|r| G = owns(O) |}
+do send to me: owns(G, O)
+if	askpermit(O) && {|r| notOwned(O) |}
+do send to me: notowned(O) */
+
+if	init2() && askpermit(O) && permitg(G, O)
+do	send to me: permitg(G, O)
+	
+if	init2() && askpermit(O) && permit(P, O)
+do	send to me: permit(P, O)
+
+if	init2() && permit("p1", "i1/i2")
+do	send to me: log("ok")
+
+if	init2() && permit("p3", "i1/i2")
+do	send to me: log("error")
+
+// todo:
+if	init2() && permit("p1", O)
+do	send to me: permit("p1 has access to:", O)
