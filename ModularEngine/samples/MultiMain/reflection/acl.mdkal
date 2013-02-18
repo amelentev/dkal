@@ -12,7 +12,9 @@ type Group = String
 type Object = String
 
 relation permitg(G: Group, O: Object)
-relation permit(P: Group, O: Object)
+relation permitg2(G: Group, O: Object)
+relation permit(P: Principal, O: Object)
+relation permit2(P: Principal, O: Object)
 
 relation askpermit(O: Object)
 relation log(S: String)
@@ -22,32 +24,53 @@ knows forall O: Object, G: Group
 	{|r| G = owns(O) |} -> permitg(G, O)
 knows forall O: Object, O1: Object, G: Group
 	{|r| notOwned(O) |} && {|r| O1 = getParent(O) |} && permitg(G, O1) -> permitg(G, O)
+
+// permitg2 definition:
+knows forall O: Object, G: Group
+	{|r| O = getPermittedObjects(G) |} -> permitg2(G, O)
+/* topdown version of permitg. does not work yet.
+knows forall O: Object, G: Group
+	{|r| O = getObjectIOwn(G) |} -> permitg2(G, O)
+knows forall O: Object, O1: Object, G: Group
+	permitg2(G, O) && {|r| O1 = getChildren(O) |} && {|r| notOwned(O1) |} -> permitg2(G, O)
+*/
 	
 // permit definition:
 knows forall O: Object, G: Group, P: Principal
-	permitg(G, O) && {|x| "//groups/$G/*" | P |} -> permit(P, O)
-
+	permitg(G, O)  && {|x| "//groups/$G/*" | P |} -> permit(P, O)
+	
+knows forall O: Object, G: Group, P: Principal
+	permitg2(G, O) && {|x| "//groups/$G/*" | P |} -> permit2(P, O)
+	
 ---p1---
 
 // queries:
 knows askpermit("i1") //g1,p1
-knows askpermit("i1/i2") //g1,p1
-knows askpermit("i1/i2/i3") //g3,p3
+knows askpermit("i1/i22") //g1,p1
+knows askpermit("i1/i22/i33") //g3,p3
 
 with O: Object, G: Group, P: Principal
 
+// check permit for concrete object and principal
+if	permit("p1", "i1/i22")
+do	send to me: log("ok")
+
+if	permit("p3", "i1/i22")
+do	send to me: log("error")
+
+// get groups and principals who can access specific object
 if	askpermit(O) && permitg(G, O)
 do	send to me: permitg(G, O)
 	
 if	askpermit(O) && permit(P, O)
 do	send to me: permit(P, O)
 
-if	permit("p1", "i1/i2")
-do	send to me: log("ok")
+// get permitted objects for specific group
+if	permitg2("g1", O)
+do	send to me: permitg2("g1 has access to:", O)
 
-if	permit("p3", "i1/i2")
-do	send to me: log("error")
+if	permitg2("g2", O)
+do	send to me: permitg2("g2 has access to:", O)
 
-// todo:
-if	permit("p1", O)
-do	send to me: permit("p1 has access to:", O)
+if	permitg2("g3", O)
+do	send to me: permitg2("g3 has access to:", O)
