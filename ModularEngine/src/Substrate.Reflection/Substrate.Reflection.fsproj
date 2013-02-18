@@ -50,7 +50,6 @@
     <Compile Include="ReflectionQuery.fs" />
     <Compile Include="ReflectionSubstrate.fs" />
     <Compile Include="ReflectionParser.fs" />
-    <None Include="Script.fsx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
