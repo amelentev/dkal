@@ -1,6 +1,7 @@
 datasource xml("<root>
 	<groups>
 		<g1><p1/></g1>
+		<g2><p2/></g2>
 		<g3><p3/></g3>
 	</groups>
 </root>") namespaces "x"
@@ -28,11 +29,11 @@ knows forall O: Object, O1: Object, G: Group
 // permitg2 definition:
 knows forall O: Object, G: Group
 	{|r| O = getPermittedObjects(G) |} -> permitg2(G, O)
-/* topdown version of permitg. does not work yet.
+/* top-down version of permitg. does not work yet.
 knows forall O: Object, G: Group
 	{|r| O = getObjectIOwn(G) |} -> permitg2(G, O)
 knows forall O: Object, O1: Object, G: Group
-	permitg2(G, O) && {|r| O1 = getChildren(O) |} && {|r| notOwned(O1) |} -> permitg2(G, O)
+	permitg2(G, O) && {|r| O1 = getChildren(O) |} && {|r| notOwned(O1) |} -> permitg2(G, O1)
 */
 	
 // permit definition:
@@ -40,7 +41,7 @@ knows forall O: Object, G: Group, P: Principal
 	permitg(G, O)  && {|x| "//groups/$G/*" | P |} -> permit(P, O)
 	
 knows forall O: Object, G: Group, P: Principal
-	permitg2(G, O) && {|x| "//groups/$G/*" | P |} -> permit2(P, O)
+	{|x| "//groups/*/$P/.." | G |} && permitg2(G, O) -> permit2(P, O)
 	
 ---p1---
 
@@ -69,8 +70,8 @@ do	send to me: permit(P, O)
 if	permitg2("g1", O)
 do	send to me: permitg2("g1 has access to:", O)
 
-if	permitg2("g2", O)
-do	send to me: permitg2("g2 has access to:", O)
+if	permit2("p2", O)
+do	send to me: permit2("p2 has access to:", O)
 
-if	permitg2("g3", O)
-do	send to me: permitg2("g3 has access to:", O)
+if	permit2("p3", O)
+do	send to me: permit2("p3 has access to:", O)
