@@ -59,6 +59,13 @@ module SPIL =
                           ((q said x() && q said x()) -> x())))"]
               ["p said x() -> (q said x() -> x())"])
 
+    "Carlos2" => fun _ ->
+      Assert.Equal("",
+        [true],
+        solve ["w() -> (x() && y() && z())";
+               "(z() && y() && x()) -> w()"]
+              ["w() -> w()"])
+
     "set || intro. todo" => fun _ ->
       Assert.Equal("",
         [true],
