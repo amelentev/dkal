@@ -12,6 +12,7 @@
 namespace Microsoft.Research.Dkal.Ast.Infon
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
 
 /// IInfonPrettyPrinter provides an interface to print top-level AST elements
 type IInfonPrettyPrinter =

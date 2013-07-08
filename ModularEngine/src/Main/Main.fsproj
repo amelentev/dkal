@@ -87,6 +87,11 @@
       <Project>{1fe1b1da-1e1d-4c5e-88fa-37f023c28885}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Name>Globals</Name>
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Infostrate.Factories\Infostrate.Factories.fsproj">
       <Name>Infostrate.Factories</Name>
       <Project>{16750eb8-94df-444d-a506-5b59ee41b620}</Project>

@@ -28,6 +28,7 @@ using Microsoft.Research.Dkal.MailBox.Factories;
 using Microsoft.Research.Dkal.Router.Factories;
 using Microsoft.Research.Dkal.SignatureProvider.Factories;
 using Microsoft.Research.Dkal.Utils.Exceptions;
+using Microsoft.Research.Dkal.Globals;
 
 namespace Microsoft.Research.Dkal.GuiMain
 {

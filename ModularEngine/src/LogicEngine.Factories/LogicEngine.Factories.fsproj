@@ -98,6 +98,11 @@
       <Project>{1ea3b178-b4de-4ac9-9f1c-02fa83f565e4}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.UFOL\LogicEngine.UFOL.fsproj">
+      <Name>LogicEngine.UFOL</Name>
+      <Project>{1d3e0243-d275-4528-a473-6cff79ce6702}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

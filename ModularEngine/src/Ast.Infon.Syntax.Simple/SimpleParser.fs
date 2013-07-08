@@ -18,6 +18,7 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Syntax.Parsing
 open Microsoft.Research.Dkal.Utils.Exceptions
+open Microsoft.Research.Dkal.Globals
 
 /// The SimpleParser parses from the simple concrete syntax, which uses declared 
 /// typed variables. It must be initialized with a Context that holds variable 

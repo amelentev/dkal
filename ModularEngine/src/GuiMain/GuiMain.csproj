@@ -212,6 +212,10 @@
       <Project>{A7809ED2-AC1D-46CC-B594-B1422CFE0DA7}</Project>
       <Name>Factories.Initializer</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
+      <Name>Globals</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Infostrate.Factories\Infostrate.Factories.fsproj">
       <Project>{16750EB8-94DF-444D-A506-5B59EE41B620}</Project>
       <Name>Infostrate.Factories</Name>

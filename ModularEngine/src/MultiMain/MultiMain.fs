@@ -33,6 +33,7 @@ open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
 open Microsoft.Research.Dkal.Utils.ErrorCodes
+open Microsoft.Research.Dkal.Globals
 
 /// Console front-end for many principals
 module MultiMain =

@@ -46,8 +46,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
-    <StartWorkingDirectory>C:\Users\t-guide\Documents\Visual Studio 2010\Projects\dkal\ModularEngine\Samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>university.mdkal 100000000 10000</StartArguments>
+    <StartWorkingDirectory>C:\Users\t-espav\Documents\Visual Studio 2012\Projects\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
+    <StartArguments>hello_world.mdkal 100000000 10000 -UFOL</StartArguments>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -89,6 +89,11 @@
     <ProjectReference Include="..\Executor.Factories\Executor.Factories.fsproj">
       <Name>Executor.Factories</Name>
       <Project>{1fe1b1da-1e1d-4c5e-88fa-37f023c28885}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Name>Globals</Name>
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Infostrate.Factories\Infostrate.Factories.fsproj">

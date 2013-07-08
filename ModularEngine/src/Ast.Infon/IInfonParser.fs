@@ -12,6 +12,7 @@
 namespace Microsoft.Research.Dkal.Ast.Infon
 
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Globals
 
 /// IInfonParser provides an interface for top-level parsers that interpret policies
 type IInfonParser =
