@@ -48,7 +48,9 @@ module Main =
 
             let router = RouterFactory.Router kind routingFile
             let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
-            let logicEngine = LogicEngineFactory.LogicEngine (LogicEngineFactory.parseLogicEngineKind tail)
+
+            let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
+            let logicEngine = LogicEngineFactory.LogicEngine ((LogicEngineFactory.parseLogicEngineKind tail), assembly)
             let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
             let infostrate = InfostrateFactory.Infostrate kind
             let mailbox = MailBoxFactory.MailBox kind logicEngine
@@ -60,7 +62,6 @@ module Main =
             elif step <> "noStep" then
               failwithf "Step parameter must be one of 'step' or 'noStep', found %O" step
 
-            let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
             log.Info("Principal {0} running...", router.Me)
             log.Debug("------------------------------------------------------------------------")
             log.Debug(printer.PrintPolicy assembly.Policy)

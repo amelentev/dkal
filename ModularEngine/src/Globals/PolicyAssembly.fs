@@ -31,3 +31,6 @@ type Policy = { Rules: ITerm list; KA: ITerm list }
 
 /// An Assembly is composed of a Signature and a Policy
 type Assembly = { Signature: Signature; Policy: Policy }
+
+/// MultiAssembly contains information relevant to all assemblies
+type MultiAssembly = { TypeRenames: Dictionary<string, string>; Relations: RelationDeclaration list; PrincipalPolicies: Dictionary<string, Assembly> }

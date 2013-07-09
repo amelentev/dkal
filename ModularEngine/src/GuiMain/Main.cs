@@ -75,11 +75,6 @@ namespace Microsoft.Research.Dkal.GuiMain
                 var router = RouterFactory.Router(kind, routingFile);
                 var parser= ParserFactory.InfonParser(kind, router.Me);
                 var printer = PrettyPrinterFactory.InfonPrinter(kind);
-                var logicEngine = LogicEngineFactory.LogicEngine(logicEngineKind);
-                var signatureProvider = SignatureProviderFactory.SignatureProvider(kind);
-                var infostrate = InfostrateFactory.Infostrate(kind);
-                var mailbox = MailBoxFactory.MailBox(kind, logicEngine);
-                var executor = ExecutorFactory.Executor(kind, router, logicEngine, signatureProvider, infostrate, mailbox);
 
                 Assembly assembly;
                 try
@@ -96,6 +91,12 @@ namespace Microsoft.Research.Dkal.GuiMain
                     MessageBox.Show("Semantic error: " + e.Data0 + " at " + e.Data1, "Semantic Error");
                     return;
                 }
+
+                var logicEngine = LogicEngineFactory.LogicEngine(logicEngineKind, assembly);
+                var signatureProvider = SignatureProviderFactory.SignatureProvider(kind);
+                var infostrate = InfostrateFactory.Infostrate(kind);
+                var mailbox = MailBoxFactory.MailBox(kind, logicEngine);
+                var executor = ExecutorFactory.Executor(kind, router, logicEngine, signatureProvider, infostrate, mailbox);
 
                 log.Info("Principal {0} running...", router.Me);
                 log.Debug("------------------------------------------------------------------------");
