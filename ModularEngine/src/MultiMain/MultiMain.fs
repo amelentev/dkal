@@ -46,10 +46,10 @@ module MultiMain =
 
   let private messagesLimitExceeded = new AutoResetEvent(false)
 
-  let private createExec(router: IRouter, assembly: Assembly, logicEngineKind: string) =
+  let private createExec(router: IRouter, assembly: Assembly, assemblyInfo: MultiAssembly, logicEngineKind: string) =
     let kind = "simple"
     let infostrate = InfostrateFactory.Infostrate kind
-    let logicEngine = LogicEngineFactory.LogicEngine (logicEngineKind, assembly)
+    let logicEngine = LogicEngineFactory.LogicEngine (logicEngineKind, Some assemblyInfo)
     let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
     let mailbox = MailBoxFactory.MailBox kind logicEngine
     let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
@@ -130,7 +130,7 @@ module MultiMain =
 
     let fixedPointCounter = new CountdownEvent(assemblies.Length)
     let executors = assemblies |> List.mapi (fun i x ->
-      let exec = createExec(routers.[fst x], snd x, logicEngineKind)
+      let exec = createExec(routers.[fst x], snd x, multiAssembly, logicEngineKind)
       exec.FixedPointCallback 
         (fun _ ->
           let reachedGlobalFixedPoint = try fixedPointCounter.Signal() with e -> true

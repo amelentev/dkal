@@ -25,32 +25,48 @@ open Microsoft.Z3
 /// the principals' substrate and infostrate information.
 /// It provides support to formulae on the universal fragment of FOL
 /// Initially does not support quotations
-type UFOLogicEngine(assembly: Assembly) = 
+type UFOLogicEngine(assemblyInfo: MultiAssembly) = 
 
   let log = LogManager.GetLogger("LogicEngine.UFOL")
-  let _z3context : Microsoft.Z3.Context = new Microsoft.Z3.Context() 
+  // TODO check Z3 documentation for possible parameters for context construction
+  let _z3context : Context = new Context()
+  let mutable _z3solver: Solver option = None
   
   let mutable _signatureProvider: ISignatureProvider option = None
   let mutable _infostrate: IInfostrate option = None
-  
-  let mutable _freshVarId = 0
-  
+
   /// Information about declared relations for the DKAL script being analyzed
-  let mutable _assemblyInformation: Assembly = assembly
+  let _assemblyInformation: MultiAssembly = assemblyInfo
+  let _z3TypeDefinitions= Z3TypeDefinition()
+  let mutable _z3RelationDefinitions= []
 
   /// The signature checking implementation for this logic engine
   member ufolengine.get_AssemblyInformation () =
     _assemblyInformation
 
+  member private ufolengine.getZ3TypesArray(args: IVar list) =
+    args |>
+      List.fold (fun acc var -> acc @ [Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3TypeForDkalType(var.Type.FullName), _z3context)]) [] |>
+      List.toArray
+
   member private ufolengine.makeZ3FunDecl (name: string) (args: IVar list) =
-    "(declare-fun " + name + ")"
+    let rangeSort= _z3context.MkBoolSort();
+    let domainSort= ufolengine.getZ3TypesArray(args)
+    _z3context.MkFuncDecl(name, domainSort, rangeSort)
+
+
+  member private ufolengine.z3Learn(z3Expression: BoolExpr) =
+    log.Debug ("Z3 is learning: {0}", z3Expression)
+    match _z3solver with 
+    | None -> _z3solver <- Some (_z3context.MkSimpleSolver())
+    | _ -> ()
+
+    _z3solver.Value.Assert([|z3Expression|])
 
   interface ILogicEngine with
     member engine.Start() = 
-      /// TODO should initialize Z3 with all relevant information (?)
-      for rel in assembly.Signature.Relations do
-        engine.makeZ3FunDecl rel.Name rel.Args |> ignore
-      ()
+      /// Feed Z3 relation declarations and save them for when we have to reset Z3
+      List.iter (fun rel -> ignore (engine.makeZ3FunDecl rel.Name rel.Args)) assemblyInfo.Relations
 
     member engine.Stop() =
       /// TODO should cleanup and shutdown Z3 (?)

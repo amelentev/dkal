@@ -92,7 +92,7 @@ namespace Microsoft.Research.Dkal.GuiMain
                     return;
                 }
 
-                var logicEngine = LogicEngineFactory.LogicEngine(logicEngineKind, assembly);
+                var logicEngine = LogicEngineFactory.LogicEngine(logicEngineKind, null);
                 var signatureProvider = SignatureProviderFactory.SignatureProvider(kind);
                 var infostrate = InfostrateFactory.Infostrate(kind);
                 var mailbox = MailBoxFactory.MailBox(kind, logicEngine);

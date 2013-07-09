@@ -23,7 +23,7 @@ type LogicEngineFactory() =
     cmdargs |> List.map (fun x -> logics.TryFind x) |> List.filter Option.isSome |> List.map Option.get |> List.append ["simple"] |> List.rev |> List.head
 
   /// Construct a LogicEngine. A logic engine kind must be provided.
-  static member LogicEngine (kind: string, assembly: Assembly) = 
+  static member LogicEngine (kind: string, assemblyInfo: MultiAssembly option) = 
     match kind with
     | "simple" -> new Simple.SimpleLogicEngine() :> ILogicEngine
     | "ml" | "ML" -> new ML.MLLogicEngine() :> ILogicEngine
@@ -32,5 +32,5 @@ type LogicEngineFactory() =
     | "SPIL" -> new PPIL.SPILogicEngine() :> ILogicEngine
     | "TPIL" -> new PPIL.TPILogicEngine() :> ILogicEngine
     | "TSPIL" -> new PPIL.TSPILogicEngine() :> ILogicEngine
-    | "UFOL" -> new UFOL.UFOLogicEngine(assembly) :> ILogicEngine
+    | "UFOL" -> new UFOL.UFOLogicEngine(assemblyInfo.Value) :> ILogicEngine
     | k -> failwith <| "Unrecognized logic engine kind: " + k

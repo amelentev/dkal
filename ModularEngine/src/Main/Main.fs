@@ -50,7 +50,7 @@ module Main =
             let parser, printer = ParserFactory.InfonParser(kind, router.Me), PrettyPrinterFactory.InfonPrinter kind
 
             let assembly = parser.ParseAssembly (File.ReadAllText policyFile)
-            let logicEngine = LogicEngineFactory.LogicEngine ((LogicEngineFactory.parseLogicEngineKind tail), assembly)
+            let logicEngine = LogicEngineFactory.LogicEngine ((LogicEngineFactory.parseLogicEngineKind tail), None)
             let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
             let infostrate = InfostrateFactory.Infostrate kind
             let mailbox = MailBoxFactory.MailBox kind logicEngine
