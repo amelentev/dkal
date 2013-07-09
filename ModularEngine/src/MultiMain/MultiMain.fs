@@ -18,6 +18,8 @@ open System.Diagnostics
 open System.Text
 open System.Threading
 open System.Text.RegularExpressions
+open System.Collections.Generic
+
 
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Infostrate.Factories
@@ -47,7 +49,7 @@ module MultiMain =
   let private createExec(router: IRouter, assembly: Assembly, logicEngineKind: string) =
     let kind = "simple"
     let infostrate = InfostrateFactory.Infostrate kind
-    let logicEngine = LogicEngineFactory.LogicEngine logicEngineKind
+    let logicEngine = LogicEngineFactory.LogicEngine (logicEngineKind, assembly)
     let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
     let mailbox = MailBoxFactory.MailBox kind logicEngine
     let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)
@@ -111,6 +113,20 @@ module MultiMain =
         log.Error("{0}.dkal(0,0): error {1}: {2} at {3}", ppal, errorSemanticCheck, desc, o)
         Environment.Exit(1); failwith ""
     let assemblies =  ppalsWithOffset |> List.map parse
+    
+    // collect all distinct relation declarations from the assemblies
+    let signatures=
+      assemblies |>
+      List.collect (fun assembly -> (snd assembly).Signature.Relations) |>
+      List.fold (fun acc sign ->
+        match acc with
+        | _ when List.exists (fun sign' -> sign' = sign) acc -> acc
+        | _ -> sign::acc ) []
+    let multiAssembly= { TypeRenames = Dictionary<string,string>(); Relations= signatures; PrincipalPolicies= 
+      assemblies |>
+      List.fold (fun acc x -> 
+                    acc.[fst x] <- snd x
+                    acc) (Dictionary<string,Assembly>()) }
 
     let fixedPointCounter = new CountdownEvent(assemblies.Length)
     let executors = assemblies |> List.mapi (fun i x ->

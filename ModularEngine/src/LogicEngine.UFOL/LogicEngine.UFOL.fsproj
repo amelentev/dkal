@@ -47,10 +47,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Z3Types.fs" />
-    <Compile Include="Subst.fs" />
-    <Compile Include="TranslationToZ3.fs" />
-    <Compile Include="TranslationFromZ3.fs" />
     <Compile Include="UFOLogicEngine.fs" />
   </ItemGroup>
   <ItemGroup>
