@@ -80,6 +80,7 @@
     <Compile Include="IParsingContext.fs" />
     <Compile Include="ISubstrateParser.fs" />
     <Compile Include="ISubstratePrettyPrinter.fs" />
+    <Compile Include="ITranslator.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

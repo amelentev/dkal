@@ -36,6 +36,7 @@ open Microsoft.Research.Dkal.Factories.Initializer
 open Microsoft.Research.Dkal.Utils.Exceptions
 open Microsoft.Research.Dkal.Utils.ErrorCodes
 open Microsoft.Research.Dkal.Globals
+open Microsoft.Research.Dkal.LogicEngine.UFOL
 
 /// Console front-end for many principals
 module MultiMain =
@@ -46,10 +47,15 @@ module MultiMain =
 
   let private messagesLimitExceeded = new AutoResetEvent(false)
 
+  // TODO see how to avoid linking to UFOLEngine just to check the appropriate infostrate
   let private createExec(router: IRouter, assembly: Assembly, assemblyInfo: MultiAssembly, logicEngineKind: string) =
-    let kind = "simple"
-    let infostrate = InfostrateFactory.Infostrate kind
+    
     let logicEngine = LogicEngineFactory.LogicEngine (logicEngineKind, Some assemblyInfo)
+    let kind =
+      match logicEngine with
+      | :? UFOLogicEngine as engine -> "ufol"
+      | _ -> "simple"
+    let infostrate = InfostrateFactory.Infostrate kind
     let signatureProvider = SignatureProviderFactory.SignatureProvider kind 
     let mailbox = MailBoxFactory.MailBox kind logicEngine
     let executor = ExecutorFactory.Executor (kind, router, logicEngine, signatureProvider, infostrate, mailbox)

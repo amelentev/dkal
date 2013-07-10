@@ -22,6 +22,7 @@ type SignatureProviderFactory() =
   static member SignatureProvider (kind: string) = 
     match kind with
     | "simple" -> new SimpleSignatureProvider() :> ISignatureProvider
+    | "ufol" -> new SimpleSignatureProvider() :> ISignatureProvider
     | k -> failwith <| "Unrecognized signature provider kind: " + k
 
 

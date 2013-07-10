@@ -70,6 +70,11 @@
       <Project>{6c2de9fd-b01c-4665-a5cc-4e75ac1ce2fc}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Infostrate.Z3\Infostrate.Z3.fsproj">
+      <Name>Infostrate.Z3</Name>
+      <Project>{78629451-b21b-47f2-921b-f01921cf63f2}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>

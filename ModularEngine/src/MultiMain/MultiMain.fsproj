@@ -47,7 +47,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
     <StartWorkingDirectory>C:\Users\t-espav\Documents\Visual Studio 2012\Projects\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>hello_world.mdkal 100000000 10000 -UFOL</StartArguments>
+    <StartArguments>rules.mdkal 100000000 10000</StartArguments>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -132,6 +132,11 @@
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">
       <Name>Interfaces</Name>
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.UFOL\LogicEngine.UFOL.fsproj">
+      <Name>LogicEngine.UFOL</Name>
+      <Project>{1d3e0243-d275-4528-a473-6cff79ce6702}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\MailBox.Factories\MailBox.Factories.fsproj">

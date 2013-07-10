@@ -9,19 +9,14 @@
 //
 // *********************************************************
 
-namespace Microsoft.Research.Dkal.Infostrate.Simple
+namespace Microsoft.Research.Dkal.Ast.Translations.Z3Translator
 
-open System.Collections.Generic
-open NLog
-
-open Microsoft.Research.Dkal.Ast.Infon
-open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
-open Microsoft.Research.Dkal.Globals
+open Microsoft.Z3
 
-type Z3Infostrate(assembly: Assembly) =
-  inherit SimpleInfostrate()
+type Z3Expr(expr: Expr) =
+  let _z3Expr= expr
 
-  let typesMapping = Dictionary<string, string>()
-  do
-    typesMapping.Add("Dkal.Principal", "")
+  interface ITranslatedExpr with
+    member tr.getUnderlyingExpr() =
+      _z3Expr :> System.Object

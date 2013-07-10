@@ -9,7 +9,7 @@
 //
 // *********************************************************
 
-namespace Microsoft.Research.Dkal.LogicEngine.UFOL
+namespace Microsoft.Research.Dkal.Ast.Translations.Z3Translator
 
 open System
 open System.Collections.Generic
@@ -44,8 +44,9 @@ type Z3TypeDefinition() =
   let _typeDefs= Dictionary<string, Z3Type>()
   let log = LogManager.GetLogger("LogicEngine.UFOL")
   do
-    _typeDefs.Add("Dkal.Principal", Uninterpreted("Principal"))
-
+    _typeDefs.Add("Dkal.Principal", Uninterpreted("Dkal.Principal"))
+    _typeDefs.Add("System.String", Uninterpreted("System.String"))
+    _typeDefs.Add("Dkal.Rule", Uninterpreted("Dkal.Rule"))
 
   member z3types.setZ3TypeForDkalType(dkalType, z3Type) =
     _typeDefs.Add(dkalType, z3Type)
@@ -54,5 +55,5 @@ type Z3TypeDefinition() =
     try 
       _typeDefs.[dkalType]
     with
-      | e -> log.ErrorException("Unknown type", e); failwith "Unknown type"
+      | e -> log.Error("Unknown type {0}", dkalType); failwith "Unknown type"
       
