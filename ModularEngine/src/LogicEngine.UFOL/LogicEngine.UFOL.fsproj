@@ -80,14 +80,14 @@
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Library2\Z3Translator.fsproj">
-      <Name>Z3Translator</Name>
-      <Project>{6c1c87fc-8c86-4b18-b9d8-4bd01891cdd0}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Substrate\Substrate.fsproj">
       <Name>Substrate (Substrate\Substrate)</Name>
       <Project>{49e0e6c4-6c69-4c95-a1d5-aa3f5c8a8554}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Z3Translator\Z3Translator.fsproj">
+      <Name>Z3Translator</Name>
+      <Project>{6c1c87fc-8c86-4b18-b9d8-4bd01891cdd0}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

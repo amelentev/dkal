@@ -16,6 +16,7 @@ open NLog
 
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
+open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast.Translations.Z3Translator
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
@@ -66,11 +67,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
     _z3RelationDefinitions.Add(name, _z3context.MkFuncDecl(name, domainSort, rangeSort))
 
 
-  /// Given a prefix (list of principal ITerms) a current Substitution with 
-  /// side conditions (AsInfo ITerms) and a target infon ITerm to derive
-  /// this method will recursively derive the target infon depending on its
-  /// structure.
-  // Shamelessly lifted from SimpleEngine
+  /// Lift all queries from infon that need to be forwarded to the substrates
   member private ufolengine.substrateQueries (infon: ITerm) = 
     seq {
         match infon with
@@ -80,6 +77,13 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
         | AsInfon(exp) -> yield exp
         | _ -> yield! []
     }
+
+  member private ufolengine.substsFromKnowledge (infon: ITerm) (subst: ISubstitution) (knowledge: ITerm seq) =
+    knowledge |>
+      Seq.fold (fun acc x -> match infon.UnifyFrom subst x with
+                                | None -> acc
+                                | Some sub -> sub::acc) []
+
   interface ILogicEngine with
     member engine.Start() = 
       ()
@@ -97,23 +101,23 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       seq {
           for subst in substs do
             // recursively solve substitutions for asInfon
-            let specSubsts= SubstrateDispatcher.Solve (engine.substrateQueries infon) [subst]
-            for specSubst in specSubsts do
+            let infon= infon.Apply subst
+            let knowledgeBasedSubsts = 
+                  if not infon.Vars.IsEmpty then     // check the infostrate knowledge for possible substitutions
+                    engine.substsFromKnowledge infon subst _infostrate.Value.Knowledge
+                  else
+                    [subst]
+            for subst2 in knowledgeBasedSubsts do
+              let specSubsts= SubstrateDispatcher.Solve (engine.substrateQueries infon) [subst2]
+              for specSubst in specSubsts do
+                let substInfon= infon.Apply specSubst
                 _z3solver.Value.Push()
-                _z3solver.Value.Assert( _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon).getUnderlyingExpr() :?> BoolExpr) )
+                _z3solver.Value.Assert( _z3context.MkNot((_z3translator.Value :> ITranslator).translate(substInfon.Apply specSubst).getUnderlyingExpr() :?> BoolExpr) )
                 let hasModel= _z3solver.Value.Check([||])
                 _z3solver.Value.Pop()
                 match hasModel with
                   | Status.UNSATISFIABLE -> yield specSubst
                   | _ -> ()
-(*
-            let model = match hasModel with
-              | Status.UNSATISFIABLE -> Some _z3solver.Value.Model
-              | _ -> None
-            _z3solver.Value.Pop()
-            if model.IsSome then
-              yield subst
-*)
       }
 
     /// Constructs evidence for the given infon ITerm that matches the given 

@@ -29,7 +29,11 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
     member translator.translate(term: ITerm) =
       match term with
         | PrincipalConstant(t) -> Z3Expr(_ctx.MkConst(t, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("Dkal.Principal"), _ctx))) :> ITranslatedExpr
-        | Const(t) -> failwith "Const not implemented"
+        | SubstrateConstant(t) -> match t with
+                                    | :? int as n -> Z3Expr(_ctx.MkInt(n)) :> ITranslatedExpr
+                                    | :? double as n -> Z3Expr(_ctx.MkReal(n.ToString())) :> ITranslatedExpr
+                                    | :? string as n -> Z3Expr(_ctx.MkConst(n, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("System.String"), _ctx))) :> ITranslatedExpr
+                                    | _ -> failwith (String.Format("Const type unrecognized {0}", t.GetType().FullName))
         | EmptyInfon(t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
         | AsInfon(t) -> (translator :> ITranslator).translate(EmptyInfon)   // assume it is already solved as true for the substitutions under Substrate
         | AndInfon(t) -> Z3Expr(_ctx.MkAnd(t |>

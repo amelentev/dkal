@@ -47,6 +47,7 @@ type Z3TypeDefinition() =
     _typeDefs.Add("Dkal.Principal", Uninterpreted("Dkal.Principal"))
     _typeDefs.Add("System.String", Uninterpreted("System.String"))
     _typeDefs.Add("Dkal.Rule", Uninterpreted("Dkal.Rule"))
+    _typeDefs.Add("System.Int32", Int)
 
   member z3types.setZ3TypeForDkalType(dkalType, z3Type) =
     _typeDefs.Add(dkalType, z3Type)
