@@ -33,6 +33,7 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
                                     | :? int as n -> Z3Expr(_ctx.MkInt(n)) :> ITranslatedExpr
                                     | :? double as n -> Z3Expr(_ctx.MkReal(n.ToString())) :> ITranslatedExpr
                                     | :? string as n -> Z3Expr(_ctx.MkConst(n, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("System.String"), _ctx))) :> ITranslatedExpr
+                                    | :? IConst as c -> (translator :> ITranslator).translate(c)
                                     | _ -> failwith (String.Format("Const type unrecognized {0}", t.GetType().FullName))
         | EmptyInfon(t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
         | AsInfon(t) -> (translator :> ITranslator).translate(EmptyInfon)   // assume it is already solved as true for the substitutions under Substrate

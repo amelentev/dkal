@@ -14,9 +14,10 @@ namespace Microsoft.Research.Dkal.Infostrate.Z3
 open System.Collections.Generic
 open NLog
 
-open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Interfaces
+open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Z3
 
 /// The Z3 infostrate accumulates facts as Z3 assertions to the engine
@@ -28,6 +29,11 @@ type Z3Infostrate() =
   let mutable _z3translator: ITranslator option= None
   let mutable _z3solver : Solver option = None
   let mutable _z3context: Context option = None
+
+  let _knownPrincipals= new HashSet<string>()
+
+  // We perform finite domain Z3 queries, so we need to know the domain values
+  let _knownValues = new Dictionary<Microsoft.Research.Dkal.Interfaces.IType,HashSet<IConst>>()
   
   member z3is.setTranslator(translator: ITranslator) =
     _z3translator <- Some translator
@@ -44,14 +50,34 @@ type Z3Infostrate() =
   member z3is.setContext(context: Context) =
     _z3context <- Some context
 
+  member private z3is.learnConstants (infon: ITerm) =
+    let rec getConstants infon =
+        match infon with
+        | EmptyInfon -> seq {yield! []}
+        | AndInfon(infons) -> Seq.collect (fun inf -> getConstants(inf)) infons
+        | OrInfon(infons) -> Seq.collect (fun inf -> getConstants(inf)) infons
+        | ImpliesInfon(infA, infB) -> Seq.collect (fun inf -> getConstants(inf)) [infA; infB]
+        | SaidInfon(ppal, inf) -> getConstants(inf)
+        | JustifiedInfon(inf, ev) -> getConstants(inf)
+        | Var(t) -> seq {yield! []}
+        | Const(c) -> seq {yield c}
+        | App(f, args) -> Seq.collect (fun inf -> getConstants(inf)) args
+        | templ -> failwith ("Unimplemented getConstants on " + templ.ToString())
+    getConstants(infon) |> Seq.iter (fun c -> if not (_knownValues.ContainsKey(c.Type)) then
+                                                _knownValues.Add(c.Type, new HashSet<IConst>())
+                                              ignore (_knownValues.[c.Type].Add(c)))
+
+  member z3is.getDomainForType (typ : IType) =
+    if _knownValues.ContainsKey(typ) then
+      _knownValues.[typ]
+    else
+      new HashSet<IConst>()
+
   interface IInfostrate with
     /// Split the infon into conjunctions and learn these recursively
     member is.Learn (infon: ITerm) = 
       log.Debug("Learn {0}", infon)
-      // solver only knows false at start
-      if knowledge.Count = 0 then
-        _z3solver.Value.Reset()
-
+      is.learnConstants(infon)
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
@@ -67,6 +93,7 @@ type Z3Infostrate() =
       log.Debug("Forget {0}", infon)
       log.Debug("Forgetting everything")
       _z3solver.Value.Reset()
+      _knownValues.Clear()
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to forget asInfon(...)"

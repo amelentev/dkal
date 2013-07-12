@@ -78,11 +78,45 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
         | _ -> yield! []
     }
 
+    (*
   member private ufolengine.substsFromKnowledge (infon: ITerm) (subst: ISubstitution) (knowledge: ITerm seq) =
-    knowledge |>
-      Seq.fold (fun acc x -> match infon.UnifyFrom subst x with
+    match infon with
+    | EmptyInfon -> [subst]
+    | Var(t) -> knowledge |> Seq.collect(fun kn -> seq {yield infon.UnifyFrom subst kn}) |> 
+                          Seq.filter (fun subopt -> subopt.IsSome) |> Seq.map (fun subopt -> subopt.Value) |> Seq.toList
+    | SaidInfon(ppal ,t) -> ufolengine.substsFromKnowledge t subst knowledge
+    | JustifiedInfon(t, ev) -> ufolengine.substsFromKnowledge t subst knowledge
+    | ImpliesInfon(a,b) -> 
+      let subA = ufolengine.substsFromKnowledge a subst knowledge
+      let subB = ufolengine.substsFromKnowledge b subst knowledge
+      let subAB = subA |> List.collect(fun sa -> subB |> List.map (fun sb -> sa.ComposeWith sb))
+      let subBA = subB |> List.collect(fun sb -> subA |> List.map (fun sa -> sb.ComposeWith sa))
+      (seq [subA; subB; subBA; subAB]) |> List.concat
+    | AndInfon(infons) -> 
+      ignore (infons |> List.map (fun inf -> ufolengine.substsFromKnowledge inf subst knowledge))
+      []
+    | App(t) -> knowledge |> Seq.collect(fun kn -> seq {yield infon.UnifyFrom subst kn}) |> 
+                          Seq.filter (fun subopt -> subopt.IsSome) |> Seq.map (fun subopt -> subopt.Value) |> Seq.toList
+    | term -> log.Error("substFromKnowledge not implemented for {0}", term); failwith "substFromKnowledge not implemented" 
+         
+         (*
+         Seq.fold (fun acc x -> match infon.UnifyFrom subst x with
                                 | None -> acc
-                                | Some sub -> sub::acc) []
+                                | Some sub -> sub::acc) []*)
+  *)
+
+  /// Given a sequence of substitutions that may not have substitutions for some free variable in an infon, it returns
+  /// a set of extended substitutions that bind these free variables.
+  /// The chosen values are taken from the known domain of the variable type
+  member private ufolengine.completeSubstitutions (infon: ITerm) (substs : ISubstitution seq) =
+    let rec extendSubstitutionForVars substitution (vars:IVar seq) = 
+      vars |>
+        Seq.fold (fun subsAcc var -> subsAcc |>
+                                     Seq.collect (fun (sub:ISubstitution) -> (_infostrate.Value :?> Z3Infostrate).getDomainForType(var.Type) |>
+                                                                             Seq.collect (fun mapping -> [sub.Extend (var, Constant(mapping))]) )
+                 ) (seq [substitution])
+    substs |> 
+      Seq.collect (fun sub -> extendSubstitutionForVars sub (List.filter (fun var -> not (sub.DomainContains(var))) infon.Vars))
 
   interface ILogicEngine with
     member engine.Start() = 
@@ -97,28 +131,17 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
     /// that make the infon hold
     member engine.Derive (infon: ITerm) (substs: ISubstitution seq) =
       log.Debug("Derive {0}", infon)
-      // TODO solve asInfon via substrates and assert substitutions
-      seq {
-          for subst in substs do
-            // recursively solve substitutions for asInfon
-            let infon= infon.Apply subst
-            let knowledgeBasedSubsts = 
-                  if not infon.Vars.IsEmpty then     // check the infostrate knowledge for possible substitutions
-                    engine.substsFromKnowledge infon subst _infostrate.Value.Knowledge
-                  else
-                    [subst]
-            for subst2 in knowledgeBasedSubsts do
-              let specSubsts= SubstrateDispatcher.Solve (engine.substrateQueries infon) [subst2]
-              for specSubst in specSubsts do
-                let substInfon= infon.Apply specSubst
-                _z3solver.Value.Push()
-                _z3solver.Value.Assert( _z3context.MkNot((_z3translator.Value :> ITranslator).translate(substInfon.Apply specSubst).getUnderlyingExpr() :?> BoolExpr) )
-                let hasModel= _z3solver.Value.Check([||])
-                _z3solver.Value.Pop()
-                match hasModel with
-                  | Status.UNSATISFIABLE -> yield specSubst
-                  | _ -> ()
-      }
+      substs |>
+        Seq.collect (fun sub -> [infon.Apply sub]) |>
+        Seq.collect (fun inf -> SubstrateDispatcher.Solve (engine.substrateQueries inf) substs) |>
+        engine.completeSubstitutions infon |>   // lastly for each substitution try it out on Z3
+        Seq.filter  (fun sub -> 
+                     _z3solver.Value.Push()
+                     _z3solver.Value.Assert( _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr() :?> BoolExpr) )
+                     let hasModel= _z3solver.Value.Check([||])
+                     _z3solver.Value.Pop()
+                     hasModel = Status.UNSATISFIABLE
+                     )
 
     /// Constructs evidence for the given infon ITerm that matches the given 
     /// proofTemplate, if possible. Works under the given substitutions, returning

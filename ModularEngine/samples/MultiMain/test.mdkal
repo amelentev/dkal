@@ -1,0 +1,12 @@
+type Int = System.Int32
+relation f(X: Int)
+relation g(X: Int)
+
+---p1-----------------------------
+knows f(1)
+knows f(1) -> g(1)
+knows f(2) -> g(2)
+
+with X:Int
+if g(X) do
+send to me: f(2)
