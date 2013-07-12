@@ -38,6 +38,9 @@ type Substitution(subst : Dictionary<IVar, ITerm>) =
     member s.Apply (v: IVar) = 
       match subst.TryGetValue v with
       | true, (:? IVar as ret) -> (s:>ISubstitution).Apply(ret) // var -> another var
+      | true, (:? IConst as ret) -> match ret.Value with       // TODO take this out, shouldn't happen
+                                    | :? IConst as value -> value :> ITerm
+                                    | _ -> ret :> ITerm
       | true, ret -> ret
       | _ -> v :> ITerm
 

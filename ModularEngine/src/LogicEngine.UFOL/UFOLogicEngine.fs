@@ -132,9 +132,8 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
     member engine.Derive (infon: ITerm) (substs: ISubstitution seq) =
       log.Debug("Derive {0}", infon)
       substs |>
-        Seq.collect (fun sub -> [infon.Apply sub]) |>
-        Seq.collect (fun inf -> SubstrateDispatcher.Solve (engine.substrateQueries inf) substs) |>
-        engine.completeSubstitutions infon |>   // lastly for each substitution try it out on Z3
+        engine.completeSubstitutions infon |>
+        SubstrateDispatcher.Solve (engine.substrateQueries infon) |>
         Seq.filter  (fun sub -> 
                      _z3solver.Value.Push()
                      _z3solver.Value.Assert( _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr() :?> BoolExpr) )
