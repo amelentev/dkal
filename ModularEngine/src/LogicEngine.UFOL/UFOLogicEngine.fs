@@ -78,33 +78,6 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
         | _ -> yield! []
     }
 
-    (*
-  member private ufolengine.substsFromKnowledge (infon: ITerm) (subst: ISubstitution) (knowledge: ITerm seq) =
-    match infon with
-    | EmptyInfon -> [subst]
-    | Var(t) -> knowledge |> Seq.collect(fun kn -> seq {yield infon.UnifyFrom subst kn}) |> 
-                          Seq.filter (fun subopt -> subopt.IsSome) |> Seq.map (fun subopt -> subopt.Value) |> Seq.toList
-    | SaidInfon(ppal ,t) -> ufolengine.substsFromKnowledge t subst knowledge
-    | JustifiedInfon(t, ev) -> ufolengine.substsFromKnowledge t subst knowledge
-    | ImpliesInfon(a,b) -> 
-      let subA = ufolengine.substsFromKnowledge a subst knowledge
-      let subB = ufolengine.substsFromKnowledge b subst knowledge
-      let subAB = subA |> List.collect(fun sa -> subB |> List.map (fun sb -> sa.ComposeWith sb))
-      let subBA = subB |> List.collect(fun sb -> subA |> List.map (fun sa -> sb.ComposeWith sa))
-      (seq [subA; subB; subBA; subAB]) |> List.concat
-    | AndInfon(infons) -> 
-      ignore (infons |> List.map (fun inf -> ufolengine.substsFromKnowledge inf subst knowledge))
-      []
-    | App(t) -> knowledge |> Seq.collect(fun kn -> seq {yield infon.UnifyFrom subst kn}) |> 
-                          Seq.filter (fun subopt -> subopt.IsSome) |> Seq.map (fun subopt -> subopt.Value) |> Seq.toList
-    | term -> log.Error("substFromKnowledge not implemented for {0}", term); failwith "substFromKnowledge not implemented" 
-         
-         (*
-         Seq.fold (fun acc x -> match infon.UnifyFrom subst x with
-                                | None -> acc
-                                | Some sub -> sub::acc) []*)
-  *)
-
   /// Given a sequence of substitutions that may not have substitutions for some free variable in an infon, it returns
   /// a set of extended substitutions that bind these free variables.
   /// The chosen values are taken from the known domain of the variable type

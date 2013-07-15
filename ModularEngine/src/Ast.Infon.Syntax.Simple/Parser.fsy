@@ -52,7 +52,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token AND IMPLIES OR
 
 // Unary infon operators
-%token AS_INFON SAID
+%token NOT AS_INFON SAID
 
 // Delimiters
 %token EQ LPAR RPAR LBRACE RBRACE LSQ RSQ COLON SEMICOLON COMMA DOT GETS
@@ -124,6 +124,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %left OR
 %left AND
 %right SAID
+%right NOT
 
 // ------------------------------------------------------------------------------------------------------
 // These are the rules of the grammar 
@@ -233,14 +234,17 @@ Infon:
         primitiveApp(Primitives.AsInfon, [bq]), solvedMacros
       else
         primitiveApp(Primitives.AsInfon, [t]), solvedMacros }
-	| Infon IMPLIES Infon
+    | Infon IMPLIES Infon
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Implies, [t1; t2]), sm1 @ sm2 }
-	| Principal SAID Infon
+    | Principal SAID Infon
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3
       primitiveApp(Primitives.Said, [t1; t2]), sm1 @ sm2 }
+    | NOT Infon
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Not, [t]), sm }
 	| Infon AND Infon
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $3

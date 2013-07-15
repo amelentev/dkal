@@ -43,6 +43,7 @@ rule tokenize = parse
 | "||"				  { OR }
 
 // Unary infon operators
+| "not"				{ NOT }
 | "asInfon"			{ AS_INFON }
 | "said"		  	{ SAID }
 

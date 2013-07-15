@@ -107,6 +107,10 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
                             | :? ISubstrateQueryTerm as exp -> Some exp
                             | _ -> failwith "Expecting ISubstrateQueryTerm in AsInfon"
                           | _ -> None
+  /// Active pattern for infon negation
+  let (|NotInfon|_|) mt = match mt with
+                          | App({Name=Primitives.Not; RetType=Infon}, [infon]) -> Some infon
+                          | _ -> None
   /// Active pattern for infon conjunction
   let (|AndInfon|_|) mt = match mt with
                           | App({Name=Primitives.And; RetType=Infon}, mts) -> Some mts

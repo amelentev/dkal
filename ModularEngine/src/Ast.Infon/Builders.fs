@@ -90,6 +90,8 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   /// Build an asInfon
   let AsInfon (query: ISubstrateQueryTerm) = 
     App(Primitives.SolveFunction Primitives.AsInfon |> Option.get, [query])
+  /// Build negation of an infon
+  let NotInfon (infon: ITerm) = App(Primitives.SolveFunction Primitives.Not |> Option.get, [infon])
   /// Build an infon conjunction
   let AndInfon (infons: ITerm list) = 
     App({ Name = Primitives.And; 

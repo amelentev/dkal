@@ -41,6 +41,7 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
         | AndInfon(t) -> Z3Expr(_ctx.MkAnd(t |>
                                            List.map (fun x -> (translator :> ITranslator).translate(x).getUnderlyingExpr() :?> BoolExpr) |>
                                            List.toArray)) :> ITranslatedExpr
+        | NotInfon(t) -> Z3Expr(_ctx.MkNot((translator :> ITranslator).translate(t).getUnderlyingExpr() :?> BoolExpr)) :> ITranslatedExpr
         | OrInfon(t) -> Z3Expr(_ctx.MkOr(t |>
                                            List.map (fun x -> (translator :> ITranslator).translate(x).getUnderlyingExpr() :?> BoolExpr) |>
                                            List.toArray)) :> ITranslatedExpr

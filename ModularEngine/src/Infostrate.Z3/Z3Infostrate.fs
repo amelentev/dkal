@@ -56,6 +56,7 @@ type Z3Infostrate() =
         | EmptyInfon -> seq {yield! []}
         | AndInfon(infons) -> Seq.collect (fun inf -> getConstants(inf)) infons
         | OrInfon(infons) -> Seq.collect (fun inf -> getConstants(inf)) infons
+        | NotInfon(inf) -> getConstants(inf)
         | ImpliesInfon(infA, infB) -> Seq.collect (fun inf -> getConstants(inf)) [infA; infB]
         | SaidInfon(ppal, inf) -> getConstants(inf)
         | JustifiedInfon(inf, ev) -> getConstants(inf)
