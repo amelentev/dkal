@@ -104,12 +104,20 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
     /// that make the infon hold
     member engine.Derive (infon: ITerm) (substs: ISubstitution seq) =
       log.Debug("Derive {0}", infon)
+      let substs= substs |>
+                         engine.completeSubstitutions infon |>
+                         SubstrateDispatcher.Solve (engine.substrateQueries infon)
+
+      // TODO probably needs to be done to fixpoint
+      // learn new constants that cropped up from solving substrates
+      (_infostrate.Value :?> Z3Infostrate).learnConstantsFromSubstitutions (Seq.toList substs)
+
       substs |>
         engine.completeSubstitutions infon |>
-        SubstrateDispatcher.Solve (engine.substrateQueries infon) |>
         Seq.filter  (fun sub -> 
                      _z3solver.Value.Push()
-                     _z3solver.Value.Assert( _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr() :?> BoolExpr) )
+                     let notGuard= _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr() :?> BoolExpr)
+                     _z3solver.Value.Assert( notGuard )
                      let hasModel= _z3solver.Value.Check([||])
                      _z3solver.Value.Pop()
                      hasModel = Status.UNSATISFIABLE

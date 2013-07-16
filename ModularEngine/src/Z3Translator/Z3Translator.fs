@@ -27,6 +27,11 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
   
   interface ITranslator with
     member translator.translate(term: ITerm) =
+      let escapeAndTerminate (str: string) =
+        // not sure which characters are accepted
+        // "_" + str.Replace(" ", "_") + "_"
+        str
+
       match term with
         | PrincipalConstant(t) -> Z3Expr(_ctx.MkConst(t, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("Dkal.Principal"), _ctx))) :> ITranslatedExpr
         | SubstrateConstant(t) -> match t with
@@ -37,6 +42,7 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
                                     | :? IConst as c -> (translator :> ITranslator).translate(c)
                                     | _ -> failwith (String.Format("Const type unrecognized {0}", t.GetType().FullName))
         | EmptyInfon(t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
+        | SaidInfon(ppal, t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr // TODO ignore for now, results may not make sense in these cases
         | AsInfon(t) -> (translator :> ITranslator).translate(EmptyInfon)   // assume it is already solved as true for the substitutions under Substrate
         | AndInfon(t) -> Z3Expr(_ctx.MkAnd(t |>
                                            List.map (fun x -> (translator :> ITranslator).translate(x).getUnderlyingExpr() :?> BoolExpr) |>
@@ -48,9 +54,13 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
         | ImpliesInfon(t) -> Z3Expr(_ctx.MkImplies((translator :> ITranslator).translate(fst t).getUnderlyingExpr() :?> BoolExpr,
                                                    (translator :> ITranslator).translate(snd t).getUnderlyingExpr() :?> BoolExpr))
                              :> ITranslatedExpr
+        | Var(t) ->
+          Z3Expr(_ctx.MkConst(t.Name, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType(t.Type.FullName), _ctx))) :> ITranslatedExpr
+        | Forall(t) ->
+          Z3Expr(_ctx.MkForall(
+                              [|((Z3Expr(_ctx.MkConst((fst t).Name, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType((fst t).Type.FullName), _ctx))) :> ITranslatedExpr).getUnderlyingExpr()) :?> Expr|],
+                              (translator :> ITranslator).translate(snd t).getUnderlyingExpr() :?> BoolExpr)) :> ITranslatedExpr
         | App(t) -> Z3Expr(_ctx.MkApp(_rels.[(fst t).Name], (snd t) |>
                                                                     List.map (fun x -> (translator :> ITranslator).translate(x).getUnderlyingExpr() :?> Expr) |>
                                                                     List.toArray )) :> ITranslatedExpr
-        | Var(t) ->
-          Z3Expr(_ctx.MkConst(t.Name, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType(t.Type.FullName), _ctx))) :> ITranslatedExpr
         | t -> failwith (String.Format("Translation not implemented {0}", t))

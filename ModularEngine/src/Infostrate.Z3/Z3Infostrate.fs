@@ -34,7 +34,7 @@ type Z3Infostrate() =
 
   // We perform finite domain Z3 queries, so we need to know the domain values
   let _knownValues = new Dictionary<Microsoft.Research.Dkal.Interfaces.IType,HashSet<IConst>>()
-  
+
   member z3is.setTranslator(translator: ITranslator) =
     _z3translator <- Some translator
 
@@ -62,17 +62,25 @@ type Z3Infostrate() =
         | JustifiedInfon(inf, ev) -> getConstants(inf)
         | Var(t) -> seq {yield! []}
         | Const(c) -> seq {yield c}
+        | AsInfon(t) -> seq {yield! []} // does this make 100% sense? Things the substrate predicates about may supposedly be extra-domain
+        | Forall(t) -> getConstants(snd t)
         | App(f, args) -> Seq.collect (fun inf -> getConstants(inf)) args
         | templ -> failwith ("Unimplemented getConstants on " + templ.ToString())
     getConstants(infon) |> Seq.iter (fun c -> if not (_knownValues.ContainsKey(c.Type)) then
                                                 _knownValues.Add(c.Type, new HashSet<IConst>())
                                               ignore (_knownValues.[c.Type].Add(c)))
 
+  // booleans? There is no "false" ITerm
   member z3is.getDomainForType (typ : IType) =
     if _knownValues.ContainsKey(typ) then
       _knownValues.[typ]
     else
       new HashSet<IConst>()
+
+  member z3is.learnConstantsFromSubstitutions (substs: ISubstitution list)=
+    substs |>
+      List.iter (fun sub -> sub.Domain |>
+                               List.iter (fun var -> z3is.learnConstants(sub.Apply var)))
 
   interface IInfostrate with
     /// Split the infon into conjunctions and learn these recursively
@@ -82,7 +90,7 @@ type Z3Infostrate() =
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
-      | Forall(v, t) -> (is :> IInfostrate).Learn t
+//      | Forall(v, t) -> (is :> IInfostrate).Learn t
       | infon -> 
           let z3Infon= _z3translator.Value.translate(infon)
           log.Debug("Asserting to Z3 {0}", ((z3Infon.getUnderlyingExpr() :?> Expr)))
