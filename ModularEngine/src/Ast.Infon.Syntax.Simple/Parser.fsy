@@ -82,7 +82,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token UPON FROM IF ELSE
 
 // Actions
-%token SEND SAY JUSTIFICATION TO LEARN FORGET INSTALL UNINSTALL APPLY 
+%token SEND SAY JUSTIFICATION TO LEARN FORGET INSTALL UNINSTALL APPLY COMPLETE
 
 // Evidence
 %token EV_AND
@@ -118,7 +118,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 
 %left WITH
 %left UPON IF 
-%left SEND SAY LEARN FORGET INSTALL UNINSTALL APPLY 
+%left SEND SAY LEARN FORGET INSTALL UNINSTALL APPLY COMPLETE
 %right LSQ RSQ
 %left IMPLIES
 %left OR
@@ -340,6 +340,14 @@ Action:
     { let t1, sm1 = normalizeAndApplyMacros $1
       let t2, sm2 = normalizeAndApplyMacros $2
       primitiveApp(Primitives.SeqAction, [t1; t2]), sm1 @ sm2 }
+  | COMPLETE LOWER_IDENTIFIER
+    { // check if it is a relation
+      let found, func = relations.TryGetValue $2
+      if not found then
+        failwithf "Undefined identifier: %O" $2
+      else
+        primitiveApp(Primitives.Complete, [({ Function = func; Args = [] } :> ITerm)]), []
+    }
   | LOWER_IDENTIFIER LPAR Terms RPAR		
     { let ts, sms = List.unzip (List.map normalizeAndApplyMacros $3)
       if ctxs.Peek().HasMacro($1) then

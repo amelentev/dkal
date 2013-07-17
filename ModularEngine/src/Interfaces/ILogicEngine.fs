@@ -41,3 +41,7 @@ type ILogicEngine =
 
   /// The signature checking implementation for this logic engine
   abstract member SignatureProvider: ISignatureProvider with set, get
+
+  /// Learns that the knowledge learnt so far for a given relation (wrapped as an infon) is complete (closed)
+  abstract member Complete: ITerm -> bool
+

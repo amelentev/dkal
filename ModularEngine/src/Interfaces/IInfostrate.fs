@@ -22,3 +22,4 @@ type IInfostrate =
 
   /// Returns a sequence of knowledge from the infostrate 
   abstract member Knowledge: ITerm seq
+

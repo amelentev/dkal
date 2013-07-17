@@ -99,6 +99,11 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       /// TODO should cleanup and shutdown Z3 (?)
       ()
 
+
+    member mle.Complete(infon: ITerm) =
+    // TODO
+      true
+
     /// Given an infon ITerm with (possibly) free variables and an initial sequence
     /// of substitutions it returns all those (possibly specialized) substitutions
     /// that make the infon hold

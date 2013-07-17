@@ -49,6 +49,7 @@ type Z3TypeDefinition() =
     _typeDefs.Add("Dkal.Rule", Uninterpreted("Dkal.Rule"))
     _typeDefs.Add("System.DateTime", Uninterpreted("System.String"))
     _typeDefs.Add("System.Int32", Int)
+    _typeDefs.Add("System.Boolean", Bool)
 
   member z3types.setZ3TypeForDkalType(dkalType, z3Type) =
     _typeDefs.Add(dkalType, z3Type)

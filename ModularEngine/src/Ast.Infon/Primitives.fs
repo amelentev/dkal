@@ -60,6 +60,8 @@ module Primitives =
   let Apply = "apply"
   [<Literal>] 
   let Fresh = "fresh"
+  [<Literal>] 
+  let Complete = "complete"
 
   // Infons
   [<Literal>] 
@@ -145,6 +147,8 @@ module Primitives =
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.SubstrateUpdate]; Identity = None}
     | Fresh -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Int32]; Identity = None}
+    | Complete ->
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
     
     // Infons
     | EmptyInfon ->

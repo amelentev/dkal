@@ -11,8 +11,12 @@
 
 namespace Microsoft.Research.Dkal.Interfaces
 
+/// Wraps around a generic translated expression
 type ITranslatedExpr =
+  /// Gets the underlying expression which is completely domain related
   abstract member getUnderlyingExpr: unit -> System.Object
 
+/// ITranslator provides a mechanism for translating ITerm elements to any other expression
 type ITranslator =
+  /// Translates an ITerm to an ITranslatedExpr
   abstract member translate: ITerm -> ITranslatedExpr

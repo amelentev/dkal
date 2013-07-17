@@ -36,6 +36,9 @@ type SimpleLogicEngine() =
     member se.Start () = ()
     member se.Stop () = ()
 
+    member mle.Complete(infon: ITerm) =
+      failwith("Complete not implemented for Simple engine")
+
     member se.set_Infostrate (infostrate: IInfostrate) =
       _infostrate <- Some infostrate
 
