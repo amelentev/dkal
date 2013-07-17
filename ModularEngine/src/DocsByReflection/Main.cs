@@ -34,48 +34,50 @@ namespace Microsoft.Research.Dkal.Documentation
         // Namespaces that we are intersted in
         static string namespaceOfInterest = "Microsoft.Research.Dkal";
 
+        static string runningPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
         // List of assemblies to process
-        static Assembly[] assemblies = {  Assembly.LoadFrom("Interfaces.dll"),
-                                          Assembly.LoadFrom("Ast.dll"),
-                                          Assembly.LoadFrom("Ast.Tree.dll"),
-                                          Assembly.LoadFrom("Ast.Infon.dll"), 
-                                          Assembly.LoadFrom("Ast.Syntax.Parsing.dll"), 
-                                          Assembly.LoadFrom("Ast.Infon.Syntax.Simple.dll"), 
-                                          Assembly.LoadFrom("Ast.Infon.Syntax.Typed.dll"), 
-                                          Assembly.LoadFrom("Ast.Infon.Syntax.Factories.dll"), 
-                                          Assembly.LoadFrom("Ast.Substrate.Basic.Syntax.Simple.dll"), 
-                                          Assembly.LoadFrom("Ast.Substrate.Basic.Syntax.Typed.dll"), 
-                                          Assembly.LoadFrom("Ast.Substrate.Sql.Syntax.Simple.dll"), 
-                                          Assembly.LoadFrom("Ast.Substrate.Sql.Syntax.Typed.dll"), 
-                                          Assembly.LoadFrom("Ast.Substrate.Xml.Syntax.Simple.dll"), 
-                                          Assembly.LoadFrom("Ast.Substrate.Xml.Syntax.Typed.dll"), 
-                                          Assembly.LoadFrom("Executor.Simple.dll"), 
-                                          Assembly.LoadFrom("Executor.Factories.dll"), 
-                                          Assembly.LoadFrom("Infostrate.Simple.dll"), 
-                                          Assembly.LoadFrom("Infostrate.Factories.dll"), 
-                                          Assembly.LoadFrom("LogicEngine.Simple.dll"), 
-                                          Assembly.LoadFrom("LogicEngine.Factories.dll"), 
-                                          Assembly.LoadFrom("MailBox.Simple.dll"), 
-                                          Assembly.LoadFrom("MailBox.Factories.dll"), 
-                                          Assembly.LoadFrom("Router.dll"), 
-                                          Assembly.LoadFrom("Router.Local.dll"), 
-                                          Assembly.LoadFrom("Router.Simple.dll"), 
-                                          Assembly.LoadFrom("Router.Factories.dll"), 
-                                          Assembly.LoadFrom("SignatureProvider.Simple.dll"), 
-                                          Assembly.LoadFrom("SignatureProvider.Factories.dll"), 
-                                          Assembly.LoadFrom("Substrate.dll"), 
-                                          Assembly.LoadFrom("Substrate.Basic.dll"), 
-                                          Assembly.LoadFrom("Substrate.Crypto.dll"), 
-                                          Assembly.LoadFrom("Substrate.FSharp.dll"), 
-                                          Assembly.LoadFrom("Substrate.Sql.dll"), 
-                                          Assembly.LoadFrom("Substrate.Xml.dll"), 
-                                          Assembly.LoadFrom("Substrate.Factories.dll"), 
-                                          Assembly.LoadFrom("Factories.Initializer.dll"), 
-                                          Assembly.LoadFrom("Globals.dll"), 
-                                          Assembly.LoadFrom("Utils.dll"), 
-                                          Assembly.LoadFrom("Dkal.exe"), 
-                                          Assembly.LoadFrom("DkalGui.exe"), 
-                                          Assembly.LoadFrom("DkalMulti.exe"), 
+        static Assembly[] assemblies = {  Assembly.LoadFrom(runningPath + "Interfaces.dll"),
+                                          Assembly.LoadFrom(runningPath + "Ast.dll"),
+                                          Assembly.LoadFrom(runningPath + "Ast.Tree.dll"),
+                                          Assembly.LoadFrom(runningPath + "Ast.Infon.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Syntax.Parsing.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Infon.Syntax.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Infon.Syntax.Typed.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Infon.Syntax.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Substrate.Basic.Syntax.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Substrate.Basic.Syntax.Typed.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Substrate.Sql.Syntax.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Substrate.Sql.Syntax.Typed.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Substrate.Xml.Syntax.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Ast.Substrate.Xml.Syntax.Typed.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Executor.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Executor.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Infostrate.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Infostrate.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "LogicEngine.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "LogicEngine.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "MailBox.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "MailBox.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Router.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Router.Local.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Router.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Router.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "SignatureProvider.Simple.dll"), 
+                                          Assembly.LoadFrom(runningPath + "SignatureProvider.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Substrate.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Substrate.Basic.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Substrate.Crypto.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Substrate.FSharp.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Substrate.Sql.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Substrate.Xml.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Substrate.Factories.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Factories.Initializer.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Globals.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Utils.dll"), 
+                                          Assembly.LoadFrom(runningPath + "Dkal.exe"), 
+                                          Assembly.LoadFrom(runningPath + "DkalGui.exe"), 
+                                          Assembly.LoadFrom(runningPath + "DkalMulti.exe"), 
+                                          Assembly.LoadFile(runningPath + "Z3Translator.dll")
                                        };
 
         class AssemblyData
@@ -182,6 +184,11 @@ namespace Microsoft.Research.Dkal.Documentation
                         td.DefinedAssembly = data[a];
 
                         XmlElement tDoc = DocsByReflection.XMLFromType(t);
+                        if (tDoc == null || tDoc["summary"] == null)
+                        {
+                            // this type has no documentation
+                            continue;
+                        }
                         td.Description = PrepareString(tDoc["summary"].InnerText);
 
                         foreach (MethodInfo m in t.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance 

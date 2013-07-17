@@ -47,6 +47,7 @@ type PrincipalConstant(name: string) =
   member pc.Name = name
   override pc.ToString() = name
 
+/// Collection
 type Collection(elems: IConst list) =
   inherit Constant(elems)
   member c.elems = elems
