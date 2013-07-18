@@ -22,7 +22,7 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.Infostrate.Z3
-
+open Microsoft.Research.Dkal.Substrate.Basic
 open Microsoft.Z3
 
 /// The UFOL engine uses Z3 deducing engine to infer the condition formulae based on
@@ -45,10 +45,13 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
   let _assemblyInformation: MultiAssembly = assemblyInfo
   let _z3TypeDefinitions= Z3TypeDefinition()
   let _z3RelationDefinitions= Dictionary<string, FuncDecl>()
+  let _dkalRelationDeclarations = Dictionary<string, RelationDeclaration>()
 
   do
     /// Feed Z3 relation declarations and save them for when we have to reset Z3
-    List.iter (fun rel -> ignore (this.makeZ3FunDecl rel.Name rel.Args)) assemblyInfo.Relations
+    List.iter (fun rel ->
+                         ignore (this.makeZ3FunDecl rel.Name rel.Args)
+                         _dkalRelationDeclarations.Add(rel.Name, rel)) assemblyInfo.Relations
     _z3solver <- Some (_z3context.MkSimpleSolver())
     _z3translator <- Some (Z3Translator(_z3context, _z3TypeDefinitions, _z3RelationDefinitions))
 
@@ -91,6 +94,17 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
     substs |> 
       Seq.collect (fun sub -> extendSubstitutionForVars sub (List.filter (fun var -> not (sub.DomainContains(var))) infon.Vars))
 
+  /// Tries to derive the relation for every known domain object. Those that are derivable and saved and known to be true
+  /// The rest will from now on be known as false
+  member private ufolengine.doCompleteRelation (relationName: string) =
+    let relDecl= _dkalRelationDeclarations.[relationName]
+    let relArgs= relDecl.Args |> List.map(fun var -> var :> ITerm)
+    let relDeclTypes = relDecl.Args |> List.map(fun var -> var.Type)
+    let relAppInfon= App({Name= relationName; RetType = Type.Infon ; ArgsType = relDeclTypes; Identity=None }, relArgs)
+    let substs = (ufolengine :> ILogicEngine).Derive relAppInfon [Substitution.Id]
+
+    (_infostrate.Value :?> Z3Infostrate).learnRelationCompleteDomain(relAppInfon, substs)
+
   interface ILogicEngine with
     member engine.Start() = 
       ()
@@ -99,9 +113,11 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       /// TODO should cleanup and shutdown Z3 (?)
       ()
 
-
     member mle.Complete(infon: ITerm) =
-    // TODO
+      match infon with
+      | App(f, args) -> mle.doCompleteRelation(f.Name)
+      | _ -> log.Error("Engine tried to complete {0}", infon)
+             failwith("Engine tried to complete " + infon.ToString())
       true
 
     /// Given an infon ITerm with (possibly) free variables and an initial sequence

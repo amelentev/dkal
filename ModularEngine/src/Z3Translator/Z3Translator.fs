@@ -25,6 +25,9 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
   let _rels= rels
   let _types = types
   
+  member tr.getZ3TypeSortForDkalType(typ: IType) =
+    Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType(typ.FullName), _ctx)
+
   interface ITranslator with
     member translator.translate(term: ITerm) =
       let escapeAndTerminate (str: string) =

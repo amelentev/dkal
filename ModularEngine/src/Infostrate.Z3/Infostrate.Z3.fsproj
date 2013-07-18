@@ -75,6 +75,11 @@
       <Project>{fddb2efe-2e4b-4007-909b-dfce3552fc68}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Z3Translator\Z3Translator.fsproj">
+      <Name>Z3Translator</Name>
+      <Project>{6c1c87fc-8c86-4b18-b9d8-4bd01891cdd0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
