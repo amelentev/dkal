@@ -1,0 +1,105 @@
+datasource xml("<root>
+	<objects>
+		<i1 owns='g1'>
+			<i2>
+				<i3 owns='g3'/>
+			</i2>
+		</i1>
+	</objects>
+	<groups>
+		<g1><p1/></g1>
+		<g3><p3/></g3>
+	</groups>
+</root>") namespaces "x"
+
+type String = System.String
+type Principal = String
+type Group = String
+type Object = String
+
+relation child(C: Object, P: Object)
+relation owns(G: Group, O: Object)
+relation owned(O: Object)
+// relation notowned(O: Object)
+relation permitg(G: Group, O: Object)
+relation permit(P: Group, O: Object)
+relation in(P: Principal, G: Group)
+
+relation init()
+relation init2()
+relation childLearnt()
+relation ownsLearnt()
+relation ownedLearnt()
+relation inLearnt()
+relation askpermit(O: Object)
+relation log(S: String)
+
+// permitg definition:
+knows forall O: Object, G: Group
+	owns (G, O) -> owned(O)
+knows forall O: Object, G: Group
+	owns(G, O) -> permitg(G, O)
+knows forall O: Object, O1: Object, G: Group
+	not owned(O) && child(O, O1) && permitg(G, O1) -> permitg(G, O)
+	
+// permit definition:
+knows forall O: Object, G: Group, P: Principal
+	permitg(G, O) && in(P, G) -> permit(P, O)
+	
+---p1---
+
+// load from xml
+knows	init()
+if init() do forget init()
+
+with O: Object, O1: Object, G: Group, P: Principal
+if	init() && {|x| "//objects//*" | O |} && {|x| "//objects//$O/*" | O1 |}
+do	learn child(O1, O) learn childLearnt()
+//	send to me: child(O1, O)
+
+if childLearnt()
+do complete child forget childLearnt()
+	
+//if	init() && {|x| "//objects//*[not(@owns)]" | O |}
+//do	learn not owned(O)
+//	send to me: not owned(O)
+	
+if	init() && {|x| "//objects//*[@owns]" | O, G <-> "owns" |}
+do	learn owns(G, O) learn ownsLearnt()
+//	send to me: owns(G, O)
+
+if ownsLearnt()
+do complete owns learn ownedLearnt() forget ownsLearnt()
+	
+if ownedLearnt()
+do complete owned learn init2() forget ownedLearnt()
+
+if	init() && {|x| "//groups/*" | G |} && {|x| "//groups/$G/*" | P |}
+do	learn in(P, G) learn inLearnt()
+//	send to me: in(P, G)
+
+if inLearnt()
+do complete in forget inLearnt()
+
+// queries:
+knows askpermit("i1") //g1,p1
+knows askpermit("i2") //g1,p1
+knows askpermit("i3") //g3,p3
+
+if init2() do forget init2()
+
+with O: Object, G: Group, P: Principal
+if	init2() && askpermit(O) && permitg(G, O)
+do	send to me: permitg(G, O)
+	
+if	init2() && askpermit(O) && permit(P, O)
+do	send to me: permit(P, O)
+
+if	init2() && permit("p1", "i2")
+do	send to me: log("ok")
+
+if	init2() && permit("p3", "i2")
+do	send to me: log("error")
+
+if	init2() && permit("p1", O)
+do	send to me: permit("p1 has access to:", O)
