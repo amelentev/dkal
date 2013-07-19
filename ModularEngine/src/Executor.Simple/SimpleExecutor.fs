@@ -263,7 +263,7 @@ type SimpleExecutor(router: IRouter,
       | Apply(su) -> 
         substrateUpdates.Add su |> ignore; false
       | Fresh(v) -> false // it is already instantiated, so no action needed
-      | Complete(rel) -> logicEngine.Complete rel
+      | Freeze(rel) -> logicEngine.Freeze rel
       | _ -> failwithf "Unrecognized action %O" a
 
     for a in actions do

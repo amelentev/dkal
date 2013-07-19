@@ -62,7 +62,7 @@ type SimpleParser() =
     | Forget(_) 
     | Apply(_) 
     | Fresh(_) 
-    | Complete(_) -> ()
+    | Freeze(_) -> ()
     | Install(r) 
     | Uninstall(r) -> checkRuleSanity(r)
     | _ -> raise(SemanticCheckException("Expecting action when checking sanity", pp.PrintTerm(a)))

@@ -33,8 +33,8 @@ type Wrapper() =
     member le.Start () = ()
     member le.Stop () = ()
 
-    member mle.Complete(infon: ITerm) =
-      failwith("Complete not implemented for Wrapper engine")
+    member mle.Freeze(infon: ITerm) =
+      failwith("Freeze not implemented for Wrapper engine")
 
     member le.set_Infostrate (infostrate: IInfostrate) =
       _infostrate := Some infostrate

@@ -43,5 +43,5 @@ type ILogicEngine =
   abstract member SignatureProvider: ISignatureProvider with set, get
 
   /// Learns that the knowledge learnt so far for a given relation (wrapped as an infon) is complete (closed)
-  abstract member Complete: ITerm -> bool
+  abstract member Freeze: ITerm -> bool
 

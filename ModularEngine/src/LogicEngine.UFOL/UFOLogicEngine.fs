@@ -96,7 +96,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
 
   /// Tries to derive the relation for every known domain object. Those that are derivable and saved and known to be true
   /// The rest will from now on be known as false
-  member private ufolengine.doCompleteRelation (relationName: string) =
+  member private ufolengine.doFreezeRelation (relationName: string) =
     let relDecl= _dkalRelationDeclarations.[relationName]
     let relArgs= relDecl.Args |> List.map(fun var -> var :> ITerm)
     let relDeclTypes = relDecl.Args |> List.map(fun var -> var.Type)
@@ -113,11 +113,11 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       /// TODO should cleanup and shutdown Z3 (?)
       ()
 
-    member mle.Complete(infon: ITerm) =
+    member mle.Freeze(infon: ITerm) =
       match infon with
-      | App(f, args) -> mle.doCompleteRelation(f.Name)
-      | _ -> log.Error("Engine tried to complete {0}", infon)
-             failwith("Engine tried to complete " + infon.ToString())
+      | App(f, args) -> mle.doFreezeRelation(f.Name)
+      | _ -> log.Error("Engine tried to freeze {0}", infon)
+             failwith("Engine tried to freeze " + infon.ToString())
       true
 
     /// Given an infon ITerm with (possibly) free variables and an initial sequence

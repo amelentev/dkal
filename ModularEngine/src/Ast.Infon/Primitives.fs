@@ -61,7 +61,7 @@ module Primitives =
   [<Literal>] 
   let Fresh = "fresh"
   [<Literal>] 
-  let Complete = "complete"
+  let Freeze = "freeze"
 
   // Infons
   [<Literal>] 
@@ -147,7 +147,7 @@ module Primitives =
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.SubstrateUpdate]; Identity = None}
     | Fresh -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Int32]; Identity = None}
-    | Complete ->
+    | Freeze ->
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Infon]; Identity = None}
     
     // Infons

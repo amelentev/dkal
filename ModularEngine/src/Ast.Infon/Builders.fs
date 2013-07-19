@@ -84,8 +84,8 @@ module Microsoft.Research.Dkal.Ast.Infon.Builders
   let FreshAction (v: ITerm) = 
     App(Primitives.SolveFunction Primitives.Fresh |> Option.get, [v])
   /// Build a complete relation action
-  let CompleteAction (r: ITerm) =
-    App(Primitives.SolveFunction Primitives.Complete |> Option.get, [r])
+  let FreezeAction (r: ITerm) =
+    App(Primitives.SolveFunction Primitives.Freeze |> Option.get, [r])
 
   /// Build an empty infon
   let EmptyInfon = 

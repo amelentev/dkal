@@ -95,9 +95,9 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|Fresh|_|) mt = match mt with
                        | App({Name=Primitives.Fresh}, [v]) -> Some v
                        | _ -> None
-  /// Active pattern for complete relation declaration action
-  let (|Complete|_|) mt = match mt with
-                          | App({Name=Primitives.Complete}, [f]) -> Some f
+  /// Active pattern for freeze relation declaration action
+  let (|Freeze|_|) mt = match mt with
+                          | App({Name=Primitives.Freeze}, [f]) -> Some f
                           | _ -> None
   /// Active pattern for the empty infon
   let (|EmptyInfon|_|) mt = match mt with 

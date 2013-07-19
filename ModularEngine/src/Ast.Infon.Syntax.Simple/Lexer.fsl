@@ -104,7 +104,7 @@ rule tokenize = parse
 | "install"			      { INSTALL }
 | "uninstall"		      { UNINSTALL }
 | "apply"		          { APPLY }
-| "complete"              { COMPLETE }
+| "freeze"              { FREEZE }
 
 
 // Evidence
