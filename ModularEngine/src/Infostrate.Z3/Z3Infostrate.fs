@@ -106,6 +106,9 @@ type Z3Infostrate() =
     else
       new HashSet<IConst>()
 
+  member z3is.getDomains() =
+    _knownValues
+
   member z3is.learnConstantsFromSubstitutions (substs: ISubstitution list)=
     substs |>
       List.iter (fun sub -> sub.Domain |>

@@ -81,18 +81,6 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
         | _ -> yield! []
     }
 
-  /// Given a sequence of substitutions that may not have substitutions for some free variable in an infon, it returns
-  /// a set of extended substitutions that bind these free variables.
-  /// The chosen values are taken from the known domain of the variable type
-  member private ufolengine.completeSubstitutions (infon: ITerm) (substs : ISubstitution seq) =
-    let rec extendSubstitutionForVars substitution (vars:IVar seq) = 
-      vars |>
-        Seq.fold (fun subsAcc var -> subsAcc |>
-                                     Seq.collect (fun (sub:ISubstitution) -> (_infostrate.Value :?> Z3Infostrate).getDomainForType(var.Type) |>
-                                                                             Seq.collect (fun mapping -> [sub.Extend (var, Constant(mapping))]) )
-                 ) (seq [substitution])
-    substs |> 
-      Seq.collect (fun sub -> extendSubstitutionForVars sub (List.filter (fun var -> not (sub.DomainContains(var))) infon.Vars))
 
   /// Tries to derive the relation for every known domain object. Those that are derivable and saved and known to be true
   /// The rest will from now on be known as false
@@ -126,7 +114,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
     member engine.Derive (infon: ITerm) (substs: ISubstitution seq) =
       log.Debug("Derive {0}", infon)
       let substs= substs |>
-                         engine.completeSubstitutions infon |>
+                         Z3TranslatorUtil.completeSubstitutions (infon) ((_infostrate.Value :?> Z3Infostrate).getDomains()) |>
                          SubstrateDispatcher.Solve (engine.substrateQueries infon)
 
       // TODO probably needs to be done to fixpoint
@@ -134,7 +122,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       (_infostrate.Value :?> Z3Infostrate).learnConstantsFromSubstitutions (Seq.toList substs)
 
       substs |>
-        engine.completeSubstitutions infon |>
+        Z3TranslatorUtil.completeSubstitutions (infon) ((_infostrate.Value :?> Z3Infostrate).getDomains()) |>
         Seq.filter  (fun sub -> 
                      _z3solver.Value.Push()
                      let notGuard= _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr() :?> BoolExpr)
@@ -162,6 +150,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       _infostrate <- Some infostrate
       let z3Infostrate= _infostrate.Value :?> Z3Infostrate
       z3Infostrate.setTranslator (_z3translator.Value)
+      _z3translator.Value.setVariableDomains (z3Infostrate.getDomains())
       z3Infostrate.setContext(_z3context)
       z3Infostrate.setSolver(_z3solver.Value)
 

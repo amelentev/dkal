@@ -15,18 +15,52 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast.Tree
+open Microsoft.Research.Dkal.Substrate
 open Microsoft.Z3
 
 open System
 open System.Collections.Generic
 
+type Z3TranslatorUtil=
+
+  /// Given a sequence of substitutions that may not have substitutions for some free variable in an infon, it returns
+  /// a set of extended substitutions that bind these free variables.
+  /// The chosen values are taken from the known domain of the variable type
+  static member completeSubstitutions (infon: ITerm) (varDomains: Dictionary<IType,HashSet<IConst>>) (substs : ISubstitution seq) =
+    let rec extendSubstitutionForVars substitution (vars:IVar seq) = 
+      vars |>
+        Seq.fold (fun subsAcc var -> subsAcc |>
+                                     Seq.collect (fun (sub:ISubstitution) -> (varDomains.[var.Type] |>
+                                                                                                    Seq.collect (fun mapping -> [sub.Extend (var, Constant(mapping))]))
+                                                 )
+                 ) (seq [substitution])
+    substs |> 
+      Seq.collect (fun sub -> extendSubstitutionForVars sub (List.filter (fun var -> not (sub.DomainContains(var))) infon.Vars))
+
+
 type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string, FuncDecl>) =
   let _ctx= ctx
   let _rels= rels
   let _types = types
+  let mutable _domains= Dictionary<IType, HashSet<IConst>>()
   
+  member tr.setVariableDomains(domains: Dictionary<IType, HashSet<IConst>>) =
+    _domains <- domains
+
   member tr.getZ3TypeSortForDkalType(typ: IType) =
     Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType(typ.FullName), _ctx)
+
+  member tr.domainRestrictionFromQuery (query:ISubstrateQueryTerm) =
+    let substs = Z3TranslatorUtil.completeSubstitutions (query) _domains ([Substitution.Id])
+    let substs = SubstrateDispatcher.Solve [query] substs
+    let expr= substs |>
+                      Seq.fold (fun acc sub -> let subDomainTranslation= sub.Domain |> Seq.fold (fun acc var -> let translateVarValue =
+                                                                                                                  _ctx.MkEq((tr :> ITranslator).translate(var :> ITerm).getUnderlyingExpr() :?> Expr,
+                                                                                                                    (tr :> ITranslator).translate(sub.Apply(var)).getUnderlyingExpr() :?> Expr)
+                                                                                                                _ctx.MkAnd([|translateVarValue;acc|])) (_ctx.MkTrue())
+                                               (_ctx.MkOr([|acc;subDomainTranslation|]))
+                               ) (_ctx.MkFalse())
+    Z3Expr(expr) :> ITranslatedExpr
 
   interface ITranslator with
     member translator.translate(term: ITerm) =
@@ -46,7 +80,7 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
                                     | _ -> failwith (String.Format("Const type unrecognized {0}", t.GetType().FullName))
         | EmptyInfon(t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
         | SaidInfon(ppal, t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr // TODO ignore for now, results may not make sense in these cases
-        | AsInfon(t) -> (translator :> ITranslator).translate(EmptyInfon)   // assume it is already solved as true for the substitutions under Substrate
+        | AsInfon(t) -> translator.domainRestrictionFromQuery(t)   // TODO needs to be queried into the substrate to know if true or not
         | AndInfon(t) -> Z3Expr(_ctx.MkAnd(t |>
                                            List.map (fun x -> (translator :> ITranslator).translate(x).getUnderlyingExpr() :?> BoolExpr) |>
                                            List.toArray)) :> ITranslatedExpr

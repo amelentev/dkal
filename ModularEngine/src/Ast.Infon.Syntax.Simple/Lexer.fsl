@@ -74,6 +74,7 @@ rule tokenize = parse
 
 // Relation declarations
 | "relation"		{ RELATION }
+| "dsrelation"      { DATASOURCERELATION }
 
 // Macro declarations
 | "macro"			{ MACRO }

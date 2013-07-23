@@ -51,7 +51,7 @@ type TypedParser() =
       GeneralParser.TryParse (Parser.Policy Lexer.tokenize) s
 
     member sp.ParseSignature s =
-      { Substrates = []; Relations = [] }
+      { Substrates = []; Relations = []; DatasourceRelations= []; }
 
     member sp.ParseAssembly s =
       let sp = (sp :> IInfonParser)

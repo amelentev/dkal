@@ -23,7 +23,8 @@ type RelationDeclaration = { Name: string;
 /// A Signature holds all the substrate, tables and relation declarations 
 /// found in an assembly
 type Signature =  { Substrates: ISubstrate list;
-                    Relations: RelationDeclaration list }
+                    Relations: RelationDeclaration list
+                    DatasourceRelations: RelationDeclaration list }
  
 /// A Policy contains a list of rules (in the order they were found in the 
 /// Assembly) and knowledge assertions

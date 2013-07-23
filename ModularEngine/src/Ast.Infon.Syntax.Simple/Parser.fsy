@@ -23,6 +23,7 @@ open System
 open System.Collections.Generic
 
 let relations = new Dictionary<string, Function>()
+let datasourceRelations= new Dictionary<string, Function>()
 
 let mutable ctxs = new Stack<IParsingContext>()
 
@@ -68,6 +69,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 
 // Relation declarations
 %token RELATION
+%token DATASOURCERELATION
 
 // Macro declarations
 %token MACRO
@@ -135,10 +137,11 @@ Assembly:
 	| Signature Policy EOF							  { { Signature = $1; Policy = $2 } }
 
 Signature:
-	|										                	{ {Substrates = []; Relations = []} }
+	|										                	{ { Substrates = []; Relations = []; DatasourceRelations= [] } }
 	| Signature SubstrateDeclaration 			{ {$1 with Substrates = $1.Substrates @ [$2]} }
 	| Signature TypeDeclaration 			  	{ $1 }
 	| Signature RelationDeclaration 			{ {$1 with Relations = $1.Relations @ [$2]} }
+	| Signature DatasourceRelationDeclaration   { {$1 with DatasourceRelations = $1.DatasourceRelations @ [$2]} }
 	| Signature MacroDeclaration 				  { $1 }
 
 Policy:
@@ -168,7 +171,13 @@ RelationDeclaration:
 	| RELATION LOWER_IDENTIFIER LPAR Args RPAR		
     { let rel = { Name = $2; ArgsType = (List.map (fun (v:IVar) -> v.Type) $4); RetType = Type.Infon; Identity = None}
       relations.[$2] <- rel
-      { Name = $2; Args = $4 } }   
+      { Name = $2; Args = $4 } }
+
+DatasourceRelationDeclaration:
+    | DATASOURCERELATION LOWER_IDENTIFIER LPAR Args RPAR
+    { let rel = {Name = $2; ArgsType = (List.map (fun (v:IVar) -> v.Type) $4); RetType = Type.Infon; Identity= None}
+      datasourceRelations.[$2] <- rel
+      { Name = $2; Args = $4 } }
 
 Args:
 	|											      { [] }
@@ -263,12 +272,17 @@ Infon:
         let ret, solvedMacro = ctxs.Peek().ApplyMacro($1, ts)
         ret, (List.concat sms) @ [solvedMacro]
       else
-        // check if it is a relation
+        // check if it is a relation or a datasource relation
         let found, func = relations.TryGetValue $1
         if found then
           App(func, ts), (List.concat sms)
         else
-          failwithf "Undefined identifier: %O" $1 }
+          let found, func= datasourceRelations.TryGetValue $1
+          if found then
+            App (func, ts), (List.concat sms)
+          else
+            failwithf "Undefined identifier: %O" $1
+    }
   | ForAllDeclaration Infon
     { ctxs.Pop() |> ignore
       let t, solvedMacros = normalizeAndApplyMacros $2
@@ -341,10 +355,14 @@ Action:
       let t2, sm2 = normalizeAndApplyMacros $2
       primitiveApp(Primitives.SeqAction, [t1; t2]), sm1 @ sm2 }
   | FREEZE LOWER_IDENTIFIER
-    { // check if it is a relation
-      let found, func = relations.TryGetValue $2
+    { // check if it is a datasource relation
+      let found, func = datasourceRelations.TryGetValue $2
       if not found then
-        failwithf "Undefined identifier: %O" $2
+        let found, func= relations.TryGetValue $2
+        if found then
+          failwithf "Trying to freeze non-datasource relation: %O" $2
+        else
+          failwithf "Undefined identifier: %O" $2
       else
         primitiveApp(Primitives.Freeze, [({ Function = func; Args = [] } :> ITerm)]), []
     }
