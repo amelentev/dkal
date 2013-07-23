@@ -30,8 +30,12 @@ type Z3TranslatorUtil=
     let rec extendSubstitutionForVars substitution (vars:IVar seq) = 
       vars |>
         Seq.fold (fun subsAcc var -> subsAcc |>
-                                     Seq.collect (fun (sub:ISubstitution) -> (varDomains.[var.Type] |>
-                                                                                                    Seq.collect (fun mapping -> [sub.Extend (var, Constant(mapping))]))
+                                     Seq.collect (fun (sub:ISubstitution) -> let domain= try 
+                                                                                           varDomains.[var.Type]
+                                                                                         with
+                                                                                           | _ -> HashSet<IConst>()                                     
+                                                                             domain |>
+                                                                                    Seq.collect (fun mapping -> [sub.Extend (var, Constant(mapping))])
                                                  )
                  ) (seq [substitution])
     substs |> 
