@@ -18,7 +18,7 @@ open NLog
 
 open Microsoft.Z3
 
-type Z3Type = Bool | Int | Real | BitVec of uint32 | Array of Z3Type * Z3Type | Uninterpreted of string
+type Z3Type = Bool | Int | Real | BitVec of uint32 | Array of Z3Type * Z3Type | Uninterpreted of string | Record of string * string list * Z3Type list
 
 type Z3TypesUtil() =
   static member z3TypeToString(typ) =
@@ -29,6 +29,9 @@ type Z3TypesUtil() =
     | BitVec(n) -> String.Format("_ BitVec {0}", n)
     | Array(dom, ran) -> "(Array " + Z3TypesUtil.z3TypeToString(dom) + " " + Z3TypesUtil.z3TypeToString(ran) + ")"
     | Uninterpreted(name) -> name
+    | Record(name, fields, typelist) -> "(Record " + name + " [" +
+                                        ((List.zip fields typelist) |>
+                                                                    (List.fold (fun acc (field, _type) -> acc + " " + field + ":" + Z3TypesUtil.z3TypeToString(_type)) "")) + "]"
 
   static member getZ3TypeSort(typ, ctx: Context) =
     match typ with
@@ -38,6 +41,11 @@ type Z3TypesUtil() =
     | BitVec(n) -> ctx.MkBitVecSort(n) :> Sort
     | Array(dom, ran) -> ctx.MkArraySort(Z3TypesUtil.getZ3TypeSort(dom, ctx), Z3TypesUtil.getZ3TypeSort(ran, ctx)) :> Sort
     | Uninterpreted(name) -> ctx.MkUninterpretedSort(name) :> Sort
+    | Record(name, fields, typelist) -> ctx.MkTupleSort(ctx.MkSymbol(name),
+                                                        fields |> List.map (fun field -> ctx.MkSymbol(field) :> Symbol) |> List.toArray,
+                                                        typelist |> List.map (fun _type -> Z3TypesUtil.getZ3TypeSort(_type, ctx)) |> List.toArray
+                                                       ) :> Sort
+
 
 
 type Z3TypeDefinition() =
@@ -50,6 +58,8 @@ type Z3TypeDefinition() =
     _typeDefs.Add("System.DateTime", Uninterpreted("System.String"))
     _typeDefs.Add("System.Int32", Int)
     _typeDefs.Add("System.Boolean", Bool)
+    _typeDefs.Add("World", Uninterpreted("World"))
+    _typeDefs.Add("AccFun", Array(Record("AccFun", ["world";"principal"],[Uninterpreted("World");Uninterpreted("Dkal.Principal")]), Uninterpreted("World")))
 
   member z3types.setZ3TypeForDkalType(dkalType, z3Type) =
     _typeDefs.Add(dkalType, z3Type)

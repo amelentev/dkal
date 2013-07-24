@@ -66,6 +66,12 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
                                ) (_ctx.MkFalse())
     Z3Expr(expr) :> ITranslatedExpr
 
+  member private tr.translateSaidInfon(ppal: ITerm, t: ITerm) =
+    // "said" modality actually needs to be translated folded back from the beginning
+    // that is, given "A said B said X" the first accessibility is to the world of "A said" and from then to "B said"
+    // ie, [A][B]X --> [X accA accB]
+    Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
+
   interface ITranslator with
     member translator.translate(term: ITerm) =
       let escapeAndTerminate (str: string) =
@@ -83,7 +89,7 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
                                     | :? IConst as c -> (translator :> ITranslator).translate(c)
                                     | _ -> failwith (String.Format("Const type unrecognized {0}", t.GetType().FullName))
         | EmptyInfon(t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
-        | SaidInfon(ppal, t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr // TODO ignore for now, results may not make sense in these cases
+        | SaidInfon(ppal, t) -> translator.translateSaidInfon(ppal, t) // TODO ignore for now, results may not make sense in these cases
         | AsInfon(t) -> translator.domainRestrictionFromQuery(t)   // TODO needs to be queried into the substrate to know if true or not
         | AndInfon(t) -> Z3Expr(_ctx.MkAnd(t |>
                                            List.map (fun x -> (translator :> ITranslator).translate(x).getUnderlyingExpr() :?> BoolExpr) |>
@@ -101,6 +107,7 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
           Z3Expr(_ctx.MkForall(
                               [|((Z3Expr(_ctx.MkConst((fst t).Name, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType((fst t).Type.FullName), _ctx))) :> ITranslatedExpr).getUnderlyingExpr()) :?> Expr|],
                               (translator :> ITranslator).translate(snd t).getUnderlyingExpr() :?> BoolExpr)) :> ITranslatedExpr
+        // TODO Relational app infons need to be framed into a particular world (universally quantified)
         | App(t) -> Z3Expr(_ctx.MkApp(_rels.[(fst t).Name], (snd t) |>
                                                                     List.map (fun x -> (translator :> ITranslator).translate(x).getUnderlyingExpr() :?> Expr) |>
                                                                     List.toArray )) :> ITranslatedExpr
