@@ -52,16 +52,17 @@ type Z3Infostrate() =
   member z3is.setContext(context: Context) =
     _z3context <- Some context
 
-  member z3is.learnRelationCompleteDomain(relAppInfon: ITerm, substs: ISubstitution seq) =
-    let makeZ3DomainAssertion(sub: ISubstitution) =
+  member private z3is.makeZ3DomainAssertion(sub: ISubstitution) =
       let eqExprs= sub.Domain |>
                               Seq.map(fun var -> _z3context.Value.MkEq( _z3translator.Value.translate(var :> ITerm).getUnderlyingExpr() :?> Expr,
-                                                           _z3translator.Value.translate(sub.Apply(var)).getUnderlyingExpr() :?> Expr)) |>
+                                                                        _z3translator.Value.translate(sub.Apply(var)).getUnderlyingExpr() :?> Expr)) |>
                               Seq.toArray
-
       _z3context.Value.MkAnd(eqExprs)
+
+
+  member z3is.learnRelationCompleteDomain(relAppInfon: ITerm, substs: ISubstitution seq) =
     let orExprs= substs |>
-                        Seq.map(fun sub -> (makeZ3DomainAssertion sub)) |>
+                        Seq.map(fun sub -> (z3is.makeZ3DomainAssertion sub)) |>
                         Seq.toArray
     let domainExpr= _z3context.Value.MkOr(orExprs)
     let relationExpr= _z3translator.Value.translate(relAppInfon).getUnderlyingExpr() :?> BoolExpr
@@ -69,6 +70,18 @@ type Z3Infostrate() =
     let assertion= _z3context.Value.MkForall( relAppInfon.Vars |> List.map(fun var -> _z3context.Value.MkConst(var.Name, (_z3translator.Value :?> Z3Translator).getZ3TypeSortForDkalType(var.Type))) |> List.toArray,
                                               assertion)
     ignore (_knownDomains.Add assertion)
+    log.Debug("Asserting to Z3 {0}", assertion)
+    _z3solver.Value.Assert assertion
+
+  member z3is.learnPrincipals(principals: string seq) =
+    principals |> Seq.iter(fun ppal -> z3is.learnConstants(Principal(ppal)))
+    // fix the principals domain. If called again without cleaning it might become unsat
+    let ppalVar= Var({ Name= "principalVariable"; Type=Type.Principal})
+    let ppalSubsts= principals |> Seq.map (fun ppal -> Substitution.Id.Extend(ppalVar :?> IVar, Principal(ppal)))
+    let orExprs= ppalSubsts |>
+                            Seq.map(fun sub -> (z3is.makeZ3DomainAssertion sub)) |>
+                            Seq.toArray
+    let assertion= _z3context.Value.MkForall([|_z3translator.Value.translate(ppalVar).getUnderlyingExpr() :?> Expr|], _z3context.Value.MkOr(orExprs))
     log.Debug("Asserting to Z3 {0}", assertion)
     _z3solver.Value.Assert assertion
 
@@ -146,6 +159,7 @@ type Z3Infostrate() =
         knowledge |>
           Seq.iter (fun x -> ignore ((is :> IInfostrate).Learn(x)))
         _knownDomains |> Seq.iter(fun assertion -> log.Debug("Asserting to Z3 {0}", assertion); _z3solver.Value.Assert(assertion))
+        is.learnPrincipals([]) // no new principals are added, but Z3 needs to relearn domain
         not(todel |> Seq.isEmpty)
 
     member si.Knowledge =

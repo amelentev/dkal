@@ -57,7 +57,8 @@ type Z3TypeDefinition() =
     _typeDefs.Add("System.Int32", Int)
     _typeDefs.Add("System.Boolean", Bool)
     _typeDefs.Add("World", Uninterpreted("World"))
-    _typeDefs.Add("Said", Array(Record("AccFun", ["world";"principal"],[Uninterpreted("World");Uninterpreted("Dkal.Principal")]), Uninterpreted("World")))
+    _typeDefs.Add("Said", Array(Record("Said", ["world";"principal"],[Uninterpreted("World");Uninterpreted("Dkal.Principal")]), Uninterpreted("World")))
+    _typeDefs.Add("SaidSelector", Record("Said", ["world";"principal"],[Uninterpreted("World");Uninterpreted("Dkal.Principal")]))
 
   member z3types.setZ3TypeForDkalType(dkalType, z3Type) =
     _typeDefs.Add(dkalType, z3Type)

@@ -157,6 +157,8 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       _z3translator.Value.setVariableDomains (z3Infostrate.getDomains())
       z3Infostrate.setContext(_z3context)
       z3Infostrate.setSolver(_z3solver.Value)
+      // learn principals
+      _assemblyInformation.PrincipalPolicies.Keys |> z3Infostrate.learnPrincipals
 
     member engine.get_Infostrate () =
       _infostrate.Value
