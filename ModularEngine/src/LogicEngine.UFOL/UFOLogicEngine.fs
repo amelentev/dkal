@@ -67,8 +67,10 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
   member private ufolengine.makeZ3FunDecl (name: string) (args: IVar list) =
     let rangeSort= _z3context.MkBoolSort();
     let domainSort= ufolengine.getZ3TypesArray(args)
+    // relations need world knowledge for "said"
+    // the world goes first for later convenience
+    let domainSort= Array.append ([|Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context)|]) (domainSort)
     _z3RelationDefinitions.Add(name, _z3context.MkFuncDecl(name, domainSort, rangeSort))
-
 
   /// Lift all queries from infon that need to be forwarded to the substrates
   member private ufolengine.substrateQueries (infon: ITerm) = 
@@ -124,11 +126,13 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       substs |>
         Z3TranslatorUtil.completeSubstitutions (infon) ((_infostrate.Value :?> Z3Infostrate).getDomains()) |>
         Seq.filter  (fun sub -> 
+                     log.Debug("Deriving {0} through Z3", (_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr())
                      _z3solver.Value.Push()
                      let notGuard= _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr() :?> BoolExpr)
                      _z3solver.Value.Assert( notGuard )
                      let hasModel= _z3solver.Value.Check([||])
                      _z3solver.Value.Pop()
+                     log.Debug("{0} valid", (if hasModel = Status.UNSATISFIABLE then "Is" else "Is NOT"))
                      hasModel = Status.UNSATISFIABLE
                      )
 

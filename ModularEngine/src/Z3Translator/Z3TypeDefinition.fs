@@ -46,8 +46,6 @@ type Z3TypesUtil() =
                                                         typelist |> List.map (fun _type -> Z3TypesUtil.getZ3TypeSort(_type, ctx)) |> List.toArray
                                                        ) :> Sort
 
-
-
 type Z3TypeDefinition() =
   let _typeDefs= Dictionary<string, Z3Type>()
   let log = LogManager.GetLogger("LogicEngine.UFOL")
@@ -59,7 +57,7 @@ type Z3TypeDefinition() =
     _typeDefs.Add("System.Int32", Int)
     _typeDefs.Add("System.Boolean", Bool)
     _typeDefs.Add("World", Uninterpreted("World"))
-    _typeDefs.Add("AccFun", Array(Record("AccFun", ["world";"principal"],[Uninterpreted("World");Uninterpreted("Dkal.Principal")]), Uninterpreted("World")))
+    _typeDefs.Add("Said", Array(Record("AccFun", ["world";"principal"],[Uninterpreted("World");Uninterpreted("Dkal.Principal")]), Uninterpreted("World")))
 
   member z3types.setZ3TypeForDkalType(dkalType, z3Type) =
     _typeDefs.Add(dkalType, z3Type)
@@ -69,4 +67,6 @@ type Z3TypeDefinition() =
       _typeDefs.[dkalType]
     with
       | e -> log.Error("Unknown type {0}", dkalType); failwith "Unknown type"
-      
+
+  member z3types.getZ3WorldSort() =
+    z3types.getZ3TypeForDkalType("World")
