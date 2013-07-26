@@ -19,11 +19,18 @@ open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Ast.Translations.Z3Translator
+open Microsoft.Research.Dkal.Globals
 open Microsoft.Z3
 
 /// The Z3 infostrate accumulates facts as Z3 assertions to the engine
-type Z3Infostrate() = 
+type Z3Infostrate() =
   let log = LogManager.GetLogger("Infostrate.Z3")
+
+  /// Know the mappings between DKAL and Z3
+  let _z3TypeDefinitions= Z3TypeDefinition()
+  let _z3RelationDefinitions= Dictionary<string, FuncDecl>()
+  let _dkalRelationDeclarations= Dictionary<string, RelationDeclaration>()
+  let mutable _afDecl = None
 
   /// Stores the known facts since it will be necessary to reset the Z3 solver
   let knowledge = new HashSet<ITerm>()
@@ -31,11 +38,43 @@ type Z3Infostrate() =
   let mutable _z3solver : Solver option = None
   let mutable _z3context: Context option = None
 
-  let _knownPrincipals= new HashSet<string>()
-
   // We perform finite domain Z3 queries, so we need to know the domain values
   let _knownValues = new Dictionary<Microsoft.Research.Dkal.Interfaces.IType,HashSet<IConst>>()
   let _knownDomains= new HashSet<BoolExpr>()
+  let _knownPrincipals= new HashSet<string>()
+
+
+  member private ufolengine.getZ3TypesArray(args: IVar list) =
+    args |>
+      List.fold (fun acc var -> acc @ [Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3TypeForDkalType(var.Type.FullName), _z3context.Value)]) [] |>
+      List.toArray
+
+  member private z3is.makeZ3FunDecl (name: string) (args: IVar list) =
+    let rangeSort= _z3context.Value.MkBoolSort();
+    let domainSort= z3is.getZ3TypesArray(args)
+    // relations need world knowledge for "said"
+    // the world goes first for later convenience
+    let domainSort= Array.append ([|Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context.Value)|]) (domainSort)
+    _z3RelationDefinitions.Add(name, _z3context.Value.MkFuncDecl(name, domainSort, rangeSort))
+
+
+  member z3is.setup(z3Ctx: Context, z3Solver: Solver, assemblyInfo: MultiAssembly) =
+    _z3context <- Some z3Ctx
+    _z3solver <- Some z3Solver
+
+    /// Feed Z3 relation declarations and save them for when we have to reset Z3
+    List.iter (fun rel ->
+                         ignore (z3is.makeZ3FunDecl rel.Name rel.Args)
+                         _dkalRelationDeclarations.Add(rel.Name, rel)) assemblyInfo.Relations
+    let translator= (Z3Translator(_z3context.Value, _z3TypeDefinitions, _z3RelationDefinitions))
+    _z3translator <- Some (translator :> ITranslator)
+    // learn principals
+    assemblyInfo.PrincipalPolicies.Keys |> z3is.learnPrincipals
+    // let accFuns= assemblyInfo.PrincipalPolicies.Keys |> z3is.createAccessiblityRelations
+    let accFun= z3is.createAccessiblityRelation()
+    translator.setVariableDomains(z3is.getDomains())
+    // translator.setAccessibilityFunctions(accFuns)
+    translator.setAccessibilityFunction(accFun)
 
   member z3is.setTranslator(translator: ITranslator) =
     _z3translator <- Some translator
@@ -67,13 +106,18 @@ type Z3Infostrate() =
     let domainExpr= _z3context.Value.MkOr(orExprs)
     let relationExpr= _z3translator.Value.translate(relAppInfon).getUnderlyingExpr() :?> BoolExpr
     let assertion= _z3context.Value.MkImplies(relationExpr, domainExpr)
-    let assertion= _z3context.Value.MkForall( relAppInfon.Vars |> List.map(fun var -> _z3context.Value.MkConst(var.Name, (_z3translator.Value :?> Z3Translator).getZ3TypeSortForDkalType(var.Type))) |> List.toArray,
-                                              assertion)
+    let assertion=
+      _z3context.Value.MkForall(relAppInfon.Vars |>
+                                                 List.map
+                                                   (fun var ->
+                                                     _z3context.Value.MkConst(var.Name, (_z3translator.Value :?> Z3Translator).getZ3TypeSortForDkalType(var.Type))) |>
+                                                 List.toArray
+                               ,assertion)
     ignore (_knownDomains.Add assertion)
     log.Debug("Asserting to Z3 {0}", assertion)
     _z3solver.Value.Assert assertion
 
-  member z3is.learnPrincipals(principals: string seq) =
+  member private z3is.learnPrincipals(principals: string seq) =
     principals |> Seq.iter(fun ppal -> z3is.learnConstants(Principal(ppal)))
     // fix the principals domain. If called again without cleaning it might become unsat
     let ppalVar= Var({ Name= "principalVariable"; Type=Type.Principal})
@@ -84,6 +128,15 @@ type Z3Infostrate() =
     let assertion= _z3context.Value.MkForall([|_z3translator.Value.translate(ppalVar).getUnderlyingExpr() :?> Expr|], _z3context.Value.MkOr(orExprs))
     log.Debug("Asserting to Z3 {0}", assertion)
     _z3solver.Value.Assert assertion
+
+  /// Creates an accessibility relation for each principal (World,World)
+  /// Actually Z3 API allows functions, so (World,World) -> Bool
+  member private z3is.createAccessiblityRelation() =
+    let worldSort= Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context.Value)
+    let principalSort= Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3TypeForDkalType("Dkal.Principal"), _z3context.Value)
+    let afName= _z3context.Value.MkSymbol("__AF__")
+    _afDecl <- Some (_z3context.Value.MkFuncDecl(afName, [|principalSort;worldSort; worldSort|], _z3context.Value.MkBoolSort()))
+    _afDecl.Value
 
   member private z3is.learnConstants (infon: ITerm) =
     let rec getConstants infon =
@@ -135,14 +188,13 @@ type Z3Infostrate() =
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
-//      | Forall(v, t) -> (is :> IInfostrate).Learn t
       | infon -> 
           let z3Infon= _z3translator.Value.translate(infon)
           log.Debug("Asserting to Z3 {0}", ((z3Infon.getUnderlyingExpr() :?> Expr)))
           _z3solver.Value.Assert([|z3Infon.getUnderlyingExpr() :?> BoolExpr|])
           knowledge.Add infon
 
-    /// Split the infon into conjunctions and forget these recursively
+    /// Splits the infon into conjunctions and forgets these recursively
     member is.Forget (infon: ITerm) =
       log.Debug("Forget {0}", infon)
       log.Debug("Forgetting everything")

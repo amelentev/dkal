@@ -47,7 +47,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
     <StartWorkingDirectory>C:\Users\t-espav\Documents\Visual Studio 2012\Projects\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>rumors.mdkal 1000000 1000 -UFOL</StartArguments>
+    <StartArguments>said.mdkal 1000000 1000 -UFOL</StartArguments>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
