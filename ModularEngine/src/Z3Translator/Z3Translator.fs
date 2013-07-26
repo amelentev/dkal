@@ -46,12 +46,21 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
   let _ctx= ctx
   let _rels= rels
   let _types = types
-  let _initialWorld = _ctx.MkConst("__initialworld__", Z3TypesUtil.getZ3TypeSort(_types.getZ3WorldSort(), _ctx))
   let mutable _domains= Dictionary<IType, HashSet<IConst>>()
-  let mutable freshPrincipal = 0
-  
+  let mutable _accFun: FuncDecl option = None
+  let mutable _initialWorld = None
+  let mutable freshWorld = 0
+  let WORLD= "newWorld"
+  let INITIAL_WORLD=  "__initialworld__"
+
+  do
+      _initialWorld <- Some(_ctx.MkConst(INITIAL_WORLD, Z3TypesUtil.getZ3TypeSort(_types.getZ3WorldSort(), _ctx)))
+
   member tr.setVariableDomains(domains: Dictionary<IType, HashSet<IConst>>) =
     _domains <- domains
+
+  member tr.setAccessibilityFunction(accFun: FuncDecl) =
+    _accFun <- Some accFun
 
   member tr.getZ3TypeSortForDkalType(typ: IType) =
     Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType(typ.FullName), _ctx)
@@ -70,7 +79,18 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
 
   member private tr.translateSaidInfon(ppal: ITerm, t: ITerm, world: Expr) =
     // "said" modality is translated through the accessibility function of the principal // TODO
-    Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
+    let ppalName,isConstant = match ppal with
+                              | :? IConst as ppalConstant -> ppalConstant.Value :?> string, true
+                              | :? IVar as var -> var.Name, false
+                              | _ -> failwithf "Term {0} does not identify a principal and cannot \"say\"" ppal
+
+    let nextWorld= _ctx.MkConst(WORLD + freshWorld.ToString(), Z3TypesUtil.getZ3TypeSort(_types.getZ3WorldSort(), _ctx))
+    freshWorld <- freshWorld + 1
+    let ppalConst= _ctx.MkConst(ppalName, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("Dkal.Principal"), _ctx))
+    let moveWorld = _ctx.MkApp(_accFun.Value, [|ppalConst; world; nextWorld|]) :?> BoolExpr
+    let translatedSequent= tr.doBasicTranslation(t, nextWorld)
+    let saidImplies= _ctx.MkImplies(moveWorld, (translatedSequent :> ITranslatedExpr).getUnderlyingExpr() :?> BoolExpr)
+    Z3Expr(_ctx.MkForall([|nextWorld|], saidImplies))
 
   member private tr.doBasicTranslation(term: ITerm, world:Expr) =
     let translatedTerm=
@@ -84,8 +104,8 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
                                     | :? IConst as c -> tr.doBasicTranslation(c, world)
                                     | _ -> failwith (String.Format("Const type unrecognized {0}", t.GetType().FullName))
         | EmptyInfon(t) -> Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
-        | SaidInfon(ppal, t) -> tr.translateSaidInfon(ppal, t, world) // TODO ignore for now, results may not make sense in these cases
-        | AsInfon(t) -> tr.domainRestrictionFromQuery(t)   // TODO needs to be queried into the substrate to know if true or not
+        | SaidInfon(ppal, t) -> tr.translateSaidInfon(ppal, t, world) :> ITranslatedExpr // TODO ignore for now, results may not make sense in these cases
+        | AsInfon(t) -> tr.domainRestrictionFromQuery(t)
         | AndInfon(t) -> Z3Expr(_ctx.MkAnd(t |>
                                             List.map (fun x -> tr.doBasicTranslation(x, world).getUnderlyingExpr() :?> BoolExpr) |>
                                             List.toArray)) :> ITranslatedExpr
@@ -112,17 +132,13 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
 
 
   member private tr.doModalTranslation(term: ITerm, world: Expr) =
-      let escapeAndTerminate (str: string) =
-        // not sure which characters are accepted
-        // "_" + str.Replace(" ", "_") + "_"
-        str
-
-      let translatedTerm= tr.doBasicTranslation(term, world)
-      match term with
-        | App(_) | Forall(_) -> Z3Expr(_ctx.MkForall([|_initialWorld|], translatedTerm.getUnderlyingExpr() :?> Expr)) :> ITranslatedExpr
-        | _ -> translatedTerm
+    let escapeAndTerminate (str: string) =
+      // not sure which characters are accepted
+      // "_" + str.Replace(" ", "_") + "_"
+      str
+    tr.doBasicTranslation(term, world)
 
   interface ITranslator with
     member translator.translate(term: ITerm) =
       // translator.doModalTranslation(term, _initialWorld)
-      translator.doBasicTranslation(term, _initialWorld)
+      translator.doBasicTranslation(term, _initialWorld.Value)

@@ -23,13 +23,14 @@ open Microsoft.Research.Dkal.Globals
 open Microsoft.Z3
 
 /// The Z3 infostrate accumulates facts as Z3 assertions to the engine
-type Z3Infostrate() = 
+type Z3Infostrate() =
   let log = LogManager.GetLogger("Infostrate.Z3")
 
   /// Know the mappings between DKAL and Z3
   let _z3TypeDefinitions= Z3TypeDefinition()
   let _z3RelationDefinitions= Dictionary<string, FuncDecl>()
   let _dkalRelationDeclarations= Dictionary<string, RelationDeclaration>()
+  let mutable _afDecl = None
 
   /// Stores the known facts since it will be necessary to reset the Z3 solver
   let knowledge = new HashSet<ITerm>()
@@ -69,8 +70,11 @@ type Z3Infostrate() =
     _z3translator <- Some (translator :> ITranslator)
     // learn principals
     assemblyInfo.PrincipalPolicies.Keys |> z3is.learnPrincipals
-    assemblyInfo.PrincipalPolicies.Keys |> z3is.createAccessiblityRelations
+    // let accFuns= assemblyInfo.PrincipalPolicies.Keys |> z3is.createAccessiblityRelations
+    let accFun= z3is.createAccessiblityRelation()
     translator.setVariableDomains(z3is.getDomains())
+    // translator.setAccessibilityFunctions(accFuns)
+    translator.setAccessibilityFunction(accFun)
 
   member z3is.setTranslator(translator: ITranslator) =
     _z3translator <- Some translator
@@ -127,16 +131,12 @@ type Z3Infostrate() =
 
   /// Creates an accessibility relation for each principal (World,World)
   /// Actually Z3 API allows functions, so (World,World) -> Bool
-  member private z3is.createAccessiblityRelations(principals: string seq) =
-  (*
-    principals |> Seq.map (fun ppal ->
-                                 seq {
-                                     let worldSort= Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context.Value)
-                                     yield _z3context.Value.MkFuncDecl([|worldSort; worldSort|], Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context.Value))
-                                 }
-                           )
-  *)
-    () // TODO
+  member private z3is.createAccessiblityRelation() =
+    let worldSort= Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context.Value)
+    let principalSort= Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3TypeForDkalType("Dkal.Principal"), _z3context.Value)
+    let afName= _z3context.Value.MkSymbol("__AF__")
+    _afDecl <- Some (_z3context.Value.MkFuncDecl(afName, [|principalSort;worldSort; worldSort|], _z3context.Value.MkBoolSort()))
+    _afDecl.Value
 
   member private z3is.learnConstants (infon: ITerm) =
     let rec getConstants infon =
