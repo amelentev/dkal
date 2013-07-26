@@ -69,7 +69,7 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
     Z3Expr(expr) :> ITranslatedExpr
 
   member private tr.translateSaidInfon(ppal: ITerm, t: ITerm, world: Expr) =
-    // "said" modality is translated through the accessibility function of the principal
+    // "said" modality is translated through the accessibility function of the principal // TODO
     Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
 
   member private tr.doBasicTranslation(term: ITerm, world:Expr) =
