@@ -69,24 +69,8 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
     Z3Expr(expr) :> ITranslatedExpr
 
   member private tr.translateSaidInfon(ppal: ITerm, t: ITerm, world: Expr) =
-    // "said" modality actually needs to be translated folded back from the beginning
-    // that is, given "A said B said X" the first accessibility is to the world of "A said" and from then to "B said"
-    // ie, [A][B]X --> [X accA accB]
-    let saidSort= Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("Said"), _ctx)
-    let ppalSaidFunName= match ppal with
-                         | :? PrincipalConstant as cons -> cons.Name
-                         | :? Variable as var -> var.Name
-                         | _ -> failwithf "Term {0} does not resolve to a principal" ppal
-    let ppalSaidFunName= "__" + ppalSaidFunName + "_" + freshPrincipal.ToString()
-    freshPrincipal <- freshPrincipal + 1
-    let ppalSaidFunConst= _ctx.MkConst(ctx.MkSymbol(ppalSaidFunName), saidSort) :?> ArrayExpr
-    let saidSelectorSort= Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("SaidSelector"), _ctx) :?> TupleSort
-    let saidSelector= saidSelectorSort.MkDecl.Apply([|world; (tr.doBasicTranslation(ppal, world) :> ITranslatedExpr).getUnderlyingExpr() :?> Expr|])
-    let nextSaidWorld= _ctx.MkSelect(ppalSaidFunConst, saidSelector)
-    let translatedTerm= tr.doBasicTranslation(t, nextSaidWorld) :> ITranslatedExpr
-    Z3Expr(_ctx.MkForall([|ppalSaidFunConst|], translatedTerm.getUnderlyingExpr() :?> Expr)) :> ITranslatedExpr
-    // Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
-    // quantify over all possible world accessible functions for this principal
+    // "said" modality is translated through the accessibility function of the principal
+    Z3Expr(_ctx.MkTrue()) :> ITranslatedExpr
 
   member private tr.doBasicTranslation(term: ITerm, world:Expr) =
     let translatedTerm=
@@ -118,11 +102,11 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
             Z3Expr(_ctx.MkForall(
                                 [|((Z3Expr(_ctx.MkConst(var.Name, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType(var.Type.FullName), _ctx))) :> ITranslatedExpr).getUnderlyingExpr()) :?> Expr|],
                                 tr.doBasicTranslation(term, world).getUnderlyingExpr() :?> BoolExpr)) :> ITranslatedExpr
-        // TODO Relational app infons need to be framed into a particular world (universally quantified)
+        // Relational app infons need to be framed into a particular world, as well as any predicate
         | App(f, args) -> Z3Expr(_ctx.MkApp(_rels.[f.Name], args |>
-                                                                    List.map (fun x -> tr.doBasicTranslation(x, world).getUnderlyingExpr() :?> Expr) |>
-                                                                    List.toArray |>
-                                                                    Array.append [|world|] )) :> ITranslatedExpr
+                                                                 List.map (fun x -> tr.doBasicTranslation(x, world).getUnderlyingExpr() :?> Expr) |>
+                                                                 List.toArray |>
+                                                                 Array.append [|world|] )) :> ITranslatedExpr
         | t -> failwith (String.Format("Translation not implemented {0}", t))
     translatedTerm
 
@@ -133,8 +117,6 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
         // "_" + str.Replace(" ", "_") + "_"
         str
 
-      // as a general rule, we need an "initial" world over which the infon holds, therefore every translation will be quantified for a special initial world
-      // unless it is a basic term (variable / constant)
       let translatedTerm= tr.doBasicTranslation(term, world)
       match term with
         | App(_) | Forall(_) -> Z3Expr(_ctx.MkForall([|_initialWorld|], translatedTerm.getUnderlyingExpr() :?> Expr)) :> ITranslatedExpr
@@ -142,4 +124,5 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
 
   interface ITranslator with
     member translator.translate(term: ITerm) =
-      translator.doModalTranslation(term, _initialWorld)
+      // translator.doModalTranslation(term, _initialWorld)
+      translator.doBasicTranslation(term, _initialWorld)

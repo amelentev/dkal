@@ -132,7 +132,15 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
                      _z3solver.Value.Assert( notGuard )
                      let hasModel= _z3solver.Value.Check([||])
                      _z3solver.Value.Pop()
-                     log.Debug("{0} valid", (if hasModel = Status.UNSATISFIABLE then "Is" else "Is NOT"))
+                     if hasModel = Status.UNSATISFIABLE then
+                       log.Debug("Assertion is valid")
+                     else if hasModel = Status.SATISFIABLE then
+                       log.Debug("Assertion is invalid")
+                       log.Debug("--- KNOWLEDGE ---\n{0}", Array.toList(_z3solver.Value.Assertions))
+                       log.Debug("--- MODEL ---\n{0}", _z3solver.Value.Model)
+                     else
+                       log.Debug("Assertion is UNKNOWN")
+                       log.Debug(Printf.sprintf "--- KNOWLEDGE ---\n%A" (Array.toList(_z3solver.Value.Assertions)))
                      hasModel = Status.UNSATISFIABLE
                      )
 
@@ -159,6 +167,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) as this =
       z3Infostrate.setSolver(_z3solver.Value)
       // learn principals
       _assemblyInformation.PrincipalPolicies.Keys |> z3Infostrate.learnPrincipals
+      _assemblyInformation.PrincipalPolicies.Keys |> z3Infostrate.createAccessiblityRelations
 
     member engine.get_Infostrate () =
       _infostrate.Value

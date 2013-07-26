@@ -67,11 +67,26 @@ type Z3Infostrate() =
     let domainExpr= _z3context.Value.MkOr(orExprs)
     let relationExpr= _z3translator.Value.translate(relAppInfon).getUnderlyingExpr() :?> BoolExpr
     let assertion= _z3context.Value.MkImplies(relationExpr, domainExpr)
-    let assertion= _z3context.Value.MkForall( relAppInfon.Vars |> List.map(fun var -> _z3context.Value.MkConst(var.Name, (_z3translator.Value :?> Z3Translator).getZ3TypeSortForDkalType(var.Type))) |> List.toArray,
-                                              assertion)
+    let assertion=
+      _z3context.Value.MkForall(relAppInfon.Vars |>
+                                                 List.map
+                                                   (fun var ->
+                                                     _z3context.Value.MkConst(var.Name, (_z3translator.Value :?> Z3Translator).getZ3TypeSortForDkalType(var.Type))) |>
+                                                 List.toArray
+                               ,assertion)
     ignore (_knownDomains.Add assertion)
     log.Debug("Asserting to Z3 {0}", assertion)
     _z3solver.Value.Assert assertion
+
+  /// Creates an accessibility relation for each principal (World,World)
+  /// Actually Z3 API allows functions, so (World,World) -> Bool
+  member z3is.createAccessibilityRelations(principals: string seq)=
+    principals |> Seq.map (fun ppal ->
+                                 seq {
+                                     let worldSort= Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context.Value)
+                                     yield _z3context.Value.MkFuncDecl([|worldSort; worldSort|], Z3TypesUtil.getZ3TypeSort(_z3TypeDefinitions.getZ3WorldSort(), _z3context.Value))
+                                 }
+                           )
 
   member z3is.learnPrincipals(principals: string seq) =
     principals |> Seq.iter(fun ppal -> z3is.learnConstants(Principal(ppal)))
@@ -135,14 +150,13 @@ type Z3Infostrate() =
       match infon.Normalize() with
       | EmptyInfon -> false
       | AsInfon(_) -> failwith "Engine is trying to learn asInfon(...)"
-//      | Forall(v, t) -> (is :> IInfostrate).Learn t
       | infon -> 
           let z3Infon= _z3translator.Value.translate(infon)
           log.Debug("Asserting to Z3 {0}", ((z3Infon.getUnderlyingExpr() :?> Expr)))
           _z3solver.Value.Assert([|z3Infon.getUnderlyingExpr() :?> BoolExpr|])
           knowledge.Add infon
 
-    /// Split the infon into conjunctions and forget these recursively
+    /// Splits the infon into conjunctions and forgets these recursively
     member is.Forget (infon: ITerm) =
       log.Debug("Forget {0}", infon)
       log.Debug("Forgetting everything")
