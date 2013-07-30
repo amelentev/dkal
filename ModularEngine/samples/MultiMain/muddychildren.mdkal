@@ -1,0 +1,178 @@
+/// This example models the muddy children problem
+/// 
+type String = System.String
+type Int = System.Int32
+type Principal = Dkal.Principal
+
+relation ignoresIfMuddyOrNot(P: Principal)
+relation isMuddy(P: Principal)
+relation isClean(P: Principal)
+relation log(S: String)
+relation question(N: Int)
+relation hasConclusion()
+relation startQuestionRound()
+relation areYouMuddy()
+relation answered(P: Principal)
+relation start()
+relation end()
+relation partialanswer()
+
+/// In the beginning, each child knows:
+/// - every other child status
+/// - that is ignorant of its own status
+/// - that no round has elapsed
+
+---alice-----------------------------
+knows ignoresIfMuddyOrNot(me)
+knows isClean(bob)
+knows not end()
+knows not bob said isMuddy(bob)
+
+upon bob said isMuddy(bob) do
+	learn bob said isMuddy(bob)
+	forget not bob said isMuddy(bob)
+upon bob said isClean(bob) do
+	learn bob said isClean(bob)
+
+with X:Int
+	upon mom said question(X) do
+        learn question(X)
+        learn startQuestionRound()
+
+if isClean(bob) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	learn isMuddy(me)
+	forget ignoresIfMuddyOrNot(me)
+	forget startQuestionRound()
+if isMuddy(bob) && question(0) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	forget startQuestionRound()
+if isMuddy(bob) && not bob said isMuddy(bob) && question(1) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	learn isMuddy(me)
+	forget ignoresIfMuddyOrNot(me)
+	forget startQuestionRound()
+if bob said isMuddy(bob) && question(1) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	learn isClean(me)
+	forget ignoresIfMuddyOrNot(me)
+	forget startQuestionRound()
+
+with X:Int
+	if question(X) do forget question(X)
+	if hasConclusion() do
+		forget hasConclusion()
+
+if hasConclusion() && isMuddy(me) && not end()
+do
+	send to mom: isMuddy(me)
+	send to bob: isMuddy(me)
+	forget not end()
+	learn end()
+
+if hasConclusion() && isClean(me) && not end()
+do
+	send to mom: isClean(me)
+	send to bob: isClean(me)
+	forget not end()
+	learn end()
+
+if hasConclusion() && ignoresIfMuddyOrNot(me) && not end()
+do
+	send to mom: ignoresIfMuddyOrNot(me)
+	send to bob: ignoresIfMuddyOrNot(me)
+
+---bob-----------------------------
+knows ignoresIfMuddyOrNot(me)
+knows isMuddy(alice)
+knows not end()
+knows not alice said isMuddy(alice)
+
+upon alice said isMuddy(alice) do
+	learn alice said isMuddy(alice)
+	forget not alice said isMuddy(alice)
+upon alice said isClean(alice) do
+	learn alice said isClean(alice)
+
+with X:Int
+	upon mom said question(X) do
+        learn question(X)
+        learn startQuestionRound()
+
+if isClean(alice) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	learn isMuddy(me)
+	forget ignoresIfMuddyOrNot(me)
+	forget startQuestionRound()
+if isMuddy(alice) && question(0) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	forget startQuestionRound()
+if isMuddy(alice) && not alice said isMuddy(alice) && question(1) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	learn isMuddy(me)
+	forget ignoresIfMuddyOrNot(me)
+	forget startQuestionRound()
+if alice said isMuddy(alice) && question(1) && not end() && startQuestionRound() do
+	learn hasConclusion()
+	learn isClean(me)
+	forget ignoresIfMuddyOrNot(me)
+	forget startQuestionRound()
+
+with X:Int
+	if question(X) do forget question(X)
+	if hasConclusion() do
+		forget hasConclusion()
+	
+if hasConclusion() && isMuddy(me) && not end()
+do
+	send to mom: isMuddy(me)
+	send to alice: isMuddy(me)
+	forget not end()
+	learn end()
+
+if hasConclusion() && isClean(me) && not end()
+do
+	send to mom: isClean(me)
+	send to alice: isClean(me)
+	forget not end()
+	learn end()
+
+if hasConclusion() && ignoresIfMuddyOrNot(me) && not end()
+do
+	send to mom: ignoresIfMuddyOrNot(me)
+	send to alice: ignoresIfMuddyOrNot(me)
+
+---mom-----------------------------
+knows start()
+knows question(0)
+
+with X:Int
+	if start() && question(X) do
+		forget isMuddy(alice)
+		forget isMuddy(bob)
+		forget isClean(alice)
+		forget isClean(bob)
+		forget ignoresIfMuddyOrNot(alice)
+		forget ignoresIfMuddyOrNot(bob)
+		send to alice: question(X)
+		send to bob: question(X)
+		forget start()
+
+with P: Principal
+	upon P said isMuddy(P) do
+		learn isMuddy(P) learn answered(P)
+	upon P said isClean(P) do
+		learn isClean(P) learn answered(P)
+	upon P said ignoresIfMuddyOrNot(P) do
+		learn ignoresIfMuddyOrNot(P) learn answered(P) learn partialanswer()
+
+with X:Int, Y:Int
+if  answered(alice) && answered(bob) && partialanswer()
+	&& question(X) && {||Y:=X+1|}
+do
+	learn start()
+	forget answered(alice)
+	forget answered(bob)
+	forget partialanswer()
+	forget question(X)
+	learn question(Y)

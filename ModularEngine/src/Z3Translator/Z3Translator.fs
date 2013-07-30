@@ -93,13 +93,17 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
     Z3Expr(_ctx.MkForall([|nextWorld|], saidImplies))
 
   member private tr.doBasicTranslation(term: ITerm, world:Expr) =
+    let escapeAndTerminate (str: string) =
+      // not sure which characters are accepted
+      "_" + str.Replace(" ", "_") + "_"
+
     let translatedTerm=
         match term with
         | PrincipalConstant(t) -> Z3Expr(_ctx.MkConst(t, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("Dkal.Principal"), _ctx))) :> ITranslatedExpr
         | SubstrateConstant(t) -> match t with
                                     | :? int as n -> Z3Expr(_ctx.MkInt(n)) :> ITranslatedExpr
                                     | :? double as n -> Z3Expr(_ctx.MkReal(n.ToString())) :> ITranslatedExpr
-                                    | :? string as n -> Z3Expr(_ctx.MkConst(n, Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("System.String"), _ctx))) :> ITranslatedExpr
+                                    | :? string as n -> Z3Expr(_ctx.MkConst(escapeAndTerminate(n), Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("System.String"), _ctx))) :> ITranslatedExpr
                                     | :? System.DateTime as n -> Z3Expr(_ctx.MkConst(n.ToString(), Z3TypesUtil.getZ3TypeSort(_types.getZ3TypeForDkalType("System.DateTime"), _ctx))) :> ITranslatedExpr
                                     | :? IConst as c -> tr.doBasicTranslation(c, world)
                                     | _ -> failwith (String.Format("Const type unrecognized {0}", t.GetType().FullName))
@@ -132,10 +136,6 @@ type Z3Translator(ctx: Context, types: Z3TypeDefinition, rels: Dictionary<string
 
 
   member private tr.doModalTranslation(term: ITerm, world: Expr) =
-    let escapeAndTerminate (str: string) =
-      // not sure which characters are accepted
-      // "_" + str.Replace(" ", "_") + "_"
-      str
     tr.doBasicTranslation(term, world)
 
   interface ITranslator with

@@ -125,9 +125,10 @@ type Z3Infostrate() =
     let orExprs= ppalSubsts |>
                             Seq.map(fun sub -> (z3is.makeZ3DomainAssertion sub)) |>
                             Seq.toArray
-    let assertion= _z3context.Value.MkForall([|_z3translator.Value.translate(ppalVar).getUnderlyingExpr() :?> Expr|], _z3context.Value.MkOr(orExprs))
-    log.Debug("Asserting to Z3 {0}", assertion)
-    _z3solver.Value.Assert assertion
+    if orExprs.Length > 0 then
+      let assertion= _z3context.Value.MkForall([|_z3translator.Value.translate(ppalVar).getUnderlyingExpr() :?> Expr|], _z3context.Value.MkOr(orExprs))
+      log.Debug("Asserting to Z3 {0}", assertion)
+      _z3solver.Value.Assert assertion
 
   /// Creates an accessibility relation for each principal (World,World)
   /// Actually Z3 API allows functions, so (World,World) -> Bool
@@ -176,9 +177,12 @@ type Z3Infostrate() =
     _knownValues
 
   member z3is.learnConstantsFromSubstitutions (substs: ISubstitution list)=
+    /// todo
+    let cnt= _knownValues.Count
     substs |>
       List.iter (fun sub -> sub.Domain |>
                                List.iter (fun var -> z3is.learnConstants(sub.Apply var)))
+    cnt < _knownValues.Count
 
   interface IInfostrate with
     /// Split the infon into conjunctions and learn these recursively

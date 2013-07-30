@@ -90,14 +90,19 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) =
     /// that make the infon hold
     member engine.Derive (infon: ITerm) (substs: ISubstitution seq) =
       log.Debug("Derive {0}", infon)
-      let substs= substs |>
-                         Z3TranslatorUtil.completeSubstitutions (infon) ((_infostrate.Value :?> Z3Infostrate).getDomains()) |>
-                         SubstrateDispatcher.Solve (engine.substrateQueries infon)
+      let mutable newlearned = true
+      let mutable retSubsts = substs
+      let originalSubsts= substs
+      while newlearned do
+          retSubsts <- originalSubsts
+          retSubsts <- retSubsts |>
+                             Z3TranslatorUtil.completeSubstitutions (infon) ((_infostrate.Value :?> Z3Infostrate).getDomains()) |>
+                             SubstrateDispatcher.Solve (engine.substrateQueries infon)
 
-      // TODO probably needs to be done to fixpoint
-      // learn new constants that cropped up from solving substrates
-      (_infostrate.Value :?> Z3Infostrate).learnConstantsFromSubstitutions (Seq.toList substs)
+          // learn new constants that cropped up from solving substrates to fixpoint
+          newlearned <- (_infostrate.Value :?> Z3Infostrate).learnConstantsFromSubstitutions (Seq.toList retSubsts)
 
+      let substs= retSubsts
       substs |>
         Z3TranslatorUtil.completeSubstitutions (infon) ((_infostrate.Value :?> Z3Infostrate).getDomains()) |>
         Seq.filter  (fun sub -> 
@@ -111,8 +116,8 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) =
                        log.Debug("Assertion is valid")
                      else if hasModel = Status.SATISFIABLE then
                        log.Debug("Assertion is invalid")
-                       log.Debug("--- KNOWLEDGE ---\n{0}", Array.toList(_z3solver.Value.Assertions))
-                       log.Debug("--- MODEL ---\n{0}", _z3solver.Value.Model)
+                       log.Debug("--- KNOWLEDGE ---\n{0}", (Printf.sprintf "%A" (Array.toList(_z3solver.Value.Assertions))))
+  //                     log.Debug("--- MODEL ---\n{0}", _z3solver.Value.Model)
                      else
                        log.Debug("Assertion is UNKNOWN")
                        log.Debug(Printf.sprintf "--- KNOWLEDGE ---\n%A" (Array.toList(_z3solver.Value.Assertions)))
