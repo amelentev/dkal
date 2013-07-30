@@ -35,9 +35,6 @@ type MLLogicEngine() =
     member mle.Start () = ()
     member mle.Stop () = ()
 
-    member mle.Freeze(infon: ITerm) =
-      failwith("Freeze not implemented for ML engine")
-
     member mle.set_Infostrate (infostrate: IInfostrate) =
       _infostrate := Some infostrate
 

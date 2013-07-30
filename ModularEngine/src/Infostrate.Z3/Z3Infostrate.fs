@@ -210,13 +210,14 @@ type Z3Infostrate() =
       | Forall(v, t) -> (is :> IInfostrate).Forget t
       | infon ->
         let todel = knowledge |> Seq.filter (fun h -> infon.Unify(h) |> Option.exists (fun s -> s.IsVariableRenaming))
+        let somethingDeleted= not(todel |> Seq.isEmpty)
         todel |> List.ofSeq |> List.iter (fun x -> knowledge.Remove(x) |> ignore)
         log.Debug("Relearning everything except {0}", infon) // TODO quite inefficient as we have to translate again. Better to keep the associated translations
         knowledge |>
           Seq.iter (fun x -> ignore ((is :> IInfostrate).Learn(x)))
         _knownDomains |> Seq.iter(fun assertion -> log.Debug("Asserting to Z3 {0}", assertion); _z3solver.Value.Assert(assertion))
         is.learnPrincipals([]) // no new principals are added, but Z3 needs to relearn domain
-        not(todel |> Seq.isEmpty)
+        somethingDeleted
 
     member si.Knowledge =
       // variables in knowledges should not intersect

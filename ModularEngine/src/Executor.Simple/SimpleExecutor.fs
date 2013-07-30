@@ -242,8 +242,17 @@ type SimpleExecutor(router: IRouter,
 
     let applyOne a =
       match a with
-      | Learn(infon) -> infostrate.Learn infon
-      | Forget(infon) -> infostrate.Forget infon
+      | Learn(infon) -> 
+                // check for consistency in engines that support negation
+                match logicEngine with
+                | :? INegLogicEngine as negLogicEngine ->
+                    if infostrate.Forget(NotInfon(infon)) then
+                        log.Warn("WARNING when learning " + infon.ToString() + ": engine already knew its negation. Forgetting negation...")
+                        if not (Seq.isEmpty(logicEngine.Derive (NotInfon(infon)) [Substitution.Id])) then
+                            failwithf "Cannot learn {0}! Its negation is already derivable!" infon
+                | _ -> ()
+                infostrate.Learn infon
+      | Forget(infon) -> infostrate.Forget infon // forgetting may not mean it is not derivable anyway
       | Send(ppal, infon) -> 
         let infon = match infon with 
                     | JustifiedInfon(infon, ev) -> JustifiedInfon(ForallMany(infon.Vars, infon), ev)
@@ -263,7 +272,9 @@ type SimpleExecutor(router: IRouter,
       | Apply(su) -> 
         substrateUpdates.Add su |> ignore; false
       | Fresh(v) -> false // it is already instantiated, so no action needed
-      | Freeze(rel) -> logicEngine.Freeze rel
+      | Freeze(rel) -> match logicEngine with
+                       | :? INegLogicEngine as negLogicEngine -> negLogicEngine.Freeze rel
+                       | _ -> failwithf "Logic engine type %s does not support freezing" (logicEngine.GetType().ToString())
       | _ -> failwithf "Unrecognized action %O" a
 
     for a in actions do

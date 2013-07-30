@@ -70,7 +70,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) =
 
     (_infostrate.Value :?> Z3Infostrate).learnRelationCompleteDomain(relAppInfon, substs)
 
-  interface ILogicEngine with
+  interface INegLogicEngine with
     member engine.Start() = 
       ()
 

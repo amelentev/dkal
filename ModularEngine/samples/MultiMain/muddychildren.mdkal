@@ -67,14 +67,14 @@ if hasConclusion() && isMuddy(me) && not end()
 do
 	send to mom: isMuddy(me)
 	send to bob: isMuddy(me)
-	forget not end()
+	// forget not end()
 	learn end()
 
 if hasConclusion() && isClean(me) && not end()
 do
 	send to mom: isClean(me)
 	send to bob: isClean(me)
-	forget not end()
+	// forget not end()
 	learn end()
 
 if hasConclusion() && ignoresIfMuddyOrNot(me) && not end()
@@ -127,14 +127,14 @@ if hasConclusion() && isMuddy(me) && not end()
 do
 	send to mom: isMuddy(me)
 	send to alice: isMuddy(me)
-	forget not end()
+	// forget not end()
 	learn end()
 
 if hasConclusion() && isClean(me) && not end()
 do
 	send to mom: isClean(me)
 	send to alice: isClean(me)
-	forget not end()
+	// forget not end()
 	learn end()
 
 if hasConclusion() && ignoresIfMuddyOrNot(me) && not end()
