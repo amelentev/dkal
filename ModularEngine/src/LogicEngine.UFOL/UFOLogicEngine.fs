@@ -106,12 +106,13 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) =
       substs |>
         Z3TranslatorUtil.completeSubstitutions (infon) ((_infostrate.Value :?> Z3Infostrate).getDomains()) |>
         Seq.filter  (fun sub -> 
-                     log.Debug("Deriving {0} through Z3", (_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr())
+                     //log.Debug("Deriving {0} through Z3", (_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr())
                      _z3solver.Value.Push()
                      let notGuard= _z3context.MkNot((_z3translator.Value :> ITranslator).translate(infon.Apply sub).getUnderlyingExpr() :?> BoolExpr)
                      _z3solver.Value.Assert( notGuard )
                      let hasModel= _z3solver.Value.Check([||])
                      _z3solver.Value.Pop()
+                     (*
                      if hasModel = Status.UNSATISFIABLE then
                        log.Debug("Assertion is valid")
                      else if hasModel = Status.SATISFIABLE then
@@ -121,6 +122,7 @@ type UFOLogicEngine(assemblyInfo: MultiAssembly) =
                      else
                        log.Debug("Assertion is UNKNOWN")
                        log.Debug(Printf.sprintf "--- KNOWLEDGE ---\n%A" (Array.toList(_z3solver.Value.Assertions)))
+                    *)
                      hasModel = Status.UNSATISFIABLE
                      )
 

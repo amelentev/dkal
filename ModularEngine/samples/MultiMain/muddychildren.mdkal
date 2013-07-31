@@ -11,7 +11,6 @@ relation log(S: String)
 relation question(N: Int)
 relation hasConclusion()
 relation startQuestionRound()
-relation areYouMuddy()
 relation answered(P: Principal)
 relation start()
 relation end()
@@ -27,10 +26,10 @@ knows ignoresIfMuddyOrNot(me)
 knows isClean(bob)
 knows not end()
 knows not bob said isMuddy(bob)
+knows not bob said isClean(bob)
 
 upon bob said isMuddy(bob) do
 	learn bob said isMuddy(bob)
-	forget not bob said isMuddy(bob)
 upon bob said isClean(bob) do
 	learn bob said isClean(bob)
 
