@@ -207,6 +207,7 @@ type SimpleExecutor(router: IRouter,
     mailbox.Prune()
 
     // Return true if some change was computed
+    log.Debug("{0}: ------------- round END ------------------- {1} changed", router.Me, if changed then "" else "NOT ")
     changed
     
   /// Given a set list of action terms, each of the actions is applied.
