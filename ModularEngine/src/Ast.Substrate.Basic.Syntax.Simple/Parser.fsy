@@ -113,6 +113,8 @@ Term:
     { primitiveApp(BasicPrimitives.Eq, [$1; $4]) }
 	| Term NOT EQ Term		%prec EQ
     { primitiveApp(BasicPrimitives.Neq, [$1; $4]) }
+	| Term NEQ Term		%prec EQ
+    { primitiveApp(BasicPrimitives.Neq, [$1; $3]) }
 	| Term LT Term
     { primitiveApp(BasicPrimitives.Lt, [$1; $3]) }
 	| Term LT EQ Term		%prec EQ
