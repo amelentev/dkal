@@ -1,3 +1,2 @@
 @echo off
-PATH=..\..\src\MultiMain\bin\Debug\;%PATH%
-DkalMulti.exe %1 100000 1000 %2
+..\..\src\MultiMain\bin\Debug\DkalMulti.exe %1 10000000 1000 %2
