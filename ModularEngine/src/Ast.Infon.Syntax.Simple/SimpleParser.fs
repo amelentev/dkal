@@ -59,6 +59,7 @@ type SimpleParser() =
     | JustifiedSend(_) 
     | JustifiedSay(_) 
     | Learn(_) 
+    | Relearn(_) 
     | Forget(_) 
     | Apply(_) 
     | Fresh(_) 

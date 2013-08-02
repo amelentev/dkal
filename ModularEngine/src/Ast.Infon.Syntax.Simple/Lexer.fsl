@@ -101,6 +101,7 @@ rule tokenize = parse
 | "justification"     { JUSTIFICATION }
 | "to"				        { TO }
 | "learn"			        { LEARN }
+| "relearn"			        { RELEARN }
 | "forget"			      { FORGET }
 | "install"			      { INSTALL }
 | "uninstall"		      { UNINSTALL }

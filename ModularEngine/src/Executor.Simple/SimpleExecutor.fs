@@ -247,12 +247,18 @@ type SimpleExecutor(router: IRouter,
                 // check for consistency in engines that support negation
                 match logicEngine with
                 | :? INegLogicEngine as negLogicEngine ->
-                    if infostrate.Forget(NotInfon(infon)) then
-                        log.Warn("WARNING when learning " + infon.ToString() + ": engine already knew its negation. Forgetting negation...")
-                        if not (Seq.isEmpty(logicEngine.Derive (NotInfon(infon)) [Substitution.Id])) then
-                            failwithf "Cannot learn {0}! Its negation is already derivable!" infon
+                    if infostrate.Forget(NotInfon(infon)) ||
+                       not (Seq.isEmpty(logicEngine.Derive (NotInfon(infon)) [Substitution.Id])) then
+                        failwithf "ERROR when learning %O: engine already knew (or can derive) its negation." infon
                 | _ -> ()
                 infostrate.Learn infon
+      | Relearn(infon) -> match logicEngine with
+                          | :? INegLogicEngine as negLogicEngine ->
+                                   infostrate.Forget(NotInfon(infon)) |> ignore
+                                   if not (Seq.isEmpty(logicEngine.Derive (NotInfon(infon)) [Substitution.Id])) then
+                                       failwithf "Cannot relearn %O! I've forgotten its negation, but it is still derivable!" infon
+                                   infostrate.Learn infon
+                          | _ -> failwithf "Relearning infons not allowed on %s logic engine" (logicEngine.GetType().ToString())
       | Forget(infon) -> infostrate.Forget infon // forgetting may not mean it is not derivable anyway
       | Send(ppal, infon) -> 
         let infon = match infon with 

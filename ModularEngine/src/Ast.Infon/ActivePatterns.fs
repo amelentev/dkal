@@ -76,6 +76,10 @@ module Microsoft.Research.Dkal.Ast.Infon.ActivePatterns
   let (|Forget|_|) mt = match mt with
                         | App({Name=Primitives.Forget}, [i]) -> Some i
                         | _ -> None
+  /// Active pattern for the relearn infon action, which is a combination of learn + forget negation
+  let (|Relearn|_|) mt =  match mt with
+                        | App({Name=Primitives.Relearn}, [i]) -> Some i
+                        | _ -> None
   /// Active pattern for the install rule action
   let (|Install|_|) mt =  match mt with
                           | App({Name=Primitives.Install}, [r]) -> Some r

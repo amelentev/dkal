@@ -51,6 +51,8 @@ module Primitives =
   [<Literal>] 
   let Learn = "learn"
   [<Literal>] 
+  let Relearn = "relearn"
+  [<Literal>] 
   let Forget = "forget"
   [<Literal>] 
   let Install = "install"
@@ -136,6 +138,8 @@ module Primitives =
     | JustifiedSay -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.Principal; Type.Infon]; Identity = None}
     | Learn -> 
+      Some {Name = f; RetType = Type.Action; ArgsType = [Type.AbstractInfon]; Identity = None}
+    | Relearn -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.AbstractInfon]; Identity = None}
     | Forget -> 
       Some {Name = f; RetType = Type.Action; ArgsType = [Type.AbstractInfon]; Identity = None}

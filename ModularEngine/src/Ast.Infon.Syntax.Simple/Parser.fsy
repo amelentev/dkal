@@ -84,7 +84,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 %token UPON FROM IF ELSE
 
 // Actions
-%token SEND SAY JUSTIFICATION TO LEARN FORGET INSTALL UNINSTALL APPLY FREEZE
+%token SEND SAY JUSTIFICATION TO LEARN RELEARN FORGET INSTALL UNINSTALL APPLY FREEZE
 
 // Evidence
 %token EV_AND
@@ -120,7 +120,7 @@ let normalizeAndApplyMacros (t: ITerm, solvedMacros: ISubstrateQueryTerm list) =
 
 %left WITH
 %left UPON IF 
-%left SEND SAY LEARN FORGET INSTALL UNINSTALL APPLY FREEZE
+%left SEND SAY LEARN RELEARN FORGET INSTALL UNINSTALL APPLY FREEZE
 %right LSQ RSQ
 %left IMPLIES
 %left OR
@@ -338,6 +338,9 @@ Action:
   | LEARN Infon
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Learn, [t]), sm }
+  | RELEARN Infon
+    { let t, sm = normalizeAndApplyMacros $2
+      primitiveApp(Primitives.Relearn, [t]), sm }
   | FORGET Infon
     { let t, sm = normalizeAndApplyMacros $2
       primitiveApp(Primitives.Forget, [t]), sm }
