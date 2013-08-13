@@ -1,0 +1,3 @@
+guido implied p(x,y)
+|-
+p(x,y)

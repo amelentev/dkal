@@ -29,8 +29,8 @@ relation init2()
 relation askpermit(O: Object)
 relation log(S: String)
 
-// permitg definition:
 knows forall O: Object, G: Group
+// permitg definition:
 	owns(G, O) -> permitg(G, O)
 knows forall O: Object, O1: Object, G: Group
 	notowned(O) && child(O, O1) && permitg(G, O1) -> permitg(G, O)

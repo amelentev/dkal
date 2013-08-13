@@ -1,10 +1,9 @@
-﻿namespace Microsoft.Research.DkalBackends.DatalogBackend
-
-open Microsoft.Research.DkalBackends.Ast
-open Datalog
+﻿namespace Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 
 open System
 open System.Collections.Generic
+open Microsoft.Research.DkalBackends.Ast
+open Datalog
 
 module Utils = 
   

@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Research.DkalBackends.DatalogBackend
+﻿namespace Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 
 open System.Collections.Generic
 open System.IO

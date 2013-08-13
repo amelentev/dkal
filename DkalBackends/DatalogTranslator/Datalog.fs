@@ -1,9 +1,8 @@
-﻿namespace Microsoft.Research.DkalBackends.DatalogBackend
+﻿namespace Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 
 open System.Collections.Generic
 
 module Datalog =
-  
   type Term = 
   | VarTerm of string
   | AtomTerm of string
