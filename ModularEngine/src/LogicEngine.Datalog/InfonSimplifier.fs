@@ -22,6 +22,8 @@ open Microsoft.Z3
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator.Datalog
 
 module InfonSimplifier =
+    let FAKE_TRUE_RELATION= "FakeTrue"
+
     let simplifyArg(arg: ITerm) =
         match arg with
         | Const(c) -> ConstTerm(c.Value.ToString())
@@ -36,7 +38,7 @@ module InfonSimplifier =
 
     let rec simplify(infon: ITerm) =
         match infon with
-        | AsInfon(t) -> failwith "Attempting to simplify AsInfon ..."
+        | AsInfon(t) -> AtomFormula(FAKE_TRUE_RELATION, [])
         | EmptyInfon(t) -> failwith "Attempting to simplify EmptyInfon ..."
         | SaidInfon(ppal, t) -> SpeechFormula(simplifyPrincipal(ppal), SaidSpeech, simplify(t))
         | AndInfon(t) -> match t with

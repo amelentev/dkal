@@ -37,6 +37,7 @@ open Microsoft.Research.Dkal.Utils.Exceptions
 open Microsoft.Research.Dkal.Utils.ErrorCodes
 open Microsoft.Research.Dkal.Globals
 open Microsoft.Research.Dkal.LogicEngine.UFOL
+open Microsoft.Research.Dkal.LogicEngine.Datalog
 
 /// Console front-end for many principals
 module MultiMain =
@@ -54,6 +55,7 @@ module MultiMain =
     let kind =
       match logicEngine with
       | :? UFOLogicEngine as engine -> "ufol"
+      | :? DatalogLogicEngine as engine -> "datalog"
       | _ -> "simple"
     let infostrate = InfostrateFactory.Infostrate kind
     let signatureProvider = SignatureProviderFactory.SignatureProvider kind 

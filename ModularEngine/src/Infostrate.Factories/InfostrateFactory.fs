@@ -21,7 +21,8 @@ type InfostrateFactory() =
   /// Construct an Infostrate. An infostrate kind must be provided. 
   static member Infostrate (kind: string) = 
     match kind with
-    | "simple" -> new SimpleInfostrate() :> IInfostrate
+    | "simple" 
+    | "datalog" -> new SimpleInfostrate() :> IInfostrate
     | "ufol" -> new Z3Infostrate() :> IInfostrate
     | k -> failwith <| "Unrecognized infostrate kind: " + k
 

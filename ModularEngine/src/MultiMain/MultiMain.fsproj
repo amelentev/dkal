@@ -47,7 +47,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
     <StartWorkingDirectory>C:\Users\t-espav\Documents\Visual Studio 2012\Projects\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>muddychildren_2_1.mdkal 100000 1000 -UFOL</StartArguments>
+    <StartArguments>test.mdkal 100000 1000 -datalog</StartArguments>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -99,6 +99,11 @@
     <ProjectReference Include="..\Infostrate.Factories\Infostrate.Factories.fsproj">
       <Name>Infostrate.Factories</Name>
       <Project>{16750eb8-94df-444d-a506-5b59ee41b620}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\LogicEngine.Datalog\LogicEngine.Datalog.fsproj">
+      <Name>LogicEngine.Datalog</Name>
+      <Project>{2f3ce1be-81f3-4033-b09f-3c2820d7bfa9}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\LogicEngine.Factories\LogicEngine.Factories.fsproj">

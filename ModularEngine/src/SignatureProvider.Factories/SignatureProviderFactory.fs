@@ -21,8 +21,9 @@ type SignatureProviderFactory() =
   /// Construct a SignatureProvider. A signature provider kind must be provided.
   static member SignatureProvider (kind: string) = 
     match kind with
-    | "simple" -> new SimpleSignatureProvider() :> ISignatureProvider
-    | "ufol" -> new SimpleSignatureProvider() :> ISignatureProvider
+    | "simple"
+    | "ufol"
+    | "datalog" -> new SimpleSignatureProvider() :> ISignatureProvider
     | k -> failwith <| "Unrecognized signature provider kind: " + k
 
 

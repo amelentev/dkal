@@ -34,9 +34,18 @@ type DatalogLogicEngine() =
 
   let mutable _signatureProvider: ISignatureProvider option = None
   let mutable _infostrate: IInfostrate option = None
-  let mutable _freshVarId = 0
-
   let _context= new Context()
+
+    /// Lift all queries from infon that need to be forwarded to the substrates
+  member private se.substrateQueries (infon: ITerm) = 
+    seq {
+        match infon with
+        | AndInfon(infons) -> 
+          yield! infons |>
+                        Seq.fold (fun acc inf -> Seq.append acc (se.substrateQueries inf)) (seq [])
+        | AsInfon(exp) -> yield exp
+        | _ -> yield! []
+    }
 
   interface ILogicEngine with
     member se.Start () = ()
@@ -61,7 +70,8 @@ type DatalogLogicEngine() =
       log.Debug("Derive {0}", target)
       let datalogTranslator= DatalogTranslator()
       let knowledge= _infostrate.Value.Knowledge
-      // TODO solve asInfon instances
+      let substs = SubstrateDispatcher.Solve (se.substrateQueries target) substs
+
       seq {
         for subst in substs do
             let fp= _context.MkFixedpoint()
@@ -95,6 +105,8 @@ type DatalogLogicEngine() =
                                                            | _ -> () // ? TODO
                                              )
 
+            let fakeTrueFunc= _context.MkFuncDecl(FAKE_TRUE_RELATION, [||], _context.MkBoolSort())
+            fp.AddFact(fakeTrueFunc, [||])
             program.Rules |> Seq.iter ( fun rp -> match rp with
                                                   | RulePart(AtomRule(relationRule)) -> 
                                                         let (func, args) = relationRuleToFact(relationRule, regRels, regConsts, _context)

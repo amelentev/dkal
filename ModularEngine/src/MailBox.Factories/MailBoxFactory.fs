@@ -21,8 +21,9 @@ type MailBoxFactory() =
   /// proof correctness must be provided.
   static member MailBox (kind: string) (logicEngine: ILogicEngine) = 
     match kind with
-    | "simple" -> new SimpleMailBox(logicEngine) :> IMailBox
-    | "ufol" -> new SimpleMailBox(logicEngine) :> IMailBox
+    | "simple"
+    | "ufol"
+    | "datalog" -> new SimpleMailBox(logicEngine) :> IMailBox
     | k -> failwith <| "Unrecognized mailbox kind: " + k
 
 

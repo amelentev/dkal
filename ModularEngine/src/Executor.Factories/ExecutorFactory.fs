@@ -26,8 +26,9 @@ type ExecutorFactory() =
                           infostrate: IInfostrate,
                           mailbox: IMailBox) = 
     match kind with
-    | "simple" -> new SimpleExecutor(router, logicEngine, signatureProvider, infostrate, mailbox) :> IExecutor
-    | "ufol" -> new SimpleExecutor(router, logicEngine, signatureProvider, infostrate, mailbox) :> IExecutor
+    | "simple"
+    | "ufol"
+    | "datalog" -> new SimpleExecutor(router, logicEngine, signatureProvider, infostrate, mailbox) :> IExecutor
     | k -> failwith <| "Unrecognized executor kind: " + k
 
 

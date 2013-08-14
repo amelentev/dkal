@@ -96,6 +96,10 @@ type DatalogTranslator() =
         program.AddDeclarationPart(SortDeclarationPart(SortDeclaration("C", constantsMapping.Count, "constants.map")))
         program.AddDeclarationPart(NewLineDeclarationPart)
 
+        // create the " true" literal relation, mostly useful for further translations
+        let trueRel= RelationDeclaration("DFakeTrue", [], Input)
+        program.AddDeclarationPart(RelationDeclarationPart(trueRel))
+
         // create the D* "derivable" relations
         for kv in leaderIds do
             let pl, fl = matterLengths kv.Key
@@ -184,5 +188,13 @@ type DatalogTranslator() =
                                                     [Relation("D"+u.ToString(), matterToDatalogTerms matter)])))
         program.AddRulePart(NewLineRulePart)
         ) theses
-
+        
+        let sorts= new Dictionary<Sort, Mapping<System.Object>>()
+        let qMap= new Mapping<System.Object>()
+        let cMap= new Mapping<System.Object>()
+        quotationsMapping.Values |> Seq.iter (fun q -> qMap.Add(q :> System.Object))
+        constantsMapping.Values |> Seq.iter (fun c -> cMap.Add(c :> System.Object))
+        sorts.["Q"] <- qMap
+        sorts.["C"] <- cMap
+        program.Sorts <- sorts
         program
