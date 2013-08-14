@@ -88,6 +88,10 @@ module Datalog =
   type Program() = 
     let declParts = new List<ProgramDeclarationPart>()
     let ruleParts = new List<ProgramRulePart>()
+
+    member p.Declarations with get() = declParts
+    member p.Rules with get() = ruleParts
+
     member p.AddDeclarationPart(dp: ProgramDeclarationPart) = declParts.Add(dp)
     member p.AddRulePart(rp: ProgramRulePart) = ruleParts.Add(rp)
     override p.ToString() = String.concat "" (Seq.map (fun (dp: ProgramDeclarationPart) -> dp.ToString()) declParts) + "\r\n" + 

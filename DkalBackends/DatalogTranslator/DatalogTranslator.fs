@@ -74,16 +74,15 @@ type DatalogTranslator() =
         // convert each formula (hypothesis or thesis) into a prefixed formula
         // calculate form and matter 
         let (hypotheses, theses)= problem
-        for f in hypotheses @ theses do
-          prefixedPointer.[f] <- prefixedFormula EmptyPrefix f
-          tr.visitSubformula prefixedPointer.[f] |> ignore
+        (hypotheses @ theses) |> Seq.iter (fun f -> prefixedPointer.[f] <- prefixedFormula EmptyPrefix f
+                                                    tr.visitSubformula prefixedPointer.[f] |> ignore
+                                          )
 
         // mapping of possible constants
-        for (pm, fm) in matterPointer.Values do
-            for me in pm @ fm do
-                match me with
-                | MatterTerm(ConstTerm(c)) -> constantsMapping.Add (ConstTerm c) |> ignore
-                | _ -> ()
+        matterPointer.Values |> Seq.collect (fun (pm, fm) -> pm @ fm) |> Seq.iter (fun me -> match me with
+                                                                                             | MatterTerm(ConstTerm(c)) -> constantsMapping.Add (ConstTerm c) |> ignore
+                                                                                             | _ -> ()
+                                                                                  )
 
         // assign a unique id to each distinct formula form
         for kv in formPointer do
