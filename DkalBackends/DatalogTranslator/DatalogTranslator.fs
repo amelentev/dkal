@@ -180,8 +180,9 @@ type DatalogTranslator() =
         let args = matterToDatalogArgumentsDeclaration matter
         program.AddDeclarationPart(RelationDeclarationPart(RelationDeclaration("Query"+i.ToString(), args, PrintTuples)))
         program.AddRulePart(CommentRulePart(thesis.ToString()))
-        program.AddRulePart(RulePart(ImpliesRule(Relation("Query"+i.ToString(), matterToDatalogTerms matter), 
+        program.AddQueryPart(RulePart(ImpliesRule(Relation("Query"+i.ToString(), matterToDatalogTerms matter), 
                                                     [Relation("D"+u.ToString(), matterToDatalogTerms matter)])))
         program.AddRulePart(NewLineRulePart)
         ) theses
+
         program

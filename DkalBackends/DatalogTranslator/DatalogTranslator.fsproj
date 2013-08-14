@@ -39,8 +39,8 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Datalog.fs" />
     <Compile Include="Mapping.fs" />
+    <Compile Include="Datalog.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="DatalogTranslator.fs" />
   </ItemGroup>

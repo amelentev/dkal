@@ -1,6 +1,7 @@
 ﻿namespace Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 
 open System.Collections.Generic
+open Mapping
 
 module Datalog =
   type Term = 
@@ -88,11 +89,21 @@ module Datalog =
   type Program() = 
     let declParts = new List<ProgramDeclarationPart>()
     let ruleParts = new List<ProgramRulePart>()
+    let queryParts= new List<ProgramRulePart>()
+    let mutable sorts: Dictionary<Sort, Mapping<System.Object>> option= None
 
     member p.Declarations with get() = declParts
     member p.Rules with get() = ruleParts
+    member p.Queries with get() = queryParts
+    member p.Sorts with get() = sorts.Value and set(value) = sorts <- Some value
 
     member p.AddDeclarationPart(dp: ProgramDeclarationPart) = declParts.Add(dp)
     member p.AddRulePart(rp: ProgramRulePart) = ruleParts.Add(rp)
+    
+    /// queries are the same as rules, and in fact if you AddRule rather than AddQuery, it would work ok
+    /// But it is better to keep them semantically separate
+    member p.AddQueryPart(qp: ProgramRulePart) = queryParts.Add(qp)
+
     override p.ToString() = String.concat "" (Seq.map (fun (dp: ProgramDeclarationPart) -> dp.ToString()) declParts) + "\r\n" + 
-                              String.concat "" (Seq.map (fun (rp: ProgramRulePart) -> rp.ToString()) ruleParts)
+                              String.concat "" (Seq.map (fun (rp: ProgramRulePart) -> rp.ToString()) ruleParts) + "\r\n" +
+                              String.concat "" (Seq.map (fun (qp: ProgramRulePart) -> qp.ToString()) queryParts)

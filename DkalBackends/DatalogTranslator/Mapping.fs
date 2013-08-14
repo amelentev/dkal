@@ -8,7 +8,8 @@ module Mapping =
  type Mapping<'t when 't: equality>() = 
     let t2i = new List<'t>()
     
-    member s.Count = t2i.Count
+    member s.Values with get() = t2i
+    member s.Count with get() = t2i.Count
 
     member s.Add (i: 't) = 
       if not (t2i.Contains i) then

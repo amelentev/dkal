@@ -20,6 +20,7 @@ open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Z3
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
+open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator.Datalog
 open InfonSimplifier
 
 /// The SimpleEngine uses backwards propagation to derive all possible 
@@ -68,13 +69,45 @@ type DatalogLogicEngine() =
                                                                                   |> Seq.map (fun term -> simplify(term)) |> Seq.toList,
                                                                         [simplify(target.Apply(subst))])
                                                                      )
-            
-            ()
-            // TODO separate thesis from hypotheses in program
-            // TODO register relations as func declarations in the fp
-            // TODO add rules as rules in the fp
-            // TODO add thesis as query in the fp
-            // TODO solve
+            let regRels= new Dictionary<string, FuncDecl>()
+            let regConsts= new Dictionary<Expr, uint32>()
+            let fresh= ref (uint32(0))
+            program.Declarations |> Seq.iter ( fun decl -> match decl with
+                                                           | SortDeclarationPart(sortDecl) ->
+                                                                let sort= _context.MkUninterpretedSort(sortDecl.Name)
+                                                                try 
+                                                                    program.Sorts.[sortDecl.Name].Values
+                                                                        |> Seq.iter ( fun value -> 
+                                                                                        let cst= _context.MkConst(value.ToString(), sort)
+                                                                                        regConsts.[cst] <- !fresh
+                                                                                        fresh := !fresh + uint32(1)
+                                                                                    )
+                                                                with e -> ()
+                                                           | _ -> ()
+                                             )
+            program.Declarations |> Seq.iter ( fun decl -> match decl with
+                                                           | RelationDeclarationPart(relDecl) -> 
+                                                                let argsSorts= relDecl.Args
+                                                                                 |> Seq.collect (fun arg -> seq {yield _context.MkUninterpretedSort(snd arg) :> Microsoft.Z3.Sort})
+                                                                                 |> Seq.toArray
+                                                                regRels.[relDecl.Name] <- _context.MkFuncDecl(relDecl.Name, argsSorts, _context.MkBoolSort())
+                                                                fp.RegisterRelation(regRels.[relDecl.Name])
+                                                           | _ -> () // ? TODO
+                                             )
+
+            program.Rules |> Seq.iter ( fun rp -> match rp with
+                                                  | RulePart(AtomRule(relationRule)) -> 
+                                                        let (func, args) = relationRuleToFact(relationRule, regRels, regConsts, _context)
+                                                        fp.AddFact(func, args)
+                                                  | RulePart(ImpliesRule(head, body)) -> fp.AddRule( impliesRuleToFact(head, body, regRels, regConsts, _context) )
+                                                  | _ -> ()
+                                      )
+            let sat= program.Queries |> Seq.fold ( fun res query -> match res with
+                                                                    | Status.UNSATISFIABLE -> fp.Query( rulePartToBoolExpr(query, regRels, regConsts, _context) )
+                                                                    | _ as x -> x
+                                                 ) Status.UNSATISFIABLE
+            if sat = Status.UNSATISFIABLE then
+                yield subst
       }
 
     member se.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =
