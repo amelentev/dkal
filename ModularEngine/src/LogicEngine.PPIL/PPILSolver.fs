@@ -26,6 +26,7 @@ module PPILSolver =
                     | _ -> None)
       res
 
+  /// Basic PIL. O(n)
   let solveBPIL H Q =
       genericSolve Stage3.homonomySufArr emptyRule H Q
 
@@ -41,11 +42,18 @@ module PPILSolver =
       let Q = Q |> List.map Stage0.flatConjuncts
       genericSolve Stage3.homonomyHash emptyRule H Q
 
+  /// Transitive PIL. O(n^2)
   let solveTPIL H Q =
       genericSolve Stage3.homonomySufArr TPIL.applyTrans H Q
 
-  /// SPIL + additional transitive rule
-  let solveTSPILhash H Q =
+  /// Transitive SPIL. O(n^3)
+  let solveTSPIL H Q =
       let H = H |> List.map Stage0.flatConjuncts
       let Q = Q |> List.map Stage0.flatConjuncts
-      genericSolve Stage3.homonomyHash TPIL.applyTrans H Q
+      let setrels = ref None
+      let stage3 I HY QU (nodes, vertices) =
+        let res = Stage3.homonomyHash I HY QU (nodes, vertices)
+        let (_,_,H) = res
+        setrels := Some (TSPIL.genSetContainmentRelation H)
+        res
+      genericSolve stage3 (TPIL.genericApplyTrans (fun x -> TSPIL.traverseSubsets setrels.Value.Value x)) H Q

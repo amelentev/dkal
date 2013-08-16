@@ -19,7 +19,7 @@ open Utils
 module TPIL =
   let private solve = Utils.genericSolve PPILSolver.solveTPIL
 
-  let tests = [
+  let genericTests solve = [
     "transitive 1" => fun _ ->
       Assert.Equal("",
         [true],
@@ -52,3 +52,4 @@ module TPIL =
           solve ["a() -> b() && c()"]
                 ["a() -> b()"])
     ]
+  let tests = genericTests solve
