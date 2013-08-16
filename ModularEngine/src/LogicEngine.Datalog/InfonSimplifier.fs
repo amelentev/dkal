@@ -21,8 +21,24 @@ open Microsoft.Research.DkalBackends.Ast
 open Microsoft.Z3
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator.Datalog
 
+module Seq =
+    // useful extension method for folding while keeping the index at hand
+    let public foldi foldfun accum sequence =
+        sequence
+        |> Seq.fold (fun (acc, i) elem -> (foldfun i acc elem, i+1)) (accum, 0)
+        |> fst
+
 module InfonSimplifier =
     let FAKE_TRUE_RELATION= "FakeTrue"
+
+    let relationToBoolExpr(rel: Relation, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Expr, uint32>, varDefs: Dictionary<string, Expr>, ctx: Context) =
+        let dom= regRels.[rel.Name].Domain
+        ctx.MkApp (regRels.[rel.Name], rel.Args |> Seq.mapi ( fun i arg -> match arg with
+                                                                           | VarTerm(s) -> varDefs.[s]
+                                                                           | AtomTerm(s) -> ctx.MkNumeral(regConsts.[ctx.MkConst(s, dom.[i])], dom.[i])
+                                                                           | WildcardTerm -> failwith "Wildcard shouldn't appear in rule"
+                                                            ) |> Seq.toArray
+                  ) :?> BoolExpr
 
     let simplifyArg(arg: ITerm) =
         match arg with
@@ -51,44 +67,29 @@ module InfonSimplifier =
         | t -> failwith (String.Format("Translation not implemented {0}", t))
 
 
-    let relationRuleToFact(relationRule: Relation, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Expr, uint32>, ctx: Context) =
+    let relationRuleToFact(relationRule: Relation, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Expr, uint32>, varDefs: Dictionary<string, Expr>, ctx: Context) =
         let dom= regRels.[relationRule.Name].Domain
         ( regRels.[relationRule.Name], relationRule.Args
-                                           |> Seq.mapi ( fun i arg -> match arg with     // TODO is this right...?
-                                                                      | VarTerm(s) -> ctx.MkConst(s, dom.[i])
+                                           |> Seq.mapi ( fun i arg -> match arg with
+                                                                      | VarTerm(s) -> varDefs.[s]
                                                                       | AtomTerm(s) -> ctx.MkConst(s, dom.[i])
                                                                       | WildcardTerm -> failwith "Wildcard shouldn't appear in rule"
                                                        )
                                            |> Seq.map (fun expr -> regConsts.[expr]) |> Seq.toArray
         )
 
-    let impliesRuleToFact(head: Relation, body: Relation list, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Expr, uint32>, ctx: Context) =
-        let premise= ctx.MkAnd(body |> Seq.fold ( fun acc rel -> let dom= regRels.[rel.Name].Domain
-                                                                 acc |> Array.append [| (ctx.MkApp( regRels.[rel.Name],
-                                                                                                    rel.Args |> Seq.mapi ( fun i arg -> match arg with     // TODO is this right...?
-                                                                                                                                        | VarTerm(s) -> ctx.MkConst(s, dom.[i])
-                                                                                                                                        | AtomTerm(s) -> ctx.MkConst(s, dom.[i])
-                                                                                                                                        | WildcardTerm -> failwith "Wildcard shouldn't appear in rule"
-                                                                                                                         ) |> Seq.toArray
-                                                                                                  ) :?> BoolExpr) |]
-                                                ) [||])
+    let impliesRuleToFact(head: Relation, body: Relation list, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Expr, uint32>, varDefs: Dictionary<string, Expr>, ctx: Context) =
+        let premise= ctx.MkAnd(body |> Seq.fold ( fun acc rel -> acc |> Array.append [| relationToBoolExpr(rel, regRels, regConsts, varDefs, ctx) |] ) [||])
         let dom= regRels.[head.Name].Domain
-        let consq= ctx.MkApp( regRels.[head.Name], head.Args |> Seq.mapi ( fun i arg -> match arg with     // TODO is this right...?
-                                                                                        | VarTerm(s) -> ctx.MkConst(s, dom.[i])
-                                                                                        | AtomTerm(s) -> ctx.MkConst(s, dom.[i])
-                                                                                        | WildcardTerm -> failwith "Wildcard shouldn't appear in rule"
-                                                                          ) |> Seq.toArray
-                            ) :?> BoolExpr
+        let consq= relationToBoolExpr(head, regRels, regConsts, varDefs, ctx)
         ctx.MkImplies(premise, consq)
 
-    let rulePartToBoolExpr(rp: ProgramRulePart, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Expr, uint32>, ctx: Context) =
+    let rec rulePartToBoolExpr(rp: ProgramRulePart, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Expr, uint32>, varDefs: Dictionary<string, Expr>, ctx: Context) =
         match rp with
-        | RulePart(AtomRule(relationRule)) -> 
-            let dom= regRels.[relationRule.Name].Domain
-            ctx.MkApp( regRels.[relationRule.Name], relationRule.Args |> Seq.mapi ( fun i arg -> match arg with     // TODO is this right...?
-                                                                                                 | VarTerm(s) -> ctx.MkConst(s, dom.[i])
-                                                                                                 | AtomTerm(s) -> ctx.MkConst(s, dom.[i])
-                                                                                                 | WildcardTerm -> failwith "Wildcard shouldn't appear in rule"
-                                                                                  ) |> Seq.toArray
-                     ) :?> BoolExpr
+        | RulePart(AtomRule(relationRule)) -> relationToBoolExpr(relationRule, regRels, regConsts, varDefs, ctx)
+        | RulePart(ImpliesRule(cons, prems)) ->
+                                                let p= ctx.MkAnd(prems |> Seq.map (fun prem -> relationToBoolExpr(prem, regRels, regConsts, varDefs, ctx)) |> Seq.toArray)
+                                                let q= relationToBoolExpr(cons, regRels, regConsts, varDefs, ctx)
+                                                let res= ctx.MkImplies(p, q)
+                                                res
         | _ -> failwith "Cannot make a query from anything but a relation rule"

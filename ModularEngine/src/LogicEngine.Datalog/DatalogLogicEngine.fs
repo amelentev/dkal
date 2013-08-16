@@ -81,10 +81,12 @@ type DatalogLogicEngine() =
                                                                      )
             let regRels= new Dictionary<string, FuncDecl>()
             let regConsts= new Dictionary<Expr, uint32>()
+            let regSorts= new Dictionary<Sort, Microsoft.Z3.Sort>()
             let fresh= ref (uint32(0))
             program.Declarations |> Seq.iter ( fun decl -> match decl with
                                                            | SortDeclarationPart(sortDecl) ->
-                                                                let sort= _context.MkUninterpretedSort(sortDecl.Name)
+                                                                let sort= _context.MkFiniteDomainSort(sortDecl.Name, uint64(program.Sorts.[sortDecl.Name].Count))
+                                                                regSorts.[sortDecl.Name] <- sort
                                                                 try 
                                                                     program.Sorts.[sortDecl.Name].Values
                                                                         |> Seq.iter ( fun value -> 
@@ -95,10 +97,11 @@ type DatalogLogicEngine() =
                                                                 with e -> ()
                                                            | _ -> ()
                                              )
+
             program.Declarations |> Seq.iter ( fun decl -> match decl with
                                                            | RelationDeclarationPart(relDecl) -> 
                                                                 let argsSorts= relDecl.Args
-                                                                                 |> Seq.collect (fun arg -> seq {yield _context.MkUninterpretedSort(snd arg) :> Microsoft.Z3.Sort})
+                                                                                 |> Seq.collect (fun arg -> seq {yield regSorts.[snd arg]})
                                                                                  |> Seq.toArray
                                                                 regRels.[relDecl.Name] <- _context.MkFuncDecl(relDecl.Name, argsSorts, _context.MkBoolSort())
                                                                 fp.RegisterRelation(regRels.[relDecl.Name])
@@ -107,18 +110,44 @@ type DatalogLogicEngine() =
 
             let fakeTrueFunc= _context.MkFuncDecl(FAKE_TRUE_RELATION, [||], _context.MkBoolSort())
             fp.AddFact(fakeTrueFunc, [||])
-            program.Rules |> Seq.iter ( fun rp -> match rp with
+
+            let varDefs= program.Rules
+                         |> Seq.append program.Queries
+                         |> Seq.collect (fun rulepart -> match rulepart with
+                                                         | RulePart(AtomRule(relation)) -> seq {yield relation}
+                                                         | RulePart(ImpliesRule(head, body)) -> seq {yield! head::body}
+                                                         | _ -> seq {yield! []}
+                                        )
+                         |> Seq.collect (fun rel -> let dom= regRels.[rel.Name].Domain
+                                                    rel.Args |> Seq.mapi (fun i arg -> (arg, dom.[i]))
+                                        )
+                         |> Seq.fold (fun (acc:Dictionary<string,Expr>) arg -> match arg with
+                                                     | (VarTerm(s), sort) -> let v= _context.MkBound(!fresh, sort)
+                                                                             acc.[s] <- v
+                                                                             regConsts.[v] <- !fresh
+                                                                             fresh := !fresh + uint32(1)
+                                                                             acc
+                                                     | _ -> acc
+                                     ) (new Dictionary<string,Expr>())
+            program.Rules |> Seq.append program.Queries
+                          |> Seq.iter ( fun rp -> match rp with
                                                   | RulePart(AtomRule(relationRule)) -> 
-                                                        let (func, args) = relationRuleToFact(relationRule, regRels, regConsts, _context)
-                                                        fp.AddFact(func, args)
-                                                  | RulePart(ImpliesRule(head, body)) -> fp.AddRule( impliesRuleToFact(head, body, regRels, regConsts, _context) )
+                                                        //let (func, args) = relationRuleToFact(relationRule, regRels, regConsts, varDefs, _context)
+                                                        //fp.AddFact(func, args)
+                                                        fp.AddRule( relationToBoolExpr(relationRule, regRels, regConsts, varDefs, _context) )
+                                                  | RulePart(ImpliesRule(head, body)) -> fp.AddRule( impliesRuleToFact(head, body, regRels, regConsts, varDefs, _context) )
                                                   | _ -> ()
                                       )
-            let sat= program.Queries |> Seq.fold ( fun res query -> match res with
-                                                                    | Status.UNSATISFIABLE -> fp.Query( rulePartToBoolExpr(query, regRels, regConsts, _context) )
-                                                                    | _ as x -> x
-                                                 ) Status.UNSATISFIABLE
-            if sat = Status.UNSATISFIABLE then
+            let sat= program.Queries |> Seq.fold (fun res query -> match res with
+                                                                   | Status.SATISFIABLE -> match query with
+                                                                                           | RulePart(ImpliesRule(head, body)) ->
+                                                                                                let q= relationToBoolExpr(head, regRels, regConsts, varDefs, _context)
+                                                                                                let res= fp.Query(q)
+                                                                                                res
+                                                                                           | _ -> failwith "Error!"
+                                                                   | _ as x -> x
+                                                 ) Status.SATISFIABLE
+            if sat = Status.SATISFIABLE then
                 yield subst
       }
 
@@ -129,3 +158,4 @@ type DatalogLogicEngine() =
         failwith "Not implemented"
 
 
+ 
