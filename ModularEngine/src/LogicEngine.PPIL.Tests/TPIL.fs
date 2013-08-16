@@ -45,11 +45,10 @@ module TPIL =
         [true],
         solve []
               ["a() -> a()"])
-    
-    "transitive -> &&. TSPIL. todo" => fun _ ->
-        Assert.Equal("",
-          [true],
-          solve ["a() -> b() && c()"]
-                ["a() -> b()"])
+    "transitive said" => fun _ ->
+      Assert.Equal("",
+        [true; false; false],
+        solve ["a() -> p1 said b()"; "p1 said b() -> c()"; "b() -> d()"; "p2 said b() -> e()"]
+              ["a() -> c()"; "a() -> d()"; "a() -> e()"])
     ]
   let tests = genericTests solve

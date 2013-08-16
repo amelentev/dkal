@@ -44,4 +44,10 @@ module TSPIL =
           [true; true; true; true; false],
           solve ["a() -> b() && c()"; "c() -> d() && e()"]
                 ["a() -> e()"; "a() -> e()"; "a() && b() && c() -> d() && e()"; "a() -> d()||e()"; "b()||c() -> e()"])
+
+    "TSPIL 5" => fun _ ->
+        Assert.Equal("",
+          [false],
+          solve ["a() -> b() && c()"]
+                ["a() -> me said c()"])
     ] @ (TPIL.genericTests solve)
