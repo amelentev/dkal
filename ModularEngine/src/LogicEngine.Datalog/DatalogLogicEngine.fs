@@ -80,18 +80,23 @@ type DatalogLogicEngine() =
                                                                         [simplify(target.Apply(subst))])
                                                                      )
             let regRels= new Dictionary<string, FuncDecl>()
-            let regConsts= new Dictionary<Expr, uint32>()
+            let regConsts= new Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>()
             let regSorts= new Dictionary<Sort, Microsoft.Z3.Sort>()
-            let fresh= ref (uint32(0))
+
+            // Z3 allows finite domain sorts, BUT
+            // 1) they MUST have a numerical representation
+            // 2) when declaring them, you must declare its size. BUT its size is actually the max possible value + 1 (actually representing the range 0..max)
             program.Declarations |> Seq.iter ( fun decl -> match decl with
                                                            | SortDeclarationPart(sortDecl) ->
-                                                                let sort= _context.MkFiniteDomainSort(sortDecl.Name, uint64(program.Sorts.[sortDecl.Name].Count))
+                                                                let sort= _context.MkFiniteDomainSort(sortDecl.Name, uint64(program.Sorts.[sortDecl.Name].Count + 1))
                                                                 regSorts.[sortDecl.Name] <- sort
+                                                                let fresh= ref (uint32(0))
                                                                 try 
+                                                                    regConsts.[sort] <- new Dictionary<Expr, uint32>()
                                                                     program.Sorts.[sortDecl.Name].Values
                                                                         |> Seq.iter ( fun value -> 
                                                                                         let cst= _context.MkConst(value.ToString(), sort)
-                                                                                        regConsts.[cst] <- !fresh
+                                                                                        regConsts.[sort].[cst] <- !fresh
                                                                                         fresh := !fresh + uint32(1)
                                                                                     )
                                                                 with e -> ()
@@ -103,14 +108,19 @@ type DatalogLogicEngine() =
                                                                 let argsSorts= relDecl.Args
                                                                                  |> Seq.collect (fun arg -> seq {yield regSorts.[snd arg]})
                                                                                  |> Seq.toArray
-                                                                regRels.[relDecl.Name] <- _context.MkFuncDecl(relDecl.Name, argsSorts, _context.MkBoolSort())
+                                                                regRels.[relDecl.Name] <- _context.MkFuncDecl(relDecl.Name, argsSorts, _context.BoolSort)
                                                                 fp.RegisterRelation(regRels.[relDecl.Name])
                                                            | _ -> () // ? TODO
                                              )
 
-            let fakeTrueFunc= _context.MkFuncDecl(FAKE_TRUE_RELATION, [||], _context.MkBoolSort())
+            let fakeTrueFunc= _context.MkFuncDecl(FAKE_TRUE_RELATION, [||], _context.BoolSort)
             fp.AddFact(fakeTrueFunc, [||])
 
+            // TODO warning: I'm mapping the variables to the SAME dictionary as the constants for a given Sort. This does NOT mess up the
+            // size of the finite domain sort because they were mapped BEFORE, but be wary.
+            // It might be better to have a separate repository for this but I don't want to drown in parameters later.
+            // I'll probably have to change it if it gets too confusing.
+            let freshVar= ref (uint32(0))
             let varDefs= program.Rules
                          |> Seq.append program.Queries
                          |> Seq.collect (fun rulepart -> match rulepart with
@@ -122,20 +132,21 @@ type DatalogLogicEngine() =
                                                     rel.Args |> Seq.mapi (fun i arg -> (arg, dom.[i]))
                                         )
                          |> Seq.fold (fun (acc:Dictionary<string,Expr>) arg -> match arg with
-                                                     | (VarTerm(s), sort) -> let v= _context.MkBound(!fresh, sort)
-                                                                             acc.[s] <- v
-                                                                             regConsts.[v] <- !fresh
-                                                                             fresh := !fresh + uint32(1)
-                                                                             acc
-                                                     | _ -> acc
+                                                                               | (VarTerm(s), sort) -> let v= _context.MkBound(!freshVar, sort)
+                                                                                                       acc.[s] <- v
+                                                                                                       regConsts.[sort].[v] <- !freshVar
+                                                                                                       freshVar := !freshVar + uint32(1)
+                                                                                                       acc
+                                                                               | _ -> acc
                                      ) (new Dictionary<string,Expr>())
             program.Rules |> Seq.append program.Queries
                           |> Seq.iter ( fun rp -> match rp with
                                                   | RulePart(AtomRule(relationRule)) -> 
-                                                        //let (func, args) = relationRuleToFact(relationRule, regRels, regConsts, varDefs, _context)
-                                                        //fp.AddFact(func, args)
-                                                        fp.AddRule( relationToBoolExpr(relationRule, regRels, regConsts, varDefs, _context) )
-                                                  | RulePart(ImpliesRule(head, body)) -> fp.AddRule( impliesRuleToFact(head, body, regRels, regConsts, varDefs, _context) )
+                                                        let rule= relationToBoolExpr(relationRule, regRels, regConsts, varDefs, _context)
+                                                        fp.AddRule(rule)
+                                                  | RulePart(ImpliesRule(head, body)) ->
+                                                        let rule= impliesRuleToBoolExpr(head, body, regRels, regConsts, varDefs, _context)
+                                                        fp.AddRule(rule)
                                                   | _ -> ()
                                       )
             let sat= program.Queries |> Seq.fold (fun res query -> match res with
