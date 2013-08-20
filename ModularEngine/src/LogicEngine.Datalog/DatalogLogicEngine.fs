@@ -23,11 +23,6 @@ open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator.Datalog
 open InfonSimplifier
 
-/// The SimpleEngine uses backwards propagation to derive all possible 
-/// Substitutions that will satisfy the given query. Each Substitution will 
-/// have an accompanying list of side conditions to be checked against the 
-/// substrate(s). Only those Substitutions that pass the side conditions are
-/// returned
 type DatalogLogicEngine() = 
 
   let log = LogManager.GetLogger("LogicEngine.Datalog")
@@ -45,6 +40,30 @@ type DatalogLogicEngine() =
                         Seq.fold (fun acc inf -> Seq.append acc (se.substrateQueries inf)) (seq [])
         | AsInfon(exp) -> yield exp
         | _ -> yield! []
+    }
+
+  member private se.mergeSubstitutionWithAnswer (subst:ISubstitution) (answer:Expr) (regVarNamesAndTypes:Dictionary<Expr, string*IType>) =
+    seq {
+        if answer.IsTrue then
+            yield subst
+        else if answer.IsEq then
+            // merge subst with this assignment
+            // TODO is it right to assume that substitutions are just horn clauses?
+            let (lhs, rhs)= if answer.Args.[0].IsVar then answer.Args.[0],answer.Args.[1] else answer.Args.[1],answer.Args.[0]
+            // TODO complete the correct value, which needs to be backtranslated from the translation chain...
+            yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, Constant(0))
+        else if answer.IsAnd then
+            // merge subst with all merged args. Get substs for each arg and combine them all
+            let subsToCombine= answer.Args |> Seq.map (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes)
+            let merged = ( subsToCombine |> Seq.fold (fun acc valsForClause -> 
+                                                            valsForClause |> Seq.collect (fun valuation -> acc |> Seq.map (fun sub -> valuation.ComposeWith sub))
+                                                     ) (seq {yield Substitution.Id})
+                         )
+            yield! merged
+        else if answer.IsOr then
+            // create one different merge for each arg
+            yield! answer.Args |> Seq.collect (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes)
+        else yield! []
     }
 
   interface ILogicEngine with
@@ -82,6 +101,8 @@ type DatalogLogicEngine() =
             let regRels= new Dictionary<string, FuncDecl>()
             let regConsts= new Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>()
             let regSorts= new Dictionary<Sort, Microsoft.Z3.Sort>()
+            let regVars= new Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>()
+            let regVarNames=  new Dictionary<Expr, string*IType>()
 
             // Z3 allows finite domain sorts, BUT
             // 1) they MUST have a numerical representation
@@ -93,6 +114,7 @@ type DatalogLogicEngine() =
                                                                 let fresh= ref (uint32(0))
                                                                 try 
                                                                     regConsts.[sort] <- new Dictionary<Expr, uint32>()
+                                                                    regVars.[sort] <- new Dictionary<Expr, uint32>()
                                                                     program.Sorts.[sortDecl.Name].Values
                                                                         |> Seq.iter ( fun value -> 
                                                                                         let cst= _context.MkConst(value.ToString(), sort)
@@ -115,11 +137,6 @@ type DatalogLogicEngine() =
 
             let fakeTrueFunc= _context.MkFuncDecl(FAKE_TRUE_RELATION, [||], _context.BoolSort)
             fp.AddFact(fakeTrueFunc, [||])
-
-            // TODO warning: I'm mapping the variables to the SAME dictionary as the constants for a given Sort. This does NOT mess up the
-            // size of the finite domain sort because they were mapped BEFORE, but be wary.
-            // It might be better to have a separate repository for this but I don't want to drown in parameters later.
-            // I'll probably have to change it if it gets too confusing.
             let freshVar= ref (uint32(0))
             let varDefs= program.Rules
                          |> Seq.append program.Queries
@@ -134,7 +151,9 @@ type DatalogLogicEngine() =
                          |> Seq.fold (fun (acc:Dictionary<string,Expr>) arg -> match arg with
                                                                                | (VarTerm(s), sort) -> let v= _context.MkBound(!freshVar, sort)
                                                                                                        acc.[s] <- v
-                                                                                                       regConsts.[sort].[v] <- !freshVar
+                                                                                                       // TODO figure out the correct type of the variable
+                                                                                                       regVarNames.[v] <- (s, Microsoft.Research.Dkal.Ast.Type.Principal)
+                                                                                                       regVars.[sort].[v] <- !freshVar
                                                                                                        freshVar := !freshVar + uint32(1)
                                                                                                        acc
                                                                                | _ -> acc
@@ -142,24 +161,26 @@ type DatalogLogicEngine() =
             program.Rules |> Seq.append program.Queries
                           |> Seq.iter ( fun rp -> match rp with
                                                   | RulePart(AtomRule(relationRule)) -> 
-                                                        let rule= relationToBoolExpr(relationRule, regRels, regConsts, varDefs, _context)
+                                                        let rule= relationToBoolExpr(relationRule, regRels, regConsts, regVars, varDefs, _context)
                                                         fp.AddRule(rule)
                                                   | RulePart(ImpliesRule(head, body)) ->
-                                                        let rule= impliesRuleToBoolExpr(head, body, regRels, regConsts, varDefs, _context)
+                                                        let rule= impliesRuleToBoolExpr(head, body, regRels, regConsts, regVars, varDefs, _context)
                                                         fp.AddRule(rule)
                                                   | _ -> ()
                                       )
             let sat= program.Queries |> Seq.fold (fun res query -> match res with
                                                                    | Status.SATISFIABLE -> match query with
                                                                                            | RulePart(ImpliesRule(head, body)) ->
-                                                                                                let q= relationToBoolExpr(head, regRels, regConsts, varDefs, _context)
+                                                                                                let q= relationToBoolExpr(head, regRels, regConsts, regVars, varDefs, _context)
                                                                                                 let res= fp.Query(q)
                                                                                                 res
                                                                                            | _ -> failwith "Error!"
                                                                    | _ as x -> x
                                                  ) Status.SATISFIABLE
             if sat = Status.SATISFIABLE then
-                yield subst
+                // TODO actually get the answer and build and yield the acceptable substitutions
+                let answer= fp.GetAnswer()
+                yield! se.mergeSubstitutionWithAnswer subst answer regVarNames
       }
 
     member se.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =
@@ -167,6 +188,4 @@ type DatalogLogicEngine() =
 
     member se.CheckJustification (evidence: ITerm) = 
         failwith "Not implemented"
-
-
  

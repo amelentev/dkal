@@ -31,7 +31,8 @@ module Seq =
 module InfonSimplifier =
     let FAKE_TRUE_RELATION= "FakeTrue"
 
-    let relationToBoolExpr(rel: Relation, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
+    let relationToBoolExpr(rel: Relation, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>,
+                           regVars: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
         let dom= regRels.[rel.Name].Domain
         ctx.MkApp (regRels.[rel.Name], rel.Args |> Seq.mapi ( fun i arg -> match arg with
                                                                            | VarTerm(s) -> varDefs.[s]
@@ -78,18 +79,20 @@ module InfonSimplifier =
                                            |> Seq.map (fun expr -> regConsts.[expr]) |> Seq.toArray
         )
 
-    let impliesRuleToBoolExpr(head: Relation, body: Relation list, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
-        let premise= ctx.MkAnd(body |> Seq.fold ( fun acc rel -> acc |> Array.append [| relationToBoolExpr(rel, regRels, regConsts, varDefs, ctx) |] ) [||])
+    let impliesRuleToBoolExpr(head: Relation, body: Relation list, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>,
+                              regVars: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
+        let premise= ctx.MkAnd(body |> Seq.fold ( fun acc rel -> acc |> Array.append [| relationToBoolExpr(rel, regRels, regConsts, regVars, varDefs, ctx) |] ) [||])
         let dom= regRels.[head.Name].Domain
-        let consq= relationToBoolExpr(head, regRels, regConsts, varDefs, ctx)
+        let consq= relationToBoolExpr(head, regRels, regConsts, regVars, varDefs, ctx)
         ctx.MkImplies(premise, consq)
 
-    let rec rulePartToBoolExpr(rp: ProgramRulePart, regRels: Dictionary<string, FuncDecl>, regConsts:Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
+    let rec rulePartToBoolExpr(rp: ProgramRulePart, regRels: Dictionary<string, FuncDecl>, regConsts:Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>,
+                               regVars: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
         match rp with
-        | RulePart(AtomRule(relationRule)) -> relationToBoolExpr(relationRule, regRels, regConsts, varDefs, ctx)
+        | RulePart(AtomRule(relationRule)) -> relationToBoolExpr(relationRule, regRels, regConsts, regVars, varDefs, ctx)
         | RulePart(ImpliesRule(cons, prems)) ->
-                                                let p= ctx.MkAnd(prems |> Seq.map (fun prem -> relationToBoolExpr(prem, regRels, regConsts, varDefs, ctx)) |> Seq.toArray)
-                                                let q= relationToBoolExpr(cons, regRels, regConsts, varDefs, ctx)
+                                                let p= ctx.MkAnd(prems |> Seq.map (fun prem -> relationToBoolExpr(prem, regRels, regConsts, regVars, varDefs, ctx)) |> Seq.toArray)
+                                                let q= relationToBoolExpr(cons, regRels, regConsts, regVars, varDefs, ctx)
                                                 let res= ctx.MkImplies(p, q)
                                                 res
         | _ -> failwith "Cannot make a query from anything but a relation rule"
