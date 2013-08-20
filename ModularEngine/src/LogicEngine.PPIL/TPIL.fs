@@ -16,7 +16,7 @@ open AST
 open Stage4
 
 module TPIL =
-  let applyTrans (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) = function
+  let genericApplyTrans extraTraverse (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) = function
     | Implies(_, ul, ur) ->
       let homkey (u:AST) = H.[u.Key].Key
       let status p =  T.[homkey p].Status
@@ -24,20 +24,22 @@ module TPIL =
       let constructPred ukey side f2 =
         let r = HashSet<int>()
         let q = Queue<int>()
-        q.Enqueue ukey
-        r.Add ukey |> ignore
+        let qappend w =
+          if not(r.Contains w) then
+            q.Enqueue w
+            r.Add w |> ignore
+        qappend ukey
         while q.Count > 0 do
           let u = H.[q.Dequeue()]
           for v in T.[homkey u].get side do
             match v with
             | Implies(_,vl,vr) when status v <> Raw ->
               let w = homkey (f2 (vl,vr))
-              if not(r.Contains w) then
-                q.Enqueue w
-                r.Add w |> ignore
+              qappend w
             | _ -> ()
+          extraTraverse u side |> Seq.iter qappend
         r
-        
+
       let Pl = constructPred (homkey ul) ImplRight fst
       let Pr = constructPred (homkey ur) ImplLeft snd
 
@@ -50,3 +52,5 @@ module TPIL =
         | _ -> ()
       ]
     | _ -> []
+
+  let applyTrans x = genericApplyTrans (fun _ _ -> []) x

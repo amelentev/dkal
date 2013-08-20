@@ -47,6 +47,7 @@
     <Compile Include="Utils.fs" />
     <Compile Include="SPIL.fs" />
     <Compile Include="TPIL.fs" />
+    <Compile Include="TSPIL.fs" />
     <Compile Include="Tests.fs" />
     <None Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -85,6 +86,11 @@
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{3b621dd5-cefd-4b21-865b-b1a3e3a318dd}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Name>Globals</Name>
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Interfaces\Interfaces.fsproj">

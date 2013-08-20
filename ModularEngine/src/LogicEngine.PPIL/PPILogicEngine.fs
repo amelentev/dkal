@@ -215,4 +215,4 @@ type TPILogicEngine() =
   inherit PPILogicEngine(PPILSolver.solveTPIL)
 
 type TSPILogicEngine() =
-  inherit PPILogicEngine(PPILSolver.solveTSPILhash)
+  inherit PPILogicEngine(PPILSolver.solveTSPIL)

@@ -59,7 +59,7 @@ module Stage3 =
       v.Position <- ind
       ind <- ind + 1
 
-    /// remembered hases. from node key to hash
+    /// remembered hashes. from node key to hash
     let hashcache = Dictionary<int, int>()
     /// hash function for prefix
     let prefhash (u:AST) = vertices.[u.Key].Position

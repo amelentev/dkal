@@ -32,7 +32,7 @@ module Utils =
       let parser = SimpleParser() :> IInfonParser
       parser.SetParsingContext (new ParsingContext("me"))
       let decls = "type Int = System.Int32 \n"+
-                  "relation a() relation b() relation c() relation d() relation x() relation y() relation z() relation w() relation r(X:Int) \n" +
+                  "relation a() relation b() relation c() relation d() relation e() relation x() relation y() relation z() relation w() relation r(X:Int) \n" +
                   "relation needSum(X:Int, Y:Int) relation needProduct(X:Int, Y:Int) relation knowsMath(X:Dkal.Principal)"
       let rels = parser.ParseSignature (decls)
       parser.ParseInfon s

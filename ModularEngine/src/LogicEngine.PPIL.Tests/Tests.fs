@@ -104,12 +104,12 @@ module Tests =
                     [false; false],
                     solve ["a()"]
                           ["a() -> b()"; "b()"])
-      ] @ SPIL.tests @ TPIL.tests
+      ] @ SPIL.tests @ TPIL.tests @ TSPIL.tests
 
   [<EntryPoint>]
   let main argv = 
       let r = tests
-            //|> Test.filter (fun x -> x.Contains "transitive")
+            //|> Test.filter (fun x -> x.Contains "TSPIL 2")
             |> Test.filter (fun x -> not (x.EndsWith "todo"))
             |> run
       System.Console.ReadLine() |> ignore
