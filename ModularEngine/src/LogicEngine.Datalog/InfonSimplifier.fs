@@ -30,6 +30,7 @@ module Seq =
 
 module InfonSimplifier =
     let FAKE_TRUE_RELATION= "FakeTrue"
+    let FAKE_TRUE_FACT= AtomFormula(FAKE_TRUE_RELATION, [])
 
     let relationToBoolExpr(rel: Relation, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>,
                            regVars: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
@@ -45,20 +46,20 @@ module InfonSimplifier =
 
     let simplifyArg(arg: ITerm) =
         match arg with
-        | Const(c) -> ConstTerm(c.Value.ToString())
-        | Var(v) -> Microsoft.Research.DkalBackends.Ast.VarTerm(v.Name)
+        | Const(c) -> ConstTerm(c.Value.ToString(), c.Type.ToString())
+        | Var(v) -> Microsoft.Research.DkalBackends.Ast.VarTerm(v.Name, v.Type.ToString())
         | _ -> failwith "Argument cannot be more complex than a constant or variable for Datalog engine"
 
     let simplifyPrincipal(ppalTerm: ITerm) =
         match ppalTerm with
-        | PrincipalConstant(ppal) -> ConstTerm(ppal)
-        | Var(ppal) -> Microsoft.Research.DkalBackends.Ast.VarTerm(ppal.Name)
+        | PrincipalConstant(ppal) -> ConstTerm(ppal, Type.Principal.ToString())
+        | Var(ppal) -> Microsoft.Research.DkalBackends.Ast.VarTerm(ppal.Name, Type.Principal.ToString())
         | _ -> failwith ("Term " + ppalTerm.ToString() + " does not denote a principal")
 
     let rec simplify(infon: ITerm) =
         match infon with
         | AsInfon(t) -> AtomFormula(FAKE_TRUE_RELATION, [])
-        | EmptyInfon(t) -> failwith "Attempting to simplify EmptyInfon ..."
+        | EmptyInfon(t) -> AtomFormula(FAKE_TRUE_RELATION, []) // failwith "Attempting to simplify EmptyInfon ..."
         | SaidInfon(ppal, t) -> SpeechFormula(simplifyPrincipal(ppal), SaidSpeech, simplify(t))
         | AndInfon(t) -> match t with
                          | [] -> failwith "AndInfon may not be composed of no infons"
@@ -98,3 +99,38 @@ module InfonSimplifier =
                                                 let res= ctx.MkImplies(p, q)
                                                 res
         | _ -> failwith "Cannot make a query from anything but a relation rule"
+
+    // TODO move this two funs away to utils or something like that
+    let z3ExprToDkal (expr:Microsoft.Z3.Expr) (typ:IType)
+                     (regConsts:Dictionary<uint32, (Microsoft.Z3.Sort*Expr)>) (mappedConstants:List<Microsoft.Research.DkalBackends.Ast.Term>)=
+        let originalDkalExpr= snd(regConsts.[uint32(expr.ToString())])
+        // let ndx= int(originalDkalExpr.ToString().Replace("|",""))
+        let mapped= originalDkalExpr.ToString().Replace("|","")
+        // let mapped= mappedConstants.[ndx]
+
+        if typ = Microsoft.Research.Dkal.Ast.Type.Boolean then
+            match mapped.ToString() with
+            | "true" -> Const(Constant(true))
+            | _ -> Const(Constant(false))
+        elif typ = Microsoft.Research.Dkal.Ast.Type.Int32 then
+            Const(Constant(int(mapped.ToString())))
+        elif typ = Microsoft.Research.Dkal.Ast.Type.Double then
+            Const(Constant(double(mapped.ToString())))
+        elif typ = Microsoft.Research.Dkal.Ast.Type.String then
+            Const(Constant(mapped.ToString()))
+        elif typ = Microsoft.Research.Dkal.Ast.Type.DateTime then
+            Const(Constant(System.DateTime.Parse(mapped.ToString())))
+        elif typ = Microsoft.Research.Dkal.Ast.Type.Principal then
+            PrincipalConstant(mapped.ToString()) :> ITerm
+        else
+            failwith ("Unrecognized type for constant " + (originalDkalExpr.ToString()) + "! : "  + (typ.ToString()))
+
+    let dkalTypeFromString (typ:string) =
+        match typ with
+        | "Dkal.Principal" -> Microsoft.Research.Dkal.Ast.Type.Principal
+        | "System.Int32" -> Microsoft.Research.Dkal.Ast.Type.Int32
+        | "System.Double" -> Microsoft.Research.Dkal.Ast.Type.Double
+        | "System.DateTime" -> Microsoft.Research.Dkal.Ast.Type.DateTime
+        | "System.String" -> Microsoft.Research.Dkal.Ast.Type.String
+        | "System.Boolean" -> Microsoft.Research.Dkal.Ast.Type.Boolean
+        | _ -> failwith ("Unrecognized type " + typ)

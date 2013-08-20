@@ -66,7 +66,7 @@ module Utils =
       | MatterSpeech(AnySpeech) -> failwith "impossible"
       | MatterSpeech(s) -> args.Add(AtomTerm(s.ToString()))
       | MatterTerm(AnyTerm) -> failwith "impossible"
-      | MatterTerm(Microsoft.Research.DkalBackends.Ast.VarTerm(v)) -> args.Add(VarTerm(v))
-      | MatterTerm(ConstTerm(c)) -> args.Add(AtomTerm(c))
+      | MatterTerm(Microsoft.Research.DkalBackends.Ast.VarTerm(v, t)) -> args.Add(VarTerm(v))
+      | MatterTerm(ConstTerm(c, t)) -> args.Add(AtomTerm(c))
     args
 

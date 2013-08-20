@@ -4,14 +4,14 @@ module Ast =
 
   type Term = 
   | AnyTerm
-  | ConstTerm of string
-  | VarTerm of string
+  | ConstTerm of string*string  // value + dkal type
+  | VarTerm of string*string    // name + dkal type
     with 
       override t.ToString() = 
         match t with
         | AnyTerm -> "<term>"
-        | ConstTerm (c) -> c
-        | VarTerm v -> v
+        | ConstTerm (c, t) -> c
+        | VarTerm (v, t) -> v
 
   type Speech = SaidSpeech | ImpliedSpeech | AnySpeech
     with 

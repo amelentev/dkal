@@ -14,6 +14,7 @@ namespace Microsoft.Research.Dkal.LogicEngine.Datalog
 open System.Collections.Generic
 open NLog
 
+open InfonSimplifier
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
@@ -22,7 +23,6 @@ open Microsoft.Z3
 open Microsoft.Research.DkalBackends
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator.Datalog
-open InfonSimplifier
 
 type DatalogLogicEngine() = 
 
@@ -43,7 +43,8 @@ type DatalogLogicEngine() =
         | _ -> yield! []
     }
 
-  member private se.mergeSubstitutionWithAnswer (subst:ISubstitution) (answer:Expr) (regVarNamesAndTypes:Dictionary<Expr, string*IType>) (mappedConstants: List<Ast.Term>) =
+  member private se.mergeSubstitutionWithAnswer (subst:ISubstitution) (answer:Expr) (regVarNamesAndTypes:Dictionary<Expr, string*IType>)
+                                                (mappedConstants: Dictionary<uint32, Microsoft.Z3.Sort*Expr>) (translatedConstants:List<Ast.Term>)=
     seq {
         if answer.IsTrue then
             yield subst
@@ -52,10 +53,12 @@ type DatalogLogicEngine() =
             // TODO is it right to assume that substitutions are just horn clauses?
             let (lhs, rhs)= if answer.Args.[0].IsVar then answer.Args.[0],answer.Args.[1] else answer.Args.[1],answer.Args.[0]
             // TODO complete the correct value, which needs to be backtranslated from the translation chain...
-            yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, Constant(mappedConstants.[int(rhs.ToString())]))
+            // yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, Constant(mappedConstants.[int(rhs.ToString())]))
+            yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, z3ExprToDkal (rhs) (snd(regVarNamesAndTypes.[lhs]))
+                                                                                                                           (mappedConstants) (translatedConstants) )
         else if answer.IsAnd then
             // merge subst with all merged args. Get substs for each arg and combine them all
-            let subsToCombine= answer.Args |> Seq.map (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes mappedConstants)
+            let subsToCombine= answer.Args |> Seq.map (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes mappedConstants translatedConstants)
             let merged = ( subsToCombine |> Seq.fold (fun acc valsForClause -> 
                                                             valsForClause |> Seq.collect (fun valuation -> acc |> Seq.map (fun sub -> valuation.ComposeWith sub))
                                                      ) (seq {yield Substitution.Id})
@@ -63,9 +66,18 @@ type DatalogLogicEngine() =
             yield! merged
         else if answer.IsOr then
             // create one different merge for each arg
-            yield! answer.Args |> Seq.collect (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes mappedConstants)
+            let newSubs= answer.Args |> Seq.collect (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes mappedConstants translatedConstants)
+            yield! newSubs
         else yield! []
     }
+
+  member private se.ignoreSubstrate (infon:ITerm) =
+    match infon with
+    | AndInfon(infons) -> let ignored= infons |> Seq.fold (fun acc inf -> Seq.append acc [se.ignoreSubstrate inf]) (seq []) |> Seq.toList
+                          AndInfon(ignored)
+    | AsInfon(exp) -> EmptyInfon
+    | _ -> infon
+
 
   interface ILogicEngine with
     member se.Start () = ()
@@ -90,17 +102,20 @@ type DatalogLogicEngine() =
       log.Debug("Derive {0}", target)
       let datalogTranslator= DatalogTranslator()
       let knowledge= _infostrate.Value.Knowledge
-      let substs = SubstrateDispatcher.Solve (se.substrateQueries target) substs
+      let originalTarget= target
+      let target= se.ignoreSubstrate target
 
       seq {
         for subst in substs do
             let fp= _context.MkFixedpoint()
+            // note we add FAKE_TRUE_RELATION to the "knowledge" so it is taken as a fact by the translator
             let program= datalogTranslator.translateInferenceProblem ( (knowledge |> Seq.map (fun kn -> kn.Apply(subst))
-                                                                                  |> Seq.map (fun term -> simplify(term)) |> Seq.toList,
+                                                                                  |> Seq.map (fun term -> simplify(term)) |> Seq.append [FAKE_TRUE_FACT] |> Seq.toList,
                                                                         [simplify(target.Apply(subst))])
                                                                      )
             let regRels= new Dictionary<string, FuncDecl>()
             let regConsts= new Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>()
+            let invRegConsts= new Dictionary<uint32, Microsoft.Z3.Sort*Expr>()
             let regSorts= new Dictionary<Sort, Microsoft.Z3.Sort>()
             let regVars= new Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>()
             let regVarNames=  new Dictionary<Expr, string*IType>()
@@ -120,6 +135,7 @@ type DatalogLogicEngine() =
                                                                         |> Seq.iter ( fun value -> 
                                                                                         let cst= _context.MkConst(value.ToString(), sort)
                                                                                         regConsts.[sort].[cst] <- !fresh
+                                                                                        invRegConsts.[!fresh] <- (sort :> Microsoft.Z3.Sort, cst)
                                                                                         fresh := !fresh + uint32(1)
                                                                                     )
                                                                 with e -> ()
@@ -136,8 +152,6 @@ type DatalogLogicEngine() =
                                                            | _ -> () // ? TODO
                                              )
 
-            let fakeTrueFunc= _context.MkFuncDecl(FAKE_TRUE_RELATION, [||], _context.BoolSort)
-            fp.AddFact(fakeTrueFunc, [||])
             let freshVar= ref (uint32(0))
             let varDefs= program.Rules
                          |> Seq.append program.Queries
@@ -147,16 +161,17 @@ type DatalogLogicEngine() =
                                                          | _ -> seq {yield! []}
                                         )
                          |> Seq.collect (fun rel -> let dom= regRels.[rel.Name].Domain
-                                                    rel.Args |> Seq.mapi (fun i arg -> (arg, dom.[i]))
+                                                    let signature= datalogTranslator.RelationSignatures.[rel.Name]
+                                                    rel.Args |> Seq.mapi (fun i arg -> (arg, signature.[i], dom.[i]))
                                         )
                          |> Seq.fold (fun (acc:Dictionary<string,Expr>) arg -> match arg with
-                                                                               | (VarTerm(s), sort) -> let v= _context.MkBound(!freshVar, sort)
-                                                                                                       acc.[s] <- v
-                                                                                                       // TODO figure out the correct type of the variable
-                                                                                                       regVarNames.[v] <- (s, Microsoft.Research.Dkal.Ast.Type.Principal)
-                                                                                                       regVars.[sort].[v] <- !freshVar
-                                                                                                       freshVar := !freshVar + uint32(1)
-                                                                                                       acc
+                                                                               | (VarTerm(s), typ, sort) -> let v= _context.MkBound(!freshVar, sort)
+                                                                                                            acc.[s] <- v
+                                                                                                            // TODO figure out the correct type of the variable
+                                                                                                            regVarNames.[v] <- (s, dkalTypeFromString(typ))
+                                                                                                            regVars.[sort].[v] <- !freshVar
+                                                                                                            freshVar := !freshVar + uint32(1)
+                                                                                                            acc
                                                                                | _ -> acc
                                      ) (new Dictionary<string,Expr>())
             program.Rules |> Seq.append program.Queries
@@ -181,7 +196,11 @@ type DatalogLogicEngine() =
             if sat = Status.SATISFIABLE then
                 // TODO actually get the answer and build and yield the acceptable substitutions
                 let answer= fp.GetAnswer()
-                yield! se.mergeSubstitutionWithAnswer subst answer regVarNames datalogTranslator.ConstantsMapping.Values
+                let possibleSubsts= [subst] |> Seq.collect (fun solvedSub -> se.mergeSubstitutionWithAnswer solvedSub answer regVarNames invRegConsts datalogTranslator.ConstantsMapping.Values)
+                for possibleSub in Seq.toList(possibleSubsts) do
+                  let substrateSolved = SubstrateDispatcher.Solve (se.substrateQueries (originalTarget.Normalize())) [possibleSub]
+                  yield! substrateSolved
+//                yield! (substrateSolved |> Seq.collect (fun solvedSub -> se.mergeSubstitutionWithAnswer solvedSub answer regVarNames invRegConsts datalogTranslator.ConstantsMapping.Values))
       }
 
     member se.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =

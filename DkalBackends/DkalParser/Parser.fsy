@@ -46,8 +46,8 @@ InfonFormula:
 	| LPAR InfonFormula RPAR					{ $2 }
 
 Term:
-	| LOWER_IDENTIFIER							{ ConstTerm($1) }
-	| UPPER_IDENTIFIER							{ VarTerm($1) }
+	| LOWER_IDENTIFIER							{ ConstTerm($1, "System.Object") }  // type information is not useful when run from the old commmand line
+	| UPPER_IDENTIFIER							{ VarTerm($1, "System.Object") }    // type information is not useful when run from the old commmand line
 
 Terms:
 	|											{ [] }

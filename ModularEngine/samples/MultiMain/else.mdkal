@@ -15,7 +15,7 @@ if r(I) && {||I<5|} do
 else if r(I) && {||I>5|} do
 	send to p2: r(I) && log(">5")
 	forget r(I)
-else if r(I) do //  && {||I==5|}
+else if r(I) && {||I==5|} do 
 	send to p2: r(I) && log("=5")
 	forget r(I)
 

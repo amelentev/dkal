@@ -26,6 +26,7 @@ type DatalogTranslator() =
     let quotationsMapping = Mapping<Speech>()
     // constants mapping contains both the constant value (term) as well as a string representation of its original type. The type is not saved for the translation though
     let constantsMapping = Mapping<Microsoft.Research.DkalBackends.Ast.Term>()
+    let relationSignatures= Dictionary<string, string list>()
 
     do
         quotationsMapping.Add(SaidSpeech)
@@ -33,6 +34,7 @@ type DatalogTranslator() =
 
     member tr.QuotationsMapping with get() = quotationsMapping
     member tr.ConstantsMapping with get() = constantsMapping
+    member tr.RelationSignatures with get() = relationSignatures
 
     /// Traverses the parse tree filling the form and matter dictionaries
     member private tr.visitSubformula (pf: PrefixedInfonFormula)=
@@ -71,6 +73,14 @@ type DatalogTranslator() =
             matterPointer.[pf] <- matter
             form, matter
 
+    member private tr.extractSignature (matter:Matter) =
+        let sign= snd(matter)
+        sign |> List.map (fun arg -> match arg with
+                                       | MatterTerm(Microsoft.Research.DkalBackends.Ast.VarTerm(c,t)) -> t
+                                       | MatterTerm(ConstTerm(c,t)) -> t
+                                       | _ -> failwith "Cannot extract signature from AnyTerm"
+                           )
+
     member tr.translateInferenceProblem (problem: InferenceProblem)=
         // convert each formula (hypothesis or thesis) into a prefixed formula
         // calculate form and matter 
@@ -81,7 +91,7 @@ type DatalogTranslator() =
 
         // mapping of possible constants
         matterPointer.Values |> Seq.collect (fun (pm, fm) -> pm @ fm) |> Seq.iter (fun me -> match me with
-                                                                                             | MatterTerm(ConstTerm(c)) -> constantsMapping.Add(ConstTerm(c)) |> ignore
+                                                                                             | MatterTerm(ConstTerm(c, t)) -> constantsMapping.Add(ConstTerm(c, t)) |> ignore
                                                                                              | _ -> ()
                                                                                   )
 
@@ -97,17 +107,15 @@ type DatalogTranslator() =
         program.AddDeclarationPart(SortDeclarationPart(SortDeclaration("C", constantsMapping.Count, "constants.map")))
         program.AddDeclarationPart(NewLineDeclarationPart)
 
-        // create the " true" literal relation, mostly useful for further translations
-        let trueRel= RelationDeclaration("DFakeTrue", [], Input)
-        program.AddDeclarationPart(RelationDeclarationPart(trueRel))
-
         // create the D* "derivable" relations
         for kv in leaderIds do
             let pl, fl = matterLengths kv.Key
             let matter = matterPointer.[kv.Key]
+            let signature= tr.extractSignature(matter)
             let args = matterToDatalogArgumentsDeclaration matter
             let rd = RelationDeclaration("D" + kv.Value.ToString(), args, Input)
             program.AddDeclarationPart(RelationDeclarationPart(rd))
+            relationSignatures.["D" + kv.Value.ToString()] <- signature
 
         // create a Datalog fact for each hypothesis
         for hypothesis in hypotheses do
@@ -183,7 +191,9 @@ type DatalogTranslator() =
         let form, matter = formPointer.[pf], matterPointer.[pf]
         let u = leaderIds.[form]
         let args = matterToDatalogArgumentsDeclaration matter
+        let signature = tr.extractSignature(matter)
         program.AddDeclarationPart(RelationDeclarationPart(RelationDeclaration("Query"+i.ToString(), args, PrintTuples)))
+        relationSignatures.["Query"+i.ToString()] <- signature
         program.AddRulePart(CommentRulePart(thesis.ToString()))
         program.AddQueryPart(RulePart(ImpliesRule(Relation("Query"+i.ToString(), matterToDatalogTerms matter), 
                                                     [Relation("D"+u.ToString(), matterToDatalogTerms matter)])))
