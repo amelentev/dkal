@@ -36,7 +36,9 @@ module InfonSimplifier =
         let dom= regRels.[rel.Name].Domain
         ctx.MkApp (regRels.[rel.Name], rel.Args |> Seq.mapi ( fun i arg -> match arg with
                                                                            | VarTerm(s) -> varDefs.[s]
-                                                                           | AtomTerm(s) -> ctx.MkNumeral(regConsts.[dom.[i]].[ctx.MkConst(s, dom.[i])], dom.[i])
+                                                                           | AtomTerm(s) -> 
+                                                                                let value= ctx.MkConst(s, dom.[i])
+                                                                                ctx.MkNumeral(regConsts.[dom.[i]].[value], dom.[i])
                                                                            | WildcardTerm -> failwith "Wildcard shouldn't appear in rule"
                                                             ) |> Seq.toArray
                   ) :?> BoolExpr

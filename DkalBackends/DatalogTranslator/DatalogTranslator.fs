@@ -24,6 +24,7 @@ type DatalogTranslator() =
     let leaderIds = Dictionary<PrefixedInfonFormula, int>()
     // mapping of possible quotations
     let quotationsMapping = Mapping<Speech>()
+    // constants mapping contains both the constant value (term) as well as a string representation of its original type. The type is not saved for the translation though
     let constantsMapping = Mapping<Microsoft.Research.DkalBackends.Ast.Term>()
 
     do
@@ -80,7 +81,7 @@ type DatalogTranslator() =
 
         // mapping of possible constants
         matterPointer.Values |> Seq.collect (fun (pm, fm) -> pm @ fm) |> Seq.iter (fun me -> match me with
-                                                                                             | MatterTerm(ConstTerm(c)) -> constantsMapping.Add (ConstTerm c) |> ignore
+                                                                                             | MatterTerm(ConstTerm(c)) -> constantsMapping.Add(ConstTerm(c)) |> ignore
                                                                                              | _ -> ()
                                                                                   )
 

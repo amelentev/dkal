@@ -10,7 +10,7 @@ module Ast =
       override t.ToString() = 
         match t with
         | AnyTerm -> "<term>"
-        | ConstTerm c -> c
+        | ConstTerm (c) -> c
         | VarTerm v -> v
 
   type Speech = SaidSpeech | ImpliedSpeech | AnySpeech

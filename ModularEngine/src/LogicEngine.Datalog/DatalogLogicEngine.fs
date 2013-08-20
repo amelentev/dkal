@@ -19,6 +19,7 @@ open Microsoft.Research.Dkal.Ast
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Z3
+open Microsoft.Research.DkalBackends
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator.Datalog
 open InfonSimplifier
@@ -42,7 +43,7 @@ type DatalogLogicEngine() =
         | _ -> yield! []
     }
 
-  member private se.mergeSubstitutionWithAnswer (subst:ISubstitution) (answer:Expr) (regVarNamesAndTypes:Dictionary<Expr, string*IType>) =
+  member private se.mergeSubstitutionWithAnswer (subst:ISubstitution) (answer:Expr) (regVarNamesAndTypes:Dictionary<Expr, string*IType>) (mappedConstants: List<Ast.Term>) =
     seq {
         if answer.IsTrue then
             yield subst
@@ -51,10 +52,10 @@ type DatalogLogicEngine() =
             // TODO is it right to assume that substitutions are just horn clauses?
             let (lhs, rhs)= if answer.Args.[0].IsVar then answer.Args.[0],answer.Args.[1] else answer.Args.[1],answer.Args.[0]
             // TODO complete the correct value, which needs to be backtranslated from the translation chain...
-            yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, Constant(0))
+            yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, Constant(mappedConstants.[int(rhs.ToString())]))
         else if answer.IsAnd then
             // merge subst with all merged args. Get substs for each arg and combine them all
-            let subsToCombine= answer.Args |> Seq.map (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes)
+            let subsToCombine= answer.Args |> Seq.map (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes mappedConstants)
             let merged = ( subsToCombine |> Seq.fold (fun acc valsForClause -> 
                                                             valsForClause |> Seq.collect (fun valuation -> acc |> Seq.map (fun sub -> valuation.ComposeWith sub))
                                                      ) (seq {yield Substitution.Id})
@@ -62,7 +63,7 @@ type DatalogLogicEngine() =
             yield! merged
         else if answer.IsOr then
             // create one different merge for each arg
-            yield! answer.Args |> Seq.collect (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes)
+            yield! answer.Args |> Seq.collect (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes mappedConstants)
         else yield! []
     }
 
@@ -180,7 +181,7 @@ type DatalogLogicEngine() =
             if sat = Status.SATISFIABLE then
                 // TODO actually get the answer and build and yield the acceptable substitutions
                 let answer= fp.GetAnswer()
-                yield! se.mergeSubstitutionWithAnswer subst answer regVarNames
+                yield! se.mergeSubstitutionWithAnswer subst answer regVarNames datalogTranslator.ConstantsMapping.Values
       }
 
     member se.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =

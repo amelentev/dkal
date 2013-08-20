@@ -7,7 +7,7 @@ module Mapping =
 
  type Mapping<'t when 't: equality>() = 
     let t2i = new List<'t>()
-    
+
     member s.Values with get() = t2i
     member s.Count with get() = t2i.Count
 
