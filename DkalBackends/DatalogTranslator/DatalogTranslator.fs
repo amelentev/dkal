@@ -26,7 +26,7 @@ type DatalogTranslator() =
     let quotationsMapping = Mapping<Speech>()
     // constants mapping contains both the constant value (term) as well as a string representation of its original type. The type is not saved for the translation though
     let constantsMapping = Mapping<Microsoft.Research.DkalBackends.Ast.Term>()
-    let relationSignatures= Dictionary<string, string list>()
+    let relationSignatures= Dictionary<string, string option list>()
 
     do
         quotationsMapping.Add(SaidSpeech)
@@ -74,11 +74,11 @@ type DatalogTranslator() =
             form, matter
 
     member private tr.extractSignature (matter:Matter) =
-        let sign= snd(matter)
+        let sign= fst(matter) @ snd(matter)
         sign |> List.map (fun arg -> match arg with
-                                       | MatterTerm(Microsoft.Research.DkalBackends.Ast.VarTerm(c,t)) -> t
-                                       | MatterTerm(ConstTerm(c,t)) -> t
-                                       | _ -> failwith "Cannot extract signature from AnyTerm"
+                                       | MatterTerm(Microsoft.Research.DkalBackends.Ast.VarTerm(c,t)) -> Some t
+                                       | MatterTerm(ConstTerm(c,t)) -> Some t
+                                       | _ -> None //failwith "Cannot extract signature from AnyTerm"
                            )
 
     member tr.translateInferenceProblem (problem: InferenceProblem)=

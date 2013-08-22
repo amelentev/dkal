@@ -54,8 +54,13 @@ type DatalogLogicEngine() =
             let (lhs, rhs)= if answer.Args.[0].IsVar then answer.Args.[0],answer.Args.[1] else answer.Args.[1],answer.Args.[0]
             // TODO complete the correct value, which needs to be backtranslated from the translation chain...
             // yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, Constant(mappedConstants.[int(rhs.ToString())]))
-            yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, z3ExprToDkal (rhs) (snd(regVarNamesAndTypes.[lhs]))
-                                                                                                                           (mappedConstants) (translatedConstants) )
+
+            // WHY AM I GETTING const = const CLAUSES??!?!?
+            if (not (lhs.IsConst && rhs.IsConst)) then
+                yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, z3ExprToDkal (rhs) (snd(regVarNamesAndTypes.[lhs]))
+                                                                                                                               (mappedConstants) )
+            else 
+                yield subst
         else if answer.IsAnd then
             // merge subst with all merged args. Get substs for each arg and combine them all
             let subsToCombine= answer.Args |> Seq.map (fun arg -> se.mergeSubstitutionWithAnswer subst arg regVarNamesAndTypes mappedConstants translatedConstants)
@@ -123,11 +128,11 @@ type DatalogLogicEngine() =
             // Z3 allows finite domain sorts, BUT
             // 1) they MUST have a numerical representation
             // 2) when declaring them, you must declare its size. BUT its size is actually the max possible value + 1 (actually representing the range 0..max)
+            let fresh= ref (uint32(0))
             program.Declarations |> Seq.iter ( fun decl -> match decl with
                                                            | SortDeclarationPart(sortDecl) ->
                                                                 let sort= _context.MkFiniteDomainSort(sortDecl.Name, uint64(program.Sorts.[sortDecl.Name].Count + 1))
                                                                 regSorts.[sortDecl.Name] <- sort
-                                                                let fresh= ref (uint32(0))
                                                                 try 
                                                                     regConsts.[sort] <- new Dictionary<Expr, uint32>()
                                                                     regVars.[sort] <- new Dictionary<Expr, uint32>()
@@ -166,12 +171,15 @@ type DatalogLogicEngine() =
                                         )
                          |> Seq.fold (fun (acc:Dictionary<string,Expr>) arg -> match arg with
                                                                                | (VarTerm(s), typ, sort) -> let v= _context.MkBound(!freshVar, sort)
+                                                                                                            if typ.IsSome then
+                                                                                                                let dkalType= dkalTypeFromString(typ.Value)
+                                                                                                                regVarNames.[v] <- (s, dkalType)
+                                                                                                            // vars without type are nonfunctional ones, but we still need them
                                                                                                             acc.[s] <- v
-                                                                                                            // TODO figure out the correct type of the variable
-                                                                                                            regVarNames.[v] <- (s, dkalTypeFromString(typ))
                                                                                                             regVars.[sort].[v] <- !freshVar
                                                                                                             freshVar := !freshVar + uint32(1)
                                                                                                             acc
+
                                                                                | _ -> acc
                                      ) (new Dictionary<string,Expr>())
             program.Rules |> Seq.append program.Queries
@@ -184,6 +192,9 @@ type DatalogLogicEngine() =
                                                         fp.AddRule(rule)
                                                   | _ -> ()
                                       )
+
+            // TODO this doesn't really work with more than one query. Fix this, we need to make one unique encompassing query.
+            (*
             let sat= program.Queries |> Seq.fold (fun res query -> match res with
                                                                    | Status.SATISFIABLE -> match query with
                                                                                            | RulePart(ImpliesRule(head, body)) ->
@@ -193,14 +204,18 @@ type DatalogLogicEngine() =
                                                                                            | _ -> failwith "Error!"
                                                                    | _ as x -> x
                                                  ) Status.SATISFIABLE
+            *)
+            let andQueries= program.Queries |> Seq.collect (fun query -> match query with
+                                                                         | RulePart(ImpliesRule(head,body)) -> [head]
+                                                                         | _ -> failwith "Error - queries should be encoded as ImpliesRule"
+                                                           )
+                                            |> Seq.map (fun query -> relationToBoolExpr(query, regRels, regConsts, regVars, varDefs, _context))
+            let query= _context.MkAnd(andQueries |> Seq.toArray)
+            let sat= fp.Query(query)
             if sat = Status.SATISFIABLE then
-                // TODO actually get the answer and build and yield the acceptable substitutions
-                let answer= fp.GetAnswer()
+                let answer= remapVariables (fp.GetAnswer(), query, _context)
                 let possibleSubsts= [subst] |> Seq.collect (fun solvedSub -> se.mergeSubstitutionWithAnswer solvedSub answer regVarNames invRegConsts datalogTranslator.ConstantsMapping.Values)
-                for possibleSub in Seq.toList(possibleSubsts) do
-                  let substrateSolved = SubstrateDispatcher.Solve (se.substrateQueries (originalTarget.Normalize())) [possibleSub]
-                  yield! substrateSolved
-//                yield! (substrateSolved |> Seq.collect (fun solvedSub -> se.mergeSubstitutionWithAnswer solvedSub answer regVarNames invRegConsts datalogTranslator.ConstantsMapping.Values))
+                yield! possibleSubsts |> Seq.collect (fun possibleSub -> SubstrateDispatcher.Solve (se.substrateQueries (originalTarget.Normalize())) [possibleSub])
       }
 
     member se.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =

@@ -44,6 +44,69 @@ module InfonSimplifier =
                                                             ) |> Seq.toArray
                   ) :?> BoolExpr
 
+    /// Answers returned by Z3 are not indexed in the same way as the original queries. In fact, it seems that the ordering of the variables in the returned answer
+    /// is the ordering of the variables in the original query, but right-to-left
+    /// This is all conjecture and has NOT been 100% confirmed by Nikolaj or Leo. However, it is currently the best option we have as other possibilities are either
+    /// not working or have been ruled out. Expect changes in this sense
+    let remapVariables (valuation: Expr, query: BoolExpr, context: Context) =
+        let rec getVars (expr:Expr) =
+            if expr.IsTrue then
+                [] |> List.toArray
+            else if expr.IsEq then
+                let lhs= if expr.Args.[0].IsVar then expr.Args.[0] else expr.Args.[1]
+                [lhs] |> List.toArray
+            else if expr.IsAnd then
+                expr.Args |> Seq.collect (fun arg -> getVars(arg)) |> Seq.toArray
+            else
+                // shouldn't happen
+                failwith "Error: valuation should be made up of Horn clauses"
+
+        let rec remap (mapping:Dictionary<Expr,Expr>) (valuation:Expr) (context:Context)=
+            if valuation.IsTrue then
+                valuation
+            else if valuation.IsEq then
+                let (lhs,rhs) = if valuation.Args.[0].IsVar then valuation.Args.[0],valuation.Args.[1] else valuation.Args.[1], valuation.Args.[0]
+                context.MkEq(mapping.[lhs] ,rhs) :> Expr
+            else if valuation.IsAnd then
+                context.MkAnd( valuation.Args |> Seq.map (fun arg -> remap mapping arg context :?> BoolExpr) |> Seq.toArray ) :> Expr
+            else if valuation.IsOr then 
+                context.MkOr( valuation.Args |> Seq.map (fun arg -> remap mapping arg context :?> BoolExpr) |> Seq.toArray ) :> Expr
+            else
+                failwith "I can't recognise the valuation form" 
+
+        // valuation may actually be several horn clauses. If such is the case, let's just take the first one, as the ordering seems to be consistent in each clause
+        if valuation.IsTrue then    // nothing to do
+            valuation
+        else
+            let ans= if valuation.IsOr then valuation.Args.[0] else valuation
+            // bear in mind query is an AndExpr
+            let reversedQueryVars= query.Args |> Seq.collect (fun arg -> arg.Args) |> Seq.toList
+                                   |> List.fold (fun acc x -> if List.exists (fun y -> y = x) acc then acc else acc @ [x]) [] |>
+                                   List.toArray |> Array.rev
+            let valuationVars= getVars(ans)
+            let mapping= Dictionary<Expr,Expr>()
+            valuationVars |> Seq.iteri (fun i exp -> mapping.[exp] <- reversedQueryVars.[i])
+
+            // return the remapped valuation
+            let newValuation= remap mapping valuation context
+            newValuation
+
+    /// Similar to relationToBoolExpr, except that in the case of queries the variables are existentially quantified.
+    /// This may seem unnecessary (and it should be), but it is so to cope with Z3 limitations: Z3 does not relate original variables to the
+    /// returned valuation. By adding quantifiers we ensure the ordering is strictly kept in the result, and we can interpret them
+    (*
+    let queryToBoolExpr(rel: Relation, regRels: Dictionary<string, FuncDecl>, regConsts: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>,
+                           regVars: Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>, varDefs: Dictionary<string, Expr>, ctx: Context) =
+        let dom= regRels.[rel.Name].Domain
+        let orderedVars= rel.Args |> Seq.collect (fun arg -> match arg with
+                                                              | VarTerm(s) -> [varDefs.[s]]
+                                                              | _ -> []
+                                                 )
+        let app= relationToBoolExpr(rel, regRels, regConsts, regVars, varDefs, ctx)
+        let orderedVars= orderedVars |> Seq.toArray
+        ctx.MkExists(orderedVars, app) :> BoolExpr
+    *)
+
     let simplifyArg(arg: ITerm) =
         match arg with
         | Const(c) -> ConstTerm(c.Value.ToString(), c.Type.ToString())
@@ -102,7 +165,7 @@ module InfonSimplifier =
 
     // TODO move this two funs away to utils or something like that
     let z3ExprToDkal (expr:Microsoft.Z3.Expr) (typ:IType)
-                     (regConsts:Dictionary<uint32, (Microsoft.Z3.Sort*Expr)>) (mappedConstants:List<Microsoft.Research.DkalBackends.Ast.Term>)=
+                     (regConsts:Dictionary<uint32, (Microsoft.Z3.Sort*Expr)>) =
         let originalDkalExpr= snd(regConsts.[uint32(expr.ToString())])
         // let ndx= int(originalDkalExpr.ToString().Replace("|",""))
         let mapped= originalDkalExpr.ToString().Replace("|","")
