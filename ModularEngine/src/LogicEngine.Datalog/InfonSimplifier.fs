@@ -124,6 +124,7 @@ module InfonSimplifier =
         | AsInfon(t) -> AtomFormula(FAKE_TRUE_RELATION, [])
         | EmptyInfon(t) -> AtomFormula(FAKE_TRUE_RELATION, []) // failwith "Attempting to simplify EmptyInfon ..."
         | SaidInfon(ppal, t) -> SpeechFormula(simplifyPrincipal(ppal), SaidSpeech, simplify(t))
+        | JustifiedInfon(inf, ev) -> failwith "Not implemented yet"
         | AndInfon(t) -> match t with
                          | [] -> failwith "AndInfon may not be composed of no infons"
                          | term :: [] -> simplify(term)
