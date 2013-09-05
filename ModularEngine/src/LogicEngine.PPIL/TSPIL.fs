@@ -73,3 +73,9 @@ module TSPIL =
   | Side.ImplLeft ->
     subsets.[v.Key]
   | _ -> failwith "impossible"
+
+  let applyDisjunctionSetIntro (subsets:SetRelation, _) (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) = function
+    | SetFormula(_, SetOperation.OrOp, list) as s when list.Length>1 ->
+      let hs = H.[s.Key]
+      subsets.[hs.Key] |> List.map (fun x -> H.[x])
+    | _ -> []

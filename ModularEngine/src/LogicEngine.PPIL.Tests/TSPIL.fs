@@ -18,6 +18,7 @@ open Utils
 
 module TSPIL =
   let private solve = Utils.genericSolve PPILSolver.solveTSPIL
+  let private solveDSI = Utils.genericSolve PPILSolver.solveTSPIL_DS
 
   let tests = 
     [
@@ -50,4 +51,15 @@ module TSPIL =
           [false],
           solve ["a() -> b() && c()"]
                 ["a() -> me said c()"])
+
+    "TSPIL+DS" => fun _ ->
+        let hyp = ["a() || b()"]
+        let que = ["a() || b() || c()"; "b() || c()"; "a()"]
+        Assert.Equal("",
+          [false; false; false],
+          solve hyp que)
+        Assert.Equal("",
+          [true; false; false],
+          solveDSI hyp que)
+
     ] @ (TPIL.genericTests solve)

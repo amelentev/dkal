@@ -216,3 +216,6 @@ type TPILogicEngine() =
 
 type TSPILogicEngine() =
   inherit PPILogicEngine(PPILSolver.solveTSPIL)
+
+type TSPIL2LogicEngine() =
+  inherit PPILogicEngine(PPILSolver.solveTSPIL_DS)
