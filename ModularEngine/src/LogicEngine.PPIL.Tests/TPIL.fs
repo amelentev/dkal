@@ -17,7 +17,7 @@ open Microsoft.Research.Dkal.LogicEngine.PPIL
 open Utils
 
 module TPIL =
-  let private solve = Utils.genericSolve PPILSolver.solveTPIL
+  let solve = Utils.genericSolve PPILSolver.solveTPIL
 
   let genericTests solve = [
     "transitive 1" => fun _ ->

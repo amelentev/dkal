@@ -1,0 +1,9 @@
+/// logic: TSPIL2
+relation r(X: System.Int32)
+relation log(S: System.String)
+
+----p1----
+knows r(1) || r(2)
+
+if r(1) || r(2) || r(3)
+do send to me: log("ok1")
