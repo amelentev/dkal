@@ -2,6 +2,7 @@ import sys
 import getopt
 
 HEADER_DEFINITIONS= (""
+"/// Logic: UFOL\n"
 "/// This example models the muddy children problem\n"
 "///\n"
 "type String = System.String\n"
