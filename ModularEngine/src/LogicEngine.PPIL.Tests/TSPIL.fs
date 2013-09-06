@@ -52,6 +52,15 @@ module TSPIL =
           solve ["a() -> b() && c()"]
                 ["a() -> me said c()"])
 
+    "TSPIL x2x" => fun _ ->
+        let que = ["a()&&b() -> a()"; "a() -> a()||b()"; "a()||b() -> a()"; "a() -> a()&&b()"]
+        Assert.Equal("",
+          [true; true; false; false],
+          solve [] que)
+        Assert.Equal("",
+          [false; false; false; false],
+          TPIL.solve [] que)
+
     "TSPIL+DS" => fun _ ->
         let hyp = ["a() || b()"]
         let que = ["a() || b() || c()"; "b() || c()"; "a()"]

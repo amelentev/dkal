@@ -63,7 +63,7 @@ module Stage4 =
             let (l,r) = hom l, hom r
             appendT l.Key ImplLeft n
             appendT r.Key ImplRight n
-            if homkey l = homkey r then
+            if l.Key = r.Key then
               T.[homkey n].Status <- Pending
         | Rel(_, Primitives.EmptyInfon) as u ->
             T.[homkey u].Status <- Pending

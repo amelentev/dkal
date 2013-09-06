@@ -58,7 +58,15 @@ module PPILSolver =
       let (N, V) = Stage2.constructNodesnVertices (H@Q)
       let (H,Q,HO) = Stage3.homonomyHash inp H Q (N,V)
       let setrels = TSPIL.genSetContainmentRelation HO V
+      let subsets = fst setrels
       let T = Stage4.preprocess HO H
+      for t in T.Keys do // mark x2x axioms
+        match HO.[t] with
+        | Implies(_,l,r) as n ->
+          let l,r = HO.[l.Key], HO.[r.Key]
+          if subsets.[l.Key] |> List.exists ((=) r.Key) then
+            T.[t].Status <- Stage4.Pending
+        | _ -> ()
       let rules H T u =
         TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) H T u
           @ (extraRules setrels H T u)
