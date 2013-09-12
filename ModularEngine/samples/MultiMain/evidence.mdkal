@@ -1,4 +1,3 @@
-/// logic: SPIL
 // example of evidence construction from signatures
 relation r(X: System.Int32)
 relation e(E: Dkal.Evidence)
