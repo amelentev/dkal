@@ -27,6 +27,7 @@ type DatalogTranslator() =
     // constants mapping contains both the constant value (term) as well as a string representation of its original type. The type is not saved for the translation though
     let constantsMapping = Mapping<Microsoft.Research.DkalBackends.Ast.Term>()
     let relationSignatures= Dictionary<string, string option list>()
+    let translatedRelations= Dictionary<string,PrefixedInfonFormula>()
 
     do
         quotationsMapping.Add(SaidSpeech)
@@ -35,6 +36,7 @@ type DatalogTranslator() =
     member tr.QuotationsMapping with get() = quotationsMapping
     member tr.ConstantsMapping with get() = constantsMapping
     member tr.RelationSignatures with get() = relationSignatures
+    member tr.TranslatedRelations with get() = translatedRelations
 
     /// Traverses the parse tree filling the form and matter dictionaries
     member private tr.visitSubformula (pf: PrefixedInfonFormula)=
@@ -113,7 +115,9 @@ type DatalogTranslator() =
             let matter = matterPointer.[kv.Key]
             let signature= tr.extractSignature(matter)
             let args = matterToDatalogArgumentsDeclaration matter
-            let rd = RelationDeclaration("D" + kv.Value.ToString(), args, Input)
+            let derivableRelationName= "D" + kv.Value.ToString()
+            let rd = RelationDeclaration(derivableRelationName, args, Input)
+            translatedRelations.[derivableRelationName] <- kv.Key
             program.AddDeclarationPart(RelationDeclarationPart(rd))
             relationSignatures.["D" + kv.Value.ToString()] <- signature
 
