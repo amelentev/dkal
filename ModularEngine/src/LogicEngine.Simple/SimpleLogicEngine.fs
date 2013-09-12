@@ -143,6 +143,7 @@ type SimpleLogicEngine() =
       else
         failwith "asInfon(...) under prefix"
     | JustifiedInfon(inf, ev) when pref = [] ->
+      // se.DoDerive pref (subst, conds) inf
       // Justified infons are treated separately since we need to construct proofs for these
       let unifyEv (subst', conds', pr') =
         match ev.UnifyFrom subst' pr' with

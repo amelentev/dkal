@@ -47,7 +47,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\DkalMulti.XML</DocumentationFile>
     <StartWorkingDirectory>C:\Users\t-espav\Documents\Visual Studio 2012\Projects\ModularEngine\samples\MultiMain\</StartWorkingDirectory>
-    <StartArguments>test.mdkal 10000000 1000 -datalog</StartArguments>
+    <StartArguments>calc.mdkal 10000000 10000 -datalog</StartArguments>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
