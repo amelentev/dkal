@@ -27,7 +27,10 @@ type DatalogTranslator() =
     // constants mapping contains both the constant value (term) as well as a string representation of its original type. The type is not saved for the translation though
     let constantsMapping = Mapping<Microsoft.Research.DkalBackends.Ast.Term>()
     let relationSignatures= Dictionary<string, string option list>()
-    let translatedRelations= Dictionary<string,PrefixedInfonFormula>()
+    let translatedRelations= Dictionary<string,InfonFormula>()
+    
+    // for a relation name, give the infontemplate and the term substitution per parameter of the relation
+    let infonTemplates= Dictionary<string, InfonFormula*Dictionary<Microsoft.Research.DkalBackends.Ast.Term,int>>()
 
     do
         quotationsMapping.Add(SaidSpeech)
@@ -45,6 +48,7 @@ type DatalogTranslator() =
             let pform, pMatter = prefixFormMatter p
             let form = AtomPrefixedFormula(pform, r, List.replicate ts.Length AnyTerm)
             let matter = (pMatter, List.map MatterTerm ts)
+            let dkalInfon= AtomFormula(r, ts)
             formPointer.[pf] <- form
             matterPointer.[pf] <- matter
             form, matter
@@ -54,6 +58,7 @@ type DatalogTranslator() =
             let pform, pMatter = prefixFormMatter p
             let form = AndPrefixedFormula(pform, form1, form2)
             let matter = (pMatter, matter1 @ matter2)
+            // let dkalInfon= AndFormula(dkalInf1, dkalInf2)
             formPointer.[pf] <- form
             matterPointer.[pf] <- matter
             form, matter
@@ -63,6 +68,7 @@ type DatalogTranslator() =
             let pform, pMatter = prefixFormMatter p
             let form = ImpliesPrefixedFormula(pform, form1, form2)
             let matter = (pMatter, matter1 @ matter2)
+            // let dkalInfon= ImpliesFormula(dkalInf1, dkalInf2)
             formPointer.[pf] <- form
             matterPointer.[pf] <- matter
             form, matter
@@ -71,6 +77,7 @@ type DatalogTranslator() =
             let pform, pMatter = prefixFormMatter p
             let form = SpeechPrefixedFormula(pform, AnyTerm, AnySpeech, form1)
             let matter = (pMatter, MatterTerm ppal :: MatterSpeech speech :: matter1)
+            // let dkalInfon= SpeechFormula(ppal, SaidSpeech, dkalInf1)
             formPointer.[pf] <- form
             matterPointer.[pf] <- matter
             form, matter
@@ -82,6 +89,32 @@ type DatalogTranslator() =
                                        | MatterTerm(ConstTerm(c,t)) -> Some t
                                        | _ -> None //failwith "Cannot extract signature from AnyTerm"
                            )
+
+    member tr.visitInfonTemplate (template:InfonFormula) (subst:Dictionary<Microsoft.Research.DkalBackends.Ast.Term,int>) (fact:Relation) =
+        match template with
+        | AtomFormula(rel, terms) -> AtomFormula(rel, terms |> List.map (fun term -> if subst.ContainsKey(term) then
+                                                                                        let argList= fact.Args |> Seq.toList
+                                                                                        // argList.[subst.[term]]
+                                                                                        term
+                                                                                     else
+                                                                                        term
+                                                                        )
+                                                )
+        | AndFormula(inf1, inf2) -> AndFormula(tr.visitInfonTemplate inf1 subst fact, tr.visitInfonTemplate inf2 subst fact)
+        | ImpliesFormula(inf1, inf2) -> ImpliesFormula(tr.visitInfonTemplate inf1 subst fact, tr.visitInfonTemplate inf2 subst fact)
+        | SpeechFormula(ppal, speech, inf) -> SpeechFormula( (if subst.ContainsKey(ppal) then
+                                                                let argList= fact.Args |> Seq.toList
+                                                                //argList.[subst.[ppal]]
+                                                                ppal
+                                                              else ppal),
+                                                             speech,
+                                                             tr.visitInfonTemplate inf subst fact
+                                                           )
+
+    member tr.buildBackInfon (fact: Relation) =
+        let signature= relationSignatures.[fact.Name]
+        let infonTemplate= infonTemplates.[fact.Name]
+        tr.visitInfonTemplate (fst(infonTemplate)) (snd(infonTemplate)) fact
 
     member tr.translateInferenceProblem (problem: InferenceProblem)=
         // convert each formula (hypothesis or thesis) into a prefixed formula
@@ -117,7 +150,7 @@ type DatalogTranslator() =
             let args = matterToDatalogArgumentsDeclaration matter
             let derivableRelationName= "D" + kv.Value.ToString()
             let rd = RelationDeclaration(derivableRelationName, args, Input)
-            translatedRelations.[derivableRelationName] <- kv.Key
+            translatedRelations.[derivableRelationName] <- stripPrefixedFormula(kv.Key)
             program.AddDeclarationPart(RelationDeclarationPart(rd))
             relationSignatures.["D" + kv.Value.ToString()] <- signature
 

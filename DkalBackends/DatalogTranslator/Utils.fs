@@ -7,6 +7,13 @@ open Datalog
 
 module Utils = 
   
+  let rec stripPrefixedFormula (f: PrefixedInfonFormula) =
+    match f with
+    | AtomPrefixedFormula(p, r, ts) -> AtomFormula(r, ts)
+    | AndPrefixedFormula(p, pi1, pi2) -> AndFormula(stripPrefixedFormula(pi1), stripPrefixedFormula(pi2))
+    | ImpliesPrefixedFormula(p, pi1, pi2) -> ImpliesFormula(stripPrefixedFormula(pi1), stripPrefixedFormula(pi2))
+    | SpeechPrefixedFormula(p, ppal, speech, pi) -> SpeechFormula(ppal, speech, stripPrefixedFormula(pi))
+
   let rec prefixedFormula (p: Prefix) (f: InfonFormula) = 
     match f with
     | AtomFormula(r, ts) -> AtomPrefixedFormula(p, r, ts)

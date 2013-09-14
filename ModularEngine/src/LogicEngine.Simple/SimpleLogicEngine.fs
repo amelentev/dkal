@@ -143,13 +143,16 @@ type SimpleLogicEngine() =
       else
         failwith "asInfon(...) under prefix"
     | JustifiedInfon(inf, ev) when pref = [] ->
-      // se.DoDerive pref (subst, conds) inf
       // Justified infons are treated separately since we need to construct proofs for these
       let unifyEv (subst', conds', pr') =
         match ev.UnifyFrom subst' pr' with
           | Some s -> seq [(s, seq {yield! conds; yield! conds'})]
           | None -> seq []
-      se.DoDeriveJustification inf (subst, conds) |> Seq.collect unifyEv
+      let just = se.DoDeriveJustification inf (subst, conds) |> Seq.collect unifyEv
+      if just |> Seq.toList |> List.length > 0 then
+        just
+      else
+        just
     | templ when not (Seq.isEmpty conds || templ.Vars |> List.forall subst.DomainContains) -> // if templ has unbound variables
       // exec 1st substrate query to [possibly] instantiate unbound vars
       let condhd, condtl = conds |> Seq.take 1, conds |> Seq.skip 1

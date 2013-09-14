@@ -243,7 +243,7 @@ type DatalogLogicEngine() =
                 // the last argument of this AND expression is an EQ expression equalling a spurious variable with the derivation itself
                 // the derivation is an AST of the derivation process, intermediate nodes are intermediate derivations and the leaves are facts
                 // so for example a node having k children is interpreted as n1 & n2 & ... & nk -> node
-                let actualAnswer= if derivation.Args.Length = 1 || derivation.IsEq then
+                let actualAnswer= if (derivation.IsAnd && derivation.Args.Length = 1) || derivation.IsEq then
                                     // it is only the derivation
                                     _context.MkTrue()
                                   else
