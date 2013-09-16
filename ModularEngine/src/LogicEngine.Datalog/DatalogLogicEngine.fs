@@ -17,14 +17,23 @@ open NLog
 open InfonSimplifier
 open Microsoft.Research.Dkal.Ast.Infon
 open Microsoft.Research.Dkal.Ast
+open Microsoft.Research.Dkal.Ast.Tree
 open Microsoft.Research.Dkal.Interfaces
 open Microsoft.Research.Dkal.Substrate
 open Microsoft.Z3
 open Microsoft.Research.DkalBackends
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator
 open Microsoft.Research.DkalBackends.DatalogBackend.DatalogTranslator.Datalog
+open Microsoft.Research.Dkal.Globals
 
-type DatalogLogicEngine() = 
+type EvidenceTree(head, args)=
+    let _head: string = head
+    let _args: EvidenceTree list = args
+
+    member et.Head with get() = _head
+    member et.Args with get() = _args
+
+type DatalogLogicEngine(assemblyInfo: MultiAssembly) = 
 
   let log = LogManager.GetLogger("LogicEngine.Datalog")
 
@@ -32,6 +41,16 @@ type DatalogLogicEngine() =
   let mutable _infostrate: IInfostrate option = None
   let _context= new Context()
   let _infonSimplifier= new InfonSimplifier()
+  let _dkalRelationDeclarations = assemblyInfo.Relations
+  let _dkalFunctions= new Dictionary<string, Function>()
+
+  do 
+    _dkalRelationDeclarations |> Seq.iter (fun rd -> let fn = {Name = rd.Name;
+                                                               RetType=Type.Infon;
+                                                               ArgsType= rd.Args |> List.map (fun v -> v.Type);
+                                                               Identity= None}
+                                                     _dkalFunctions.[rd.Name] <- fn
+                                          )
 
   member private se.FinalOutcome (infon: ITerm) =
     match infon with
@@ -55,6 +74,81 @@ type DatalogLogicEngine() =
         | _ -> yield! []
     }
 
+  member private se.purifyExplanation (explanation: Expr) =
+    if explanation.IsEq then
+        se.purifyExplanation (explanation.Args.[1])
+    else if explanation.IsAnd then
+        se.purifyExplanation (explanation.Args.[0])
+    else
+        explanation
+
+  member private se.datalogToInfon (query: string) (relationTranslations: Dictionary<string, Ast.InfonFormula>) (regConsts:Dictionary<uint32, (Microsoft.Z3.Sort*Expr)>) =
+    let rec instantiateTemplate(template: Ast.InfonFormula) (ndx: int) =
+        match template with
+        | Ast.AtomFormula(str, args) -> let fn= _dkalFunctions.[str];
+                                        let argVars= fn.ArgsType |> List.mapi (fun i typ -> Var({Name= "Var"+(ndx+i).ToString(); Type= typ}))
+                                        argVars, App(fn, argVars)
+        | Ast.AndFormula(t1, t2) -> let var1, inf1= instantiateTemplate (t1) (ndx)
+                                    let var2, inf2= instantiateTemplate (t2) (ndx+var1.Length)
+                                    var1 @ var2, AndInfon([inf1; inf2])
+        | Ast.ImpliesFormula(t1, t2) -> let var1, inf1= instantiateTemplate (t1) ndx
+                                        let var2, inf2= instantiateTemplate (t2) (ndx+var1.Length)
+                                        var1 @ var2, ImpliesInfon(inf1, inf2)
+        | Ast.SpeechFormula(ppal, speech, temp) -> let vars, inf= instantiateTemplate (temp) (ndx+2)    // have to account for the principal and speech variable
+                                                   let ppalVar= Var({ Name = "Var" + ndx.ToString(); Type = Type.Principal })
+                                                   let speechVar= Var({ Name = "Var" + (ndx+1).ToString(); Type = Type.Principal }) // superfluous, just to keep datalog translator structure
+                                                   [ppalVar;speechVar] @ vars, SaidInfon(ppalVar, inf)
+
+    let relName= query.Split([|'('|], System.StringSplitOptions.RemoveEmptyEntries).[0]
+    let datalogArgs= query.Split([|'('|], System.StringSplitOptions.RemoveEmptyEntries).[1].Replace(")","").Replace(".","").Replace(" ","")
+                          .Split([|','|], System.StringSplitOptions.RemoveEmptyEntries) |> Seq.toList |> List.map (fun s -> uint32(s))
+    let template= relationTranslations.[relName]
+    let vars, infon= instantiateTemplate template 0
+    // now we need to substitute the vars with the actual valuation in the explanation. That's why vars have been setup in the same order as in the datalog relation
+    // TODO check that the datalog query has no vars, if it does we're in trouble (ie, what does it mean?)
+    let mapping = new Dictionary<IVar, ITerm>()
+    vars |> Seq.iteri (fun i v -> mapping.[v :?> IVar] <- z3ExprToDkal (_context.MkInt(datalogArgs.[i])) ((v :?> IVar).Type) (regConsts))
+    let subst= Substitution(mapping)
+    infon.Apply subst
+
+  member private se.getSimpleEvidenceForInfon (infon: ITerm) =
+    let knowledge= _infostrate.Value.Knowledge
+    let evidences= knowledge |> Seq.collect (fun kn -> match kn with
+                                                       | JustifiedInfon(inf, ev) when inf = infon -> [ev]
+                                                       | _ -> [] )
+                             |> Seq.toList
+    if evidences.Length = 0 then
+        EmptyEvidence
+    else
+        evidences.[0]
+
+  member private se.buildEvidence (explanation: Expr) (relationTranslations: Dictionary<string, Ast.InfonFormula>) (query: BoolExpr) (regConsts: Dictionary<uint32, (Microsoft.Z3.Sort*Expr)>)=
+    let rec buildFromPurifiedTree (tree: EvidenceTree) =
+        // the tree has to be rooted at the infon we need evidence for
+        let infon= se.datalogToInfon (tree.Head) (relationTranslations) (regConsts)
+
+        if (tree.Args.Length = 0) then
+            // this has to be an original infon. We need to check if we had a corresponding signed infon
+            se.getSimpleEvidenceForInfon infon
+        else 
+            ModusPonensEvidence(AndEvidence( tree.Args |> Seq.map (fun ev -> buildFromPurifiedTree(ev)) |> Seq.toList ), infon)
+
+    let rec purifyTree (tree: Expr)=
+        let head= tree.FuncDecl.Name.ToString().Replace(".", "").Replace(" ", "").Split([|":-"|], System.StringSplitOptions.RemoveEmptyEntries).[0]
+        let args= tree.Args |> Seq.map (fun a -> purifyTree(a)) |> Seq.toList
+        EvidenceTree(head, args)
+
+    // TODO build the evidence from the explanation tree.
+    // first cleanup the AST so we get rid of all the :- and so on and end up with an actual "tree" rooted at the original tree's query itself
+    let mutable query= query
+    if query.IsAnd && query.Args.Length = 1 then
+        query <- query.Args.[0] :?> BoolExpr
+    let mutable explanationTree= purifyTree explanation
+    while explanationTree.Head.Split([|'('|]).[0] <> query.FuncDecl.Name.ToString().Split([|'('|]).[0] do
+        explanationTree <- explanationTree.Args.Item(0)
+
+    AndEvidence( explanationTree.Args |> Seq.map (fun exp -> buildFromPurifiedTree(exp)) |> Seq.toList )
+
   member private se.mergeSubstitutionWithAnswer (subst:ISubstitution) (answer:Expr) (regVarNamesAndTypes:Dictionary<Expr, string*IType>)
                                                 (mappedConstants: Dictionary<uint32, Microsoft.Z3.Sort*Expr>) (translatedConstants:List<Ast.Term>)=
     seq {
@@ -64,10 +158,8 @@ type DatalogLogicEngine() =
             // merge subst with this assignment
             // TODO is it right to assume that substitutions are just horn clauses?
             let (lhs, rhs)= if answer.Args.[0].IsVar then answer.Args.[0],answer.Args.[1] else answer.Args.[1],answer.Args.[0]
-            // TODO complete the correct value, which needs to be backtranslated from the translation chain...
-            // yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, Constant(mappedConstants.[int(rhs.ToString())]))
-
-            // WHY AM I GETTING const = const CLAUSES??!?!?
+            // complete the correct value, which needs to be backtranslated from the translation chain...
+            // CHECK: WHY AM I GETTING const = const CLAUSES sometimes??!?!?
             if (not (lhs.IsConst && rhs.IsConst)) then
                 yield subst.Extend( {Name= fst(regVarNamesAndTypes.[lhs]); Type= snd(regVarNamesAndTypes.[lhs])}, z3ExprToDkal (rhs) (snd(regVarNamesAndTypes.[lhs]))
                                                                                                                                (mappedConstants) )
@@ -112,9 +204,53 @@ type DatalogLogicEngine() =
     member se.get_SignatureProvider () =
       _signatureProvider.Value
 
+    // lifted verbatim from SimpleEngine as this is done on a realm outside datalog
+    member se.CheckJustification (evidence: ITerm) = 
+      match evidence with
+      | SignatureEvidence(PrincipalConstant(ppal), inf, SubstrateConstant(signature)) when signature.GetType() = typeof<int> -> 
+        if se.CanSign ppal inf && _signatureProvider.Value.CheckSignature inf ppal (signature :?> int) then
+          Some inf
+        else
+          log.Warn("Spoofed/Invalid signature {0} from {1} on {2}", signature, ppal, inf)
+          None
+      | ModusPonensEvidence(e1, e2) ->
+        match (se :> ILogicEngine).CheckJustification e1, (se :> ILogicEngine).CheckJustification e2 with
+        | Some i1, Some (ImpliesInfon(i1', i2)) when i1 = i1' ->
+          Some i2
+        | _ ->
+          log.Warn("Malformed/Unchecked modus ponens proof on {0} and {1}", e1, e2)
+          None
+      | AndEvidence(evidences) ->
+        let infons = List.collect (fun evidence ->  match (se :> ILogicEngine).CheckJustification evidence with
+                                                    | Some i -> [i]
+                                                    | None -> []) evidences
+        if infons.Length = evidences.Length then
+          Some <| AndInfon(infons)
+        else
+          log.Warn("Malformed/Unchecked conjunction proof on {0}", evidence)
+          None
+      | AsInfonEvidence(query) ->
+        if SubstrateDispatcher.Solve [query] [Substitution.Id] |> Seq.isEmpty |> not then
+          Some <| AsInfon(query)
+        else
+          log.Warn("Non-true asInfon evidence at {0}", query)
+          None
+      | ConcretizationEvidence(ev, subst) ->
+        match (se :> ILogicEngine).CheckJustification ev with
+        | Some generalProof -> 
+          let concreteProof = match generalProof with
+                              | :? ForallTerm as ft -> ft.Instantiate subst
+                              | _ -> generalProof.Apply subst
+          Some concreteProof
+        | None -> None
+      | _ -> 
+        log.Warn("Unhandled evidence type at {0}", evidence)
+        None
+
     /// Obtain a list of Substitution with accompanying side conditions (AsInfon
     /// ITerms). Then return only those Substitutions that satisfy all their 
     /// side conditions.
+    // TODO refactor, this is getting huge...
     member se.Derive (target: ITerm) (substs: ISubstitution seq) = 
       log.Debug("Derive {0}", target)
       let datalogTranslator= DatalogTranslator()
@@ -127,8 +263,6 @@ type DatalogLogicEngine() =
                                                                 | JustifiedInfon(inf, ev) -> [inf]
                                                                 | _ -> []
                                                     )
-
-
       // TODO create the program before working over each substitution
       seq {
         for subst in substs do
@@ -235,6 +369,7 @@ type DatalogLogicEngine() =
                                                            )
                                             |> Seq.map (fun query -> _infonSimplifier.relationToBoolExpr(query, regRels, regConsts, regVars, varDefs, _context))
             let query= _context.MkAnd(andQueries |> Seq.toArray)
+            // TODO remember that FakeTrue is EmptyInfon!
             let translations= datalogTranslator.TranslatedRelations
             let sat= fp.Query(query)
             if sat = Status.SATISFIABLE then
@@ -243,60 +378,32 @@ type DatalogLogicEngine() =
                 // the last argument of this AND expression is an EQ expression equalling a spurious variable with the derivation itself
                 // the derivation is an AST of the derivation process, intermediate nodes are intermediate derivations and the leaves are facts
                 // so for example a node having k children is interpreted as n1 & n2 & ... & nk -> node
-                let actualAnswer= if (derivation.IsAnd && derivation.Args.Length = 1) || derivation.IsEq then
-                                    // it is only the derivation
-                                    _context.MkTrue()
-                                  else
-                                    let andArgs= Array.sub derivation.Args 0 (derivation.Args.Length - 1) |> Array.map (fun x -> x :?> BoolExpr)
-                                    _context.MkAnd(andArgs)
+                // The explanation is an EQ expression for which we need the second term
+                let (actualAnswer, explanation) = if (derivation.IsAnd && derivation.Args.Length = 1) || derivation.IsEq then
+                                                    // it is only the derivation
+                                                    _context.MkTrue(), if derivation.IsAnd then derivation.Args.[0] else derivation
+                                                  else
+                                                    let andArgs= Array.sub derivation.Args 0 (derivation.Args.Length - 1) |> Array.map (fun x -> x :?> BoolExpr)
+                                                    _context.MkAnd(andArgs), derivation.Args.[derivation.Args.Length - 1]
+                let explanation= se.purifyExplanation explanation
                 let answer= _infonSimplifier.remapVariables (actualAnswer, query, _context)
                 let possibleSubsts= [subst] |> Seq.collect (fun solvedSub -> se.mergeSubstitutionWithAnswer solvedSub answer regVarNames invRegConsts datalogTranslator.ConstantsMapping.Values)
-                yield! possibleSubsts |> Seq.collect (fun possibleSub -> SubstrateDispatcher.Solve (se.substrateQueries (originalTarget.Normalize())) [possibleSub])
+                
+                // TODO check if we need to build a justification for this infon
+
+                let evidence, evVar = match target with
+                                      | JustifiedInfon(inf, ev) -> Some (se.buildEvidence explanation translations query invRegConsts), Some ev
+                                      | _ -> None, None
+
+                let nonEvidentialSubsts= possibleSubsts |> Seq.collect (fun possibleSub -> SubstrateDispatcher.Solve (se.substrateQueries (originalTarget.Normalize())) [possibleSub])
+                if evidence.IsNone then
+                    yield! nonEvidentialSubsts
+                else
+                    if ((se :> ILogicEngine).CheckJustification evidence.Value).IsSome then
+                        yield! nonEvidentialSubsts |> Seq.map (fun sub -> sub.Extend(evVar.Value :?> IVar, evidence.Value))
+                    else
+                        yield! []
       }
 
     member se.DeriveJustification (infon: ITerm) (proofTemplate: ITerm) (substs: ISubstitution seq) =
         failwith "Not implemented"
-
-    // lifted verbatim from SimpleEngine as this is done on a realm outside datalog
-    member se.CheckJustification (evidence: ITerm) = 
-      match evidence with
-      | SignatureEvidence(PrincipalConstant(ppal), inf, SubstrateConstant(signature)) when signature.GetType() = typeof<int> -> 
-        if se.CanSign ppal inf && _signatureProvider.Value.CheckSignature inf ppal (signature :?> int) then
-          Some inf
-        else
-          log.Warn("Spoofed/Invalid signature {0} from {1} on {2}", signature, ppal, inf)
-          None
-      | ModusPonensEvidence(e1, e2) ->
-        match (se :> ILogicEngine).CheckJustification e1, (se :> ILogicEngine).CheckJustification e2 with
-        | Some i1, Some (ImpliesInfon(i1', i2)) when i1 = i1' ->
-          Some i2
-        | _ ->
-          log.Warn("Malformed/Unchecked modus ponens proof on {0} and {1}", e1, e2)
-          None
-      | AndEvidence(evidences) ->
-        let infons = List.collect (fun evidence ->  match (se :> ILogicEngine).CheckJustification evidence with
-                                                    | Some i -> [i]
-                                                    | None -> []) evidences
-        if infons.Length = evidences.Length then
-          Some <| AndInfon(infons)
-        else
-          log.Warn("Malformed/Unchecked conjunction proof on {0}", evidence)
-          None
-      | AsInfonEvidence(query) ->
-        if SubstrateDispatcher.Solve [query] [Substitution.Id] |> Seq.isEmpty |> not then
-          Some <| AsInfon(query)
-        else
-          log.Warn("Non-true asInfon evidence at {0}", query)
-          None
-      | ConcretizationEvidence(ev, subst) ->
-        match (se :> ILogicEngine).CheckJustification ev with
-        | Some generalProof -> 
-          let concreteProof = match generalProof with
-                              | :? ForallTerm as ft -> ft.Instantiate subst
-                              | _ -> generalProof.Apply subst
-          Some concreteProof
-        | None -> None
-      | _ -> 
-        log.Warn("Unhandled evidence type at {0}", evidence)
-        None
- 

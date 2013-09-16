@@ -150,6 +150,8 @@ type DatalogTranslator() =
             let args = matterToDatalogArgumentsDeclaration matter
             let derivableRelationName= "D" + kv.Value.ToString()
             let rd = RelationDeclaration(derivableRelationName, args, Input)
+            // TODO caution: stripping prefixes as such will result in nonsense relations / arguments / infons for 
+            // introduced relations in the translation. *However* these should not appear in derivations (TODO confirm that!)
             translatedRelations.[derivableRelationName] <- stripPrefixedFormula(kv.Key)
             program.AddDeclarationPart(RelationDeclarationPart(rd))
             relationSignatures.["D" + kv.Value.ToString()] <- signature

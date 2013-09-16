@@ -35,5 +35,5 @@ type LogicEngineFactory() =
     | "TSPIL" -> new PPIL.TSPILogicEngine() :> ILogicEngine
     | "TSPIL2" -> new PPIL.TSPIL2LogicEngine() :> ILogicEngine
     | "UFOL" -> new UFOL.UFOLogicEngine(assemblyInfo.Value) :> ILogicEngine
-    | "datalog" -> new Datalog.DatalogLogicEngine() :> ILogicEngine
+    | "datalog" -> new Datalog.DatalogLogicEngine(assemblyInfo.Value) :> ILogicEngine
     | k -> failwith <| "Unrecognized logic engine kind: " + k
