@@ -130,9 +130,10 @@ module InfonSimplifier =
             | AndInfon(t) -> match t with
                              | [] -> failwith "AndInfon may not be composed of no infons"
                              | term :: [] -> is.simplify(term)
-                             | term :: terms -> AndFormula(is.simplify(term), is.simplify(AndInfon(terms))) 
+                             | term :: terms -> AndFormula(is.simplify(term), is.simplify(AndInfon(terms)))
             | ImpliesInfon(a, b) -> ImpliesFormula(is.simplify(a), is.simplify(b))
             | Forall(var, term) -> is.simplify(term)
+            | OrInfon(t) -> failwith (String.Format("Datalog cannot handle OR formulae {0}", infon))
             | App(f, args) -> AtomFormula(f.Name, args |> Seq.map (fun t -> is.simplifyArg(t)) |> Seq.toList)
             | t -> failwith (String.Format("Translation not implemented {0}", t))
 
