@@ -130,8 +130,10 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
         if (tree.Args.Length = 0) then
             // this has to be an original infon. We need to check if we had a corresponding signed infon
             se.getSimpleEvidenceForInfon infon
-        else 
-            ModusPonensEvidence(AndEvidence( tree.Args |> Seq.map (fun ev -> buildFromPurifiedTree(ev)) |> Seq.toList ), infon)
+        else
+            let premise= if tree.Args.Length = 1 then buildFromPurifiedTree(tree.Args.[0])
+                                                 else AndEvidence( tree.Args |> Seq.map (fun ev -> buildFromPurifiedTree(ev)) |> Seq.toList )
+            ModusPonensEvidence(premise, infon)
 
     let rec purifyTree (tree: Expr)=
         let head= tree.FuncDecl.Name.ToString().Replace(".", "").Replace(" ", "").Split([|":-"|], System.StringSplitOptions.RemoveEmptyEntries).[0]
@@ -147,7 +149,10 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
     while explanationTree.Head.Split([|'('|]).[0] <> query.FuncDecl.Name.ToString().Split([|'('|]).[0] do
         explanationTree <- explanationTree.Args.Item(0)
 
-    AndEvidence( explanationTree.Args |> Seq.map (fun exp -> buildFromPurifiedTree(exp)) |> Seq.toList )
+    if explanationTree.Args.Length > 1 then
+        AndEvidence( explanationTree.Args |> Seq.map (fun exp -> buildFromPurifiedTree(exp)) |> Seq.toList )
+    else
+        buildFromPurifiedTree(explanationTree.Args.[0])
 
   member private se.mergeSubstitutionWithAnswer (subst:ISubstitution) (answer:Expr) (regVarNamesAndTypes:Dictionary<Expr, string*IType>)
                                                 (mappedConstants: Dictionary<uint32, Microsoft.Z3.Sort*Expr>) (translatedConstants:List<Ast.Term>)=

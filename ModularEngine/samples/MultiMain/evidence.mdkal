@@ -14,6 +14,10 @@ say with justification to p2: r(1) && (r(1) -> r(2))
 forget r(0)
 
 ----p2---
+with X: Dkal.Infon, E: Dkal.Evidence
+upon p1 said X [E]
+do learn p1 said X [E]
+
 if p1 said r(1) [E] // (&e)
 do send to p1: p1 said r(1) [E]
 
