@@ -268,14 +268,12 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
                                                                 | JustifiedInfon(inf, ev) -> [inf]
                                                                 | _ -> []
                                                     )
-      // TODO create the program before working over each substitution
       seq {
         for subst in substs do
             let fp= _context.MkFixedpoint()
             let pars = _context.MkParams()
             pars.Add(":generate-explanations", true)
             fp.Parameters <- pars
-
             // note we add FAKE_TRUE_RELATION to the "knowledge" so it is taken as a fact by the translator
             let program= datalogTranslator.translateInferenceProblem ( (knowledge |> Seq.map (fun kn -> kn.Apply(subst))
                                                                                   |> Seq.map (fun term -> _infonSimplifier.simplify(term)) |> Seq.append [FAKE_TRUE_FACT] |> Seq.toList,
@@ -285,7 +283,6 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
             let regConsts= new Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>()
             let invRegConsts= new Dictionary<uint32, Microsoft.Z3.Sort*Expr>()
             let regSorts= new Dictionary<Sort, Microsoft.Z3.Sort>()
-            let regVars= new Dictionary<Microsoft.Z3.Sort, Dictionary<Expr, uint32>>()
             let regVarNames=  new Dictionary<Expr, string*IType>()
 
             // Z3 allows finite domain sorts, BUT
@@ -298,7 +295,6 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
                                                                 regSorts.[sortDecl.Name] <- sort
                                                                 try 
                                                                     regConsts.[sort] <- new Dictionary<Expr, uint32>()
-                                                                    regVars.[sort] <- new Dictionary<Expr, uint32>()
                                                                     program.Sorts.[sortDecl.Name].Values
                                                                         |> Seq.iter ( fun value -> 
                                                                                         let cst= _context.MkConst(value.ToString(), sort)
@@ -321,8 +317,16 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
                                              )
 
             let freshVar= ref (uint32(0))
-            let varDefs= program.Rules
-                         |> Seq.append program.Queries
+            
+            // TODO problem with varDefs, they are being kept from rule to rule
+            // therefore if a rule uses variables with the same name that denote distinct types, it will eventually clash.
+            // variables are NOT global to the program but just local to the rule
+            // TODO make it so
+            let purifiedRules= program.Rules |> Seq.toList |> List.mapi  (fun i rule -> _infonSimplifier.renameVars(rule, i))
+            let purifiedQueries= program.Queries |> Seq.toList |> List.mapi  (fun i rule -> _infonSimplifier.renameVars(rule, i + purifiedRules.Length))
+
+            let varDefs= purifiedRules
+                         |> Seq.append purifiedQueries
                          |> Seq.collect (fun rulepart -> match rulepart with
                                                          | RulePart(AtomRule(relation)) -> seq {yield relation}
                                                          | RulePart(ImpliesRule(head, body)) -> seq {yield! head::body}
@@ -339,19 +343,18 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
                                                                                                                 regVarNames.[v] <- (s, dkalType)
                                                                                                             // vars without type are nonfunctional ones, but we still need them
                                                                                                             acc.[s] <- v
-                                                                                                            regVars.[sort].[v] <- !freshVar
                                                                                                             freshVar := !freshVar + uint32(1)
                                                                                                             acc
 
                                                                                | _ -> acc
                                      ) (new Dictionary<string,Expr>())
-            program.Rules |> Seq.append program.Queries
+            purifiedRules |> Seq.append purifiedQueries
                           |> Seq.iter ( fun rp -> match rp with
                                                   | RulePart(AtomRule(relationRule)) -> 
-                                                        let rule= _infonSimplifier.relationToBoolExpr(relationRule, regRels, regConsts, regVars, varDefs, _context)
+                                                        let rule= _infonSimplifier.relationToBoolExpr(relationRule, regRels, regConsts, varDefs, _context)
                                                         fp.AddRule(rule)
                                                   | RulePart(ImpliesRule(head, body)) ->
-                                                        let rule= _infonSimplifier.impliesRuleToBoolExpr(head, body, regRels, regConsts, regVars, varDefs, _context)
+                                                        let rule= _infonSimplifier.impliesRuleToBoolExpr(head, body, regRels, regConsts, varDefs, _context)
                                                         fp.AddRule(rule)
                                                   | _ -> ()
                                       )
@@ -368,11 +371,11 @@ type DatalogLogicEngine(assemblyInfo: MultiAssembly) =
                                                                    | _ as x -> x
                                                  ) Status.SATISFIABLE
             *)
-            let andQueries= program.Queries |> Seq.collect (fun query -> match query with
+            let andQueries= purifiedQueries |> Seq.collect (fun query -> match query with
                                                                          | RulePart(ImpliesRule(head,body)) -> [head]
                                                                          | _ -> failwith "Error - queries should be encoded as ImpliesRule"
                                                            )
-                                            |> Seq.map (fun query -> _infonSimplifier.relationToBoolExpr(query, regRels, regConsts, regVars, varDefs, _context))
+                                            |> Seq.map (fun query -> _infonSimplifier.relationToBoolExpr(query, regRels, regConsts, varDefs, _context))
             let query= _context.MkAnd(andQueries |> Seq.toArray)
             // TODO remember that FakeTrue is EmptyInfon!
             let translations= datalogTranslator.TranslatedRelations
