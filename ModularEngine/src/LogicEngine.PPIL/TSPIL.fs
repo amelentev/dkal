@@ -37,14 +37,14 @@ module TSPIL =
         match op1 with
         | SetOperation.AndOp -> setcontains list1 list2
         | SetOperation.OrOp ->  setcontains list2 list1
-      | Rel(_,s1), Rel(_,s2) ->
-        s1=s2
-      | Rel(_,_) as r, SetFormula(_, SetOperation.AndOp, list) ->
+      | r, SetFormula(_, SetOperation.AndOp, list) ->
         let hr = homkey r
         list |> Seq.exists (fun x -> hr = homkey x)
-      | SetFormula(_, SetOperation.OrOp, list), (Rel(_,_) as r) ->
+      | SetFormula(_, SetOperation.OrOp, list), r ->
         let hr = homkey r
         list |> Seq.exists (fun x -> hr = homkey x)
+      | r1, r2 ->
+        r1.Key = r2.Key
       | _ -> false
 
   type SetRelation() =

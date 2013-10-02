@@ -71,4 +71,10 @@ module TSPIL =
           [true; false; false],
           solveDSI hyp que)
 
+    "TSPIL subset bug" => fun _ ->
+      Assert.Equal("",
+          [false],
+          solve ["(a() -> c() && b()) -> d()"]
+                ["a() -> c()"])
+
     ] @ (TPIL.genericTests solve)
