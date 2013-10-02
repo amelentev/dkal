@@ -46,9 +46,9 @@
     <Compile Include="Stage2.fs" />
     <Compile Include="Stage3.fs" />
     <Compile Include="Stage4.fs" />
+    <Compile Include="Stage5.fs" />
     <Compile Include="TPIL.fs" />
     <Compile Include="TSPIL.fs" />
-    <Compile Include="Stage5.fs" />
     <Compile Include="PPILSolver.fs" />
     <Compile Include="PPILogicEngine.fs" />
     <None Include="packages.config" />

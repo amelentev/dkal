@@ -16,7 +16,7 @@ open AST
 open Stage4
 
 module TPIL =
-  let genericApplyTrans extraTraverse (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) = function
+  let genericApplyTrans extraTraverse (H:ASTMap) (T:PrimalRecordMap) = function
     | Implies(_, ul, ur) ->
       let homkey (u:AST) = H.[u.Key].Key
       let status p =  T.[homkey p].Status

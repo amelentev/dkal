@@ -13,12 +13,13 @@ namespace Microsoft.Research.Dkal.LogicEngine.PPIL
 
 open System.Collections.Generic
 open AST
+open Stage2
 open Stage4
 
 /// Transitive SPIL
 module TSPIL =
   /// is v1 is subset of v2, i.e. if v2 |= v1
-  let isSubset (H:IDictionary<int,AST>) (V:IDictionary<int,_>) v1 v2 =
+  let isSubset (H: ASTMap) (V:TrieMap) v1 v2 =
     if V.[v1] <> V.[v2] then
       false
     else
@@ -54,7 +55,7 @@ module TSPIL =
       | true, lst -> x.[key] <- value :: lst
 
   /// generate subset and superset relations. O(N^2)
-  let genSetContainmentRelation (H:IDictionary<int,AST>) V =
+  let genSetContainmentRelation (H: ASTMap) V =
     let subsets = SetRelation()
     let supsets = SetRelation()
     let leaders = H.Keys |> Seq.filter (fun x -> x = H.[x].Key) |> Seq.toList
@@ -74,7 +75,7 @@ module TSPIL =
     subsets.[v.Key]
   | _ -> failwith "impossible"
 
-  let applyDisjunctionSetIntro (subsets:SetRelation, _) (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) = function
+  let applyDisjunctionSetIntro (subsets:SetRelation, _) (H: ASTMap) (T: PrimalRecordMap) = function
     | SetFormula(_, SetOperation.OrOp, list) as s when list.Length>1 ->
       let hs = H.[s.Key]
       subsets.[hs.Key] |> List.map (fun x -> H.[x])

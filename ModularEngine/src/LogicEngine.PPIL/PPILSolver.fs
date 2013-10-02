@@ -17,7 +17,7 @@ open AST
 module PPILSolver =
   let emptyRule _ _ _ = []
 
-  let getProofs (HO:IDictionary<_,AST>) (proofs:IDictionary<_,_>) = 
+  let getProofs (HO: ASTMap) (proofs:IDictionary<_,_>) = 
     List.map (fun (q: AST) ->
       match proofs.TryGetValue(HO.[q.Key].Key) with
       | true,proof -> Some proof

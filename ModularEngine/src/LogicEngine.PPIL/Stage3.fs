@@ -18,7 +18,7 @@ open AST
 
 module Stage3 =
 
-  let homonomySufArr (input:string) HY QU ((nodes: IDictionary<int, AST>), (vertices: IDictionary<int, Trie>)) =
+  let homonomySufArr (input:string) HY QU ((nodes: ASTMap), (vertices: TrieMap)) =
       let sufarr = LCP.sufsort input
       let lcp = LCP.computeLCP(input, sufarr)
 
@@ -52,7 +52,7 @@ module Stage3 =
 
   /// Build a homonomy map and remove duplicates from set formulas. preserve order of childrens.
   /// average complexity = O(number of nodes)
-  let homonomyHash _ HY Q ((nodes: IDictionary<int, AST>), (vertices: IDictionary<int, Trie>)) =
+  let homonomyHash _ HY Q ((nodes: ASTMap), (vertices: TrieMap)) =
     /// assign unique key for every local prefix
     let mutable ind = 0
     for v in vertices.Values do

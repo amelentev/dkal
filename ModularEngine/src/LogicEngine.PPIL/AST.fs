@@ -12,6 +12,7 @@
 namespace Microsoft.Research.Dkal.LogicEngine.PPIL
 
 open Microsoft.Research.Dkal.Interfaces
+open System.Collections.Generic
 
 module AST =
   type SetOperation = 
@@ -60,3 +61,5 @@ module AST =
     | DisjIntroduction of Proof*AST
     | ImplicationElimination of Proof*Proof*AST
     | ImplicationIntroduction of Proof*AST
+
+  type ASTMap = IDictionary<int, AST>

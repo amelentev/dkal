@@ -39,8 +39,9 @@ module Stage4 =
       member this.IncCounter() = counter <- counter + 1; counter
 
       member this.NumChilds = numChilds
+  type PrimalRecordMap = IDictionary<int, PrimalRecord>
 
-  let preprocess (H: IDictionary<int, AST>) (HY: list<AST>) =
+  let preprocess (H: ASTMap) (HY: list<AST>) =
       let hom (u:AST) = H.[u.Key]
       let homkey u = (hom u).Key
       let T = Dictionary()

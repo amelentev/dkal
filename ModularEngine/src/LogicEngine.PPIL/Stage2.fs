@@ -36,6 +36,8 @@ module Stage2 =
           let str = childs |> Seq.map (fun e -> e.Key + e.Value.ToString()) |> String.concat ","
           "("+str+")"
 
+  type TrieMap = IDictionary<int, Trie>
+
   let constrByPref trie = List.fold (fun (trie:Trie) p -> trie.add p) trie
 
   let rec constructTrie trie lst = function

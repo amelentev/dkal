@@ -19,7 +19,7 @@ open Microsoft.Research.Dkal.Interfaces
 
 module Stage5 = 
 
-  let stage5 (N:IDictionary<int,AST>) (H:IDictionary<int,AST>) (T:IDictionary<int,PrimalRecord>) extraRules queries =
+  let stage5 (N: ASTMap) (H: ASTMap) (T: PrimalRecordMap) extraRules queries =
       let hom (u:AST) = H.[u.Key]
       let homkey u = (hom u).Key
       let status (p:AST) =
