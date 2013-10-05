@@ -57,9 +57,9 @@ module PPILSolver =
       let (H, Q, inp) = Stage1.stage1 H Q
       let (N, V) = Stage2.constructNodesnVertices (H@Q)
       let (H,Q,HO) = Stage3.homonomyHash inp H Q (N,V)
-      let setrels = TSPIL.genSetContainmentRelation HO V
-      let subsets = fst setrels
       let T = Stage4.preprocess HO H
+      let setrels = TSPIL.genSetContainmentRelation HO T V
+      let subsets = fst setrels
       for t in T.Keys do // mark x2x axioms
         match HO.[t] with
         | Implies(_,l,r) as n ->
@@ -80,3 +80,28 @@ module PPILSolver =
   /// Transitive SPIL + Disjunction superset introduction rule. O(n^3)
   let solveTSPIL_DS H =
       genericSolveTSPIL TSPIL.applyDisjunctionSetIntro H
+
+  /// Transitive SPIL + (->/\i) rule
+  let solveTSPIL2 H Q =
+    let H = H |> List.map Stage0.flatConjuncts
+    let Q = Q |> List.map Stage0.flatConjuncts
+    let (H, Q, inp) = Stage1.stage1 H Q
+    let (N, V) = Stage2.constructNodesnVertices (H@Q)
+    let (H,Q,HO) = Stage3.homonomyHash inp H Q (N,V)
+    let T = Stage4.preprocess HO H
+    let setrels = TSPIL.genSetContainmentRelation HO T V
+    let subsets = fst setrels
+    for t in T.Keys do // mark x2x axioms
+      match HO.[t] with
+      | Implies(_,l,r) as n ->
+        let l,r = HO.[l.Key], HO.[r.Key]
+        if subsets.[l.Key] |> List.exists ((=) r.Key) then
+          T.[t].Status <- Stage4.Pending
+      | _ -> ()
+    let IC = TSPIL2.init HO T
+    let rules H T u =
+      TSPIL2.applyTrans2 HO T IC u
+      //TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) H T u
+        @ (TSPIL.applyDisjunctionSetIntro setrels H T u)
+    let proofs = Stage5.stage5 N HO T rules Q
+    getProofs HO proofs Q

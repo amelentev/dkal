@@ -55,10 +55,10 @@ module TSPIL =
       | true, lst -> x.[key] <- value :: lst
 
   /// generate subset and superset relations. O(N^2)
-  let genSetContainmentRelation (H: ASTMap) V =
+  let genSetContainmentRelation (H: ASTMap) T V =
     let subsets = SetRelation()
     let supsets = SetRelation()
-    let leaders = H.Keys |> Seq.filter (fun x -> x = H.[x].Key) |> Seq.toList
+    let leaders = Stage4.getLeaders H T |> Seq.map (fun a -> a.Key)
     let isSubset = isSubset H V
     for v1 in leaders do
       for v2 in leaders do

@@ -41,6 +41,10 @@ module Stage4 =
       member this.NumChilds = numChilds
   type PrimalRecordMap = IDictionary<int, PrimalRecord>
 
+  let getLeaders (H: ASTMap) (T:PrimalRecordMap) =
+    [for t in T do
+      yield H.[t.Key]]
+
   let preprocess (H: ASTMap) (HY: list<AST>) =
       let hom (u:AST) = H.[u.Key]
       let homkey u = (hom u).Key
