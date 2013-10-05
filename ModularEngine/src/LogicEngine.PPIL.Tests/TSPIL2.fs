@@ -24,7 +24,7 @@ module TSPIL2 =
     [
     "TSPIL2 1" => fun _ ->
         Assert.Equal("",
-          [true; true; true; false; false],
+          [true; true; true; false; true],
           solve ["a() -> b()"; "a() -> c()"]
                 ["a() -> c() && b()"; "a() && b() -> c()"; "a() && c() -> b()"; "b() -> c()"; "a() -> b() || c()"])
     "TSPIL2 2" => fun _ ->
@@ -32,4 +32,9 @@ module TSPIL2 =
           [true; false; true; true; false],
           solve ["a() -> c()"; "b() -> d()"]
                 ["a() && b() -> c() && d()"; "a() -> d() && c()"; "a() && b() -> c()"; "a() && c() -> c()"; "a() -> d()"])
+    "TSPIL2 3" => fun _ ->
+        Assert.Equal("",
+          [true; true; true],
+          solve ["a() -> b() && c()"; "a() -> d() && e()"; "c() && d() -> f()"; "b() && f() -> x()"]
+                ["a() -> f()"; "a() -> b() && f()"; "a() -> x()"])
     ] @ (TPIL.genericTests solve)

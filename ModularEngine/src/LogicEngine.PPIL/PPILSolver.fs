@@ -101,7 +101,7 @@ module PPILSolver =
     let IC = TSPIL2.init HO T
     let rules H T u =
       TSPIL2.applyTrans2 HO T IC u
-      //TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) H T u
+        @ TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) H T u // for disjunction subsets
         @ (TSPIL.applyDisjunctionSetIntro setrels H T u)
     let proofs = Stage5.stage5 N HO T rules Q
     getProofs HO proofs Q
