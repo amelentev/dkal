@@ -16,3 +16,10 @@ else if asInfon(true) do send to me: log("ok2")
 if r(0) -> p1 said r(3)
 do send to me: log("error")
 else if asInfon(true) do send to me: log("ok3")
+
+// \/-x2x
+knows r(11) || r(12)
+
+if r(11) || r(12) || r(13)
+do send to me: log("ok4")
+else if asInfon(true) do send to me: log("error")
