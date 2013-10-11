@@ -16,7 +16,6 @@ syntax: glob
 glob:ModularEngine/src/*/bin/*
 glob:ModularEngine/src/*/obj/*
 glob:ModularEngine/src/packages
-glob:ModularEngine/src/.nuget
 DkalBackends/_UpgradeReport_Files/UpgradeReport.css
 DkalBackends/_UpgradeReport_Files/UpgradeReport.xslt
 DkalBackends/_UpgradeReport_Files/UpgradeReport_Error.png

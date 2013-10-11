@@ -141,13 +141,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicEngine.PPIL.SAIS", "Lo
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LogicEngine.PPIL.Tests", "LogicEngine.PPIL.Tests\LogicEngine.PPIL.Tests.fsproj", "{DCE53DC6-899E-42AE-9631-B0B9C56248C1}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{9745CC1B-251F-43E6-9C9F-196E6F2ABBD7}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Substrate.Reflection", "Substrate.Reflection\Substrate.Reflection.fsproj", "{A6942FA1-47C2-4D3D-B06E-7FB9BF5B1AE5}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LogicEngine.UFOL", "LogicEngine.UFOL\LogicEngine.UFOL.fsproj", "{1D3E0243-D275-4528-A473-6CFF79CE6702}"

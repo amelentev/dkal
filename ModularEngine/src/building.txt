@@ -1,2 +1,2 @@
 Use Visual Studio 2012 for building.
-You need right click Solution->"Enable NuGet Package Restore" and reload solution before first build.
+Be sure NuGet version is >=2.7 for automatic deps download on build.
