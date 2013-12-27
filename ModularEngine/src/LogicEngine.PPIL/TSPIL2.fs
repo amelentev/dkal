@@ -17,13 +17,17 @@ open Stage2
 open Stage4
 
 /// Extension of TSPIL with (->/\i) rule.
-/// (A -> B) & (A -> C) => A -> B & C
+/// p said ((A -> B) & (A -> C)) => p said (A -> B & C)
 module TSPIL2 =
-  let rec addImpl (H: ASTMap) (T: PrimalRecordMap) (IC: IDictionary<int,IDictionary<int,int>>) (u: AST) (v: AST) =
+  type Graph = IDictionary<int, IDictionary<int,int>>
+  type Graphs = IDictionary<Trie, Graph>
+
+  let rec addImpl (H: ASTMap) (T: PrimalRecordMap) (prefix: Trie) (Gs: Graphs) (u: AST) (v: AST) =
     let hom (u:AST) = H.[u.Key]
     let u = hom u
     let v = hom v
-    let addrec = addImpl H T IC
+    let addrec = addImpl H T prefix Gs
+    let IC = Gs.[prefix]
     match IC.[u.Key].TryGetValue(v.Key) with
     | true,0 -> () // already derived
     | _,_ ->
@@ -40,7 +44,7 @@ module TSPIL2 =
           addrec u w
         else if IC.[u.Key].[w.Key] > 0 then
           IC.[u.Key].[w.Key] <- IC.[u.Key].[w.Key] - 1
-      // IC recursion
+      // forward recursion
       let leaders = Stage4.getLeaders H T
       for w in leaders do
         match IC.[v.Key].TryGetValue(w.Key) with
@@ -54,28 +58,34 @@ module TSPIL2 =
           addrec w v
         | _,_ -> ()
 
-  let init H T =
-    let IC = Dictionary() :> IDictionary<int, IDictionary<int, int>>;
+  let init H (vertices: TrieMap) T =
+    let Gs = Dictionary() :> Graphs
     let leaders = Stage4.getLeaders H T
-    leaders |> Seq.iter (fun h -> 
-      IC.Add(h.Key, Dictionary()) )
-    for u in leaders do
-      for v in leaders do
-        match v with
-        | SetFormula(_,SetOperation.AndOp,lst) ->
-          IC.[u.Key].Add(v.Key, List.length lst)
-        | _ -> ()
-      addImpl H T IC u u
-    IC
+    let prefixes = new HashSet<Trie>(leaders |> Seq.map (fun u -> vertices.[u.Key]))
+    for p in prefixes do
+      let G = Dictionary() :> Graph
+      Gs.Add(p, G)
+      for u in leaders do
+        G.Add(u.Key, Dictionary())
+    for p in prefixes do
+      let G = Gs.[p]
+      for u in leaders do
+        for v in leaders do
+          match v with
+          | SetFormula(_,SetOperation.AndOp,lst) ->
+            G.[u.Key].Add(v.Key, List.length lst)
+          | _ -> ()
+        addImpl H T p Gs u u
+    Gs
    
-  let applyTrans2 H T (IC:IDictionary<int, IDictionary<int,int>>) = function
-  | Implies(_, ul, ur) ->
-    addImpl H T IC H.[ul.Key] H.[ur.Key]
+  let applyTrans2 H (vertices: TrieMap) T (Gs: Graphs) = function
+  | Implies(_, ul, ur) as u ->
+    addImpl H T vertices.[u.Key] Gs H.[ul.Key] H.[ur.Key]
     [
       for t in T do
         match t.Value.Status, H.[t.Key] with
-        | Raw, Implies(_, wl, wr) ->
-          match IC.[H.[wl.Key].Key].TryGetValue(H.[wr.Key].Key) with
+        | Raw, (Implies(_, wl, wr) as v) ->
+          match Gs.[vertices.[v.Key]].[H.[wl.Key].Key].TryGetValue(H.[wr.Key].Key) with
           | true,0 ->
             yield H.[t.Key]
           | _,_ -> ()

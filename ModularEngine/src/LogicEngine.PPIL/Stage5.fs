@@ -84,7 +84,7 @@ module Stage5 =
             makepending (ModusPonensEvidence(proof l, proof u)) r
         | _ -> ()
 
-        extraRules H T u |> List.iter (makepending EmptyEvidence) // TODO: evidence construction
+        extraRules u |> List.iter (makepending EmptyEvidence) // TODO: evidence construction
 
         t.Status <- Processed
       

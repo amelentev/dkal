@@ -50,5 +50,20 @@ module TPIL =
         [true; false; false],
         solve ["a() -> p1 said b()"; "p1 said b() -> c()"; "b() -> d()"; "p2 said b() -> e()"]
               ["a() -> c()"; "a() -> d()"; "a() -> e()"])
+    "-> unquote" => fun _ ->
+      Assert.Equal("",
+          [false],
+          solve ["p1 said (a() -> b())"]
+                ["p1 said a() -> p1 said b()"])
+    "-> quote" => fun _ ->
+      Assert.Equal("",
+          [false],
+          solve ["p1 said a() -> p1 said b()"]
+                ["p1 said (a() -> b())"])
+    "TPIL quotes" => fun _ ->
+        Assert.Equal("",
+          [false; false; true],
+          solve ["p1 said (a() -> b())"; "p1 said a() -> c()"; "p1 said a()"]
+                ["p1 said (a() -> c())"; "p1 said a() -> b()"; "c() && p1 said b()"])
     ]
   let tests = genericTests solve

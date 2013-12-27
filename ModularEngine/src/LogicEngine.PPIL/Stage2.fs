@@ -24,13 +24,12 @@ module Stage2 =
           and set(p) = position <- p
 
       member this.add (s:string) =
-          let (ok,child) = childs.TryGetValue s
-          if ok then 
-            child
-          else 
-            let child = new Trie()
-            childs.Add(s, child)
-            child
+        match childs.TryGetValue s with
+        | true,child -> child
+        | _,_ ->
+          let child = new Trie()
+          childs.Add(s, child)
+          child
 
       override this.ToString() =
           let str = childs |> Seq.map (fun e -> e.Key + e.Value.ToString()) |> String.concat ","

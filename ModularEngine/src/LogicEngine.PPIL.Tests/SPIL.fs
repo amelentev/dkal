@@ -65,10 +65,4 @@ module SPIL =
         solve ["w() -> (x() && y() && z())";
                "(z() && y() && x()) -> w()"]
               ["w() -> w()"])
-
-    "set || intro. todo" => fun _ ->
-      Assert.Equal("",
-        [true],
-        solve ["a()||b()"]
-              ["a()||b()||c()"])
     ]

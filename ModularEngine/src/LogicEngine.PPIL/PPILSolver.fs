@@ -15,7 +15,7 @@ open System.Collections.Generic
 open AST
 
 module PPILSolver =
-  let emptyRule _ _ _ = []
+  let emptyRule _ _ _ _ = []
 
   let getProofs (HO: ASTMap) (proofs:IDictionary<_,_>) = 
     List.map (fun (q: AST) ->
@@ -28,7 +28,7 @@ module PPILSolver =
       let (N, V) = Stage2.constructNodesnVertices (H@Q)
       let (H,Q,HO) = stage3 inp H Q (N,V)
       let T = Stage4.preprocess HO H
-      let proofs = Stage5.stage5 N HO T extraRules Q
+      let proofs = Stage5.stage5 N HO T (extraRules HO V T) Q
       getProofs HO proofs Q
 
   /// Basic PIL. O(n)
@@ -67,15 +67,15 @@ module PPILSolver =
           if subsets.[l.Key] |> List.exists ((=) r.Key) then
             T.[t].Status <- Stage4.Pending
         | _ -> ()
-      let rules H T u =
-        TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) H T u
-          @ (extraRules setrels H T u)
+      let rules u =
+        TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) HO V T u
+          @ (extraRules setrels HO V T u)
       let proofs = Stage5.stage5 N HO T rules Q
       getProofs HO proofs Q
 
   /// Transitive SPIL. O(n^3)
   let solveTSPIL H =
-      genericSolveTSPIL (fun _ _ _ _ -> []) H
+      genericSolveTSPIL (fun _ _ _ _ _ -> []) H
 
   /// Transitive SPIL + Disjunction superset introduction rule. O(n^3)
   let solveTSPIL_DS H =
@@ -98,10 +98,10 @@ module PPILSolver =
         if subsets.[l.Key] |> List.exists ((=) r.Key) then
           T.[t].Status <- Stage4.Pending
       | _ -> ()
-    let IC = TSPIL2.init HO T
-    let rules H T u =
-      TSPIL2.applyTrans2 HO T IC u
-        @ TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) H T u // for disjunction subsets
-        @ (TSPIL.applyDisjunctionSetIntro setrels H T u)
+    let Gs = TSPIL2.init HO V T
+    let rules u =
+      TSPIL2.applyTrans2 HO V T Gs u
+        @ TPIL.genericApplyTrans (TSPIL.traverseSubsets setrels) HO V T u // for disjunction subsets
+        @ (TSPIL.applyDisjunctionSetIntro setrels HO V T u)
     let proofs = Stage5.stage5 N HO T rules Q
     getProofs HO proofs Q

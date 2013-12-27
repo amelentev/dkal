@@ -75,7 +75,7 @@ module TSPIL =
     subsets.[v.Key]
   | _ -> failwith "impossible"
 
-  let applyDisjunctionSetIntro (subsets:SetRelation, _) (H: ASTMap) (T: PrimalRecordMap) = function
+  let applyDisjunctionSetIntro (subsets:SetRelation, _) (H: ASTMap) vertices (T: PrimalRecordMap) = function
     | SetFormula(_, SetOperation.OrOp, list) as s when list.Length>1 ->
       let hs = H.[s.Key]
       subsets.[hs.Key] |> List.map (fun x -> H.[x])
