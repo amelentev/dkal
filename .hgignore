@@ -12,7 +12,7 @@ glob:DkalLanguageVSX/bin/Debug/**
 syntax: glob
 **/passwords_local - Cloud.dkal
 **~
-**/{bin,obj}/**Debug/*
+**/{bin,obj}/**{Debug,Release}/*
 glob:ModularEngine/src/*/bin/*
 glob:ModularEngine/src/*/obj/*
 glob:ModularEngine/src/packages

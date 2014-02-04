@@ -35,34 +35,35 @@ module Rise4FunWebService =
     jw.WriteStartDocument()
     jw.WriteStartElement("root")
     jw.WriteAttributeString("type", "object")
+
     jw.WriteElementString("Name", "DKAL")
     jw.WriteElementString("DisplayName","DKAL")
-    jw.WriteElementString("Description","Demo of DKAL")
+    jw.WriteElementString("Title","Distributed Knowledge Authorization Language")
+    jw.WriteElementString("Url","http://dkal.codeplex.com/wikipage?title=UserDocumentation")
+    jw.WriteElementString("Version","1.0")
+    jw.WriteElementString("Description","DKAL is a logic-based distributed authorization policy language. Originally it was aimed for authorization policies, but in fact it is appropriate for policies in general. In DKAL world, principals have their own states and compute their own knowledge. DKAL facilitates the analysis of policies. Are the given policies consistent? Do they comply with various regulations? Is privacy protected? And so on.")
     jw.WriteElementString("Question","How do these principals interact?")
     jw.WriteElementString("Institution","Microsoft Research")
+    jw.WriteElementString("InstitutionUrl","http://research.microsoft.com/")
     jw.WriteElementString("InstitutionImageUrl","http://research.microsoft.com/en-us/um/people/gurevich/dkal.png")
-    jw.WriteElementString("InstitutionUrl","http://dkal.codeplex.com")
-    jw.WriteElementString("MimeType","text/x-csharp")
-    jw.WriteElementString("SupportsLanguageSyntax", "true");
+    jw.WriteElementString("MimeType","text/x-mdkal")
+    jw.WriteElementString("SupportsLanguageSyntax", "true")
+    jw.WriteElementString("Email", "dkal4fun@gmail.com")
+    jw.WriteElementString("SupportEmail", "dkal4fun@gmail.com")
     jw.WriteElementString("PrivacyUrl","http://rise4fun.com/privacy")
+    jw.WriteElementString("TermsOfUseUrl","http://rise4fun.com/termsofuse")
+
     jw.WriteStartElement("Samples")
     jw.WriteAttributeString("type", "array")
-
     for file in Directory.EnumerateFiles(@".", "*.mdkal") do
       jw.WriteStartElement("item")
       jw.WriteAttributeString("type", "object")
       jw.WriteElementString("Name", file.Substring(2, file.Length - ".mdkal".Length - 2))
       jw.WriteElementString("Source", File.ReadAllText(file))
       jw.WriteEndElement()
+    jw.WriteEndElement()
 
-    jw.WriteEndElement()
-    jw.WriteElementString("TermsOfUseUrl","http://rise4fun.com/termsofuse")
-    jw.WriteElementString("Title","Distributed Knowledge Authorization Language")
-    jw.WriteElementString("Url","http://dkal.codeplex.com")
-    jw.WriteElementString("Version","1.0")
-    jw.WriteElementString("Email", "dkal@dkal.dkal")
-    jw.WriteElementString("SupportEmail", "dkal@dkal.dkal")
-    jw.WriteEndElement()
+    jw.WriteEndElement() // root
     jw.WriteEndDocument()
     jw.Flush()
 

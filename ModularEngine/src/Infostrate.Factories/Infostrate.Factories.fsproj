@@ -55,6 +55,9 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Z3">
+      <HintPath>..\LogicEngine.UFOL\lib\Microsoft.Z3.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -65,6 +68,11 @@
     <Compile Include="InfostrateFactory.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Globals\Globals.fsproj">
+      <Name>Globals</Name>
+      <Project>{74223397-052c-4f45-b703-ddf5bced536b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Infostrate.Simple\Infostrate.Simple.fsproj">
       <Name>Infostrate.Simple</Name>
       <Project>{6c2de9fd-b01c-4665-a5cc-4e75ac1ce2fc}</Project>

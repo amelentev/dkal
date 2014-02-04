@@ -1,7 +1,7 @@
 {
   displayName:    'DKAL',
   name:           'dkal',
-  mimeTypes:      ['text/x-dkal'],
+  mimeTypes:      ['text/x-mdkal'],
   fileExtensions: ['.mdkal'],
   
   lineComments:      '//',   
