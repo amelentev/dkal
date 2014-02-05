@@ -1,0 +1,54 @@
+{
+  displayName:    'DKAL',
+  name:           'dkal',
+  mimeTypes:      ['text/x-mdkal'],
+  fileExtensions: ['.mdkal'],
+  
+  lineComments:      '//',
+  blockCommentStart: '/*',
+  blockCommentEnd:   '*/',
+
+  keywords: [
+    'type', 'relation', 'datasource', 'namespaces', 'with', 'forall', 'said', 'me', 'knows',
+    'upon', 'if', 'do', 'send', 'say', 'justification', 'to', 'learn', 'forget', 'asInfon', 'let', 'fresh'
+  ],
+
+  operators: [
+    '=', '>', '<',
+    '==', '<=', '>=', '!=', '&&', '||', 
+    '+', '-', '*', '/', '%'
+  ],
+  
+  tokenizer: {
+    root: [
+      ['[a-z_$][\\w$]*', 
+        { cases: { '@keywords': 'keyword',
+                   '@default': 'identifier' } }],
+      ['[A-Z][\\w\\$]*', 'type.identifier' ],
+
+      ['"',  'string', '@string' ],
+      
+      { include: '@whitespace' },
+
+      ['[{}()\\[\\]]', '@brackets'],
+    ],
+
+    whitespace: [
+        ['[ \\t\\r\\n]+', 'white'],
+        ['\\/\\*',       'comment', '@comment' ],
+        ['\\/\\/.*$',    'comment'],
+    ],
+
+    string: [
+        ['[^"]+', 'string'],
+        ['"', 'string', '@pop'],
+    ],
+
+    comment: [
+        ['[^\\/*]+', 'comment' ],
+        ['\\/\\*',    'comment.invalid' ],
+        ["\\*/",    'comment', '@pop'  ],
+        ['[\\/*]',   'comment' ]
+    ],  
+  },
+}

@@ -45,7 +45,7 @@ module Rise4FunWebService =
     jw.WriteElementString("Question","How do these principals interact?")
     jw.WriteElementString("Institution","Microsoft Research")
     jw.WriteElementString("InstitutionUrl","http://research.microsoft.com/")
-    jw.WriteElementString("InstitutionImageUrl","http://research.microsoft.com/en-us/um/people/gurevich/dkal.png")
+    jw.WriteElementString("InstitutionImageUrl","http://rise4fun.com/images/logo_msr_small.png")
     jw.WriteElementString("MimeType","text/x-mdkal")
     jw.WriteElementString("SupportsLanguageSyntax", "true")
     jw.WriteElementString("Email", "dkal4fun@gmail.com")
@@ -70,7 +70,7 @@ module Rise4FunWebService =
   let sendLanguage (context: HttpListenerContext) =
     log.Info "sending language"
     let assemblydir = Directory.GetParent(Assembly.GetEntryAssembly().Location).FullName
-    let lang = File.ReadAllBytes(assemblydir + "/language.js")
+    let lang = File.ReadAllBytes(assemblydir + "/language.json")
 
     context.Response.OutputStream.Write(lang, 0, lang.Length)
     context.Response.OutputStream.Flush()
