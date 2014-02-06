@@ -10,7 +10,7 @@
 
   keywords: [
     'type', 'relation', 'datasource', 'namespaces', 'with', 'forall', 'said', 'me', 'knows',
-    'upon', 'if', 'do', 'send', 'say', 'justification', 'to', 'learn', 'forget', 'asInfon', 'let', 'fresh'
+    'upon', 'if', 'do', 'else', 'send', 'say', 'justification', 'to', 'learn', 'forget', 'asInfon', 'let', 'fresh'
   ],
 
   operators: [
