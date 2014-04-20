@@ -69,7 +69,7 @@ module Stage3 =
     | Implies(_,l,r) as u -> (prefhash u, chash l, chash r).GetHashCode()
     | SetFormula(_,op,args) as u -> 
         let argshash = (args |> List.map chash |> List.reduce (^^^))
-        (prefhash u, op, argshash).GetHashCode()
+        (op, argshash).GetHashCode()
     /// hash function for nodes with memorization
     and chash (u: AST) =
       match hashcache.TryGetValue u.Key with
@@ -98,9 +98,9 @@ module Stage3 =
           if homkey t1 = homkey t2 then
             true
           else
-          if vertices.[t1.Key] = vertices.[t2.Key] then // same prefix?
+            let samePrefix = vertices.[t1.Key] = vertices.[t2.Key]
             match t1, t2 with
-            | Rel(_,s1), Rel(_,s2) when s1.Equals(s2) ->
+            | Rel(_,s1), Rel(_,s2) when samePrefix && s1.Equals(s2) ->
               addhom t1 t2
             | SetFormula(_,op1,args1), SetFormula(_,op2,args2) when op1=op2 && args1.Length = args2.Length ->
               let leaders = HashSet<int>()
@@ -109,12 +109,11 @@ module Stage3 =
               if args2 |> List.forall (fun x -> leaders.Contains(homkey x)) then
                 addhom t1 t2
               else false
-            | Implies(_,a11,a12), Implies(_,a21,a22) ->
+            | Implies(_,a11,a12), Implies(_,a21,a22) when samePrefix ->
               if homkey a11 = homkey a21 && homkey a12 = homkey a22 then
                 addhom t1 t2
               else false
             | _ -> false
-          else false
         member x.GetHashCode(t: AST) = chash t
       }
     /// Set of all homonymy originals

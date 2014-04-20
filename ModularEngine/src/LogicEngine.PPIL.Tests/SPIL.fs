@@ -65,4 +65,9 @@ module SPIL =
         solve ["w() -> (x() && y() && z())";
                "(z() && y() && x()) -> w()"]
               ["w() -> w()"])
+    "quotation distributivity" => fun _ ->
+      Assert.Equal("",
+        [true],
+        solve ["a() -> p said (p said b() && p said c())"]
+              ["a() -> p said p said b() && p said p said c()"])
     ]
