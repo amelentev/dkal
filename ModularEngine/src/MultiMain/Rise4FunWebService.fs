@@ -28,6 +28,7 @@ open System.Reflection
 /// see http://rise4fun.com/dev/
 module Rise4FunWebService =
   let private log = LogManager.GetLogger("Rise4FunWebService")
+  let version = "1.1"
 
   let sendMetadata (context: HttpListenerContext) =
     log.Info "sending metadata"
@@ -40,7 +41,7 @@ module Rise4FunWebService =
     jw.WriteElementString("DisplayName","DKAL")
     jw.WriteElementString("Title","Distributed Knowledge Authorization Language")
     jw.WriteElementString("Url","http://dkal.codeplex.com/wikipage?title=UserDocumentation")
-    jw.WriteElementString("Version","1.0")
+    jw.WriteElementString("Version", version)
     jw.WriteElementString("Description","DKAL is a logic-based distributed authorization policy language. Originally it was aimed for authorization policies, but in fact it is appropriate for policies in general. In DKAL world, principals have their own states and compute their own knowledge. DKAL facilitates the analysis of policies. Are the given policies consistent? Do they comply with various regulations? Is privacy protected? And so on.")
     jw.WriteElementString("Question","How do these principals interact?")
     jw.WriteElementString("Institution","Microsoft Research")
@@ -108,7 +109,7 @@ module Rise4FunWebService =
     jw.WriteStartDocument()
     jw.WriteStartElement("root")
     jw.WriteAttributeString("type", "object")
-    jw.WriteElementString("Version", "1.0")
+    jw.WriteElementString("Version", version)
     jw.WriteStartElement("Outputs")
     jw.WriteAttributeString("type", "array")
     jw.WriteStartElement("item")
