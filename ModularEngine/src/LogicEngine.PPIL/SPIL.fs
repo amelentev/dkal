@@ -32,30 +32,7 @@ module SPIL =
   | Implies(k, a, b) -> 
     Implies(k, initialReformat a, initialReformat b)
   | Rel(_) as rel -> rel
-
-  let makeParents M nodes =
-    let parent = Array.create M None
-    let makeparents = function
-      | SetFormula(k, _, children) as u ->
-        for c in children do
-          parent.[c.Key] <- Some u
-      | Implies(k, a, b) as u ->
-        parent.[a.Key] <- Some u
-        parent.[b.Key] <- Some u
-      | Rel(_) -> ()
-    nodes |> Seq.iter makeparents
-    parent
-
-  let makeLeafKey() =
-    let leafLabels = Dictionary<string, int>() // TODO: Trie
-    leafLabels.Add(trueLabel, 0) // reserve true label
-    (fun s ->
-      match leafLabels.TryGetValue(s) with
-      | true,l -> l
-      | false,_ ->
-        let l = leafLabels.Count
-        leafLabels.Add(s, l); l)
-
+  
   let plagiarismCheckerHash (L: 'A array) =
     let hashmap = Dictionary<'A, int>()
     [|
@@ -115,17 +92,28 @@ module SPIL =
       for a in s1 do A.[a] <- -1
       res
 
-  let compressNodes A (workList: ((int*int*int*int)*AST) seq) (HO: ASTMap) counter =
-    let B = plagiarismChecker4 A (workList |> Seq.map fst |> Seq.toArray)
-    let U = workList |> Seq.map snd |> Seq.toArray
-    [ for i in 0..B.Length-1 do
-        let (u,w) = U.[i], U.[B.[i]]
-        if i<>B.[i] then
-          HO.[u.Key] <- w // replace u to w
-        else
-          HO.[u.Key] <- u // u is original
-        yield! (counter u |> Option.toList)
-    ]
+  let makeParents M nodes =
+    let parent = Array.create M None
+    let makeparents = function
+      | SetFormula(k, _, children) as u ->
+        for c in children do
+          parent.[c.Key] <- Some u
+      | Implies(k, a, b) as u ->
+        parent.[a.Key] <- Some u
+        parent.[b.Key] <- Some u
+      | Rel(_) -> ()
+    nodes |> Seq.iter makeparents
+    parent
+
+  let makeLeafKey() =
+    let leafLabels = Dictionary<string, int>() // TODO: Trie
+    leafLabels.Add(trueLabel, 0) // reserve true label
+    (fun s ->
+      match leafLabels.TryGetValue(s) with
+      | true,l -> l
+      | false,_ ->
+        let l = leafLabels.Count
+        leafLabels.Add(s, l); l)
 
   /// return a function which return the parent v of a child u if all other children of v are visited
   let makeCounter M (parent: AST option array) (nodes: AST seq) =
@@ -138,6 +126,46 @@ module SPIL =
         counter.[k] <- counter.[k] - 1
         if counter.[k] = 0 then Some(v) else None
       |_ -> None)
+
+  let makeChKey A nodeKeys M =
+    let rnd = System.Random()
+    let hashes = Array.zeroCreate M
+    nodeKeys |> Seq.iter (fun k -> hashes.[k] <- rnd.Next(M))
+    let equalityComparer = 
+      { new IEqualityComparer<int array> with
+        member x.Equals(t1: int array, t2: int array) = 
+          setEquality A t1 t2
+        member x.GetHashCode(t: int array) = t |> Array.map (fun u -> hashes.[u]) |> Array.reduce (^^^)
+      }
+    let hashtable = Dictionary<int array, int>(equalityComparer)
+    let chKey ch k =
+      let ch = ch |> List.map (fun (u: AST) -> u.Key) |> List.toArray
+      match hashtable.TryGetValue(ch) with
+      |true,k1 -> k1
+      |false,_ -> hashtable.Add(ch, k); k
+    let clearChKey() = hashtable.Clear()
+    chKey, clearChKey
+
+  let computeEL prefKey chKey leafKey = function
+    | Rel(_, s) when s = trueLabel -> (0, 0, 0, 0) // true
+    | Rel(_, s) as u -> (prefKey u, 0, leafKey s, 0)
+    | Implies(_, a, b) as u -> (prefKey u, 1, a.Key, b.Key)
+    | SetFormula(_, AndOp, ch) as u -> (0, 2, chKey ch u.Key, 0)
+    | SetFormula(_, OrOp, ch) as u ->
+      assert (ch.Length = 2)
+      (prefKey u, 3, ch.[0].Key, ch.[1].Key)
+
+  let compressNodes A (workList: ((int*int*int*int)*AST) seq) (HO: ASTMap) counter =
+    let B = plagiarismChecker4 A (workList |> Seq.map fst |> Seq.toArray)
+    let U = workList |> Seq.map snd |> Seq.toArray
+    [ for i in 0..B.Length-1 do
+        let (u,w) = U.[i], U.[B.[i]]
+        if i<>B.[i] then
+          HO.[u.Key] <- w // replace u to w
+        else
+          HO.[u.Key] <- u // u is original
+        yield! (counter u |> Option.toList)
+    ]
 
   let rec reformatSetFormulas A (HO: ASTMap) counter = function
     | SetFormula(k, AndOp, ch) as u ->
@@ -162,43 +190,15 @@ module SPIL =
     | SetFormula(_, OrOp, _) -> failwith "OR formulas should be binary"
     | Rel(_) as u -> Some(HO.[u.Key])
 
-  let computeEL prefkey chKey leafKey = function
-    | Rel(_, s) when s = trueLabel -> (0, 0, 0, 0) // true
-    | Rel(_, s) as u -> (prefkey u, 0, leafKey s, 0)
-    | Implies(_, a, b) as u -> (prefkey u, 1, a.Key, b.Key)
-    | SetFormula(_, AndOp, ch) as u -> (0, 2, chKey ch u.Key, 0)
-    | SetFormula(_, OrOp, ch) as u ->
-      assert (ch.Length = 2)
-      (prefkey u, 3, ch.[0].Key, ch.[1].Key)
-
-  let makeChKey A nodeKeys M =
-    let rnd = System.Random()
-    let hashes = Array.zeroCreate M
-    nodeKeys |> Seq.iter (fun k -> hashes.[k] <- rnd.Next(M))
-    let equalityComparer = 
-      { new IEqualityComparer<int array> with
-        member x.Equals(t1: int array, t2: int array) = 
-          setEquality A t1 t2
-        member x.GetHashCode(t: int array) = t |> Array.map (fun u -> hashes.[u]) |> Array.reduce (^^^)
-      }
-    let hashtable = Dictionary<int array, int>(equalityComparer)
-    let chKey ch k =
-      let ch = ch |> List.map (fun (u: AST) -> u.Key) |> List.toArray
-      match hashtable.TryGetValue(ch) with
-      |true,k1 -> k1
-      |false,_ -> hashtable.Add(ch, k); k
-    let clearChKey() = hashtable.Clear()
-    chKey, clearChKey
-
   let compress H Q (nodes: ASTMap) (V: TrieMap) =
     let M = 1 + max 3 (max (nodes.Keys |> Seq.max) (V.Values |> Seq.map (fun (t: Trie) -> t.Position) |> Seq.max))
     let A = Array.create M -1
     let parent = makeParents M nodes.Values
     let counter = makeCounter M parent nodes.Values
-    let prefkey (n:AST) = V.[n.Key].Position
+    let prefKey (n:AST) = V.[n.Key].Position
     let leafKey = makeLeafKey()
     let chKey,clearChKey = makeChKey A nodes.Keys M
-    let computeEL = computeEL prefkey chKey leafKey
+    let computeEL = computeEL prefKey chKey leafKey
     let HO = Dictionary<int, AST>() // Homonymy map used in stage4-5
 
     let mutable workList = nodes.Values |> Seq.filter (function |Rel(_) -> true |_ -> false)
@@ -206,8 +206,8 @@ module SPIL =
       let tocompress = workList |> Seq.map (fun u -> computeEL u, u)
       workList <- compressNodes A tocompress HO counter |> List.choose (reformatSetFormulas A HO counter)
       clearChKey()
-    let hom (u: AST) = HO.[u.Key]
-    (H |> List.map hom, Q |> List.map hom, HO)
+    let homlst = List.map (fun (u: AST) -> HO.[u.Key])
+    (homlst H, homlst Q, HO)
 
   let solve H Q =
     // stage1
