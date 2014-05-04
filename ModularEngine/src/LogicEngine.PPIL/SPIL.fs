@@ -23,7 +23,7 @@ module SPIL =
       [for c in children |> List.map initialReformat do
         match c with
         | SetFormula(k,AndOp,ch) -> yield! ch  // TODO: preserve pref for prettyprinting
-        | Rel(_, s) when s=trueLabel -> ()
+        | Rel(_, s) when s=trueLabel -> ()  // delete true from conjunctions
         | other -> yield other]
     if newchildren.IsEmpty then Rel(k, trueLabel)
     else SetFormula(k, AndOp, newchildren)

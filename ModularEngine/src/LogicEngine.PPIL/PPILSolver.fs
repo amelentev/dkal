@@ -23,8 +23,8 @@ module PPILSolver =
       | true,proof -> Some proof
       | _ -> None)
 
-  let genericSolve stage3 extraRules H Q =
-      let (H, Q, inp) = Stage1.stage1 H Q
+  let genericSolve stage1 stage3 extraRules H Q =
+      let (H, Q, inp) = stage1 H Q
       let (N, V) = Stage2.constructNodesnVertices (H@Q)
       let (H,Q,HO) = stage3 inp H Q (N,V)
       let T = Stage4.preprocess HO H
@@ -33,26 +33,26 @@ module PPILSolver =
 
   /// Basic PIL. O(n)
   let solveBPIL H Q =
-      genericSolve Stage3.homonomySufArr emptyRule H Q
+      genericSolve Stage1.stage1serialize Stage3.homonomySufArr emptyRule H Q
 
   /// solve SPIL using O(d*n) algorithm based on suffix arrays
   let solveSPILsufarr H Q =
       let H = H |> List.map Stage0.stage0
       let Q = Q |> List.map Stage0.stage0
-      genericSolve Stage3.homonomySufArr emptyRule H Q
+      genericSolve Stage1.stage1serialize Stage3.homonomySufArr emptyRule H Q
 
   /// solve SPIL using hash based agorithm with O(n) average complexity
   let solveSPILhash H Q =
       let H = H |> List.map Stage0.flatConjuncts
       let Q = Q |> List.map Stage0.flatConjuncts
-      genericSolve Stage3.homonomyHash emptyRule H Q
+      genericSolve Stage1.stage1 Stage3.homonomyHash emptyRule H Q
 
   /// solve SPIL using randomized algorithm. O(n) averege complexity.
   let solveSPILrnd H Q = SPIL.solve H Q
 
   /// Transitive PIL. O(n^2)
   let solveTPIL H Q =
-      genericSolve Stage3.homonomySufArr TPIL.applyTrans H Q
+      genericSolve Stage1.stage1serialize Stage3.homonomySufArr TPIL.applyTrans H Q
 
   let genericSolveTSPIL extraRules H Q =
       let H = H |> List.map Stage0.flatConjuncts

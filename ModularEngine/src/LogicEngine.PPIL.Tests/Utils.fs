@@ -40,7 +40,7 @@ module Utils =
   let translate hyp que =
       let h = hyp |> List.map parse |> List.map Stage0.stage0
       let q = que |> List.map parse |> List.map Stage0.stage0
-      let (H, Q, input) = Stage1.stage1 h q
+      let (H, Q, input) = Stage1.stage1serialize h q
       H, Q, input
 
   let RelationInfon (args: ITerm list) name = 
