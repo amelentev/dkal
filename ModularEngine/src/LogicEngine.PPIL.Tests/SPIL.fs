@@ -88,6 +88,16 @@ module SPIL =
       let h = SPIL.initialReformat H.Head
       // TODO: Assert.Equal("reformat", "(a&&p:b&&p:c)", h.ToString());
       Assert.Equal("", 3, h.ChildrenCount)
+
+    "or" => fun _ ->
+      check [false; true]
+              ["p said (a() || b() || q said c())"]
+              ["p said (a() || b() || c())"; "p said (a() || b() || q said c() || d())"]
+
+    "said-or distributivity. todo" => fun _ ->
+      check [true]
+              ["p said (a() || b() || q said c())"]
+              ["p said a() || p said b() || p said q said c()"]
     ]
 
   let tests = label "SufArr" (genericTests solveSufArr) @ 

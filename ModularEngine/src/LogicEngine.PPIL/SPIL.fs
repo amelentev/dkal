@@ -34,7 +34,7 @@ module SPIL =
   | Rel(_) as rel -> rel
 
   let makeParents nodes =
-    let parent = Dictionary<int, AST>()
+    let parent = Dictionary<int, AST>() // TODO: all Dictionary<int,_> should be array[M]
     let makeparents = function
       | SetFormula(k, _, children) as u ->
         for c in children do
@@ -47,7 +47,7 @@ module SPIL =
     parent
 
   let makeLeafKey =
-    let leafLabels = Dictionary<string, int>()
+    let leafLabels = Dictionary<string, int>() // TODO: Trie
     leafLabels.Add(trueLabel, 0) // reserve true label
     (fun s ->
       match leafLabels.TryGetValue(s) with
