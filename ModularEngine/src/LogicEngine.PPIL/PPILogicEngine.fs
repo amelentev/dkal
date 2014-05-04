@@ -205,17 +205,12 @@ type PPILogicEngine(solverFun : ITerm list -> ITerm list -> ITerm option list) =
                 yield subst.Value,conds
         }
 
-type BPILogicEngine() =
-  inherit PPILogicEngine(PPILSolver.solveBPIL)
+type BPILogicEngine() = inherit PPILogicEngine(PPILSolver.solveBPIL)
 
-type SPILogicEngine() = 
-  inherit PPILogicEngine(PPILSolver.solveSPILrnd)
+type SPILogicEngine() =  inherit PPILogicEngine(PPILSolver.solveSPILrnd)
 
-type TPILogicEngine() =
-  inherit PPILogicEngine(PPILSolver.solveTPIL)
+type TPILogicEngine() = inherit PPILogicEngine(PPILSolver.solveTPIL)
 
-type TSPILogicEngine() =
-  inherit PPILogicEngine(PPILSolver.solveTSPIL_DS)
+type TSPILogicEngine() = inherit PPILogicEngine(PPILSolver.solveTSPIL_DS)
 
-type TSPIL2LogicEngine() =
-  inherit PPILogicEngine(PPILSolver.solveTSPIL2)
+type TSPIL2LogicEngine() = inherit PPILogicEngine(PPILSolver.solveTSPIL2)

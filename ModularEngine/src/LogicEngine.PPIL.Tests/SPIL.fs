@@ -65,6 +65,9 @@ module SPIL =
               ["w() -> (x() && y() && z())";
                "(z() && y() && x()) -> w()"]
               ["w() -> w()"]
+
+    "1rel" => fun _ ->
+      check [false] [] ["a()"]
     ]
 
   let label s = List.map (fun t -> Test.TestLabel(s, t))

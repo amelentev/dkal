@@ -46,7 +46,7 @@ module SPIL =
     nodes |> Seq.iter makeparents
     parent
 
-  let makeLeafKey =
+  let makeLeafKey() =
     let leafLabels = Dictionary<string, int>() // TODO: Trie
     leafLabels.Add(trueLabel, 0) // reserve true label
     (fun s ->
@@ -191,12 +191,12 @@ module SPIL =
     chKey, clearChKey
 
   let compress H Q (nodes: ASTMap) (V: TrieMap) =
-    let M = 1 + max (nodes.Keys |> Seq.max) (V.Values |> Seq.map (fun (t: Trie) -> t.Position) |> Seq.max)
+    let M = 1 + max 3 (max (nodes.Keys |> Seq.max) (V.Values |> Seq.map (fun (t: Trie) -> t.Position) |> Seq.max))
     let A = Array.create M -1
     let parent = makeParents nodes.Values
     let counter = makeCounter parent nodes.Values
     let prefkey (n:AST) = V.[n.Key].Position
-    let leafKey = makeLeafKey
+    let leafKey = makeLeafKey()
     let chKey,clearChKey = makeChKey A nodes.Keys M
     let computeEL = computeEL prefkey chKey leafKey
     let HO = Dictionary<int, AST>()

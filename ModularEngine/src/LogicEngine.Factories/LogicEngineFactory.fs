@@ -31,6 +31,8 @@ type LogicEngineFactory() =
     | "fstar" | "FStar" | "Fstar" -> new FStar.Wrapper.Wrapper() :> ILogicEngine 
     | "BPIL" -> new PPIL.BPILogicEngine() :> ILogicEngine
     | "SPIL" -> new PPIL.SPILogicEngine() :> ILogicEngine
+    | "SPILsufarr" -> new PPIL.PPILogicEngine(PPIL.PPILSolver.solveSPILsufarr) :> ILogicEngine
+    | "SPILhash" -> new PPIL.PPILogicEngine(PPIL.PPILSolver.solveSPILhash) :> ILogicEngine
     | "TPIL" -> new PPIL.TPILogicEngine() :> ILogicEngine
     | "TSPIL" -> new PPIL.TSPILogicEngine() :> ILogicEngine
     | "TSPIL2" -> new PPIL.TSPIL2LogicEngine() :> ILogicEngine
