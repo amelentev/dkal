@@ -48,7 +48,7 @@ module SPIL =
 
   let makeLeafKey =
     let leafLabels = Dictionary<string, int>()
-    leafLabels.Add(trueLabel, 0) // reserve true
+    leafLabels.Add(trueLabel, 0) // reserve true label
     (fun s ->
       match leafLabels.TryGetValue(s) with
       | true,l -> l
@@ -56,8 +56,8 @@ module SPIL =
         let l = leafLabels.Count
         leafLabels.Add(s, l); l)
 
-  let plagiarismChecker (L: 'A array) =
-    let hashmap = Dictionary<'A, int>() // TODO: actual plagiarism checker
+  let plagiarismCheckerHash (L: 'A array) =
+    let hashmap = Dictionary<'A, int>()
     [|
       for i in 0..L.Length-1 ->
         match hashmap.TryGetValue(L.[i]) with
@@ -66,6 +66,46 @@ module SPIL =
           hashmap.Add(L.[i], i)
           i
      |]
+  /// 1d plagiarism checker
+  let plagiarismChecker1 (A: int array) (p: int array) =
+    let k = p.Length
+    let B: int array = Array.zeroCreate k
+    for j in 0..k-1 do
+      if A.[p.[j]] < 0 then
+        B.[j] <- j; A.[p.[j]] <- j
+      else
+        B.[j] <- A.[p.[j]]
+    for j in 0..k-1 do // reinitialized A
+      if B.[j] = j then
+        A.[p.[j]] <- -1
+    B
+  /// plagiarism checker for lists array. L[i] should be the same size for all i.
+  let rec plagiarismChecker (A: int array) (L: int list array) : int array =
+    let k = L.Length
+    if k=0 then Array.create 0 0
+    else
+      let R,L' = L |> Array.map (fun e -> e.Head, e.Tail) |> Array.unzip
+      if L'.[0] = [] then plagiarismChecker1 A R
+      else
+        let B' = plagiarismChecker A L'
+        let L'i = Array.init k (fun i -> ResizeArray<int>())
+        let Ri = Array.init k (fun i -> ResizeArray<int>())
+        let pos = Array.zeroCreate k
+        for j in 0..k-1 do
+          L'i.[B'.[j]].Add(j)
+          Ri.[B'.[j]].Add(R.[j])
+          pos.[j] <- L'i.[B'.[j]].Count - 1
+        let B'i = Array.init k (fun i -> plagiarismChecker1 A (Ri.[i].ToArray()))
+        let B = Array.zeroCreate k
+        for j in 0..k-1 do
+          let i = B'.[j] // i is original for j in L'
+          let l = B'i.[i].[pos.[j]] // l is original for pos[j] in Ri
+          B.[j] <- L'i.[i].[l]
+        B
+  /// return plagiarism checker for 4-int-tuples
+  let plagiarismChecker4 A L =
+    let t2list (a,b,c,d) = [a;b;c;d]
+    plagiarismChecker A (L |> Array.map t2list)
 
   let setEquality s1 s2 =
     if List.length s1 <> List.length s2 then false
@@ -75,8 +115,8 @@ module SPIL =
         hashset.Add(a) |> ignore
       s2 |> Seq.forall (fun a -> hashset.Contains(a))
 
-  let compressNodes (workList: ('A*AST) seq) (HO: ASTMap) counter =
-    let B = plagiarismChecker (workList |> Seq.map fst |> Seq.toArray)
+  let compressNodes A (workList: ((int*int*int*int)*AST) seq) (HO: ASTMap) counter =
+    let B = plagiarismChecker4 A (workList |> Seq.map fst |> Seq.toArray)
     let U = workList |> Seq.map snd |> Seq.toArray
     [ for i in 0..B.Length-1 do
         let (u,w) = U.[i], U.[B.[i]]
@@ -99,14 +139,14 @@ module SPIL =
         if counter.[k] = 0 then Some(v) else None
       |_ -> None)
 
-  let rec reformatSetFormulas (HO: ASTMap) counter = function
+  let rec reformatSetFormulas A (HO: ASTMap) counter = function
     | SetFormula(k, AndOp, ch) as u ->
       let ch = ch |> List.toArray |> Array.map (fun c -> HO.[c.Key])
-      let newch = ch |> Array.map (fun c -> c.Key) |> plagiarismChecker |> Array.mapi (fun i b -> i=b, i) |> Array.filter fst |> Array.map (fun (_,i) -> ch.[i])
+      let newch = ch |> Array.map (fun c -> c.Key) |> plagiarismChecker1 A |> Array.mapi (fun i b -> i=b, i) |> Array.filter fst |> Array.map (fun (_,i) -> ch.[i])
       if newch.Length = 1 then
         let w = newch.[0]
         HO.[u.Key] <- w // replace u by child w
-        counter u |> Option.bind (reformatSetFormulas HO counter) // return parent if all children are visited
+        counter u |> Option.bind (reformatSetFormulas A HO counter) // return parent if all children are visited
       else
         let newu = SetFormula(k, AndOp, newch |> Array.toList)
         HO.[u.Key] <- newu
@@ -152,6 +192,7 @@ module SPIL =
 
   let compress H Q (nodes: ASTMap) (V: TrieMap) =
     let M = 1 + max (nodes.Keys |> Seq.max) (V.Values |> Seq.map (fun (t: Trie) -> t.Position) |> Seq.max)
+    let A = Array.zeroCreate M
     let parent = makeParents nodes.Values
     let counter = makeCounter parent nodes.Values
     let prefkey (n:AST) = V.[n.Key].Position
@@ -163,7 +204,7 @@ module SPIL =
     let mutable workList = nodes.Values |> Seq.filter (function |Rel(_) -> true |_ -> false)
     while not (Seq.isEmpty workList) do
       let tocompress = workList |> Seq.map (fun u -> computeEL u, u)
-      workList <- compressNodes tocompress HO counter |> List.choose (reformatSetFormulas HO counter)
+      workList <- compressNodes A tocompress HO counter |> List.choose (reformatSetFormulas A HO counter)
       clearChKey()
     let hom (u: AST) = HO.[u.Key]
     (H |> List.map hom, Q |> List.map hom, HO) // TODO: Evidence preserving
