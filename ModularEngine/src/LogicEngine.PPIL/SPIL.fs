@@ -33,15 +33,15 @@ module SPIL =
     Implies(k, initialReformat a, initialReformat b)
   | Rel(_) as rel -> rel
 
-  let makeParents nodes =
-    let parent = Dictionary<int, AST>() // TODO: all Dictionary<int,_> should be array[M]
+  let makeParents M nodes =
+    let parent = Array.create M None
     let makeparents = function
       | SetFormula(k, _, children) as u ->
         for c in children do
-          parent.[c.Key] <- u
+          parent.[c.Key] <- Some u
       | Implies(k, a, b) as u ->
-        parent.[a.Key] <- u
-        parent.[b.Key] <- u
+        parent.[a.Key] <- Some u
+        parent.[b.Key] <- Some u
       | Rel(_) -> ()
     nodes |> Seq.iter makeparents
     parent
@@ -128,12 +128,12 @@ module SPIL =
     ]
 
   /// return a function which return the parent v of a child u if all other children of v are visited
-  let makeCounter (parent: ASTMap) (nodes: AST seq) =
-    let counter = Dictionary<int, int>()
-    nodes |> Seq.iter (fun n -> counter.Add(n.Key, n.ChildrenCount))
+  let makeCounter M (parent: AST option array) (nodes: AST seq) =
+    let counter = Array.zeroCreate M
+    nodes |> Seq.iter (fun n -> counter.[n.Key] <- n.ChildrenCount)
     (fun (u: AST) ->
-      match parent.TryGetValue u.Key with
-      |true,v ->
+      match parent.[u.Key] with
+      |Some(v) ->
         let k = v.Key
         counter.[k] <- counter.[k] - 1
         if counter.[k] = 0 then Some(v) else None
@@ -173,7 +173,7 @@ module SPIL =
 
   let makeChKey A nodeKeys M =
     let rnd = System.Random()
-    let hashes = Dictionary<int,int>()
+    let hashes = Array.zeroCreate M
     nodeKeys |> Seq.iter (fun k -> hashes.[k] <- rnd.Next(M))
     let equalityComparer = 
       { new IEqualityComparer<int array> with
@@ -193,13 +193,13 @@ module SPIL =
   let compress H Q (nodes: ASTMap) (V: TrieMap) =
     let M = 1 + max 3 (max (nodes.Keys |> Seq.max) (V.Values |> Seq.map (fun (t: Trie) -> t.Position) |> Seq.max))
     let A = Array.create M -1
-    let parent = makeParents nodes.Values
-    let counter = makeCounter parent nodes.Values
+    let parent = makeParents M nodes.Values
+    let counter = makeCounter M parent nodes.Values
     let prefkey (n:AST) = V.[n.Key].Position
     let leafKey = makeLeafKey()
     let chKey,clearChKey = makeChKey A nodes.Keys M
     let computeEL = computeEL prefkey chKey leafKey
-    let HO = Dictionary<int, AST>()
+    let HO = Dictionary<int, AST>() // Homonymy map used in stage4-5
 
     let mutable workList = nodes.Values |> Seq.filter (function |Rel(_) -> true |_ -> false)
     while not (Seq.isEmpty workList) do
@@ -207,7 +207,7 @@ module SPIL =
       workList <- compressNodes A tocompress HO counter |> List.choose (reformatSetFormulas A HO counter)
       clearChKey()
     let hom (u: AST) = HO.[u.Key]
-    (H |> List.map hom, Q |> List.map hom, HO) // TODO: Evidence preserving
+    (H |> List.map hom, Q |> List.map hom, HO)
 
   let solve H Q =
     // stage1
