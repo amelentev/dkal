@@ -48,6 +48,7 @@
     <Compile Include="Stage4.fs" />
     <Compile Include="Stage5.fs" />
     <Compile Include="TPIL.fs" />
+    <Compile Include="SPIL.fs" />
     <Compile Include="TSPIL.fs" />
     <Compile Include="TSPIL2.fs" />
     <Compile Include="PPILSolver.fs" />
@@ -100,7 +101,6 @@
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
-  
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">

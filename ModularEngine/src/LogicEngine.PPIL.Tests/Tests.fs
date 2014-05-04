@@ -37,12 +37,12 @@ module Tests =
               fun _ ->
                   let (h,q,input) = translate ["p1 said (a() && q said p said b())"] []
                   Assert.Equal("ast serialization", "p1 said (a()&q said p said b())", input)
-                  Assert.Equal("ast tostring", "p1 said (a()&q said p said b())", h.Head.ToString())
+                  Assert.Equal("ast tostring", "p1:(a&q:p:b)", h.Head.ToString())
 
           "stage2" => 
               fun _ ->
                   let (h,q,s) = translate ["p1 said (p2 said a() && q3 said p4 said b())"] []
-                  let trie = Trie()
+                  let trie = Trie([])
                   let lst = Stage2.constructTrie trie [] h.Head
                   Assert.Equal("trie", "(p1(p2(),q3(p4())))", trie.ToString())
 

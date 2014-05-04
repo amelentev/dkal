@@ -47,6 +47,9 @@ module PPILSolver =
       let Q = Q |> List.map Stage0.flatConjuncts
       genericSolve Stage3.homonomyHash emptyRule H Q
 
+  /// solve SPIL using randomized algorithm. O(n) averege complexity.
+  let solveSPILrnd H Q = SPIL.solve H Q
+
   /// Transitive PIL. O(n^2)
   let solveTPIL H Q =
       genericSolve Stage3.homonomySufArr TPIL.applyTrans H Q

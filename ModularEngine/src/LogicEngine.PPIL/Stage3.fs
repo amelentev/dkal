@@ -53,11 +53,7 @@ module Stage3 =
   /// Build a homonomy map and remove duplicates from set formulas. preserve order of childrens.
   /// average complexity = O(number of nodes)
   let homonomyHash _ HY Q ((nodes: ASTMap), (vertices: TrieMap)) =
-    /// assign unique key for every local prefix
-    let mutable ind = 0
-    for v in vertices.Values do
-      v.Position <- ind
-      ind <- ind + 1
+    Stage2.assignUniqueKeys vertices // assign unique key for every local prefix
 
     /// remembered hashes. from node key to hash
     let hashcache = Dictionary<int, int>()

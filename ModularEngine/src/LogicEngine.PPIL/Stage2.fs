@@ -16,9 +16,10 @@ open AST
 
 module Stage2 =
 
-  type Trie() =
+  type Trie(pref: string list) =
       let mutable position = -1
       let childs = new Dictionary<string, Trie>()
+      member this.Pref = pref
       member this.Position
           with get() = position
           and set(p) = position <- p
@@ -27,13 +28,16 @@ module Stage2 =
         match childs.TryGetValue s with
         | true,child -> child
         | _,_ ->
-          let child = new Trie()
+          let child = new Trie(s :: pref)
           childs.Add(s, child)
           child
 
       override this.ToString() =
           let str = childs |> Seq.map (fun e -> e.Key + e.Value.ToString()) |> String.concat ","
           "("+str+")"
+
+      interface System.IComparable<Trie> with
+        override x.CompareTo(t: Trie) = x.Position - t.Position
 
   type TrieMap = IDictionary<int, Trie>
 
@@ -54,7 +58,7 @@ module Stage2 =
       (n, trie) :: lst
 
   let constructNodesnVertices asts =
-      let trie = Trie()
+      let trie = Trie([])
       let lst = asts |> List.collect (constructTrie trie [])
 
       let nodes = Dictionary()
@@ -64,3 +68,10 @@ module Stage2 =
                           nodes.Add(n.Key, n)
                           vertices.Add(n.Key, v))
       (nodes, vertices)
+
+  /// assign unique key for every local prefix
+  let assignUniqueKeys (vertices: TrieMap) =
+    let mutable ind = 0
+    for v in vertices.Values do
+      v.Position <- ind
+      ind <- ind + 1
