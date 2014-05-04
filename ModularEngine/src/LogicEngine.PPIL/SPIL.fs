@@ -107,13 +107,13 @@ module SPIL =
     let t2list (a,b,c,d) = [a;b;c;d]
     plagiarismChecker A (L |> Array.map t2list)
 
-  let setEquality s1 s2 =
-    if List.length s1 <> List.length s2 then false
+  let setEquality (A: int array) s1 s2 =
+    if Array.length s1 <> Array.length s2 then false
     else
-      let hashset = HashSet<int>() // TODO: via array A
-      for a in s1 do
-        hashset.Add(a) |> ignore
-      s2 |> Seq.forall (fun a -> hashset.Contains(a))
+      for a in s1 do A.[a] <- 1
+      let res = s2 |> Array.forall (fun a -> A.[a]=1)
+      for a in s1 do A.[a] <- -1
+      res
 
   let compressNodes A (workList: ((int*int*int*int)*AST) seq) (HO: ASTMap) counter =
     let B = plagiarismChecker4 A (workList |> Seq.map fst |> Seq.toArray)
@@ -171,19 +171,19 @@ module SPIL =
       assert (ch.Length = 2)
       (prefkey u, 3, ch.[0].Key, ch.[1].Key)
 
-  let makeChKey nodeKeys M =
+  let makeChKey A nodeKeys M =
     let rnd = System.Random()
     let hashes = Dictionary<int,int>()
     nodeKeys |> Seq.iter (fun k -> hashes.[k] <- rnd.Next(M))
     let equalityComparer = 
-      { new IEqualityComparer<AST list> with
-        member x.Equals(t1: AST list, t2: AST list) = 
-          let keys = List.map (fun (u: AST) -> u.Key)
-          setEquality (keys t1) (keys t2)
-        member x.GetHashCode(t: AST list) = t |> List.map (fun u -> hashes.[u.Key]) |> List.reduce (^^^)
+      { new IEqualityComparer<int array> with
+        member x.Equals(t1: int array, t2: int array) = 
+          setEquality A t1 t2
+        member x.GetHashCode(t: int array) = t |> Array.map (fun u -> hashes.[u]) |> Array.reduce (^^^)
       }
-    let hashtable = Dictionary<AST list, int>(equalityComparer)
+    let hashtable = Dictionary<int array, int>(equalityComparer)
     let chKey ch k =
+      let ch = ch |> List.map (fun (u: AST) -> u.Key) |> List.toArray
       match hashtable.TryGetValue(ch) with
       |true,k1 -> k1
       |false,_ -> hashtable.Add(ch, k); k
@@ -192,12 +192,12 @@ module SPIL =
 
   let compress H Q (nodes: ASTMap) (V: TrieMap) =
     let M = 1 + max (nodes.Keys |> Seq.max) (V.Values |> Seq.map (fun (t: Trie) -> t.Position) |> Seq.max)
-    let A = Array.zeroCreate M
+    let A = Array.create M -1
     let parent = makeParents nodes.Values
     let counter = makeCounter parent nodes.Values
     let prefkey (n:AST) = V.[n.Key].Position
     let leafKey = makeLeafKey
-    let chKey,clearChKey = makeChKey nodes.Keys M
+    let chKey,clearChKey = makeChKey A nodes.Keys M
     let computeEL = computeEL prefkey chKey leafKey
     let HO = Dictionary<int, AST>()
 
