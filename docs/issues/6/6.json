@@ -1,0 +1,39 @@
+{
+  "WorkItem": {
+    "AffectedComponent": {
+      "Name": "",
+      "DisplayName": ""
+    },
+    "ClosedComment": "",
+    "ClosedDate": "2013-02-07T12:15:32.627-08:00",
+    "CommentCount": 0,
+    "Custom": null,
+    "Description": "NuGet extension is included in VS2012.\r\nWith \"Enable NuGet Package Restore\" we can store only references to dependencies in VCS, without binaries.\r\nUse FSharpPowerPack dependency from NuGet, so we don't need to install it manually.",
+    "LastUpdatedDate": "2017-11-27T14:57:27.22-08:00",
+    "PlannedForRelease": "",
+    "ReleaseVisibleToPublic": false,
+    "Priority": {
+      "Name": "Low",
+      "Severity": 50,
+      "Id": 1
+    },
+    "ProjectName": "dkal",
+    "ReportedDate": "2013-01-11T15:31:11.03-08:00",
+    "Status": {
+      "Name": "Closed",
+      "Id": 4
+    },
+    "ReasonClosed": {
+      "Name": "Unassigned"
+    },
+    "Summary": "Move all deps to NuGet package manager. Enable Package Restore During Build",
+    "Type": {
+      "Name": "Issue",
+      "Id": 3
+    },
+    "VoteCount": 1,
+    "Id": 6
+  },
+  "FileAttachments": [],
+  "Comments": []
+}

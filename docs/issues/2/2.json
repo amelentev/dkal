@@ -1,0 +1,39 @@
+{
+  "WorkItem": {
+    "AffectedComponent": {
+      "Name": "",
+      "DisplayName": ""
+    },
+    "ClosedComment": "",
+    "ClosedDate": "2013-01-25T18:25:37.427-08:00",
+    "CommentCount": 0,
+    "Custom": null,
+    "Description": "type declaration:\r\n\r\n```\r\ntype CollectionOfStrings = System.String[]\r\n```\r\n\r\nusage (see ModularEngine/samples/MultiMain/collections.mdkal):\r\n\r\n```\r\nrelation rel(A: CollectionOfStrings)\r\n\r\nknows rel([\"qwe\"; \"asd\"; \"zxc\"])\r\nknows rel([])\r\n\r\nwith A: CollectionOfStrings\r\nif rel(A) && asInfon({|\"basic\"|A.exists(\"qwe\")|})\r\ndo send to me: rel(A)\r\n\r\nif rel(A) && asInfon({|\"basic\"|A.isEmpty()|})\r\ndo send to me: log(\"empty\") && rel(A)\r\n```\r\n",
+    "LastUpdatedDate": "2017-11-27T14:57:27.22-08:00",
+    "PlannedForRelease": "",
+    "ReleaseVisibleToPublic": false,
+    "Priority": {
+      "Name": "Medium",
+      "Severity": 100,
+      "Id": 2
+    },
+    "ProjectName": "dkal",
+    "ReportedDate": "2012-12-19T11:27:18.877-08:00",
+    "Status": {
+      "Name": "Closed",
+      "Id": 4
+    },
+    "ReasonClosed": {
+      "Name": "Unassigned"
+    },
+    "Summary": "Collections support",
+    "Type": {
+      "Name": "Feature",
+      "Id": 1
+    },
+    "VoteCount": 1,
+    "Id": 2
+  },
+  "FileAttachments": [],
+  "Comments": []
+}

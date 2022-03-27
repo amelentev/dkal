@@ -1,0 +1,39 @@
+{
+  "WorkItem": {
+    "AffectedComponent": {
+      "Name": "",
+      "DisplayName": ""
+    },
+    "ClosedComment": "fixed in http://dkal.codeplex.com/SourceControl/changeset/5d0605eeb694",
+    "ClosedDate": "2013-01-11T08:50:42.69-08:00",
+    "CommentCount": 0,
+    "Custom": null,
+    "Description": "0. Make double quotation marks `\"` optional for datasource namespaces. To write \r\n`asInfon({|ns|query|})`\r\ninstead of \r\n`asInfon({|\"ns\"|query|})`\r\n\r\n1. Make `asInfon` syntax construct optional:\r\n`if {|ns|query|} do`\r\ninstead of \r\n`if asInfon({|ns|query|} do`\r\n\r\n2. Make 'basic' substrate as default:\r\n`{||query|}`\r\ninstead of \r\n`{|basic|query|}`\r\n\r\nexample:\r\n```\r\nupon P said needSum(X, Y)\r\nif {||Z:=X+Y|}\r\ndo send to P: sum(X, Y, Z)\r\n```",
+    "LastUpdatedDate": "2017-11-27T14:57:27.22-08:00",
+    "PlannedForRelease": "",
+    "ReleaseVisibleToPublic": false,
+    "Priority": {
+      "Name": "Low",
+      "Severity": 50,
+      "Id": 1
+    },
+    "ProjectName": "dkal",
+    "ReportedDate": "2013-01-11T08:43:55.227-08:00",
+    "Status": {
+      "Name": "Closed",
+      "Id": 4
+    },
+    "ReasonClosed": {
+      "Name": "Unassigned"
+    },
+    "Summary": "Cleanup substrate query syntax",
+    "Type": {
+      "Name": "Task",
+      "Id": 2
+    },
+    "VoteCount": 1,
+    "Id": 5
+  },
+  "FileAttachments": [],
+  "Comments": []
+}

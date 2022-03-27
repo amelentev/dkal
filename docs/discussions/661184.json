@@ -1,0 +1,10 @@
+[
+  {
+    "Id": "1492285",
+    "ThreadId": "661184",
+    "Html": "I modified the forall2.mdkal example in an effort to express transitive implication. Instead of one relation implying two other relations, one relation implies a second which implies a third. \r<br />\n<br />\nThe quantification mechanism appears to work. The second relation is correctly inferred. Then the third relation is also correctly inferred. However, there is something funky going on. Despite the relations being correctly inferred to be true individually, their conjunction is false. Could this be by design, and, if so, how should such a transitive implication rule be expressed?\r<br />\n<br />\nThe following is the revised example:<br />\n<pre><code>// example with explicit forall quantification\ntype Int = System.Int32\nrelation owns(X: Int)\nrelation canWrite(X: Int)\nrelation canRead(X: Int)\n\nrelation canReadBecauseOfOwn()\nrelation canReadBecauseOfWrite()\nrelation shouldBeSentButIsNot()\n\n---p1-----------------------------\n\nknows forall X: Int \n    owns(X) -&gt; canWrite(X)\n\nknows forall X: Int \n    canWrite(X) -&gt; canRead(X)\n\nknows   owns(1)\nknows   canWrite(2)\n\nif canRead(1)\ndo send to me: canReadBecauseOfOwn()\n\nif canRead(2)\ndo send to me: canReadBecauseOfWrite()\n\nif canRead(1) &amp;&amp; canRead(2)\ndo send to me: shouldBeSentButIsNot()</code></pre>\n\nThe output is as follows:<br />\n<pre><code>C:\\Program Files (x86)\\DKAL\\Samples\\MultiMain&gt;DkalMulti.exe revised_forall2.mdkal 100000 1000\n&gt;&gt; From p1 to p1:\ncanReadBecauseOfOwn\n\n&gt;&gt; From p1 to p1:\ncanReadBecauseOfWrite\n\nFixed-point reached</code></pre>\n\n",
+    "PostedDate": "2017-02-06T16:03:43.717-08:00",
+    "UserRole": null,
+    "MarkedAsAnswerDate": null
+  }
+]

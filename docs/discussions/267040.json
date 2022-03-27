@@ -1,0 +1,18 @@
+[
+  {
+    "Id": "649468",
+    "ThreadId": "267040",
+    "Html": "\r\n<p>Its not really clear what the core use case scenario of this API is.</p>\r\n<p>Can you ellaborate?</p>\r\n",
+    "PostedDate": "2011-07-29T04:05:38.147-07:00",
+    "UserRole": null,
+    "MarkedAsAnswerDate": null
+  },
+  {
+    "Id": "1492286",
+    "ThreadId": "267040",
+    "Html": "Might as well answer the question even though it is quite old.\r<br />\n<br />\nThe paper on DKAL should give the background, but one use case is to concisely express an authorization policy such that authorization decisions can be made based on that policy. Instead of hardcoding knowledge and making implicit inferences, DKAL makes explicit how agents infer knowledge. So, for instance, instead of having a program read an ACL to learn whether a user is granted access to a file, and having the decision logic be hardcoded in the program, DKAL allows the inference to be made by an engine that supplies an answer to the question of whether access is granted or not. The engine knows the policy, is given the authorization query and returns the solution. The really interesting cases are the ones where the policy is not simple and lots of inferences must be made to come up with an answer.\r<br />\n<br />\nWhether an action is authorized or not is knowledge. DKAL makes that knowledge explicit.<br />\n",
+    "PostedDate": "2017-02-06T16:19:25.407-08:00",
+    "UserRole": null,
+    "MarkedAsAnswerDate": null
+  }
+]

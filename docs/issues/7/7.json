@@ -1,0 +1,39 @@
+{
+  "WorkItem": {
+    "AffectedComponent": {
+      "Name": "",
+      "DisplayName": ""
+    },
+    "ClosedComment": "fixed in 9c6f95cd427f",
+    "ClosedDate": "2013-02-07T12:14:40.703-08:00",
+    "CommentCount": 0,
+    "Custom": null,
+    "Description": "Example:\r\n```\r\nknows forall O: Object, O1: Object, G: Group\r\n\tnotowned(O) && {|x| \"//objects//$O/..\" | O1 |} && permitg(G, O1) -> permitg(G, O)\r\n```",
+    "LastUpdatedDate": "2017-11-27T14:57:27.22-08:00",
+    "PlannedForRelease": "",
+    "ReleaseVisibleToPublic": false,
+    "Priority": {
+      "Name": "Low",
+      "Severity": 50,
+      "Id": 1
+    },
+    "ProjectName": "dkal",
+    "ReportedDate": "2013-02-07T12:04:52.677-08:00",
+    "Status": {
+      "Name": "Closed",
+      "Id": 4
+    },
+    "ReasonClosed": {
+      "Name": "Unassigned"
+    },
+    "Summary": "stackoverflow on recursive definitions with substrate queries on simple logic engine",
+    "Type": {
+      "Name": "Issue",
+      "Id": 3
+    },
+    "VoteCount": 1,
+    "Id": 7
+  },
+  "FileAttachments": [],
+  "Comments": []
+}

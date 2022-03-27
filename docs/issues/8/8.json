@@ -1,0 +1,39 @@
+{
+  "WorkItem": {
+    "AffectedComponent": {
+      "Name": "",
+      "DisplayName": ""
+    },
+    "ClosedComment": "",
+    "ClosedDate": "2014-12-26T14:51:33.693-08:00",
+    "CommentCount": 0,
+    "Custom": null,
+    "Description": "Reflection substrate allows DKAL to call specific methods in external libraries via reflection.\r\nThis can be used to integrate DKAL into some complex systems.\r\n\r\nSubstrate declaration:\r\n```\r\ndatasource reflection(\"Class, Assembly\") namespaces \"ns\"\r\n```\r\nwhere _\"Class, Assembly\"_ is full name of a class (with assembly if needed).\r\nSee [System.Type.GetClass(string)](http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx) for format.\r\n\r\nUsage:\r\n```\r\n{|ns| OutputVars = method(InputVars) |}\r\n```\r\n_method_ is static method name in the class specified above. DKAL will call the _method_ with values of _InputVars_ as arguments and bind method return values to _OutputVars_\r\n_OutputVars_ - comma separated list of output variables\r\n_InputVars_ - comma separated list of input variables\r\n\r\n_method_ type signature (C#), general case:\r\n```\r\npublic class Class {\r\n  public static IEnumerable<IEnumerable<Object>> method(T1 I1, ..., Tn In)\r\n```\r\nEach element of return value is treated as output variables bindings.\r\nif _method_ return type is not IEnumerable then returned value treated as IEnumerable with single element.\r\nif _method_ returns null then result will be empty IEnumerable.\r\nif _OutputVars_ is empty then _method_ should return boolean. In this case _method_ is just a filter of substitutions.\r\n\r\nvalid method signatures:\r\n```\r\npublic static string getParent(string o)\r\npublic static bool notOwned(string o)\r\npublic static string[] owns(string o)\r\n```\r\nusage:\r\n```\r\n{|r| G = owns(O) |}\r\n{|r| notOwned(O) |} && {|r| O1 = getParent(O) |}\r\n```",
+    "LastUpdatedDate": "2017-11-27T14:57:27.22-08:00",
+    "PlannedForRelease": "",
+    "ReleaseVisibleToPublic": false,
+    "Priority": {
+      "Name": "Medium",
+      "Severity": 100,
+      "Id": 2
+    },
+    "ProjectName": "dkal",
+    "ReportedDate": "2013-02-14T01:29:07.32-08:00",
+    "Status": {
+      "Name": "Closed",
+      "Id": 4
+    },
+    "ReasonClosed": {
+      "Name": "Fixed"
+    },
+    "Summary": "Reflection Substrate",
+    "Type": {
+      "Name": "Feature",
+      "Id": 1
+    },
+    "VoteCount": 1,
+    "Id": 8
+  },
+  "FileAttachments": [],
+  "Comments": []
+}

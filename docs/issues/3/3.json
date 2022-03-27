@@ -1,0 +1,45 @@
+{
+  "WorkItem": {
+    "AffectedComponent": {
+      "Name": "",
+      "DisplayName": ""
+    },
+    "ClosedComment": "fixed in http://dkal.codeplex.com/SourceControl/changeset/2da8a9a652f4",
+    "ClosedDate": "2013-01-10T15:37:55.713-08:00",
+    "CommentCount": 1,
+    "Custom": null,
+    "Description": "Add `System.DateTime` type support for DKAL.\r\nAdd functions `date` to create DateTime's (via DateTime.Parse) and `now` to get current DateTime.\r\nSupport comparison operators on DateTime.",
+    "LastUpdatedDate": "2017-11-27T14:57:27.22-08:00",
+    "PlannedForRelease": "",
+    "ReleaseVisibleToPublic": false,
+    "Priority": {
+      "Name": "Low",
+      "Severity": 50,
+      "Id": 1
+    },
+    "ProjectName": "dkal",
+    "ReportedDate": "2013-01-10T15:33:22.41-08:00",
+    "Status": {
+      "Name": "Closed",
+      "Id": 4
+    },
+    "ReasonClosed": {
+      "Name": "Unassigned"
+    },
+    "Summary": "DateTime type support",
+    "Type": {
+      "Name": "Feature",
+      "Id": 1
+    },
+    "VoteCount": 1,
+    "Id": 3
+  },
+  "FileAttachments": [],
+  "Comments": [
+    {
+      "Message": "Example in http://dkal.codeplex.com/SourceControl/changeset/view/93ec18c3ea2d#ModularEngine/samples/MultiMain/datetime.mdkal",
+      "PostedDate": "2013-01-25T18:29:05.807-08:00",
+      "Id": 87408
+    }
+  ]
+}

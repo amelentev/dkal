@@ -1,0 +1,4 @@
+# Suggested Reading for DKAL Theory
+If you're interested in learning about the underlying theory behind DKAL we suggest you read:
+* "Evidential Authorization", paper {{[203](203)}} on [Yuri Gurevich's annotated article list](http://research.microsoft.com/en-us/um/people/gurevich/annotated.htm). This paper introduces the justification aspect of DKAL and the [clinical trials example](Examples#examplesSingleClinical). It is a nice entry point to DKAL since it does not go too deep in the formalities.
+* "DKAL 2 --- A Simplified and Improved Authorization Language", paper {{[200](200)}} on [Yuri Gurevich's annotated article list](http://research.microsoft.com/en-us/um/people/gurevich/annotated.htm). This is a more fundamental paper with a more rigorous and formal approach. It introduces the infon logic derivation calculus.

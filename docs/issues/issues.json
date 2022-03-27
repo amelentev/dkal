@@ -1,0 +1,26 @@
+[
+  {
+    "Id": 2,
+    "Title": "Collections support"
+  },
+  {
+    "Id": 3,
+    "Title": "DateTime type support"
+  },
+  {
+    "Id": 5,
+    "Title": "Cleanup substrate query syntax"
+  },
+  {
+    "Id": 6,
+    "Title": "Move all deps to NuGet package manager. Enable Package Restore During Build"
+  },
+  {
+    "Id": 7,
+    "Title": "stackoverflow on recursive definitions with substrate queries on simple logic engine"
+  },
+  {
+    "Id": 8,
+    "Title": "Reflection Substrate"
+  }
+]
