@@ -1,0 +1,36 @@
+[
+  {
+    "Id": "0",
+    "Name": "DKAL 1.0.0.364",
+    "DevelopmentStatus": "Beta",
+    "Description": "This is the first DKAL public release. It contains a bunch of examples and 3 front-ends:\n* A console front-end for a single principal: {{Dkal.exe}}\n* A console front-end for many principals: {{DkalMulti.exe}}\n* A GUI front-end for a single principal: {{DkalGui.exe}}",
+    "ReleasedDatge": "0001-01-01T00:00:00",
+    "ModifiedDate": "2011-06-06T17:36:11.02-07:00",
+    "Files": [
+      {
+        "Id": "e2b64d55-dcd8-471a-89e0-cf1f2126b63e",
+        "FileName": "setup.exe",
+        "Url": "./0/e2b64d55-dcd8-471a-89e0-cf1f2126b63e",
+        "Type": "Application",
+        "UploadDate": "2011-06-06T17:36:10.427-07:00"
+      }
+    ]
+  },
+  {
+    "Id": "1",
+    "Name": "DKAL 1.0.0.613",
+    "DevelopmentStatus": "Beta",
+    "Description": "This is the second DKAL public release. New features:\n* New Propositional Primal Infon Logic based [Logic Engines]: BPIL, SPIL, TPIL\n* [Quantified Infon Terms|SyntaxBasic#syntaxBasicQuant] (\"forall\")\n* Updated [syntax|SyntaxBasic]",
+    "ReleasedDatge": "0001-01-01T00:00:00",
+    "ModifiedDate": "2012-10-21T04:27:40.437-07:00",
+    "Files": [
+      {
+        "Id": "7e938cde-e11d-467b-b7b9-c15f1f2309c0",
+        "FileName": "setup.exe",
+        "Url": "./1/7e938cde-e11d-467b-b7b9-c15f1f2309c0",
+        "Type": "Application",
+        "UploadDate": "2012-10-21T04:27:40-07:00"
+      }
+    ]
+  }
+]
